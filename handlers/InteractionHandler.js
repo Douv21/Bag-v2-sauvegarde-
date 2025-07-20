@@ -53,7 +53,7 @@ class InteractionHandler {
         this.handlers.channelSelect.set('autothread_remove_channel', this.handleAutothreadRemoveChannel.bind(this));
         this.handlers.channelSelect.set('confession_add_channel', this.handleConfessionAddChannel.bind(this));
         this.handlers.channelSelect.set('confession_remove_channel', this.handleConfessionRemoveChannel.bind(this));
-        this.handlers.channelSelect.set('confession_main_channel', this.handleConfessionMainChannel.bind(this));
+        this.handlers.channelSelect.set('confession_log_channel', this.handleConfessionLogChannel.bind(this));
         
         // Boutons Navigation
         this.handlers.button.set('economy_back_main', this.handleBackToMain.bind(this));
@@ -372,12 +372,6 @@ class InteractionHandler {
                         description: 'Durée avant archivage automatique',
                         value: 'archive_time',
                         emoji: '📦'
-                    },
-                    {
-                        label: 'Mode Privé',
-                        description: 'Threads privés ou publics',
-                        value: 'private_mode',
-                        emoji: '🔐'
                     }
                 ]);
 
@@ -388,15 +382,16 @@ class InteractionHandler {
                 components: components,
                 flags: 64
             });
+
         } else if (value === 'logs') {
             const embed = new EmbedBuilder()
                 .setColor('#2196F3')
                 .setTitle('📋 Configuration Logs Admin')
-                .setDescription('Configurez les logs de modération et audit');
+                .setDescription('Configurez les logs des confessions pour la modération');
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('confession_logs_config')
-                .setPlaceholder('📋 Configurer logs admin')
+                .setPlaceholder('📋 Configurer les logs admin')
                 .addOptions([
                     {
                         label: 'Canal Logs',
@@ -405,22 +400,16 @@ class InteractionHandler {
                         emoji: '📝'
                     },
                     {
-                        label: 'Niveau Détail',
-                        description: 'Niveau de détail des logs',
+                        label: 'Niveau de Détail',
+                        description: 'Niveau d\'information dans les logs',
                         value: 'log_level',
                         emoji: '🔍'
                     },
                     {
-                        label: 'Logs Confessions',
-                        description: 'Activer les logs des confessions',
-                        value: 'confession_logs',
-                        emoji: '💭'
-                    },
-                    {
-                        label: 'Logs Modération',
-                        description: 'Activer les logs de modération',
-                        value: 'moderation_logs',
-                        emoji: '🛡️'
+                        label: 'Inclure Images',
+                        description: 'Afficher les images dans les logs',
+                        value: 'log_images',
+                        emoji: '🖼️'
                     }
                 ]);
 
@@ -429,11 +418,6 @@ class InteractionHandler {
             await interaction.reply({
                 embeds: [embed],
                 components: components,
-                flags: 64
-            });
-        } else {
-            await interaction.reply({
-                content: `Configuration ${value} disponible.`,
                 flags: 64
             });
         }
@@ -1335,6 +1319,79 @@ class InteractionHandler {
         }
     }
 
+    async handleConfessionLogsConfig(interaction) {
+        const value = interaction.values[0];
+        const dataManager = require('../managers/DataManager');
+        const config = await dataManager.getData('config');
+        const guildId = interaction.guild.id;
+
+        if (value === 'log_channel') {
+            const { ChannelSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+            
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('📝 Canal Logs Admin')
+                .setDescription('Sélectionnez le canal où envoyer les logs de confessions');
+
+            const channelSelect = new ChannelSelectMenuBuilder()
+                .setCustomId('confession_log_channel')
+                .setPlaceholder('📝 Sélectionnez le canal logs')
+                .setChannelTypes([0]); // Text channels
+
+            const components = [new ActionRowBuilder().addComponents(channelSelect)];
+
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+
+        } else if (value === 'log_level') {
+            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+            
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('🔍 Niveau de Détail')
+                .setDescription('Choisissez le niveau d\'information dans les logs');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('confession_log_level')
+                .setPlaceholder('🔍 Choisir niveau de détail')
+                .addOptions([
+                    { label: 'Basique', description: 'Contenu et utilisateur seulement', value: 'basic', emoji: '📄' },
+                    { label: 'Détaillé', description: 'Toutes les informations', value: 'detailed', emoji: '📋' },
+                    { label: 'Complet', description: 'Inclut métadonnées et traces', value: 'full', emoji: '🔍' }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+
+        } else if (value === 'log_images') {
+            if (!config.confessions) config.confessions = {};
+            if (!config.confessions[guildId]) config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}',
+                logImages: true
+            };
+
+            config.confessions[guildId].logImages = !config.confessions[guildId].logImages;
+            await dataManager.saveData('config', config);
+
+            const status = config.confessions[guildId].logImages ? '🟢 Activé' : '🔴 Désactivé';
+            await interaction.reply({
+                content: `🖼️ Images dans logs : ${status}`,
+                flags: 64
+            });
+        }
+    }
+
     async handleAutothreadNameConfig(interaction) {
         const value = interaction.values[0];
         
@@ -1854,6 +1911,33 @@ class InteractionHandler {
             ]);
 
         await interaction.reply({ embeds: [embed], flags: 64 });
+    }
+
+    async handleConfessionLogChannel(interaction) {
+        const channelId = interaction.values[0];
+        const channel = interaction.guild.channels.cache.get(channelId);
+        const guildId = interaction.guild.id;
+        
+        // Charger configuration actuelle
+        const config = await this.dataManager.getData('config');
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}'
+            };
+        }
+        
+        // Sauvegarder canal logs
+        config.confessions[guildId].logChannel = channelId;
+        await this.dataManager.saveData('config', config);
+        
+        await interaction.reply({
+            content: `✅ Canal logs configuré : **${channel.name}**\n\nLes confessions seront automatiquement loggées ici avec les détails utilisateur.`,
+            flags: 64
+        });
     }
 }
 
