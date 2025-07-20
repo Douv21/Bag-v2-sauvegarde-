@@ -1,0 +1,110 @@
+const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('configeconomie')
+        .setDescription('Configuration du système économique (Admin uniquement)')
+        .setDefaultMemberPermissions('0'),
+
+    async execute(interaction, dataManager) {
+        try {
+            await this.showMainEconomyConfig(interaction, dataManager);
+        } catch (error) {
+            console.error('❌ Erreur configeconomie:', error);
+            await interaction.reply({
+                content: '❌ Une erreur est survenue lors de la configuration économique.',
+                flags: 64
+            });
+        }
+    },
+
+    async showMainEconomyConfig(interaction, dataManager) {
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle('💰 Configuration Économique')
+            .setDescription('Configurez tous les aspects du système économique du serveur')
+            .addFields([
+                {
+                    name: '💼 Actions Économiques',
+                    value: 'Gérer les actions (travail, vol, crime, etc.)',
+                    inline: true
+                },
+                {
+                    name: '🛒 Boutique',
+                    value: 'Configurer les objets et rôles à vendre',
+                    inline: true
+                },
+                {
+                    name: '⚖️ Système Karma',
+                    value: 'Sanctions et récompenses automatiques',
+                    inline: true
+                },
+                {
+                    name: '🎁 Daily/Récompenses',
+                    value: 'Configuration des récompenses quotidiennes',
+                    inline: true
+                },
+                {
+                    name: '💬 Messages',
+                    value: 'Gains automatiques pour chaque message',
+                    inline: true
+                },
+                {
+                    name: '📊 Statistiques',
+                    value: 'Voir les données du système économique',
+                    inline: true
+                }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_main_config')
+            .setPlaceholder('💰 Sélectionner une section économique')
+            .addOptions([
+                {
+                    label: 'Actions Économiques',
+                    description: 'Gérer les actions (travail, vol, etc.)',
+                    value: 'actions',
+                    emoji: '💼'
+                },
+                {
+                    label: 'Boutique',
+                    description: 'Configurer la boutique et les objets',
+                    value: 'shop',
+                    emoji: '🛒'
+                },
+                {
+                    label: 'Système Karma',
+                    description: 'Sanctions et récompenses automatiques',
+                    value: 'karma',
+                    emoji: '⚖️'
+                },
+                {
+                    label: 'Configuration Daily',
+                    description: 'Récompense quotidienne des utilisateurs',
+                    value: 'daily',
+                    emoji: '🎁'
+                },
+                {
+                    label: 'Récompenses Messages',
+                    description: 'Gains automatiques pour chaque message',
+                    value: 'messages',
+                    emoji: '💬'
+                }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+        if (interaction.deferred) {
+            await interaction.editReply({
+                embeds: [embed],
+                components: components
+            });
+        } else {
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+        }
+    }
+};
