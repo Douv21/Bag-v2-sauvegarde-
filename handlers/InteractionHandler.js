@@ -56,8 +56,12 @@ class InteractionHandler {
         this.handlers.channelSelect.set('confession_remove_channel', this.handleConfessionRemoveChannel.bind(this));
         this.handlers.channelSelect.set('confession_log_channel', this.handleConfessionLogChannel.bind(this));
         
-        // Handlers pour sélecteurs modaux  
+        // Handlers pour sélecteurs modaux et toggles
         this.handlers.selectMenu.set('confession_archive_time', this.handleConfessionArchiveTime.bind(this));
+        this.handlers.selectMenu.set('confession_thread_format', this.handleConfessionThreadFormat.bind(this));
+        
+        // Handlers pour boutons confession
+        this.handlers.button.set('toggle_confession_autothread', this.handleToggleConfessionAutothread.bind(this));
         
         // Boutons Navigation
         this.handlers.button.set('economy_back_main', this.handleBackToMain.bind(this));
@@ -445,34 +449,87 @@ class InteractionHandler {
         }
 
         if (value === 'toggle_autothread') {
-            config.confessions[guildId].autoThread = !config.confessions[guildId].autoThread;
-            await dataManager.saveData('config', config);
+            const { ButtonBuilder, ActionRowBuilder, EmbedBuilder, ButtonStyle } = require('discord.js');
+            
+            const currentStatus = config.confessions[guildId].autoThread ? '🟢 Activé' : '🔴 Désactivé';
+            const newAction = config.confessions[guildId].autoThread ? 'Désactiver' : 'Activer';
+            
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('🔄 Auto-Thread Confessions')
+                .setDescription(`**Status actuel :** ${currentStatus}\n\nCliquez pour ${newAction.toLowerCase()} les threads automatiques pour les confessions.`)
+                .addFields({
+                    name: 'ℹ️ Information',
+                    value: config.confessions[guildId].autoThread 
+                        ? 'Les confessions créent actuellement des threads automatiques'
+                        : 'Les confessions n\'utilisent pas de threads automatiques',
+                    inline: false
+                });
 
-            const status = config.confessions[guildId].autoThread ? '🟢 Activé' : '🔴 Désactivé';
+            const toggleButton = new ButtonBuilder()
+                .setCustomId('toggle_confession_autothread')
+                .setLabel(`${newAction} Auto-Thread`)
+                .setStyle(config.confessions[guildId].autoThread ? ButtonStyle.Danger : ButtonStyle.Success)
+                .setEmoji(config.confessions[guildId].autoThread ? '🔴' : '🟢');
+
+            const components = [new ActionRowBuilder().addComponents(toggleButton)];
+
             await interaction.reply({
-                content: `🧵 Auto-Thread Confessions : ${status}\n\n${config.confessions[guildId].autoThread ? 'Les confessions créeront automatiquement des threads.' : 'Les confessions n\'utiliseront plus les threads automatiques.'}`,
+                embeds: [embed],
+                components: components,
                 flags: 64
             });
 
         } else if (value === 'thread_name') {
-            const { ModalBuilder, TextInputBuilder, ActionRowBuilder, TextInputStyle } = require('discord.js');
+            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
             
-            const modal = new ModalBuilder()
-                .setCustomId('confession_thread_name_modal')
-                .setTitle('🏷️ Format Nom des Threads');
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('🏷️ Format Nom des Threads')
+                .setDescription('Choisissez le format pour les noms des threads de confessions')
+                .addFields({
+                    name: 'Format actuel',
+                    value: `\`${config.confessions[guildId].threadName || 'Confession #{number}'}\``,
+                    inline: false
+                });
 
-            const nameInput = new TextInputBuilder()
-                .setCustomId('thread_name_input')
-                .setLabel('Format du nom des threads')
-                .setStyle(TextInputStyle.Short)
-                .setValue(config.confessions[guildId].threadName || 'Confession #{number}')
-                .setPlaceholder('Ex: Confession #{number} - {date}')
-                .setRequired(true);
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('confession_thread_format')
+                .setPlaceholder('🏷️ Choisir format nom thread')
+                .addOptions([
+                    {
+                        label: 'Confession #{number}',
+                        description: 'Format simple avec numéro',
+                        value: 'Confession #{number}',
+                        emoji: '📝'
+                    },
+                    {
+                        label: 'Confession #{number} - {date}',
+                        description: 'Numéro avec date du jour',
+                        value: 'Confession #{number} - {date}',
+                        emoji: '📅'
+                    },
+                    {
+                        label: 'Thread Confession {date}',
+                        description: 'Format avec date seulement',
+                        value: 'Thread Confession {date}',
+                        emoji: '🗓️'
+                    },
+                    {
+                        label: 'Confession Anonyme #{number}',
+                        description: 'Format anonyme avec numéro',
+                        value: 'Confession Anonyme #{number}',
+                        emoji: '🔒'
+                    }
+                ]);
 
-            const actionRow = new ActionRowBuilder().addComponents(nameInput);
-            modal.addComponents(actionRow);
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
-            await interaction.showModal(modal);
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
 
         } else if (value === 'archive_time') {
             const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
@@ -2071,6 +2128,70 @@ class InteractionHandler {
 
         await interaction.reply({
             content: `📦 Durée d'archivage configurée : **${durations[archiveTime]}**\n\nLes threads seront archivés automatiquement après cette durée d'inactivité.`,
+            flags: 64
+        });
+    }
+
+    async handleToggleConfessionAutothread(interaction) {
+        const dataManager = require('../managers/DataManager');
+        const config = await dataManager.getData('config');
+        const guildId = interaction.guild.id;
+
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}',
+                archiveTime: 1440
+            };
+        }
+
+        // Toggle l'état
+        config.confessions[guildId].autoThread = !config.confessions[guildId].autoThread;
+        await dataManager.saveData('config', config);
+
+        const status = config.confessions[guildId].autoThread ? '🟢 Activé' : '🔴 Désactivé';
+        const description = config.confessions[guildId].autoThread 
+            ? 'Les confessions créeront maintenant automatiquement des threads avec le format configuré.'
+            : 'Les confessions n\'utiliseront plus les threads automatiques.';
+
+        await interaction.reply({
+            content: `🧵 **Auto-Thread Confessions ${status}**\n\n${description}`,
+            flags: 64
+        });
+    }
+
+    async handleConfessionThreadFormat(interaction) {
+        const format = interaction.values[0];
+        const dataManager = require('../managers/DataManager');
+        const config = await dataManager.getData('config');
+        const guildId = interaction.guild.id;
+
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}',
+                archiveTime: 1440
+            };
+        }
+
+        config.confessions[guildId].threadName = format;
+        await dataManager.saveData('config', config);
+
+        const examples = {
+            'Confession #{number}': 'Confession #1, Confession #2...',
+            'Confession #{number} - {date}': 'Confession #1 - 20/07/2025',
+            'Thread Confession {date}': 'Thread Confession 20/07/2025',
+            'Confession Anonyme #{number}': 'Confession Anonyme #1'
+        };
+
+        await interaction.reply({
+            content: `🏷️ **Format nom configuré :** \`${format}\`\n\n**Exemple :** ${examples[format] || format}\n\nLes nouveaux threads utiliseront ce format.`,
             flags: 64
         });
     }
