@@ -1567,10 +1567,9 @@ class InteractionHandler {
 
             const components = [new ActionRowBuilder().addComponents(channelSelect)];
 
-            await interaction.reply({
+            await interaction.update({
                 embeds: [embed],
-                components: components,
-                flags: 64
+                components: components
             });
 
         } else if (value === 'log_level') {
@@ -1592,10 +1591,9 @@ class InteractionHandler {
 
             const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
-            await interaction.reply({
+            await interaction.update({
                 embeds: [embed],
-                components: components,
-                flags: 64
+                components: components
             });
 
         } else if (value === 'log_images') {
@@ -1612,9 +1610,9 @@ class InteractionHandler {
             await this.dataManager.saveData('config', config);
 
             const status = config.confessions[guildId].logImages ? '🟢 Activé' : '🔴 Désactivé';
-            await interaction.reply({
+            await interaction.update({
                 content: `🖼️ Images dans logs : ${status}`,
-                flags: 64
+                components: []
             });
         }
     }
