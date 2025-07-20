@@ -75,9 +75,7 @@ class InteractionHandler {
         this.handlers.selectMenu.set('economy_stats_action', this.economyHandler.handleStatsAction.bind(this.economyHandler));
         
         // CARTE HOLOGRAPHIQUE PROFIL-UTILISATEUR
-        this.handlers.button.set('card_flip', this.handleCardFlip.bind(this));
-        this.handlers.button.set('card_shine', this.handleCardShine.bind(this));
-        this.handlers.button.set('card_stats', this.handleCardStats.bind(this));
+
         
         // NOUVEAUX HANDLERS BOUTIQUE AVANCÉE
         this.handlers.selectMenu.set('economy_shop_role_type_select', this.economyHandler.handleShopRoleTypeSelect.bind(this.economyHandler));
