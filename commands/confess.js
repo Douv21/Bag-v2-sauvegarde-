@@ -30,17 +30,22 @@ module.exports = {
 
             // Récupérer la configuration
             const config = await dataManager.getData('config');
-            const guildConfig = config[interaction.guild.id] || {};
+            const confessionConfig = config.confessions?.[interaction.guild.id] || {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}'
+            };
             
-            if (!guildConfig.confessionChannels || guildConfig.confessionChannels.length === 0) {
+            if (!confessionConfig.channels || confessionConfig.channels.length === 0) {
                 return await interaction.reply({
-                    content: '❌ Aucun canal de confession configuré sur ce serveur.',
+                    content: '❌ Aucun canal de confession configuré sur ce serveur.\n\nUtilisez `/config-confession` pour configurer les canaux.',
                     flags: 64
                 });
             }
 
             // Prendre le premier canal configuré
-            const channelId = guildConfig.confessionChannels[0];
+            const channelId = confessionConfig.channels[0];
             const channel = interaction.guild.channels.cache.get(channelId);
 
             if (!channel) {
@@ -68,10 +73,14 @@ module.exports = {
             const confessionMessage = await channel.send({ embeds: [confessionEmbed] });
 
             // Créer un thread si configuré
-            if (guildConfig.autoThread) {
+            if (confessionConfig.autoThread) {
+                let threadName = confessionConfig.threadName || 'Confession #{number}';
+                threadName = threadName.replace('#{number}', Date.now());
+                
                 await confessionMessage.startThread({
-                    name: `💭 Discussion - ${Date.now()}`,
-                    autoArchiveDuration: 60
+                    name: threadName,
+                    autoArchiveDuration: 60,
+                    reason: 'Auto-thread confession'
                 });
             }
 
