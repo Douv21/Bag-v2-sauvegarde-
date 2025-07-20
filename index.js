@@ -72,6 +72,27 @@ class BagBotRender {
         // Middleware
         this.app.use(express.json());
         this.app.use(express.static(path.join(__dirname, 'public')));
+        
+        // Routes essentielles pour Render.com Web Service
+        this.app.get('/health', (req, res) => {
+            res.status(200).json({
+                status: 'healthy',
+                discord: this.client.readyAt ? 'connected' : 'connecting',
+                uptime: process.uptime(),
+                timestamp: new Date().toISOString(),
+                service: 'BAG Bot V2 Render',
+                commands: this.client.commands?.size || 0
+            });
+        });
+        
+        this.app.get('/', (req, res) => {
+            res.status(200).json({
+                message: 'BAG Bot V2 Web Service',
+                status: 'running',
+                version: '2.0.0',
+                bot: this.client.user?.tag || 'Démarrage...'
+            });
+        });
 
         // Routes de santé (obligatoires pour Render.com Web Service)
         this.app.get('/', (req, res) => {
