@@ -289,6 +289,11 @@ class InteractionHandler {
             return;
         }
         
+        if (customId === 'custom_object_modal') {
+            await this.economyHandler.handleCustomObjectCreationModal(interaction);
+            return;
+        }
+        
         // Vérifier les handlers statiques de modals boutique
         const modalHandler = this.handlers.modal?.get(customId);
         if (modalHandler) {
