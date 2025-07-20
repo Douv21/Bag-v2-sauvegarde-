@@ -55,7 +55,6 @@ class InteractionHandler {
         this.handlers.channelSelect.set('confession_add_channel', this.handleConfessionAddChannel.bind(this));
         this.handlers.channelSelect.set('confession_remove_channel', this.handleConfessionRemoveChannel.bind(this));
         this.handlers.channelSelect.set('confession_log_channel', this.handleConfessionLogChannel.bind(this));
-        this.handlers.selectMenu.set('confession_logs_config', this.handleConfessionLogsConfig.bind(this));
         
         // Handlers pour sélecteurs modaux et toggles
         this.handlers.selectMenu.set('confession_archive_time', this.handleConfessionArchiveTime.bind(this));
@@ -106,10 +105,14 @@ class InteractionHandler {
     }
 
     async handleSelectMenu(interaction) {
+        console.log(`🔍 Recherche handler pour: ${interaction.customId}`);
         const handler = this.handlers.selectMenu.get(interaction.customId);
         if (handler) {
+            console.log(`✅ Handler trouvé pour: ${interaction.customId}`);
             await handler(interaction);
         } else {
+            console.log(`❌ Handler non trouvé pour: ${interaction.customId}`);
+            console.log(`📋 Handlers disponibles:`, Array.from(this.handlers.selectMenu.keys()));
             await interaction.reply({
                 content: `Sélecteur ${interaction.customId} non géré.`,
                 flags: 64
