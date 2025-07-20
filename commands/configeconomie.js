@@ -74,7 +74,7 @@ module.exports = {
                 },
                 {
                     label: 'Système Karma',
-                    description: 'Sanctions et récompenses automatiques',
+                    description: 'Configuration karma 😇😈 et effets',
                     value: 'karma',
                     emoji: '⚖️'
                 },
