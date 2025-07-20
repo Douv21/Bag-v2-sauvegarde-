@@ -69,8 +69,17 @@ module.exports = {
                 confessionEmbed.setImage(image.url);
             }
 
-            // Envoyer la confession
-            const confessionMessage = await channel.send({ embeds: [confessionEmbed] });
+            // Préparer les pings pour confessions
+            let confessionPings = '';
+            if (confessionConfig.confessionPingRoles && confessionConfig.confessionPingRoles.length > 0) {
+                confessionPings = confessionConfig.confessionPingRoles.map(roleId => `<@&${roleId}>`).join(' ') + '\n';
+            }
+
+            // Envoyer la confession avec pings
+            const confessionMessage = await channel.send({ 
+                content: confessionPings,
+                embeds: [confessionEmbed] 
+            });
 
             // Créer un thread si configuré
             if (confessionConfig.autoThread) {
@@ -94,6 +103,9 @@ module.exports = {
                 });
             }
 
+            // Envoyer les logs admin si configuré
+            await this.sendAdminLog(interaction, text, image, dataManager);
+
             // Logger la confession
             await this.logConfession(interaction, text, image?.url, dataManager);
 
@@ -114,6 +126,77 @@ module.exports = {
                     flags: 64
                 });
             }
+        }
+    },
+
+    async sendAdminLog(interaction, text, image, dataManager) {
+        try {
+            const config = await dataManager.getData('config');
+            const confessionConfig = config.confessions?.[interaction.guild.id];
+            
+            if (!confessionConfig?.logChannel) return;
+
+            const logChannel = interaction.guild.channels.cache.get(confessionConfig.logChannel);
+            if (!logChannel) return;
+
+            const logLevel = confessionConfig.logLevel || 'basic';
+            const includeImages = confessionConfig.logImages !== false;
+            
+            // Créer l'embed de log selon le niveau
+            const logEmbed = new EmbedBuilder()
+                .setColor('#ff6b6b')
+                .setTitle('📋 Nouvelle Confession')
+                .setTimestamp();
+
+            // Niveau basique : contenu et utilisateur
+            if (logLevel === 'basic') {
+                logEmbed.addFields([
+                    { name: '👤 Utilisateur', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
+                    { name: '💬 Contenu', value: text || '*Image uniquement*', inline: false }
+                ]);
+            }
+            
+            // Niveau détaillé : + canal et horodatage
+            else if (logLevel === 'detailed') {
+                logEmbed.addFields([
+                    { name: '👤 Utilisateur', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
+                    { name: '📍 Canal', value: `<#${interaction.channelId}>`, inline: true },
+                    { name: '⏰ Envoyé le', value: `<t:${Math.floor(Date.now() / 1000)}:f>`, inline: true },
+                    { name: '💬 Contenu', value: text || '*Image uniquement*', inline: false }
+                ]);
+            }
+            
+            // Niveau complet : + métadonnées et traces
+            else if (logLevel === 'full') {
+                logEmbed.addFields([
+                    { name: '👤 Utilisateur', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
+                    { name: '📍 Canal', value: `<#${interaction.channelId}>`, inline: true },
+                    { name: '⏰ Envoyé le', value: `<t:${Math.floor(Date.now() / 1000)}:f>`, inline: true },
+                    { name: '💬 Contenu', value: text || '*Image uniquement*', inline: false },
+                    { name: '🔍 Métadonnées', value: `**Serveur:** ${interaction.guild.name} (${interaction.guild.id})\n**Permissions:** ${interaction.member.permissions.bitfield}\n**Rôles:** ${interaction.member.roles.cache.size}`, inline: false }
+                ]);
+            }
+
+            if (image && includeImages) {
+                logEmbed.setImage(image.url);
+                logEmbed.addFields([
+                    { name: '🖼️ Image', value: `**Nom:** ${image.name}\n**Taille:** ${(image.size / 1024).toFixed(1)} KB`, inline: true }
+                ]);
+            }
+
+            // Préparer les pings pour logs admin
+            let logPings = '';
+            if (confessionConfig.logPingRoles && confessionConfig.logPingRoles.length > 0) {
+                logPings = confessionConfig.logPingRoles.map(roleId => `<@&${roleId}>`).join(' ') + '\n';
+            }
+
+            await logChannel.send({
+                content: logPings,
+                embeds: [logEmbed]
+            });
+
+        } catch (error) {
+            console.error('❌ Erreur envoi log admin:', error);
         }
     },
 
