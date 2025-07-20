@@ -24,7 +24,7 @@ class InteractionHandler {
         this.handlers.selectMenu.set('confession_main_config', this.handleConfessionMainConfig.bind(this));
         this.handlers.selectMenu.set('config_main_menu', this.handleConfigMainMenu.bind(this));
         this.handlers.selectMenu.set('confession_channels', this.handleConfessionChannels.bind(this));
-        this.handlers.selectMenu.set('confession_autothread', this.handleConfessionAutothread.bind(this));
+        // this.handlers.selectMenu.set('confession_autothread', this.handleConfessionAutothread.bind(this)); // Retiré car dupliqué
         this.handlers.selectMenu.set('autothread_config', this.handleAutothreadGlobalConfig.bind(this));
         
         // Sélecteurs Configuration Actions  
@@ -46,6 +46,7 @@ class InteractionHandler {
         this.handlers.selectMenu.set('confession_channels_config', this.handleConfessionChannelsConfig.bind(this));
         this.handlers.selectMenu.set('confession_autothread_config', this.handleConfessionAutothreadConfig.bind(this));
         this.handlers.selectMenu.set('confession_logs_config', this.handleConfessionLogsConfig.bind(this));
+        this.handlers.selectMenu.set('confession_log_level', this.handleConfessionLogLevel.bind(this));
 
         // Handlers pour sélecteurs canaux (ChannelSelectMenuBuilder)
         this.handlers.channelSelect = new Map();
@@ -54,6 +55,9 @@ class InteractionHandler {
         this.handlers.channelSelect.set('confession_add_channel', this.handleConfessionAddChannel.bind(this));
         this.handlers.channelSelect.set('confession_remove_channel', this.handleConfessionRemoveChannel.bind(this));
         this.handlers.channelSelect.set('confession_log_channel', this.handleConfessionLogChannel.bind(this));
+        
+        // Handlers pour sélecteurs modaux  
+        this.handlers.selectMenu.set('confession_archive_time', this.handleConfessionArchiveTime.bind(this));
         
         // Boutons Navigation
         this.handlers.button.set('economy_back_main', this.handleBackToMain.bind(this));
@@ -423,9 +427,107 @@ class InteractionHandler {
         }
     }
 
-    async handleConfessionAutothread(interaction) {
+    async handleConfessionAutothreadConfig(interaction) {
+        const value = interaction.values[0];
+        const dataManager = require('../managers/DataManager');
+        const config = await dataManager.getData('config');
+        const guildId = interaction.guild.id;
+
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}',
+                archiveTime: 1440
+            };
+        }
+
+        if (value === 'toggle_autothread') {
+            config.confessions[guildId].autoThread = !config.confessions[guildId].autoThread;
+            await dataManager.saveData('config', config);
+
+            const status = config.confessions[guildId].autoThread ? '🟢 Activé' : '🔴 Désactivé';
+            await interaction.reply({
+                content: `🧵 Auto-Thread Confessions : ${status}\n\n${config.confessions[guildId].autoThread ? 'Les confessions créeront automatiquement des threads.' : 'Les confessions n\'utiliseront plus les threads automatiques.'}`,
+                flags: 64
+            });
+
+        } else if (value === 'thread_name') {
+            const { ModalBuilder, TextInputBuilder, ActionRowBuilder, TextInputStyle } = require('discord.js');
+            
+            const modal = new ModalBuilder()
+                .setCustomId('confession_thread_name_modal')
+                .setTitle('🏷️ Format Nom des Threads');
+
+            const nameInput = new TextInputBuilder()
+                .setCustomId('thread_name_input')
+                .setLabel('Format du nom des threads')
+                .setStyle(TextInputStyle.Short)
+                .setValue(config.confessions[guildId].threadName || 'Confession #{number}')
+                .setPlaceholder('Ex: Confession #{number} - {date}')
+                .setRequired(true);
+
+            const actionRow = new ActionRowBuilder().addComponents(nameInput);
+            modal.addComponents(actionRow);
+
+            await interaction.showModal(modal);
+
+        } else if (value === 'archive_time') {
+            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+            
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('📦 Archive Automatique')
+                .setDescription('Choisissez la durée avant archivage automatique des threads');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('confession_archive_time')
+                .setPlaceholder('📦 Durée d\'archivage')
+                .addOptions([
+                    { label: '1 heure', description: 'Archive après 1 heure d\'inactivité', value: '60', emoji: '⏰' },
+                    { label: '24 heures', description: 'Archive après 1 jour d\'inactivité', value: '1440', emoji: '📅' },
+                    { label: '3 jours', description: 'Archive après 3 jours d\'inactivité', value: '4320', emoji: '📆' },
+                    { label: '7 jours', description: 'Archive après 1 semaine d\'inactivité', value: '10080', emoji: '🗓️' }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+        }
+    }
+
+    async handleConfessionLogLevel(interaction) {
+        const level = interaction.values[0];
+        const dataManager = require('../managers/DataManager');
+        const config = await dataManager.getData('config');
+        const guildId = interaction.guild.id;
+
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                logLevel: 'basic'
+            };
+        }
+
+        config.confessions[guildId].logLevel = level;
+        await dataManager.saveData('config', config);
+
+        const levels = {
+            'basic': '📄 Basique - Contenu et utilisateur seulement',
+            'detailed': '📋 Détaillé - Toutes les informations',
+            'full': '🔍 Complet - Inclut métadonnées et traces'
+        };
+
         await interaction.reply({
-            content: 'Configuration auto-thread pour confessions disponible.',
+            content: `🔍 Niveau de logs configuré :\n${levels[level]}`,
             flags: 64
         });
     }
@@ -1936,6 +2038,39 @@ class InteractionHandler {
         
         await interaction.reply({
             content: `✅ Canal logs configuré : **${channel.name}**\n\nLes confessions seront automatiquement loggées ici avec les détails utilisateur.`,
+            flags: 64
+        });
+    }
+
+    async handleConfessionArchiveTime(interaction) {
+        const archiveTime = parseInt(interaction.values[0]);
+        const dataManager = require('../managers/DataManager');
+        const config = await dataManager.getData('config');
+        const guildId = interaction.guild.id;
+
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}',
+                archiveTime: 1440
+            };
+        }
+
+        config.confessions[guildId].archiveTime = archiveTime;
+        await dataManager.saveData('config', config);
+
+        const durations = {
+            60: '1 heure',
+            1440: '24 heures (1 jour)',
+            4320: '3 jours',
+            10080: '7 jours (1 semaine)'
+        };
+
+        await interaction.reply({
+            content: `📦 Durée d'archivage configurée : **${durations[archiveTime]}**\n\nLes threads seront archivés automatiquement après cette durée d'inactivité.`,
             flags: 64
         });
     }
