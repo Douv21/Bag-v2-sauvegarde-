@@ -64,6 +64,7 @@ module.exports = {
             
             userData.balance = (userData.balance || 0) - amount;
             userData.karmaGood = (userData.karmaGood || 0) + 3; // +3 karma très positif pour la générosité
+            userData.karmaBad = Math.max(0, (userData.karmaBad || 0) - 2); // -2 karma négatif pour la générosité
             userData.lastDonate = now;
             
             targetData.balance = (targetData.balance || 0) + amount;
@@ -90,7 +91,12 @@ module.exports = {
                     },
                     {
                         name: '😇 Karma Très Positif',
-                        value: `+3 (Total: ${userData.karmaGood})`,
+                        value: `+3 (${userData.karmaGood})`,
+                        inline: true
+                    },
+                    {
+                        name: '😈 Karma Négatif',
+                        value: `-2 (${userData.karmaBad})`,
                         inline: true
                     },
                     {

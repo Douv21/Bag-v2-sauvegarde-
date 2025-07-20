@@ -83,6 +83,7 @@ module.exports = {
                 
                 userData.balance = (userData.balance || 0) + stolenAmount;
                 userData.karmaBad = (userData.karmaBad || 0) + 1;
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1); // Réduit le karma positif
                 userData.lastSteal = now;
                 
                 targetData.balance -= stolenAmount;
@@ -104,7 +105,12 @@ module.exports = {
                         },
                         {
                             name: '😈 Karma Négatif',
-                            value: `+1 (Total: ${userData.karmaBad})`,
+                            value: `+1 (${userData.karmaBad})`,
+                            inline: true
+                        },
+                        {
+                            name: '😇 Karma Positif',
+                            value: `-1 (${userData.karmaGood})`,
                             inline: true
                         }
                     ])
@@ -117,6 +123,7 @@ module.exports = {
                 const penalty = Math.floor(Math.random() * 50) + 25; // 25-75€
                 userData.balance = Math.max(0, (userData.balance || 0) - penalty);
                 userData.karmaBad = (userData.karmaBad || 0) + 1;
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1); // -1 karma positif
                 userData.lastSteal = now;
                 
                 users[userKey] = userData;
@@ -134,7 +141,12 @@ module.exports = {
                         },
                         {
                             name: '😈 Karma Négatif',
-                            value: `+1 (Total: ${userData.karmaBad})`,
+                            value: `+1 (${userData.karmaBad})`,
+                            inline: true
+                        },
+                        {
+                            name: '😇 Karma Positif',
+                            value: `-1 (${userData.karmaGood})`,
                             inline: true
                         }
                     ])

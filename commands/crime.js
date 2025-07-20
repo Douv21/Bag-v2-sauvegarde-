@@ -45,6 +45,7 @@ module.exports = {
                 
                 userData.balance = (userData.balance || 0) + earnings;
                 userData.karmaBad = (userData.karmaBad || 0) + 3; // +3 karma mauvais
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 2); // -2 karma positif
                 userData.lastCrime = now;
                 
                 users[userKey] = userData;
@@ -61,8 +62,13 @@ module.exports = {
                             inline: true
                         },
                         {
-                            name: '😈 Karma Très Négatif',
-                            value: `+3 (Total: ${userData.karmaBad})`,
+                            name: '😈 Karma Négatif',
+                            value: `+3 (${userData.karmaBad})`,
+                            inline: true
+                        },
+                        {
+                            name: '😇 Karma Positif',
+                            value: `-2 (${userData.karmaGood})`,
                             inline: true
                         },
                         {
@@ -80,6 +86,7 @@ module.exports = {
                 const penalty = Math.floor(Math.random() * 200) + 100; // 100-300€
                 userData.balance = Math.max(0, (userData.balance || 0) - penalty);
                 userData.karmaBad = (userData.karmaBad || 0) + 2; // +2 karma mauvais même en échec
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1); // -1 karma positif
                 userData.lastCrime = now;
                 
                 users[userKey] = userData;
@@ -97,7 +104,12 @@ module.exports = {
                         },
                         {
                             name: '😈 Karma Négatif',
-                            value: `+2 (Total: ${userData.karmaBad})`,
+                            value: `+2 (${userData.karmaBad})`,
+                            inline: true
+                        },
+                        {
+                            name: '😇 Karma Positif',
+                            value: `-1 (${userData.karmaGood})`,
                             inline: true
                         },
                         {

@@ -47,6 +47,7 @@ module.exports = {
                 const winnings = betAmount * 2;
                 userData.balance = (userData.balance || 0) + betAmount; // +mise (car déjà déduite)
                 userData.karmaBad = (userData.karmaBad || 0) + 1; // +1 karma mauvais même en gagnant
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1); // -1 karma positif pour le jeu
                 userData.lastBet = now;
                 
                 users[userKey] = userData;
@@ -69,7 +70,12 @@ module.exports = {
                         },
                         {
                             name: '😈 Karma Négatif',
-                            value: `+1 (Total: ${userData.karmaBad})`,
+                            value: `+1 (${userData.karmaBad})`,
+                            inline: true
+                        },
+                        {
+                            name: '😇 Karma Positif',
+                            value: `-1 (${userData.karmaGood})`,
                             inline: true
                         },
                         {
@@ -86,6 +92,7 @@ module.exports = {
                 // Défaite - perte de la mise
                 userData.balance = (userData.balance || 0) - betAmount;
                 userData.karmaBad = (userData.karmaBad || 0) + 1; // +1 karma mauvais
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1); // -1 karma positif
                 userData.lastBet = now;
                 
                 users[userKey] = userData;
@@ -108,7 +115,12 @@ module.exports = {
                         },
                         {
                             name: '😈 Karma Négatif',
-                            value: `+1 (Total: ${userData.karmaBad})`,
+                            value: `+1 (${userData.karmaBad})`,
+                            inline: true
+                        },
+                        {
+                            name: '😇 Karma Positif',
+                            value: `-1 (${userData.karmaGood})`,
                             inline: true
                         },
                         {

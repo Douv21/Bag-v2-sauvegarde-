@@ -34,6 +34,7 @@ module.exports = {
             // Mettre à jour utilisateur
             userData.balance = (userData.balance || 0) + totalReward;
             userData.karmaGood = (userData.karmaGood || 0) + 1;
+            userData.karmaBad = Math.max(0, (userData.karmaBad || 0) - 1); // Réduit le karma négatif
             userData.lastWork = now;
             users[userKey] = userData;
             
@@ -61,7 +62,12 @@ module.exports = {
                     },
                     {
                         name: '😇 Karma Positif',
-                        value: `+1 (Total: ${userData.karmaGood})`,
+                        value: `+1 (${userData.karmaGood})`,
+                        inline: true
+                    },
+                    {
+                        name: '😈 Karma Négatif',
+                        value: `-1 (${userData.karmaBad})`,
                         inline: true
                     }
                 ])
