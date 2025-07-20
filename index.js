@@ -1,18 +1,12 @@
 /**
  * BAG BOT V2 - RENDER.COM WEB SERVICE
- * Architecture modulaire pour déploiement Web Service
+ * Architecture simplifiée pour déploiement Web Service
  */
 
 const { Client, Collection, GatewayIntentBits, Partials, REST, Routes } = require('discord.js');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-
-// Gestionnaires centralisés
-const DataManager = require('./managers/DataManager');
-const KarmaManager = require('./managers/KarmaManager');
-const InteractionHandler = require('./handlers/InteractionHandler');
-const CommandHandler = require('./handlers/CommandHandler');
 
 class BagBotRender {
     constructor() {
@@ -27,12 +21,6 @@ class BagBotRender {
             partials: [Partials.Channel, Partials.Message, Partials.User, Partials.GuildMember]
         });
 
-        // Gestionnaires
-        this.dataManager = new DataManager();
-        this.karmaManager = new KarmaManager(this.dataManager);
-        this.interactionHandler = new InteractionHandler(this.client, this.dataManager);
-        this.commandHandler = new CommandHandler(this.client, this.dataManager);
-
         // Collections
         this.client.commands = new Collection();
         this.client.cooldowns = new Collection();
@@ -46,181 +34,158 @@ class BagBotRender {
 
     async init() {
         try {
-            // Configuration Express
-            this.setupExpress();
-            
-            // Chargement des commandes
-            await this.commandHandler.loadCommands();
-            
-            // Configuration des événements Discord
-            this.setupDiscordEvents();
-            
-            // Connexion Discord
-            await this.client.login(process.env.DISCORD_TOKEN);
-            
-            // Démarrage serveur Web
-            this.startWebServer();
-            
             console.log('🚀 BAG BOT V2 - Render.com Web Service démarré');
+            
+            // Setup web server
+            this.setupWebServer();
+            
+            // Load commands
+            await this.loadCommands();
+            
+            // Setup Discord client
+            this.setupDiscord();
+            
+            // Start services
+            await this.start();
+            
         } catch (error) {
-            console.error('❌ Erreur démarrage:', error);
+            console.error('❌ Erreur initialisation:', error);
             process.exit(1);
         }
     }
 
-    setupExpress() {
-        // Middleware
+    setupWebServer() {
         this.app.use(express.json());
-        this.app.use(express.static(path.join(__dirname, 'public')));
-
-        // Routes de santé (obligatoires pour Render.com Web Service)
-        this.app.get('/', (req, res) => {
-            res.json({
-                status: 'online',
-                bot: this.client.user?.tag || 'Démarrage...',
+        
+        // Health check endpoint
+        this.app.get('/health', (req, res) => {
+            res.status(200).json({ 
+                status: 'OK',
                 uptime: process.uptime(),
-                timestamp: Date.now(),
-                service: 'BAG BOT V2 - Web Service'
+                timestamp: new Date().toISOString(),
+                bot: this.client.isReady() ? 'Connected' : 'Disconnected'
             });
         });
 
-        this.app.get('/health', (req, res) => {
-            const health = {
-                status: 'healthy',
-                discord: this.client.readyAt ? 'connected' : 'connecting',
-                uptime: process.uptime(),
-                memory: process.memoryUsage(),
-                commands: this.client.commands.size,
-                guilds: this.client.guilds.cache.size
-            };
-            res.json(health);
+        // Root endpoint
+        this.app.get('/', (req, res) => {
+            res.status(200).json({
+                name: 'BAG Bot V2 - Render Web Service',
+                status: 'Active',
+                version: '2.0.0'
+            });
         });
 
-        // API endpoints pour data
-        this.app.get('/api/stats', async (req, res) => {
-            try {
-                const stats = await this.dataManager.getStats();
-                res.json(stats);
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
-        });
-
-        this.app.get('/api/data/:type', async (req, res) => {
-            try {
-                const { type } = req.params;
-                const data = await this.dataManager.getData(type);
-                res.json(data);
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
+        // Start server
+        this.app.listen(this.port, '0.0.0.0', () => {
+            console.log(`🌐 Serveur Web actif sur port ${this.port}`);
+            console.log(`📊 Health check: http://localhost:${this.port}/health`);
         });
     }
 
-    setupDiscordEvents() {
+    async loadCommands() {
+        const commandsPath = path.join(__dirname, 'commands');
+        
+        if (!fs.existsSync(commandsPath)) {
+            console.log('📂 Aucun dossier commands trouvé');
+            return;
+        }
+
+        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+        
+        console.log(`📂 Chargement de ${commandFiles.length} commandes...`);
+        
+        for (const file of commandFiles) {
+            try {
+                const command = require(path.join(commandsPath, file));
+                if (command.data && command.execute) {
+                    this.client.commands.set(command.data.name, command);
+                    console.log(`✅ ${command.data.name}`);
+                }
+            } catch (error) {
+                console.error(`❌ Erreur chargement ${file}:`, error.message);
+            }
+        }
+        
+        console.log(`✅ ${this.client.commands.size} commandes chargées`);
+    }
+
+    setupDiscord() {
+        // Event Ready
         this.client.once('ready', async () => {
             console.log(`✅ ${this.client.user.tag} connecté`);
             
-            // Enregistrement des commandes slash
-            await this.registerSlashCommands();
+            // Register commands
+            await this.registerCommands();
         });
 
-        // Les interactions sont gérées automatiquement dans InteractionHandler
+        // Event Interaction
+        this.client.on('interactionCreate', async (interaction) => {
+            if (!interaction.isChatInputCommand()) return;
 
-        // Messages pour économie et auto-thread
-        this.client.on('messageCreate', async (message) => {
-            if (message.author.bot) return;
-            
-            // Gestion récompenses économiques
-            await this.dataManager.handleMessageReward(message);
-            
-            // Gestion auto-thread
-            await this.handleAutoThread(message);
+            const command = this.client.commands.get(interaction.commandName);
+            if (!command) return;
+
+            try {
+                await command.execute(interaction);
+            } catch (error) {
+                console.error('Erreur commande:', error);
+                
+                const errorMessage = {
+                    content: 'Une erreur est survenue lors de l\'exécution de cette commande.',
+                    flags: 64
+                };
+
+                if (interaction.deferred) {
+                    await interaction.editReply(errorMessage).catch(() => {});
+                } else if (!interaction.replied) {
+                    await interaction.reply(errorMessage).catch(() => {});
+                }
+            }
         });
 
-        // Gestion des erreurs
+        // Error handling
         this.client.on('error', (error) => {
-            console.error('❌ Erreur Discord:', error);
+            console.error('Discord Client Error:', error);
         });
 
         process.on('unhandledRejection', (error) => {
-            console.error('❌ Erreur non gérée:', error);
+            console.error('Unhandled Rejection:', error);
         });
     }
 
-    async registerSlashCommands() {
+    async registerCommands() {
         try {
-            const rest = new REST().setToken(process.env.DISCORD_TOKEN);
-            const commands = Array.from(this.client.commands.values()).map(cmd => cmd.data);
-
+            const commands = Array.from(this.client.commands.values()).map(command => command.data.toJSON());
+            
             console.log(`🔄 Enregistrement de ${commands.length} commandes...`);
-
-            await rest.put(
-                Routes.applicationCommands(process.env.CLIENT_ID),
-                { body: commands }
-            );
-
+            
+            const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+            
+            await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
+                body: commands
+            });
+            
             console.log(`✅ ${commands.length} commandes enregistrées`);
         } catch (error) {
             console.error('❌ Erreur enregistrement commandes:', error);
         }
     }
 
-    async handleAutoThread(message) {
-        try {
-            // Charger configuration auto-thread
-            const config = await this.dataManager.getData('config');
-            const guildId = message.guild.id;
-            const channelId = message.channel.id;
-            
-            // Vérifier si l'auto-thread est configuré pour cette guilde et ce canal
-            const autoThreadConfig = config.autoThread?.[guildId];
-            if (!autoThreadConfig || !autoThreadConfig.enabled) return;
-            if (!autoThreadConfig.channels.includes(channelId)) return;
-            
-            // Vérifier que c'est un canal texte et pas déjà un thread
-            if (message.channel.isThread() || message.channel.type !== 0) return;
-            
-            // Créer le nom du thread en remplaçant les variables
-            let threadName = autoThreadConfig.threadName || 'Discussion - {user}';
-            threadName = threadName
-                .replace('{user}', message.author.displayName || message.author.username)
-                .replace('{channel}', message.channel.name)
-                .replace('{date}', new Date().toLocaleDateString('fr-FR'));
-            
-            // Limiter le nom à 100 caractères (limite Discord)
-            threadName = threadName.substring(0, 100);
-            
-            // Créer le thread
-            const thread = await message.startThread({
-                name: threadName,
-                autoArchiveDuration: autoThreadConfig.archiveTime || 60,
-                reason: `Auto-thread créé par ${message.author.tag}`
-            });
-            
-            // Appliquer le mode lent si configuré
-            if (autoThreadConfig.slowMode > 0) {
-                await thread.setRateLimitPerUser(autoThreadConfig.slowMode);
-            }
-            
-            console.log(`🧵 Thread créé: "${threadName}" dans #${message.channel.name} par ${message.author.tag}`);
-            
-        } catch (error) {
-            console.error('❌ Erreur création auto-thread:', error);
+    async start() {
+        if (!process.env.DISCORD_TOKEN) {
+            console.error('❌ DISCORD_TOKEN manquant');
+            process.exit(1);
         }
-    }
 
-    startWebServer() {
-        this.app.listen(this.port, '0.0.0.0', () => {
-            console.log(`🌐 Serveur Web actif sur port ${this.port}`);
-            console.log(`📊 Health check: http://localhost:${this.port}/health`);
-        });
+        if (!process.env.CLIENT_ID) {
+            console.error('❌ CLIENT_ID manquant');
+            process.exit(1);
+        }
+
+        await this.client.login(process.env.DISCORD_TOKEN);
     }
 }
 
-// Démarrage pour Render.com Web Service
-if (require.main === module) {
-    new BagBotRender();
-}
-
-module.exports = BagBotRender;
+// Démarrage
+new BagBotRender();
