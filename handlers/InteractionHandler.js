@@ -354,10 +354,42 @@ class InteractionHandler {
                 flags: 64
             });
         } else if (value === 'autothread') {
+            const guildId = interaction.guild.id;
+            const config = await this.dataManager.getData('config');
+            
+            if (!config.confessions) config.confessions = {};
+            if (!config.confessions[guildId]) {
+                config.confessions[guildId] = {
+                    channels: [],
+                    logChannel: null,
+                    autoThread: false,
+                    threadName: 'Confession #{number}',
+                    archiveTime: 1440
+                };
+            }
+
+            const currentStatus = config.confessions[guildId].autoThread ? '🟢 Activé' : '🔴 Désactivé';
+            const threadFormat = config.confessions[guildId].threadName || 'Confession #{number}';
+            const archiveTime = config.confessions[guildId].archiveTime || 1440;
+            
+            const archiveDurations = {
+                60: '1 heure',
+                1440: '1 jour',  
+                4320: '3 jours',
+                10080: '7 jours'
+            };
+
             const embed = new EmbedBuilder()
                 .setColor('#2196F3')
                 .setTitle('🧵 Configuration Auto-Thread Confessions')
-                .setDescription('Configurez la création automatique de threads pour les confessions');
+                .setDescription('Configurez la création automatique de threads pour les confessions')
+                .addFields([
+                    {
+                        name: '📊 Status Actuel',
+                        value: `**Auto-Thread :** ${currentStatus}\n**Format :** \`${threadFormat}\`\n**Archive :** ${archiveDurations[archiveTime] || `${archiveTime} minutes`}`,
+                        inline: false
+                    }
+                ]);
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('confession_autothread_config')
@@ -365,19 +397,19 @@ class InteractionHandler {
                 .addOptions([
                     {
                         label: 'Activer/Désactiver',
-                        description: 'Activer ou désactiver les threads automatiques',
+                        description: `Actuellement ${config.confessions[guildId].autoThread ? 'activé' : 'désactivé'}`,
                         value: 'toggle_autothread',
-                        emoji: '🔄'
+                        emoji: config.confessions[guildId].autoThread ? '🔴' : '🟢'
                     },
                     {
-                        label: 'Nom des Threads',
-                        description: 'Format du nom des threads créés',
+                        label: 'Format Nom Threads',
+                        description: `Actuel: ${threadFormat.substring(0, 40)}${threadFormat.length > 40 ? '...' : ''}`,
                         value: 'thread_name',
                         emoji: '🏷️'
                     },
                     {
-                        label: 'Archive Automatique',
-                        description: 'Durée avant archivage automatique',
+                        label: 'Durée Archive',
+                        description: `Actuellement: ${archiveDurations[archiveTime] || `${archiveTime}min`}`,
                         value: 'archive_time',
                         emoji: '📦'
                     }
@@ -392,10 +424,46 @@ class InteractionHandler {
             });
 
         } else if (value === 'logs') {
+            const guildId = interaction.guild.id;
+            const config = await this.dataManager.getData('config');
+            
+            if (!config.confessions) config.confessions = {};
+            if (!config.confessions[guildId]) {
+                config.confessions[guildId] = {
+                    channels: [],
+                    logChannel: null,
+                    autoThread: false,
+                    threadName: 'Confession #{number}',
+                    logLevel: 'basic',
+                    logImages: true
+                };
+            }
+
+            const logChannel = config.confessions[guildId].logChannel;
+            const logLevel = config.confessions[guildId].logLevel || 'basic';
+            const logImages = config.confessions[guildId].logImages !== false;
+            
+            const levels = {
+                'basic': '📄 Basique',
+                'detailed': '📋 Détaillé', 
+                'full': '🔍 Complet'
+            };
+
+            const channelName = logChannel ? 
+                (interaction.guild.channels.cache.get(logChannel)?.name || 'Canal supprimé') : 
+                'Aucun configuré';
+
             const embed = new EmbedBuilder()
                 .setColor('#2196F3')
                 .setTitle('📋 Configuration Logs Admin')
-                .setDescription('Configurez les logs des confessions pour la modération');
+                .setDescription('Configurez les logs des confessions pour la modération')
+                .addFields([
+                    {
+                        name: '📊 Configuration Actuelle',
+                        value: `**Canal :** ${channelName}\n**Niveau :** ${levels[logLevel]}\n**Images :** ${logImages ? '🟢 Incluses' : '🔴 Masquées'}`,
+                        inline: false
+                    }
+                ]);
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('confession_logs_config')
@@ -403,21 +471,21 @@ class InteractionHandler {
                 .addOptions([
                     {
                         label: 'Canal Logs',
-                        description: 'Définir le canal pour les logs admin',
+                        description: `Actuel: ${channelName.substring(0, 40)}`,
                         value: 'log_channel',
                         emoji: '📝'
                     },
                     {
                         label: 'Niveau de Détail',
-                        description: 'Niveau d\'information dans les logs',
+                        description: `Actuel: ${levels[logLevel]}`,
                         value: 'log_level',
                         emoji: '🔍'
                     },
                     {
-                        label: 'Inclure Images',
-                        description: 'Afficher les images dans les logs',
+                        label: 'Images dans Logs',
+                        description: `${logImages ? 'Désactiver' : 'Activer'} l'affichage des images`,
                         value: 'log_images',
-                        emoji: '🖼️'
+                        emoji: logImages ? '🔴' : '🟢'
                     }
                 ]);
 
