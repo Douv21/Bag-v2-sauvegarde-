@@ -22,8 +22,10 @@ class InteractionHandler {
         
         // Configuration Confession
         this.handlers.selectMenu.set('confession_main_config', this.handleConfessionMainConfig.bind(this));
+        this.handlers.selectMenu.set('config_main', this.handleConfessionMainConfig.bind(this));
         this.handlers.selectMenu.set('confession_channels', this.handleConfessionChannels.bind(this));
         this.handlers.selectMenu.set('confession_autothread', this.handleConfessionAutothread.bind(this));
+        this.handlers.selectMenu.set('autothread_config', this.handleAutothreadGlobalConfig.bind(this));
         
         // Boutons Actions Économie
         const actions = ['work', 'fish', 'donate', 'steal', 'crime', 'bet'];
@@ -88,15 +90,56 @@ class InteractionHandler {
     }
 
     async handleModal(interaction) {
-        const handler = this.handlers.modal.get(interaction.customId);
-        if (handler) {
-            await handler(interaction);
+        const customId = interaction.customId;
+        
+        if (customId.startsWith('reward_modal_')) {
+            await this.handleRewardModal(interaction);
+        } else if (customId.startsWith('karma_modal_')) {
+            await this.handleKarmaModal(interaction);
+        } else if (customId.startsWith('cooldown_modal_')) {
+            await this.handleCooldownModal(interaction);
         } else {
             await interaction.reply({
-                content: `Modal ${interaction.customId} non géré.`,
+                content: `Modal ${customId} non géré.`,
                 flags: 64
             });
         }
+    }
+
+    async handleRewardModal(interaction) {
+        const action = interaction.customId.split('_')[2];
+        const minReward = interaction.fields.getTextInputValue('min_reward');
+        const maxReward = interaction.fields.getTextInputValue('max_reward');
+        const karmaBonus = interaction.fields.getTextInputValue('karma_bonus') || '0';
+
+        await interaction.reply({
+            content: `✅ Configuration récompenses mise à jour pour ${action}:\n• Min: ${minReward}€\n• Max: ${maxReward}€\n• Bonus karma: ${karmaBonus}%`,
+            flags: 64
+        });
+    }
+
+    async handleKarmaModal(interaction) {
+        const action = interaction.customId.split('_')[2];
+        const goodKarma = interaction.fields.getTextInputValue('good_karma');
+        const badKarma = interaction.fields.getTextInputValue('bad_karma');
+        const multiplier = interaction.fields.getTextInputValue('level_multiplier') || '0';
+
+        await interaction.reply({
+            content: `✅ Configuration karma mise à jour pour ${action}:\n• Karma bon: ${goodKarma}😇\n• Karma mauvais: ${badKarma}😈\n• Multiplicateur: ${multiplier}%`,
+            flags: 64
+        });
+    }
+
+    async handleCooldownModal(interaction) {
+        const action = interaction.customId.split('_')[2];
+        const duration = interaction.fields.getTextInputValue('cooldown_duration');
+        const reduction = interaction.fields.getTextInputValue('karma_reduction') || '0';
+        const type = interaction.fields.getTextInputValue('cooldown_type') || 'user';
+
+        await interaction.reply({
+            content: `✅ Configuration cooldown mise à jour pour ${action}:\n• Durée: ${duration}min\n• Réduction karma: ${reduction}%\n• Type: ${type}`,
+            flags: 64
+        });
     }
 
     // === HANDLERS CONFIGURATION ÉCONOMIE ===
@@ -184,6 +227,13 @@ class InteractionHandler {
     async handleConfessionAutothread(interaction) {
         await interaction.reply({
             content: 'Configuration auto-thread pour confessions disponible.',
+            flags: 64
+        });
+    }
+
+    async handleAutothreadGlobalConfig(interaction) {
+        await interaction.reply({
+            content: 'Configuration auto-thread global disponible.',
             flags: 64
         });
     }
@@ -603,27 +653,144 @@ class InteractionHandler {
     // === HANDLERS BOUTONS ===
 
     async handleEditReward(interaction) {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
         const action = interaction.customId.split('_')[2];
-        await interaction.reply({
-            content: `💰 Modification des récompenses pour l'action ${action} disponible.\n\nConfiguration:\n• Montant minimum\n• Montant maximum\n• Bonus selon le karma`,
-            flags: 64
-        });
+        
+        const actionNames = {
+            work: 'Travailler',
+            fish: 'Pêcher', 
+            donate: 'Donner',
+            steal: 'Voler',
+            crime: 'Crime',
+            bet: 'Parier'
+        };
+
+        const modal = new ModalBuilder()
+            .setCustomId(`reward_modal_${action}`)
+            .setTitle(`💰 Configuration Récompenses: ${actionNames[action]}`);
+
+        const minRewardInput = new TextInputBuilder()
+            .setCustomId('min_reward')
+            .setLabel('Montant minimum (€)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('100')
+            .setRequired(true);
+
+        const maxRewardInput = new TextInputBuilder()
+            .setCustomId('max_reward')
+            .setLabel('Montant maximum (€)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('150')
+            .setRequired(true);
+
+        const bonusInput = new TextInputBuilder()
+            .setCustomId('karma_bonus')
+            .setLabel('Bonus selon karma (% par niveau)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('10')
+            .setRequired(false);
+
+        const firstRow = new ActionRowBuilder().addComponents(minRewardInput);
+        const secondRow = new ActionRowBuilder().addComponents(maxRewardInput);
+        const thirdRow = new ActionRowBuilder().addComponents(bonusInput);
+
+        modal.addComponents(firstRow, secondRow, thirdRow);
+
+        await interaction.showModal(modal);
     }
 
     async handleEditKarma(interaction) {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
         const action = interaction.customId.split('_')[2];
-        await interaction.reply({
-            content: `⚖️ Configuration karma pour l'action ${action} disponible.\n\nConfiguration:\n• Karma bon gagné (😇)\n• Karma mauvais gagné (😈)\n• Multiplicateurs selon le niveau`,
-            flags: 64
-        });
+        
+        const actionNames = {
+            work: 'Travailler',
+            fish: 'Pêcher', 
+            donate: 'Donner',
+            steal: 'Voler',
+            crime: 'Crime',
+            bet: 'Parier'
+        };
+
+        const modal = new ModalBuilder()
+            .setCustomId(`karma_modal_${action}`)
+            .setTitle(`⚖️ Configuration Karma: ${actionNames[action]}`);
+
+        const goodKarmaInput = new TextInputBuilder()
+            .setCustomId('good_karma')
+            .setLabel('Karma bon gagné/perdu (😇)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('1')
+            .setRequired(true);
+
+        const badKarmaInput = new TextInputBuilder()
+            .setCustomId('bad_karma')
+            .setLabel('Karma mauvais gagné/perdu (😈)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('1')
+            .setRequired(true);
+
+        const multiplierInput = new TextInputBuilder()
+            .setCustomId('level_multiplier')
+            .setLabel('Multiplicateur niveau (% bonus/malus)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('50')
+            .setRequired(false);
+
+        const firstRow = new ActionRowBuilder().addComponents(goodKarmaInput);
+        const secondRow = new ActionRowBuilder().addComponents(badKarmaInput);
+        const thirdRow = new ActionRowBuilder().addComponents(multiplierInput);
+
+        modal.addComponents(firstRow, secondRow, thirdRow);
+
+        await interaction.showModal(modal);
     }
 
     async handleEditCooldown(interaction) {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
         const action = interaction.customId.split('_')[2];
-        await interaction.reply({
-            content: `⏰ Configuration cooldown pour l'action ${action} disponible.\n\nConfiguration:\n• Durée du cooldown\n• Réduction selon le karma\n• Cooldown global ou par utilisateur`,
-            flags: 64
-        });
+        
+        const actionNames = {
+            work: 'Travailler',
+            fish: 'Pêcher', 
+            donate: 'Donner',
+            steal: 'Voler',
+            crime: 'Crime',
+            bet: 'Parier'
+        };
+
+        const modal = new ModalBuilder()
+            .setCustomId(`cooldown_modal_${action}`)
+            .setTitle(`⏰ Configuration Cooldown: ${actionNames[action]}`);
+
+        const cooldownInput = new TextInputBuilder()
+            .setCustomId('cooldown_duration')
+            .setLabel('Durée cooldown (minutes)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('60')
+            .setRequired(true);
+
+        const reductionInput = new TextInputBuilder()
+            .setCustomId('karma_reduction')
+            .setLabel('Réduction selon karma (% par niveau)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('10')
+            .setRequired(false);
+
+        const typeInput = new TextInputBuilder()
+            .setCustomId('cooldown_type')
+            .setLabel('Type (global/user)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('user')
+            .setRequired(false);
+
+        const firstRow = new ActionRowBuilder().addComponents(cooldownInput);
+        const secondRow = new ActionRowBuilder().addComponents(reductionInput);
+        const thirdRow = new ActionRowBuilder().addComponents(typeInput);
+
+        modal.addComponents(firstRow, secondRow, thirdRow);
+
+        await interaction.showModal(modal);
     }
 
     async handleBackToMain(interaction) {
