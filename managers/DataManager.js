@@ -40,7 +40,10 @@ class DataManager {
             'user_stats': 'user_stats.json',
             
             // Cooldowns système
-            'cooldowns': 'cooldowns.json'
+            'cooldowns': 'cooldowns.json',
+            
+            // Configuration karma personnalisé
+            'karma_config': 'karma_config.json'
         };
     }
 
@@ -151,7 +154,12 @@ class DataManager {
                 cooldown: 60
             },
             'user_stats': {},
-            'cooldowns': {}
+            'cooldowns': {},
+            'karma_config': {
+                customRewards: [],
+                distributionDay: 1,
+                enabled: true
+            }
         };
 
         return defaults[type] || {};
