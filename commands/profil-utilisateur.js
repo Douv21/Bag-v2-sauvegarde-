@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -67,7 +67,11 @@ module.exports = {
             const cardRarity = this.getCardRarity(level, karmaNet, userData.balance, userData.dailyStreak);
 
             // Créer l'embed de la carte holographique
-            const embed = this.createHolographicCard(targetUser, userData, {
+            // Récupérer le membre du serveur pour la date d'entrée
+            const member = interaction.guild.members.cache.get(targetUser.id);
+            
+            // Créer la carte SVG
+            const svgCard = await this.createUserCard(targetUser, userData, {
                 karmaNet,
                 karmaLevel,
                 level,
@@ -76,12 +80,61 @@ module.exports = {
                 totalXP,
                 cardRarity,
                 totalActions
-            });
+            }, member);
+
+            // Sauvegarder temporairement le SVG comme fichier
+            const fs = require('fs');
+            const path = require('path');
+            
+            const cardPath = path.join(__dirname, '..', 'temp_cards');
+            if (!fs.existsSync(cardPath)) {
+                fs.mkdirSync(cardPath, { recursive: true });
+            }
+            
+            const fileName = `card_${targetUser.id}_${Date.now()}.svg`;
+            const filePath = path.join(cardPath, fileName);
+            fs.writeFileSync(filePath, svgCard);
+
+            const embed = new EmbedBuilder()
+                .setColor(cardRarity.color || '#00FFFF')
+                .setTitle(`${cardRarity.icon} Carte Profil - ${targetUser.displayName}`)
+                .setDescription(`Voici votre carte de profil personnalisée !`)
+                .setImage(`attachment://${fileName}`)
+                .addFields([
+                    {
+                        name: '📊 Résumé',
+                        value: `**Niveau:** ${level}\n**Solde:** ${(userData.balance || 0).toLocaleString()}€\n**Karma Net:** ${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
+                        inline: true
+                    },
+                    {
+                        name: '🏆 Rareté',
+                        value: `**Type:** ${cardRarity.name}\n**Score:** ${Math.floor(cardRarity.score || 0)}\n**Statut:** ${karmaLevel.name}`,
+                        inline: true
+                    }
+                ])
+                .setFooter({ 
+                    text: `Carte générée • ${new Date().toLocaleDateString('fr-FR')}`,
+                    iconURL: targetUser.displayAvatarURL() 
+                });
+
+            const attachment = new AttachmentBuilder(filePath, { name: fileName });
 
             await interaction.reply({
                 embeds: [embed],
+                files: [attachment],
                 flags: 64
             });
+
+            // Nettoyer le fichier temporaire après 10 secondes
+            setTimeout(() => {
+                try {
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                    }
+                } catch (error) {
+                    console.error('❌ Erreur nettoyage fichier carte:', error);
+                }
+            }, 10000);
 
         } catch (error) {
             console.error('❌ Erreur profil-utilisateur:', error);
@@ -148,78 +201,116 @@ module.exports = {
         return { name: 'Commune', color: '#dda0dd', icon: '🤍', border: '═══════════' };
     },
 
-    createHolographicCard(user, userData, stats) {
+    async createUserCard(user, userData, stats, member) {
         const { karmaNet, karmaLevel, level, xpProgress, nextLevelXP, totalXP, cardRarity, totalActions } = stats;
 
-        // Design futuriste avec circuits électroniques bleu cyan
-        const cardDesign = `\`\`\`
-    ╔═══○═══════════════════════════════════○═══╗
-   ╔╝ ◦ ○ ◦                             ◦ ○ ◦ ╚╗
-  ╔╝  ╔═○═╗    🎴 CARTE HOLOGRAPHIQUE   ╔═○═╗  ╚╗
- ╔╝   ║   ║          ${user.displayName.padEnd(12).substring(0, 12)}        ║   ║   ╚╗
-╔╝ ◦  ╚═○═╝                             ╚═○═╝  ◦ ╚╗
-║                                                 ║
-║  ╔══○══════════════════════════════════○══╗   ║
-║  ║                                       ║   ║
-║  ║  💎 LVL ${level.toString().padStart(2)}  💰 ${(userData.balance || 0).toLocaleString().padStart(8)}€      ║   ║
-║  ║  ⚖️  ${karmaNet >= 0 ? '+' : ''}${karmaNet.toString().padStart(3)} ${karmaLevel.icon}  🎯 ${totalActions} actions    ║   ║
-║  ║                                       ║   ║
-║  ║  ┌─○─────────────────────────○─┐     ║   ║
-║  ║  │    ${cardRarity.name.toUpperCase().padEnd(16)}    │     ║   ║
-║  ║  │    ${karmaLevel.name.padEnd(16)}    │     ║   ║
-║  ║  └─○─────────────────────────○─┘     ║   ║
-║  ║                                       ║   ║
-║  ╚══○══════════════════════════════════○══╝   ║
-║                                                 ║
-╚╗ ◦  ╔═○═╗                             ╔═○═╗  ◦ ╔╝
- ╚╗   ║   ║      ${cardRarity.icon} ${cardRarity.name}      ║   ║   ╔╝
-  ╚╗  ╚═○═╝                             ╚═○═╝  ╔╝
-   ╚╗ ◦ ○ ◦                             ◦ ○ ◦ ╔╝
-    ╚═══○═══════════════════════════════════○═══╝
-\`\`\``;
+        // Récupérer les dates d'inscription
+        const discordJoinDate = user.createdAt.toLocaleDateString('fr-FR');
+        const serverJoinDate = member ? member.joinedAt.toLocaleDateString('fr-FR') : 'Inconnu';
+        
+        // Informations utilisateur
+        const userName = user.displayName.length > 18 ? user.displayName.substring(0, 15) + '...' : user.displayName;
+        const balance = (userData.balance || 0).toLocaleString();
+        const karmaGood = userData.karmaGood || 0;
+        const karmaBad = userData.karmaBad || 0;
 
-        const embed = new EmbedBuilder()
-            .setColor('#00FFFF') // Cyan futuriste
-            .setTitle(`${cardRarity.icon} SYSTÈME HOLOGRAPHIQUE ACTIVÉ`)
-            .setDescription(cardDesign)
-            .addFields([
-                {
-                    name: '🔋 DONNÉES BIOMÉTRIQUES',
-                    value: `\`\`\`
-○ KARMA POSITIF: ${(userData.karmaGood || 0).toString().padStart(3)}
-○ KARMA NÉGATIF: ${(userData.karmaBad || 0).toString().padStart(3)}  
-○ BALANCE NET:   ${karmaNet >= 0 ? '+' : ''}${karmaNet}
-○ STREAK DAILY:  ${(userData.dailyStreak || 0)} jours
-\`\`\``,
-                    inline: true
-                },
-                {
-                    name: '⚡ PROGRESSION SYSTÈME',
-                    value: `\`\`\`
-○ NIVEAU ACTUEL: ${level}
-○ XP TOTAL:      ${totalXP.toLocaleString()}
-○ XP RESTANT:    ${nextLevelXP - totalXP}
-○ RARETÉ:        ${cardRarity.name}
-\`\`\``,
-                    inline: true
-                },
-                {
-                    name: '🌐 STATUT HOLOGRAPHIQUE',
-                    value: `\`\`\`
-○ TYPE: ${karmaLevel.name}
-○ DESCRIPTION: ${karmaLevel.description}
-○ SCORE GLOBAL: ${Math.floor(cardRarity.score)}
-○ ID UNIQUE: ${user.id.slice(-8)}
-\`\`\``,
-                    inline: false
-                }
-            ])
-            .setThumbnail(user.displayAvatarURL())
-            .setFooter({ 
-                text: `◦ HOLOGRAM-TECH © ${new Date().getFullYear()} ◦ SCAN COMPLETED ◦`,
-                iconURL: user.displayAvatarURL() 
-            });
+        // Couleurs basées sur la rareté
+        const colors = {
+            'Commune': { bg: '#2C2F33', accent: '#99AAB5', glow: '#7289DA' },
+            'Rare': { bg: '#2C2F33', accent: '#3498DB', glow: '#5DADE2' },
+            'Épique': { bg: '#2C2F33', accent: '#9B59B6', glow: '#BB86FC' },
+            'Légendaire': { bg: '#2C2F33', accent: '#F1C40F', glow: '#FFD93D' },
+            'Mythique': { bg: '#2C2F33', accent: '#E91E63', glow: '#FF6B9D' }
+        };
+        
+        const cardColor = colors[cardRarity.name] || colors.Commune;
 
-        return embed;
+        // Créer SVG de la carte
+        const svgCard = `
+<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${cardColor.bg};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#23272A;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:${cardColor.accent};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${cardColor.glow};stop-opacity:0.8" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Fond de carte -->
+  <rect width="800" height="500" rx="20" fill="url(#cardGradient)" stroke="${cardColor.accent}" stroke-width="3"/>
+  
+  <!-- Bordure d'accentuation -->
+  <rect x="10" y="10" width="780" height="480" rx="15" fill="none" stroke="url(#accentGradient)" stroke-width="2" opacity="0.6"/>
+  
+  <!-- En-tête -->
+  <rect x="20" y="20" width="760" height="80" rx="10" fill="${cardColor.accent}" opacity="0.2"/>
+  <text x="400" y="50" text-anchor="middle" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="24" font-weight="bold" filter="url(#glow)">
+    ${cardRarity.icon} CARTE PROFIL UTILISATEUR ${cardRarity.icon}
+  </text>
+  <text x="400" y="80" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16" opacity="0.8">
+    ${cardRarity.name.toUpperCase()} • ${userName}
+  </text>
+  
+  <!-- Section Gauche - Avatar et Info -->
+  <circle cx="150" cy="200" r="70" fill="${cardColor.accent}" opacity="0.3"/>
+  <circle cx="150" cy="200" r="65" fill="#36393F" stroke="${cardColor.glow}" stroke-width="3"/>
+  <text x="150" y="210" text-anchor="middle" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="48" font-weight="bold">
+    👤
+  </text>
+  
+  <!-- Nom utilisateur -->
+  <text x="150" y="290" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="bold">
+    ${userName}
+  </text>
+  <text x="150" y="315" text-anchor="middle" fill="${cardColor.accent}" font-family="Arial, sans-serif" font-size="14">
+    Niveau ${level} • ${totalXP.toLocaleString()} XP
+  </text>
+  
+  <!-- Section Droite - Statistiques -->
+  <rect x="300" y="130" width="480" height="340" rx="15" fill="#36393F" opacity="0.5" stroke="${cardColor.accent}" stroke-width="1"/>
+  
+  <!-- Solde -->
+  <text x="320" y="160" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">💰 SOLDE</text>
+  <text x="320" y="185" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="bold">${balance}€</text>
+  
+  <!-- Karma -->
+  <text x="320" y="220" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">⚖️ KARMA</text>
+  <text x="320" y="245" fill="#43B581" font-family="Arial, sans-serif" font-size="16">😇 Positif: ${karmaGood}</text>
+  <text x="320" y="270" fill="#F04747" font-family="Arial, sans-serif" font-size="16">😈 Négatif: ${karmaBad}</text>
+  <text x="320" y="295" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16" font-weight="bold">📊 Net: ${karmaNet >= 0 ? '+' : ''}${karmaNet} (${karmaLevel.name})</text>
+  
+  <!-- Dates -->
+  <text x="320" y="330" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">📅 DATES</text>
+  <text x="320" y="355" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14">🌐 Discord: ${discordJoinDate}</text>
+  <text x="320" y="380" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14">🏠 Serveur: ${serverJoinDate}</text>
+  
+  <!-- Statistiques -->
+  <text x="320" y="415" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">🏆 STATS</text>
+  <text x="320" y="440" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14">🎯 Actions: ${totalActions} • 🔥 Streak: ${userData.dailyStreak || 0} • 💬 Messages: ${userData.messageCount || 0}</text>
+  
+  <!-- Barre de progression XP -->
+  <rect x="550" y="160" width="200" height="20" rx="10" fill="#36393F" stroke="${cardColor.accent}" stroke-width="1"/>
+  <rect x="550" y="160" width="${Math.min((xpProgress / nextLevelXP) * 200, 200)}" height="20" rx="10" fill="url(#accentGradient)"/>
+  <text x="650" y="175" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12" font-weight="bold">
+    ${xpProgress}/${nextLevelXP}
+  </text>
+  
+  <!-- Footer -->
+  <text x="400" y="485" text-anchor="middle" fill="${cardColor.accent}" font-family="Arial, sans-serif" font-size="12" opacity="0.7">
+    ID: ${user.id.slice(-8)} • Généré le ${new Date().toLocaleDateString('fr-FR')}
+  </text>
+</svg>`;
+
+        return svgCard;
     }
 };
