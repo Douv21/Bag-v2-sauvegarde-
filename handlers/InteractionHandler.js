@@ -1255,14 +1255,37 @@ class InteractionHandler {
                 flags: 64
             });
         } else if (value === 'list_channels') {
+            const guildId = interaction.guild.id;
+            const config = await this.dataManager.getData('config');
+            const autoThreadConfig = config.autoThread?.[guildId] || {
+                enabled: false,
+                channels: [],
+                threadName: 'Discussion - {user}',
+                archiveTime: 60,
+                slowMode: 0
+            };
+
+            let channelsList = '• Aucun canal configuré pour le moment';
+            if (autoThreadConfig.channels && autoThreadConfig.channels.length > 0) {
+                channelsList = autoThreadConfig.channels.map(channelId => {
+                    const channel = interaction.guild.channels.cache.get(channelId);
+                    return channel ? `• **#${channel.name}** (${channel.id})` : `• Canal supprimé (${channelId})`;
+                }).join('\n');
+            }
+
             const embed = new EmbedBuilder()
                 .setColor('#7289da')
                 .setTitle('📋 Canaux Auto-Thread Configurés')
                 .setDescription('Liste des canaux configurés pour l\'auto-thread global')
                 .addFields([
                     {
-                        name: '📱 Canaux Actifs',
-                        value: '• Aucun canal configuré pour le moment',
+                        name: `📱 Canaux Actifs (${autoThreadConfig.channels.length})`,
+                        value: channelsList,
+                        inline: false
+                    },
+                    {
+                        name: '⚙️ Configuration',
+                        value: `**Statut:** ${autoThreadConfig.enabled ? '🟢 Activé' : '🔴 Désactivé'}\n**Format:** \`${autoThreadConfig.threadName}\`\n**Archive:** ${autoThreadConfig.archiveTime} minutes`,
                         inline: false
                     },
                     {
@@ -1329,17 +1352,52 @@ class InteractionHandler {
     // Nouveaux handlers pour boutons actions (compatibilité)
     async handleEditRewardButton(interaction) {
         const action = interaction.customId.split('_')[2];
-        await this.handleEditRewardSelector({...interaction, customId: `edit_reward_${action}`, values: ['menu']});
+        // Defer l'interaction d'abord pour éviter l'erreur timeout
+        await interaction.deferReply({ flags: 64 });
+        
+        // Créer une interaction simulée pour les handlers de sélecteurs
+        const mockInteraction = {
+            ...interaction,
+            customId: `edit_reward_${action}`,
+            values: ['menu'],
+            reply: async (options) => {
+                return await interaction.editReply(options);
+            }
+        };
+        
+        await this.handleEditRewardSelector(mockInteraction);
     }
 
     async handleEditKarmaButton(interaction) {
         const action = interaction.customId.split('_')[2];
-        await this.handleEditKarmaSelector({...interaction, customId: `edit_karma_${action}`, values: ['menu']});
+        await interaction.deferReply({ flags: 64 });
+        
+        const mockInteraction = {
+            ...interaction,
+            customId: `edit_karma_${action}`,
+            values: ['menu'],
+            reply: async (options) => {
+                return await interaction.editReply(options);
+            }
+        };
+        
+        await this.handleEditKarmaSelector(mockInteraction);
     }
 
     async handleEditCooldownButton(interaction) {
         const action = interaction.customId.split('_')[2];
-        await this.handleEditCooldownSelector({...interaction, customId: `edit_cooldown_${action}`, values: ['menu']});
+        await interaction.deferReply({ flags: 64 });
+        
+        const mockInteraction = {
+            ...interaction,
+            customId: `edit_cooldown_${action}`,
+            values: ['menu'],
+            reply: async (options) => {
+                return await interaction.editReply(options);
+            }
+        };
+        
+        await this.handleEditCooldownSelector(mockInteraction);
     }
 
     // Nouveaux handlers pour config-confession
@@ -1482,9 +1540,29 @@ class InteractionHandler {
     async handleAutothreadAddChannel(interaction) {
         const channelId = interaction.values[0];
         const channel = interaction.guild.channels.cache.get(channelId);
+        const guildId = interaction.guild.id;
+        
+        // Charger configuration actuelle
+        const config = await this.dataManager.getData('config');
+        if (!config.autoThread) config.autoThread = {};
+        if (!config.autoThread[guildId]) {
+            config.autoThread[guildId] = {
+                enabled: false,
+                channels: [],
+                threadName: 'Discussion - {user}',
+                archiveTime: 60,
+                slowMode: 0
+            };
+        }
+        
+        // Ajouter canal s'il n'existe pas déjà
+        if (!config.autoThread[guildId].channels.includes(channelId)) {
+            config.autoThread[guildId].channels.push(channelId);
+            await this.dataManager.saveData('config', config);
+        }
         
         await interaction.reply({
-            content: `✅ Canal **${channel.name}** ajouté à l'auto-thread global !`,
+            content: `✅ Canal **${channel.name}** ajouté à l'auto-thread global !\n\n📊 **${config.autoThread[guildId].channels.length}** canaux configurés au total.`,
             flags: 64
         });
     }
@@ -1492,9 +1570,30 @@ class InteractionHandler {
     async handleAutothreadRemoveChannel(interaction) {
         const channelId = interaction.values[0];
         const channel = interaction.guild.channels.cache.get(channelId);
+        const guildId = interaction.guild.id;
+        
+        // Charger configuration actuelle
+        const config = await this.dataManager.getData('config');
+        if (!config.autoThread) config.autoThread = {};
+        if (!config.autoThread[guildId]) {
+            config.autoThread[guildId] = {
+                enabled: false,
+                channels: [],
+                threadName: 'Discussion - {user}',
+                archiveTime: 60,
+                slowMode: 0
+            };
+        }
+        
+        // Retirer canal s'il existe
+        const index = config.autoThread[guildId].channels.indexOf(channelId);
+        if (index > -1) {
+            config.autoThread[guildId].channels.splice(index, 1);
+            await this.dataManager.saveData('config', config);
+        }
         
         await interaction.reply({
-            content: `❌ Canal **${channel.name}** retiré de l'auto-thread global !`,
+            content: `❌ Canal **${channel.name}** retiré de l'auto-thread global !\n\n📊 **${config.autoThread[guildId].channels.length}** canaux configurés restants.`,
             flags: 64
         });
     }
@@ -1531,15 +1630,36 @@ class InteractionHandler {
 
     async handleAutothreadToggleStatus(interaction) {
         const value = interaction.values[0];
+        const guildId = interaction.guild.id;
+        
+        // Charger configuration actuelle
+        const config = await this.dataManager.getData('config');
+        if (!config.autoThread) config.autoThread = {};
+        if (!config.autoThread[guildId]) {
+            config.autoThread[guildId] = {
+                enabled: false,
+                channels: [],
+                threadName: 'Discussion - {user}',
+                archiveTime: 60,
+                slowMode: 0
+            };
+        }
+        
+        // Mettre à jour le statut
+        const newStatus = value === 'enable';
+        config.autoThread[guildId].enabled = newStatus;
+        await this.dataManager.saveData('config', config);
+        
+        const channelCount = config.autoThread[guildId].channels.length;
         
         if (value === 'enable') {
             await interaction.reply({
-                content: `✅ **Système auto-thread activé !**\n\nTous les messages dans les canaux configurés créeront automatiquement des threads.`,
+                content: `✅ **Système auto-thread activé !**\n\nTous les messages dans les **${channelCount}** canaux configurés créeront automatiquement des threads.`,
                 flags: 64
             });
         } else if (value === 'disable') {
             await interaction.reply({
-                content: `❌ **Système auto-thread désactivé !**\n\nAucun thread ne sera créé automatiquement.`,
+                content: `❌ **Système auto-thread désactivé !**\n\nAucun thread ne sera créé automatiquement sur les **${channelCount}** canaux configurés.`,
                 flags: 64
             });
         }
