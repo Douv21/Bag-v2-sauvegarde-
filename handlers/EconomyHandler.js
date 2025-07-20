@@ -1235,6 +1235,28 @@ class EconomyHandler {
             return;
         }
         
+        // Sauvegarder dans shop.json
+        const guildId = interaction.guild.id;
+        const dataManager = require('../managers/DataManager');
+        const shop = await dataManager.getData('shop');
+        
+        if (!shop[guildId]) {
+            shop[guildId] = [];
+        }
+        
+        const newItem = {
+            id: Date.now().toString(),
+            name: objectName,
+            price: priceNum,
+            description: objectDescription,
+            type: 'custom_object',
+            createdAt: new Date().toISOString(),
+            createdBy: interaction.user.id
+        };
+        
+        shop[guildId].push(newItem);
+        await dataManager.saveData('shop', shop);
+        
         const embed = new EmbedBuilder()
             .setColor('#00ff00')
             .setTitle('✅ Objet Personnalisé Créé')
@@ -1337,7 +1359,30 @@ class EconomyHandler {
             return;
         }
         
+        // Sauvegarder dans shop.json
+        const guildId = interaction.guild.id;
+        const dataManager = require('../managers/DataManager');
+        const shop = await dataManager.getData('shop');
+        
+        if (!shop[guildId]) {
+            shop[guildId] = [];
+        }
+        
         const role = interaction.guild.roles.cache.get(roleId);
+        const newItem = {
+            id: Date.now().toString(),
+            name: role?.name || `Rôle ${roleId}`,
+            price: priceNum,
+            description: `Rôle temporaire valable ${durationNum} jour${durationNum > 1 ? 's' : ''}`,
+            type: 'temp_role',
+            roleId: roleId,
+            duration: durationNum,
+            createdAt: new Date().toISOString(),
+            createdBy: interaction.user.id
+        };
+        
+        shop[guildId].push(newItem);
+        await dataManager.saveData('shop', shop);
         
         const embed = new EmbedBuilder()
             .setColor('#ffa500')
@@ -1372,7 +1417,29 @@ class EconomyHandler {
             return;
         }
         
+        // Sauvegarder dans shop.json
+        const guildId = interaction.guild.id;
+        const dataManager = require('../managers/DataManager');
+        const shop = await dataManager.getData('shop');
+        
+        if (!shop[guildId]) {
+            shop[guildId] = [];
+        }
+        
         const role = interaction.guild.roles.cache.get(roleId);
+        const newItem = {
+            id: Date.now().toString(),
+            name: role?.name || `Rôle ${roleId}`,
+            price: priceNum,
+            description: 'Rôle permanent à vie',
+            type: 'perm_role',
+            roleId: roleId,
+            createdAt: new Date().toISOString(),
+            createdBy: interaction.user.id
+        };
+        
+        shop[guildId].push(newItem);
+        await dataManager.saveData('shop', shop);
         
         const embed = new EmbedBuilder()
             .setColor('#00ff00')
