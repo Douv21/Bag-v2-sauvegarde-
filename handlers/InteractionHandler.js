@@ -49,6 +49,11 @@ class InteractionHandler {
         this.handlers.selectMenu.set('economy_cooldown_edit_config', this.economyHandler.handleCooldownEditConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_toggle_edit_config', this.economyHandler.handleToggleEditConfig.bind(this.economyHandler));
         
+        // Handlers pour les valeurs spécifiques 
+        this.handlers.selectMenu.set('economy_rewards_value_config', this.economyHandler.handleRewardsValueConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_karma_value_config', this.economyHandler.handleKarmaValueConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_toggle_action_config', this.economyHandler.handleToggleActionConfig.bind(this.economyHandler));
+        
         // Configuration Confession
         this.handlers.selectMenu.set('confession_main_config', this.handleConfessionMainConfig.bind(this));
         this.handlers.selectMenu.set('config_main_menu', this.handleConfigMainMenu.bind(this));

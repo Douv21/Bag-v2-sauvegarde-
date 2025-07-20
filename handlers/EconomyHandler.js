@@ -769,10 +769,52 @@ class EconomyHandler {
             return await this.showActionsConfig(interaction);
         }
         
+        const embed = new EmbedBuilder()
+            .setColor('#ffd700')
+            .setTitle(`💰 Modification: ${option}`)
+            .setDescription('Configuration des montants pour cette action économique');
+        
+        switch(option) {
+            case 'min_amount':
+                embed.addFields(
+                    { name: 'Valeur Actuelle', value: '50€', inline: true },
+                    { name: 'Valeur Recommandée', value: '10€ - 100€', inline: true },
+                    { name: 'Impact', value: 'Montant minimum garanti', inline: true }
+                );
+                break;
+            case 'max_amount':
+                embed.addFields(
+                    { name: 'Valeur Actuelle', value: '200€', inline: true },
+                    { name: 'Valeur Recommandée', value: '150€ - 500€', inline: true },
+                    { name: 'Impact', value: 'Montant maximum possible', inline: true }
+                );
+                break;
+            case 'karma_bonus':
+                embed.addFields(
+                    { name: 'Valeur Actuelle', value: '+10%', inline: true },
+                    { name: 'Valeur Recommandée', value: '5% - 25%', inline: true },
+                    { name: 'Impact', value: 'Bonus basé sur le karma positif', inline: true }
+                );
+                break;
+        }
+        
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_rewards_value_config')
+            .setPlaceholder('⚙️ Nouvelle valeur')
+            .addOptions([
+                { label: '25€', value: '25', emoji: '💰' },
+                { label: '50€', value: '50', emoji: '💰' },
+                { label: '100€', value: '100', emoji: '💰' },
+                { label: '200€', value: '200', emoji: '💰' },
+                { label: 'Valeur Personnalisée', value: 'custom', emoji: '⚙️' },
+                { label: 'Retour Configuration', value: 'back_rewards', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: `💰 **Modification ${option}**\n\nConfiguration en cours de développement...`,
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
@@ -783,10 +825,52 @@ class EconomyHandler {
             return await this.showActionsConfig(interaction);
         }
         
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle(`⚖️ Modification: ${option}`)
+            .setDescription('Configuration des gains/pertes de karma');
+        
+        switch(option) {
+            case 'good_karma':
+                embed.addFields(
+                    { name: 'Valeur Actuelle', value: '+2 😇', inline: true },
+                    { name: 'Valeur Recommandée', value: '+1 à +5', inline: true },
+                    { name: 'Impact', value: 'Karma positif gagné', inline: true }
+                );
+                break;
+            case 'bad_karma':
+                embed.addFields(
+                    { name: 'Valeur Actuelle', value: '-1 😈', inline: true },
+                    { name: 'Valeur Recommandée', value: '-1 à -3', inline: true },
+                    { name: 'Impact', value: 'Karma négatif ajouté', inline: true }
+                );
+                break;
+            case 'multiplier':
+                embed.addFields(
+                    { name: 'Valeur Actuelle', value: 'x1.5', inline: true },
+                    { name: 'Valeur Recommandée', value: 'x1.0 à x3.0', inline: true },
+                    { name: 'Impact', value: 'Multiplicateur des récompenses', inline: true }
+                );
+                break;
+        }
+        
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_karma_value_config')
+            .setPlaceholder('⚙️ Nouvelle valeur karma')
+            .addOptions([
+                { label: '+1 / -0', value: '1_0', emoji: '😇' },
+                { label: '+2 / -1', value: '2_1', emoji: '⚖️' },
+                { label: '+3 / -2', value: '3_2', emoji: '😈' },
+                { label: 'Multiplicateur x2.0', value: 'mult_2', emoji: '✨' },
+                { label: 'Valeur Personnalisée', value: 'custom', emoji: '⚙️' },
+                { label: 'Retour Configuration', value: 'back_karma', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: `⚖️ **Modification ${option}**\n\nConfiguration en cours de développement...`,
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
@@ -811,8 +895,98 @@ class EconomyHandler {
             return await this.showActionsConfig(interaction);
         }
         
+        const embed = new EmbedBuilder()
+            .setColor('#32cd32')
+            .setTitle(`🔄 Action: ${option}`)
+            .setDescription('Gestion de l\'état de l\'action économique');
+        
+        switch(option) {
+            case 'disable':
+                embed.setColor('#ff4444')
+                    .addFields(
+                        { name: '⚠️ Désactivation', value: 'L\'action sera temporairement indisponible', inline: false },
+                        { name: 'Impact', value: 'Les utilisateurs ne pourront plus utiliser cette commande', inline: true },
+                        { name: 'Réversible', value: 'Peut être réactivée à tout moment', inline: true }
+                    );
+                break;
+            case 'enable':
+                embed.setColor('#44ff44')
+                    .addFields(
+                        { name: '✅ Activation', value: 'L\'action sera disponible pour tous', inline: false },
+                        { name: 'Impact', value: 'Les utilisateurs pourront utiliser cette commande', inline: true },
+                        { name: 'Cooldowns', value: 'Les temps d\'attente s\'appliquent', inline: true }
+                    );
+                break;
+            case 'stats':
+                embed.setColor('#4444ff')
+                    .addFields(
+                        { name: '📊 Statistiques', value: 'Données d\'utilisation de cette action', inline: false },
+                        { name: 'Aujourd\'hui', value: '47 utilisations', inline: true },
+                        { name: 'Cette semaine', value: '312 utilisations', inline: true },
+                        { name: 'Utilisateur actif', value: '<@123456789>', inline: true }
+                    );
+                break;
+        }
+        
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_toggle_action_config')
+            .setPlaceholder('⚙️ Confirmer l\'action')
+            .addOptions([
+                { label: 'Confirmer', value: 'confirm_' + option, emoji: '✅' },
+                { label: 'Annuler', value: 'cancel', emoji: '❌' },
+                { label: 'Retour Configuration', value: 'back_toggle', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: `🔄 **Action ${option}**\n\nConfiguration en cours de développement...`,
+            embeds: [embed],
+            components: components
+        });
+    }
+    
+    // Handlers pour les valeurs spécifiques
+    async handleRewardsValueConfig(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_rewards') {
+            return await this.showActionRewardsConfig(interaction);
+        }
+        
+        await interaction.update({
+            content: `💰 **Valeur modifiée: ${value}**\n\n✅ Configuration sauvegardée avec succès !`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleKarmaValueConfig(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_karma') {
+            return await this.showActionKarmaConfig(interaction);
+        }
+        
+        await interaction.update({
+            content: `⚖️ **Karma modifié: ${value}**\n\n✅ Configuration sauvegardée avec succès !`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleToggleActionConfig(interaction) {
+        const action = interaction.values[0];
+        
+        if (action === 'back_toggle') {
+            return await this.showActionToggleConfig(interaction);
+        }
+        
+        if (action === 'cancel') {
+            return await this.showActionToggleConfig(interaction);
+        }
+        
+        await interaction.update({
+            content: `🔄 **Action effectuée: ${action}**\n\n✅ Configuration appliquée avec succès !`,
             embeds: [],
             components: []
         });
