@@ -59,6 +59,7 @@ class InteractionHandler {
         // Handlers pour sélecteurs modaux et toggles
         this.handlers.selectMenu.set('confession_archive_time', this.handleConfessionArchiveTime.bind(this));
         this.handlers.selectMenu.set('confession_thread_format', this.handleConfessionThreadFormat.bind(this));
+        this.handlers.selectMenu.set('confession_autothread_config', this.handleConfessionAutothreadConfig.bind(this));
         
         // Handlers pour boutons confession
         this.handlers.button.set('toggle_confession_autothread', this.handleToggleConfessionAutothread.bind(this));
@@ -2262,6 +2263,154 @@ class InteractionHandler {
             content: `🏷️ **Format nom configuré :** \`${format}\`\n\n**Exemple :** ${examples[format] || format}\n\nLes nouveaux threads utiliseront ce format.`,
             flags: 64
         });
+    }
+
+    async handleConfessionAutothreadConfig(interaction) {
+        const value = interaction.values[0];
+        const dataManager = require('../managers/DataManager');
+        const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+
+        if (value === 'toggle_autothread') {
+            // Bouton toggle pour activer/désactiver
+            const { ButtonBuilder, ButtonStyle } = require('discord.js');
+            
+            const config = await dataManager.getData('config');
+            const guildId = interaction.guild.id;
+            const currentStatus = config.confessions?.[guildId]?.autoThread || false;
+            
+            const button = new ButtonBuilder()
+                .setCustomId('toggle_confession_autothread')
+                .setLabel(currentStatus ? 'Désactiver Auto-Thread' : 'Activer Auto-Thread')
+                .setStyle(currentStatus ? ButtonStyle.Danger : ButtonStyle.Success)
+                .setEmoji(currentStatus ? '🔴' : '🟢');
+
+            const embed = new EmbedBuilder()
+                .setColor(currentStatus ? '#f44336' : '#4caf50')
+                .setTitle('🧵 Toggle Auto-Thread Confessions')
+                .setDescription(`Status actuel : ${currentStatus ? '🟢 **Activé**' : '🔴 **Désactivé**'}`)
+                .addFields({
+                    name: 'Action',
+                    value: `Cliquez pour ${currentStatus ? 'désactiver' : 'activer'} les threads automatiques`,
+                    inline: false
+                });
+
+            await interaction.reply({
+                embeds: [embed],
+                components: [new ActionRowBuilder().addComponents(button)],
+                flags: 64
+            });
+
+        } else if (value === 'thread_name') {
+            // Sélecteur pour format nom
+            const config = await dataManager.getData('config');
+            const guildId = interaction.guild.id;
+            const currentFormat = config.confessions?.[guildId]?.threadName || 'Confession #{number}';
+            
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('🏷️ Format Nom des Threads')
+                .setDescription('Choisissez le format pour les noms des threads de confessions')
+                .addFields({
+                    name: 'Format actuel',
+                    value: `\`${currentFormat}\``,
+                    inline: false
+                });
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('confession_thread_format')
+                .setPlaceholder('🏷️ Choisir format nom thread')
+                .addOptions([
+                    {
+                        label: 'Confession #{number}',
+                        description: 'Format simple avec numéro',
+                        value: 'Confession #{number}',
+                        emoji: '📝'
+                    },
+                    {
+                        label: 'Confession #{number} - {date}',
+                        description: 'Numéro avec date du jour',
+                        value: 'Confession #{number} - {date}',
+                        emoji: '📅'
+                    },
+                    {
+                        label: 'Thread Confession {date}',
+                        description: 'Format avec date seulement',
+                        value: 'Thread Confession {date}',
+                        emoji: '🗓️'
+                    },
+                    {
+                        label: 'Confession Anonyme #{number}',
+                        description: 'Format anonyme avec numéro',
+                        value: 'Confession Anonyme #{number}',
+                        emoji: '🔒'
+                    }
+                ]);
+
+            await interaction.reply({
+                embeds: [embed],
+                components: [new ActionRowBuilder().addComponents(selectMenu)],
+                flags: 64
+            });
+
+        } else if (value === 'archive_time') {
+            // Sélecteur pour durée archive
+            const config = await dataManager.getData('config');
+            const guildId = interaction.guild.id;
+            const currentTime = config.confessions?.[guildId]?.archiveTime || 1440;
+            
+            const durations = {
+                60: '1 heure',
+                1440: '1 jour',  
+                4320: '3 jours',
+                10080: '7 jours'
+            };
+
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('📦 Durée Archive Automatique')
+                .setDescription('Configurez la durée avant archivage automatique des threads')
+                .addFields({
+                    name: 'Durée actuelle',
+                    value: `${durations[currentTime] || `${currentTime} minutes`}`,
+                    inline: false
+                });
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('confession_archive_time')
+                .setPlaceholder('📦 Choisir durée archive')
+                .addOptions([
+                    {
+                        label: '1 heure',
+                        description: 'Archive après 1 heure',
+                        value: '60',
+                        emoji: '⏰'
+                    },
+                    {
+                        label: '1 jour',
+                        description: 'Archive après 24 heures',
+                        value: '1440',
+                        emoji: '📅'
+                    },
+                    {
+                        label: '3 jours',
+                        description: 'Archive après 3 jours',
+                        value: '4320',
+                        emoji: '🗓️'
+                    },
+                    {
+                        label: '7 jours',
+                        description: 'Archive après 1 semaine',
+                        value: '10080',
+                        emoji: '📋'
+                    }
+                ]);
+
+            await interaction.reply({
+                embeds: [embed],
+                components: [new ActionRowBuilder().addComponents(selectMenu)],
+                flags: 64
+            });
+        }
     }
 }
 
