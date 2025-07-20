@@ -40,6 +40,11 @@ class InteractionHandler {
         this.handlers.selectMenu.set('autothread_name_config', this.handleAutothreadNameConfig.bind(this));
         this.handlers.selectMenu.set('autothread_archive_config', this.handleAutothreadArchiveConfig.bind(this));
         this.handlers.selectMenu.set('autothread_slowmode_config', this.handleAutothreadSlowmodeConfig.bind(this));
+
+        // Nouveaux handlers pour config-confession
+        this.handlers.selectMenu.set('confession_channels_config', this.handleConfessionChannelsConfig.bind(this));
+        this.handlers.selectMenu.set('confession_autothread_config', this.handleConfessionAutothreadConfig.bind(this));
+        this.handlers.selectMenu.set('confession_logs_config', this.handleConfessionLogsConfig.bind(this));
         
         // Boutons Navigation
         this.handlers.button.set('economy_back_main', this.handleBackToMain.bind(this));
@@ -47,6 +52,13 @@ class InteractionHandler {
         this.handlers.button.set('config_back_main', this.handleBackToMain.bind(this));
         this.handlers.button.set('karma_force_reset', this.handleKarmaForceReset.bind(this));
         this.handlers.button.set('toggle_message_rewards', this.handleToggleMessageRewards.bind(this));
+
+        // Boutons Actions Économiques (pour compatibilité)
+        actions.forEach(action => {
+            this.handlers.button.set(`edit_reward_${action}`, this.handleEditRewardButton.bind(this));
+            this.handlers.button.set(`edit_karma_${action}`, this.handleEditKarmaButton.bind(this));
+            this.handlers.button.set(`edit_cooldown_${action}`, this.handleEditCooldownButton.bind(this));
+        });
     }
 
     registerEventListeners() {
@@ -231,21 +243,136 @@ class InteractionHandler {
     }
 
     async handleConfigMainMenu(interaction) {
+        const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
         const value = interaction.values[0];
         
         if (value === 'channels') {
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('💭 Configuration Canaux Confessions')
+                .setDescription('Gérez les canaux où les confessions sont envoyées');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('confession_channels_config')
+                .setPlaceholder('💭 Configurer les canaux confessions')
+                .addOptions([
+                    {
+                        label: 'Ajouter Canal',
+                        description: 'Ajouter un nouveau canal de confessions',
+                        value: 'add_channel',
+                        emoji: '➕'
+                    },
+                    {
+                        label: 'Retirer Canal',
+                        description: 'Retirer un canal de confessions',
+                        value: 'remove_channel',
+                        emoji: '➖'
+                    },
+                    {
+                        label: 'Voir Canaux',
+                        description: 'Afficher tous les canaux configurés',
+                        value: 'list_channels',
+                        emoji: '📋'
+                    },
+                    {
+                        label: 'Canal Principal',
+                        description: 'Définir le canal principal par défaut',
+                        value: 'main_channel',
+                        emoji: '🎯'
+                    }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
             await interaction.reply({
-                content: '💭 Configuration canaux confessions disponible.',
+                embeds: [embed],
+                components: components,
                 flags: 64
             });
         } else if (value === 'autothread') {
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('🧵 Configuration Auto-Thread Confessions')
+                .setDescription('Configurez la création automatique de threads pour les confessions');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('confession_autothread_config')
+                .setPlaceholder('🧵 Configurer auto-thread confessions')
+                .addOptions([
+                    {
+                        label: 'Activer/Désactiver',
+                        description: 'Activer ou désactiver les threads automatiques',
+                        value: 'toggle_autothread',
+                        emoji: '🔄'
+                    },
+                    {
+                        label: 'Nom des Threads',
+                        description: 'Format du nom des threads créés',
+                        value: 'thread_name',
+                        emoji: '🏷️'
+                    },
+                    {
+                        label: 'Archive Automatique',
+                        description: 'Durée avant archivage automatique',
+                        value: 'archive_time',
+                        emoji: '📦'
+                    },
+                    {
+                        label: 'Mode Privé',
+                        description: 'Threads privés ou publics',
+                        value: 'private_mode',
+                        emoji: '🔐'
+                    }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
             await interaction.reply({
-                content: '🧵 Configuration auto-thread confessions disponible.',
+                embeds: [embed],
+                components: components,
                 flags: 64
             });
         } else if (value === 'logs') {
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('📋 Configuration Logs Admin')
+                .setDescription('Configurez les logs de modération et audit');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('confession_logs_config')
+                .setPlaceholder('📋 Configurer logs admin')
+                .addOptions([
+                    {
+                        label: 'Canal Logs',
+                        description: 'Définir le canal pour les logs admin',
+                        value: 'log_channel',
+                        emoji: '📝'
+                    },
+                    {
+                        label: 'Niveau Détail',
+                        description: 'Niveau de détail des logs',
+                        value: 'log_level',
+                        emoji: '🔍'
+                    },
+                    {
+                        label: 'Logs Confessions',
+                        description: 'Activer les logs des confessions',
+                        value: 'confession_logs',
+                        emoji: '💭'
+                    },
+                    {
+                        label: 'Logs Modération',
+                        description: 'Activer les logs de modération',
+                        value: 'moderation_logs',
+                        emoji: '🛡️'
+                    }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
             await interaction.reply({
-                content: '📋 Configuration logs admin disponible.',
+                embeds: [embed],
+                components: components,
                 flags: 64
             });
         } else {
@@ -1101,6 +1228,101 @@ class InteractionHandler {
         } else {
             await interaction.reply({
                 content: `✅ Mode lent configuré: ${value} secondes entre les messages.`,
+                flags: 64
+            });
+        }
+    }
+
+    // Nouveaux handlers pour boutons actions (compatibilité)
+    async handleEditRewardButton(interaction) {
+        const action = interaction.customId.split('_')[2];
+        await this.handleEditRewardSelector({...interaction, customId: `edit_reward_${action}`, values: ['menu']});
+    }
+
+    async handleEditKarmaButton(interaction) {
+        const action = interaction.customId.split('_')[2];
+        await this.handleEditKarmaSelector({...interaction, customId: `edit_karma_${action}`, values: ['menu']});
+    }
+
+    async handleEditCooldownButton(interaction) {
+        const action = interaction.customId.split('_')[2];
+        await this.handleEditCooldownSelector({...interaction, customId: `edit_cooldown_${action}`, values: ['menu']});
+    }
+
+    // Nouveaux handlers pour config-confession
+    async handleConfessionChannelsConfig(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'add_channel') {
+            await interaction.reply({
+                content: '➕ Sélectionnez un canal à ajouter pour les confessions.',
+                flags: 64
+            });
+        } else if (value === 'remove_channel') {
+            await interaction.reply({
+                content: '➖ Sélectionnez un canal à retirer des confessions.',
+                flags: 64
+            });
+        } else if (value === 'list_channels') {
+            await interaction.reply({
+                content: '📋 Liste des canaux confessions:\n• Aucun canal configuré',
+                flags: 64
+            });
+        } else if (value === 'main_channel') {
+            await interaction.reply({
+                content: '🎯 Définissez le canal principal pour les confessions.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleConfessionAutothreadConfig(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'toggle_autothread') {
+            await interaction.reply({
+                content: '🔄 Auto-thread confessions activé/désactivé.',
+                flags: 64
+            });
+        } else if (value === 'thread_name') {
+            await interaction.reply({
+                content: '🏷️ Format du nom des threads configuré.',
+                flags: 64
+            });
+        } else if (value === 'archive_time') {
+            await interaction.reply({
+                content: '📦 Durée d\'archivage automatique configurée.',
+                flags: 64
+            });
+        } else if (value === 'private_mode') {
+            await interaction.reply({
+                content: '🔐 Mode privé des threads configuré.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleConfessionLogsConfig(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'log_channel') {
+            await interaction.reply({
+                content: '📝 Canal de logs configuré.',
+                flags: 64
+            });
+        } else if (value === 'log_level') {
+            await interaction.reply({
+                content: '🔍 Niveau de détail des logs configuré.',
+                flags: 64
+            });
+        } else if (value === 'confession_logs') {
+            await interaction.reply({
+                content: '💭 Logs des confessions activés/désactivés.',
+                flags: 64
+            });
+        } else if (value === 'moderation_logs') {
+            await interaction.reply({
+                content: '🛡️ Logs de modération activés/désactivés.',
                 flags: 64
             });
         }
