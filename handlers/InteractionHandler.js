@@ -165,7 +165,6 @@ class InteractionHandler {
 
     async handleConfigMainMenu(interaction) {
         const value = interaction.values[0];
-        const configCommand = this.client.commands.get('config-confession');
         
         switch(value) {
             case 'channels':
@@ -184,36 +183,28 @@ class InteractionHandler {
                 });
         }
     }
-    
-    async handleAutoThreadConfig(interaction) {
+
+    async handleKarmaConfigMenu(interaction) {
         const value = interaction.values[0];
-        await interaction.reply({
-            content: `Auto-thread: ${value} (En développement)`,
-            flags: 64
-        });
+        
+        switch(value) {
+            case 'levels':
+                await this.showKarmaLevelsConfig(interaction);
+                break;
+            case 'reset':
+                await this.showKarmaResetConfig(interaction);
+                break;
+            case 'actions':
+                await this.showKarmaActionsConfig(interaction);
+                break;
+            default:
+                await interaction.reply({
+                    content: `Configuration ${value} en cours de développement.`,
+                    flags: 64
+                });
+        }
     }
-    
-    async showChannelsConfig(interaction) {
-        await interaction.reply({
-            content: 'Configuration des canaux en cours de développement.',
-            flags: 64
-        });
-    }
-    
-    async showAutoThreadConfig(interaction) {
-        await interaction.reply({
-            content: 'Configuration auto-thread en cours de développement.',
-            flags: 64
-        });
-    }
-    
-    async showLogsConfig(interaction) {
-        await interaction.reply({
-            content: 'Configuration des logs en cours de développement.',
-            flags: 64
-        });
-    }
-    
+
     async handleShopPurchase(interaction) {
         const itemId = interaction.values[0];
         
@@ -223,11 +214,70 @@ class InteractionHandler {
         });
     }
 
+    // === HANDLERS BOUTONS ===
+
+    async handleEditReward(interaction) {
+        const action = interaction.customId.split('_')[2]; // extract action from button id
+        await interaction.reply({
+            content: `💰 Modification des récompenses pour l'action ${action} en cours de développement.\n\nProchainement vous pourrez configurer:\n• Montant minimum\n• Montant maximum\n• Bonus selon le karma`,
+            flags: 64
+        });
+    }
+
+    async handleEditKarma(interaction) {
+        const action = interaction.customId.split('_')[2]; // extract action from button id
+        await interaction.reply({
+            content: `⚖️ Configuration karma pour l'action ${action} en cours de développement.\n\nProchainement vous pourrez configurer:\n• Karma bon gagné (😇)\n• Karma mauvais gagné (😈)\n• Multiplicateurs selon le niveau`,
+            flags: 64
+        });
+    }
+
+    async handleEditCooldown(interaction) {
+        const action = interaction.customId.split('_')[2]; // extract action from button id
+        await interaction.reply({
+            content: `⏰ Configuration cooldown pour l'action ${action} en cours de développement.\n\nProchainement vous pourrez configurer:\n• Durée du cooldown\n• Réduction selon le karma\n• Cooldown global ou par utilisateur`,
+            flags: 64
+        });
+    }
+
+    async handleBackToActions(interaction) {
+        await this.showActionsConfig(interaction);
+    }
+
+    async handleToggleMessageRewards(interaction) {
+        await interaction.reply({
+            content: 'Toggle récompenses messages en cours de développement.',
+            flags: 64
+        });
+    }
+
+    async handleKarmaForceReset(interaction) {
+        await interaction.reply({
+            content: '🔄 Reset karma forcé en cours de développement.\n\nCette action va :\n• Distribuer les récompenses actuelles\n• Remettre tous les karma à 0\n• Logger l\'action dans les statistiques',
+            flags: 64
+        });
+    }
+
+    async handleBackToMain(interaction) {
+        // Retour au menu principal selon le contexte
+        if (interaction.customId.includes('economy')) {
+            // Recharger config économie
+            const command = this.client.commands.get('configeconomie');
+            if (command) {
+                await command.showMainEconomyConfig(interaction);
+            }
+        } else {
+            // Recharger config générale
+            const command = this.client.commands.get('config');
+            if (command) {
+                await command.showMainConfig(interaction);
+            }
+        }
+    }
+
     // === MÉTHODES D'AFFICHAGE ===
 
     async showActionsConfig(interaction) {
-        const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
-        
         const embed = new EmbedBuilder()
             .setColor('#9932cc')
             .setTitle('💼 Configuration Actions Économiques')
@@ -294,142 +344,13 @@ class InteractionHandler {
 
         const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
-        if (interaction.deferred) {
-            await interaction.editReply({
-                embeds: [embed],
-                components: components
-            });
-        } else {
-            await interaction.reply({
-                embeds: [embed],
-                components: components,
-                flags: 64
-            });
-        }
-    }
-
-    async showKarmaConfig(interaction) {
-        const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-        
-        const embed = new EmbedBuilder()
-            .setColor('#9932cc')
-            .setTitle('⚖️ Configuration Système Karma Avancé')
-            .setDescription('Système automatique avec récompenses/sanctions et reset hebdomadaire')
-            .addFields([
-                {
-                    name: '🏆 Niveaux et Récompenses',
-                    value: '**😇 Saint** (+10+): +500€, x1.5 daily, -30% cooldown\n**😇 Bon** (+1/+9): +200€, x1.2 daily, -10% cooldown\n**😐 Neutre** (0): Aucun effet\n**😈 Mauvais** (-1/-9): -100€, x0.8 daily, +20% cooldown\n**😈 Diabolique** (-10-): -300€, x0.5 daily, +50% cooldown',
-                    inline: false
-                },
-                {
-                    name: '📅 Reset Automatique',
-                    value: 'Reset chaque semaine (configurable)\nRécompenses distribuées avant reset\nTous les karma remis à 0',
-                    inline: true
-                },
-                {
-                    name: '⚙️ Actions Configurables',
-                    value: 'Gains karma bon/mauvais par action\nEffets personnalisables\nActivation/désactivation par action',
-                    inline: true
-                }
-            ]);
-
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('karma_config_menu')
-            .setPlaceholder('⚖️ Configurer le système karma')
-            .addOptions([
-                {
-                    label: 'Niveaux et Récompenses',
-                    description: 'Configurer les récompenses par niveau karma',
-                    value: 'levels',
-                    emoji: '🏆'
-                },
-                {
-                    label: 'Reset Hebdomadaire',
-                    description: 'Jour et fréquence de réinitialisation',
-                    value: 'reset',
-                    emoji: '📅'
-                },
-                {
-                    label: 'Karma par Action',
-                    description: 'Configurer karma gagné/perdu par action',
-                    value: 'actions',
-                    emoji: '⚙️'
-                }
-            ]);
-
-        const resetButton = new ButtonBuilder()
-            .setCustomId('karma_force_reset')
-            .setLabel('Reset Immédiat')
-            .setStyle(ButtonStyle.Danger)
-            .setEmoji('🔄');
-
-        const components = [
-            new ActionRowBuilder().addComponents(selectMenu),
-            new ActionRowBuilder().addComponents(resetButton)
-        ];
-
-        if (interaction.deferred) {
-            await interaction.editReply({
-                embeds: [embed],
-                components: components
-            });
-        } else {
-            await interaction.reply({
-                embeds: [embed],
-                components: components,
-                flags: 64
-            });
-        }
-    }
-
-    async showShopConfig(interaction) {
-        const { EmbedBuilder } = require('discord.js');
-        
-        const embed = new EmbedBuilder()
-            .setColor('#00AAFF')
-            .setTitle('🛒 Configuration Boutique')
-            .setDescription('Gérez les objets et rôles en vente');
-
-        await interaction.reply({
+        await this.safeReply(interaction, {
             embeds: [embed],
-            content: 'Configuration boutique en cours de développement.',
-            flags: 64
-        });
-    }
-
-    async showDailyConfig(interaction) {
-        const { EmbedBuilder } = require('discord.js');
-        
-        const embed = new EmbedBuilder()
-            .setColor('#ffd700')
-            .setTitle('🎁 Configuration Daily')
-            .setDescription('Configurez les récompenses quotidiennes');
-
-        await interaction.reply({
-            embeds: [embed],
-            content: 'Configuration daily en cours de développement.',
-            flags: 64
-        });
-    }
-
-    async showMessageRewardsConfig(interaction) {
-        const { EmbedBuilder } = require('discord.js');
-        
-        const embed = new EmbedBuilder()
-            .setColor('#32cd32')
-            .setTitle('💬 Configuration Récompenses Messages')
-            .setDescription('Configurez les gains automatiques par message');
-
-        await interaction.reply({
-            embeds: [embed],
-            content: 'Configuration messages en cours de développement.',
-            flags: 64
+            components: components
         });
     }
 
     async showActionSettings(interaction, action) {
-        const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
-        
         const actionConfig = {
             work: {
                 name: 'Travailler 💼',
@@ -561,466 +482,35 @@ class InteractionHandler {
 
         const components = [new ActionRowBuilder().addComponents(buttons)];
 
-        if (interaction.deferred) {
-            await interaction.editReply({
-                embeds: [embed],
-                components: components
-            });
-        } else {
-            await interaction.reply({
-                embeds: [embed],
-                components: components,
-                flags: 64
-            });
-        }
-    }
-
-    async sendNotImplemented(interaction, feature) {
-        await interaction.reply({
-            content: `La fonctionnalité ${feature} sera bientôt disponible.`,
-            flags: 64
-        });
-    }
-
-    // === HANDLERS BOUTONS ===
-
-    async handleEditReward(interaction) {
-        const action = interaction.customId.split('_')[2]; // extract action from button id
-        await interaction.reply({
-            content: `💰 Modification des récompenses pour l'action ${action} en cours de développement.\n\nProchainement vous pourrez configurer:\n• Montant minimum\n• Montant maximum\n• Bonus selon le karma`,
-            flags: 64
-        });
-    }
-
-    async handleEditKarma(interaction) {
-        const action = interaction.customId.split('_')[2]; // extract action from button id
-        await interaction.reply({
-            content: `⚖️ Configuration karma pour l'action ${action} en cours de développement.\n\nProchainement vous pourrez configurer:\n• Karma bon gagné (😇)\n• Karma mauvais gagné (😈)\n• Multiplicateurs selon le niveau`,
-            flags: 64
-        });
-    }
-
-    async handleEditCooldown(interaction) {
-        const action = interaction.customId.split('_')[2]; // extract action from button id
-        await interaction.reply({
-            content: `⏰ Configuration cooldown pour l'action ${action} en cours de développement.\n\nProchainement vous pourrez configurer:\n• Durée du cooldown\n• Réduction selon le karma\n• Cooldown global ou par utilisateur`,
-            flags: 64
-        });
-    }
-
-    async handleBackToActions(interaction) {
-        await this.showActionsConfig(interaction);
-    }
-
-    async handleToggleMessageRewards(interaction) {
-        await interaction.reply({
-            content: 'Toggle récompenses messages en cours de développement.',
-            flags: 64
-        });
-    }
-
-    async handleKarmaConfigMenu(interaction) {
-        const value = interaction.values[0];
-        
-        switch(value) {
-            case 'levels':
-                await this.showKarmaLevelsConfig(interaction);
-                break;
-            case 'reset':
-                await this.showKarmaResetConfig(interaction);
-                break;
-            case 'actions':
-                await this.showKarmaActionsConfig(interaction);
-                break;
-            default:
-                await interaction.reply({
-                    content: `Configuration ${value} en cours de développement.`,
-                    flags: 64
-                });
-        }
-    }
-
-    async handleKarmaForceReset(interaction) {
-        await interaction.reply({
-            content: '🔄 Reset karma forcé en cours de développement.\n\nCette action va :\n• Distribuer les récompenses actuelles\n• Remettre tous les karma à 0\n• Logger l\'action dans les statistiques',
-            flags: 64
-        });
-    }
-
-    async showKarmaLevelsConfig(interaction) {
-        const { EmbedBuilder } = require('discord.js');
-        
-        const embed = new EmbedBuilder()
-            .setColor('#ffd700')
-            .setTitle('🏆 Configuration Niveaux Karma')
-            .setDescription('Récompenses automatiques selon le niveau de karma')
-            .addFields([
-                {
-                    name: '😇 Saint (+10 karma+)',
-                    value: '💰 +500€ | 🎁 x1.5 daily | ⏰ -30% cooldown',
-                    inline: true
-                },
-                {
-                    name: '😇 Bon (+1 à +9 karma)',
-                    value: '💰 +200€ | 🎁 x1.2 daily | ⏰ -10% cooldown',
-                    inline: true
-                },
-                {
-                    name: '😐 Neutre (0 karma)',
-                    value: '💰 Aucun effet | 🎁 Normal | ⏰ Normal',
-                    inline: true
-                },
-                {
-                    name: '😈 Mauvais (-1 à -9 karma)',
-                    value: '💰 -100€ | 🎁 x0.8 daily | ⏰ +20% cooldown',
-                    inline: true
-                },
-                {
-                    name: '😈 Diabolique (-10 karma-)',
-                    value: '💰 -300€ | 🎁 x0.5 daily | ⏰ +50% cooldown',
-                    inline: true
-                }
-            ]);
-
-        await interaction.reply({
+        await this.safeReply(interaction, {
             embeds: [embed],
-            content: '⚙️ Configuration des récompenses par niveau en cours de développement.',
-            flags: 64
+            components: components
         });
     }
 
-    async showKarmaResetConfig(interaction) {
-        const { EmbedBuilder } = require('discord.js');
-        
-        const embed = new EmbedBuilder()
-            .setColor('#ff6b6b')
-            .setTitle('📅 Configuration Reset Hebdomadaire')
-            .setDescription('Paramètres de réinitialisation automatique du karma')
-            .addFields([
-                {
-                    name: 'Jour actuel',
-                    value: 'Lundi (configurable)',
-                    inline: true
-                },
-                {
-                    name: 'Prochain reset',
-                    value: 'Dans 5 jours',
-                    inline: true
-                },
-                {
-                    name: 'Actions du reset',
-                    value: '1. Distribution récompenses\n2. Reset karma à 0\n3. Log des statistiques',
-                    inline: false
-                }
-            ]);
-
-        await interaction.reply({
-            embeds: [embed],
-            content: '📅 Configuration du jour de reset en cours de développement.',
-            flags: 64
-        });
-    }
-
-    async showKarmaActionsConfig(interaction) {
-        const { EmbedBuilder } = require('discord.js');
-        
+    async showKarmaConfig(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#9932cc')
-            .setTitle('⚙️ Configuration Karma par Action')
-            .setDescription('Paramètres karma gagnés/perdus pour chaque action économique')
+            .setTitle('⚖️ Configuration Système Karma Avancé')
+            .setDescription('Système automatique avec récompenses/sanctions et reset hebdomadaire')
             .addFields([
                 {
-                    name: '💼 Travailler',
-                    value: '😇 +1 karma bon | 😈 -1 karma mauvais',
+                    name: '🏆 Niveaux et Récompenses',
+                    value: '**😇 Saint** (+10+): +500€, x1.5 daily, -30% cooldown\n**😇 Bon** (+1/+9): +200€, x1.2 daily, -10% cooldown\n**😐 Neutre** (0): Aucun effet\n**😈 Mauvais** (-1/-9): -100€, x0.8 daily, +20% cooldown\n**😈 Diabolique** (-10-): -300€, x0.5 daily, +50% cooldown',
+                    inline: false
+                },
+                {
+                    name: '📅 Reset Automatique',
+                    value: 'Reset chaque semaine (configurable)\nRécompenses distribuées avant reset\nTous les karma remis à 0',
                     inline: true
                 },
                 {
-                    name: '🎣 Pêcher', 
-                    value: '😇 +1 karma bon | 😈 -1 karma mauvais',
-                    inline: true
-                },
-                {
-                    name: '💝 Donner',
-                    value: '😇 +3 karma bon | 😈 -2 karma mauvais',
-                    inline: true
-                },
-                {
-                    name: '💸 Voler',
-                    value: '😇 -1 karma bon | 😈 +1 karma mauvais',
-                    inline: true
-                },
-                {
-                    name: '🔫 Crime',
-                    value: '😇 -3 karma bon | 😈 +3 karma mauvais',
-                    inline: true
-                },
-                {
-                    name: '🎰 Parier',
-                    value: '😇 -1 karma bon | 😈 +1 karma mauvais',
+                    name: '⚙️ Actions Configurables',
+                    value: 'Gains karma bon/mauvais par action\nEffets personnalisables\nActivation/désactivation par action',
                     inline: true
                 }
             ]);
-
-        await interaction.reply({
-            embeds: [embed],
-            content: '⚙️ Configuration karma par action en cours de développement.',
-            flags: 64
-        });
-    }
-
-    async handleBackToMain(interaction) {
-        // Retour au menu principal selon le contexte
-        if (interaction.customId.includes('economy')) {
-            // Recharger config économie
-            const command = this.client.commands.get('configeconomie');
-            if (command) {
-                await command.showMainEconomyConfig(interaction);
-            }
-        } else {
-            // Recharger config générale
-            const command = this.client.commands.get('config');
-            if (command) {
-                await command.showMainConfig(interaction);
-            }
-        }
-    }
-
-    // === AFFICHAGES SPÉCIFIQUES ===
-
-    async showActionsConfig(interaction) {
-        const embed = new EmbedBuilder()
-            .setColor('#4CAF50')
-            .setTitle('💼 Configuration Actions Économiques')
-            .setDescription('Configurez les paramètres de chaque action économique');
 
         const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('economy_action_config')
-            .setPlaceholder('🎯 Sélectionner une action à configurer')
-            .addOptions([
-                {
-                    label: 'Travail',
-                    description: 'Configurer les paramètres du travail',
-                    value: 'work',
-                    emoji: '👷'
-                },
-                {
-                    label: 'Pêche',
-                    description: 'Configurer les paramètres de la pêche',
-                    value: 'fish',
-                    emoji: '🎣'
-                },
-                {
-                    label: 'Vol',
-                    description: 'Configurer les paramètres du vol',
-                    value: 'steal',
-                    emoji: '🦹'
-                },
-                {
-                    label: 'Crime',
-                    description: 'Configurer les paramètres du crime',
-                    value: 'crime',
-                    emoji: '🔪'
-                }
-            ]);
-
-        const backButton = new ButtonBuilder()
-            .setCustomId('economy_back_main')
-            .setLabel('← Retour')
-            .setStyle(ButtonStyle.Secondary);
-
-        const components = [
-            new ActionRowBuilder().addComponents(selectMenu),
-            new ActionRowBuilder().addComponents(backButton)
-        ];
-
-        await this.safeReply(interaction, {
-            embeds: [embed],
-            components: components,
-            ephemeral: true
-        });
-    }
-
-    async showActionSettings(interaction, action) {
-        const actions = await this.dataManager.getData('actions');
-        const guildId = interaction.guild.id;
-        const actionKey = `${action}_${guildId}`;
-        
-        const actionData = actions[actionKey] || {
-            name: action,
-            enabled: true,
-            baseReward: 100,
-            cooldown: 3600,
-            karmaGood: 0,
-            karmaBad: 0,
-            guildId: guildId
-        };
-
-        const embed = new EmbedBuilder()
-            .setColor('#FF9800')
-            .setTitle(`⚙️ Configuration: ${this.getActionName(action)}`)
-            .addFields([
-                {
-                    name: '💰 Récompense de base',
-                    value: `${actionData.baseReward}€`,
-                    inline: true
-                },
-                {
-                    name: '⏰ Cooldown',
-                    value: `${Math.floor(actionData.cooldown/60)} minutes`,
-                    inline: true
-                },
-                {
-                    name: '📊 État',
-                    value: actionData.enabled ? '🟢 Activé' : '🔴 Désactivé',
-                    inline: true
-                }
-            ]);
-
-        const components = [
-            new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`edit_reward_${action}`)
-                    .setLabel('💰 Modifier Récompense')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId(`edit_cooldown_${action}`)
-                    .setLabel('⏰ Modifier Cooldown')
-                    .setStyle(ButtonStyle.Primary)
-            ),
-            new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`toggle_action_${action}`)
-                    .setLabel(actionData.enabled ? '🔴 Désactiver' : '🟢 Activer')
-                    .setStyle(actionData.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
-                new ButtonBuilder()
-                    .setCustomId('economy_back_actions')
-                    .setLabel('← Retour Actions')
-                    .setStyle(ButtonStyle.Secondary)
-            )
-        ];
-
-        await this.safeReply(interaction, {
-            embeds: [embed],
-            components: components,
-            ephemeral: true
-        });
-    }
-
-    async showMessageRewardsConfig(interaction) {
-        const rewards = await this.dataManager.getData('message_rewards');
-        
-        const embed = new EmbedBuilder()
-            .setColor('#2196F3')
-            .setTitle('💬 Configuration Récompenses Messages')
-            .setDescription('Configuration des gains automatiques par message')
-            .addFields([
-                {
-                    name: '📊 État',
-                    value: rewards.enabled ? '🟢 Activé' : '🔴 Désactivé',
-                    inline: true
-                },
-                {
-                    name: '💰 Montant par message',
-                    value: `${rewards.amount}€`,
-                    inline: true
-                },
-                {
-                    name: '⏰ Cooldown',
-                    value: `${rewards.cooldown} secondes`,
-                    inline: true
-                }
-            ]);
-
-        const components = [
-            new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId('toggle_message_rewards')
-                    .setLabel(rewards.enabled ? '🔴 Désactiver' : '🟢 Activer')
-                    .setStyle(rewards.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
-                new ButtonBuilder()
-                    .setCustomId('edit_message_amount')
-                    .setLabel('💰 Modifier Montant')
-                    .setStyle(ButtonStyle.Primary)
-            ),
-            new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId('edit_message_cooldown')
-                    .setLabel('⏰ Modifier Cooldown')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId('economy_back_main')
-                    .setLabel('← Retour')
-                    .setStyle(ButtonStyle.Secondary)
-            )
-        ];
-
-        await this.safeReply(interaction, {
-            embeds: [embed],
-            components: components,
-            ephemeral: true
-        });
-    }
-
-    // === UTILITAIRES ===
-
-    async safeReply(interaction, options) {
-        try {
-            if (interaction.deferred) {
-                await interaction.editReply(options);
-            } else if (!interaction.replied) {
-                await interaction.reply({...options, ephemeral: true});
-            } else {
-                await interaction.followUp({...options, ephemeral: true});
-            }
-        } catch (error) {
-            console.error('❌ Erreur réponse interaction:', error);
-        }
-    }
-
-    async sendErrorResponse(interaction, error) {
-        const embed = new EmbedBuilder()
-            .setColor('#FF0000')
-            .setTitle('❌ Erreur')
-            .setDescription('Une erreur est survenue lors du traitement de votre demande.')
-            .addFields([
-                {
-                    name: 'Détails',
-                    value: `\`\`\`${error.message || 'Erreur inconnue'}\`\`\``,
-                    inline: false
-                }
-            ])
-            .setTimestamp();
-
-        await this.safeReply(interaction, {
-            embeds: [embed],
-            ephemeral: true
-        });
-    }
-
-    async sendNotImplemented(interaction, feature) {
-        const embed = new EmbedBuilder()
-            .setColor('#FF9800')
-            .setTitle('🚧 Fonctionnalité en développement')
-            .setDescription(`La fonctionnalité "${feature}" sera bientôt disponible !`)
-            .setTimestamp();
-
-        await this.safeReply(interaction, {
-            embeds: [embed],
-            ephemeral: true
-        });
-    }
-
-    getActionName(action) {
-        const names = {
-            'work': 'Travail',
-            'fish': 'Pêche', 
-            'steal': 'Vol',
-            'crime': 'Crime',
-            'gamble': 'Pari',
-            'donate': 'Don'
-        };
-        return names[action] || action;
-    }
-}
-
-module.exports = InteractionHandler;
+            .setCustomId('karma_config_menu')
+            .setP
