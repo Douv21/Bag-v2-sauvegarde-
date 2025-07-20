@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: bag-bot-v2
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+    # Variables secrètes à définir dans Render.com Dashboard:
+    # - DISCORD_TOKEN
+    # - CLIENT_ID
