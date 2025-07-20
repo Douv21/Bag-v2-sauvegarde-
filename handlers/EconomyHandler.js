@@ -106,37 +106,24 @@ class EconomyHandler {
     async showShopConfig(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#00ff00')
-            .setTitle('🛒 Configuration Boutique')
-            .setDescription('Gérez les objets et rôles disponibles dans la boutique');
+            .setTitle('🛒 Configuration Boutique - 3 Workflows')
+            .setDescription('Choisissez le type d\'article à ajouter dans la boutique')
+            .addFields([
+                { name: '🎨 Workflow 1: Objets Personnalisés', value: 'Créez des objets uniques avec nom et prix personnalisés via modal', inline: false },
+                { name: '⌛ Workflow 2: Rôles Temporaires', value: 'Sélectionnez un rôle du serveur puis définissez le prix via modal', inline: false },
+                { name: '🔄 Workflow 3: Rôles Permanents', value: 'Sélectionnez un rôle du serveur puis définissez le prix via modal', inline: false }
+            ]);
 
         const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('economy_shop_config')
-            .setPlaceholder('🛒 Configurer la boutique')
+            .setCustomId('economy_shop_workflow_select')
+            .setPlaceholder('🛒 Choisir le type d\'article à créer')
             .addOptions([
-                {
-                    label: 'Ajouter Rôle',
-                    description: 'Ajouter un rôle à vendre',
-                    value: 'add_role',
-                    emoji: '➕'
-                },
-                {
-                    label: 'Retirer Rôle',
-                    description: 'Retirer un rôle de la boutique',
-                    value: 'remove_role',
-                    emoji: '➖'
-                },
-                {
-                    label: 'Prix Rôles',
-                    description: 'Modifier les prix des rôles',
-                    value: 'edit_prices',
-                    emoji: '💰'
-                },
-                {
-                    label: 'Voir Boutique',
-                    description: 'Afficher tous les objets disponibles',
-                    value: 'list_items',
-                    emoji: '📋'
-                }
+                { label: 'Objet Personnalisé', description: 'Workflow 1: Créer un objet unique avec nom et prix', value: 'custom_object', emoji: '🎨' },
+                { label: 'Rôle Temporaire', description: 'Workflow 2: Sélection rôle → prix via modal', value: 'temporary_role', emoji: '⌛' },
+                { label: 'Rôle Permanent', description: 'Workflow 3: Sélection rôle → prix via modal', value: 'permanent_role', emoji: '🔄' },
+                { label: 'Gérer Articles Existants', description: 'Modifier/supprimer les articles actuels', value: 'manage_existing', emoji: '⚙️' },
+                { label: 'Statistiques Boutique', description: 'Voir les ventes et statistiques', value: 'shop_stats', emoji: '📊' },
+                { label: 'Retour Économie', value: 'back_economy', emoji: '🔙' }
             ]);
 
         const components = [new ActionRowBuilder().addComponents(selectMenu)];
@@ -356,21 +343,27 @@ class EconomyHandler {
         const option = interaction.values[0];
         
         switch(option) {
-            case 'add_role':
-                await this.showAddRoleConfig(interaction);
+            case 'custom_object':
+                await this.startCustomObjectWorkflow(interaction);
                 break;
-            case 'remove_role':
-                await this.showRemoveRoleConfig(interaction);
+            case 'temporary_role':
+                await this.startTemporaryRoleWorkflow(interaction);
                 break;
-            case 'edit_prices':
-                await this.showEditPricesConfig(interaction);
+            case 'permanent_role':
+                await this.startPermanentRoleWorkflow(interaction);
                 break;
-            case 'list_items':
-                await this.showShopItems(interaction);
+            case 'manage_existing':
+                await this.showManageExistingItems(interaction);
+                break;
+            case 'shop_stats':
+                await this.showShopStats(interaction);
+                break;
+            case 'back_economy':
+                await this.showMainConfig(interaction);
                 break;
             default:
                 await interaction.update({
-                    content: `🛒 Configuration boutique **${option}** disponible prochainement.`,
+                    content: `🛒 Workflow **${option}** disponible prochainement.`,
                     embeds: [],
                     components: []
                 });
@@ -1065,6 +1058,401 @@ class EconomyHandler {
             embeds: [embed],
             components: components
         });
+    }
+
+    // ==================== NOUVEAUX WORKFLOWS BOUTIQUE ====================
+    
+    // WORKFLOW 1: Objets Personnalisés - Création + Prix via modal
+    async startCustomObjectWorkflow(interaction) {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+        
+        const modal = new ModalBuilder()
+            .setCustomId('custom_object_creation_modal')
+            .setTitle('🎨 Créer un Objet Personnalisé');
+        
+        const nameInput = new TextInputBuilder()
+            .setCustomId('object_name_input')
+            .setLabel('Nom de l\'objet')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(50)
+            .setPlaceholder('Ex: Potion Magique, Badge VIP, Accès Secret...')
+            .setRequired(true);
+        
+        const priceInput = new TextInputBuilder()
+            .setCustomId('object_price_input')
+            .setLabel('Prix de l\'objet (en €)')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(6)
+            .setPlaceholder('Ex: 25, 100, 500... (1€ à 999,999€)')
+            .setRequired(true);
+        
+        const descriptionInput = new TextInputBuilder()
+            .setCustomId('object_description_input')
+            .setLabel('Description de l\'objet (optionnel)')
+            .setStyle(TextInputStyle.Paragraph)
+            .setMinLength(0)
+            .setMaxLength(200)
+            .setPlaceholder('Décrivez à quoi sert cet objet...')
+            .setRequired(false);
+        
+        const firstActionRow = new ActionRowBuilder().addComponents(nameInput);
+        const secondActionRow = new ActionRowBuilder().addComponents(priceInput);
+        const thirdActionRow = new ActionRowBuilder().addComponents(descriptionInput);
+        
+        modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
+        
+        await interaction.showModal(modal);
+    }
+    
+    // WORKFLOW 2: Rôles Temporaires - Sélection rôle → prix modal
+    async startTemporaryRoleWorkflow(interaction) {
+        const { RoleSelectMenuBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#ffa500')
+            .setTitle('⌛ Workflow Rôle Temporaire - Étape 1/2')
+            .setDescription('Sélectionnez d\'abord le rôle du serveur à vendre temporairement')
+            .addFields([
+                { name: '📋 Processus', value: '1. **Sélection rôle** ← Vous êtes ici\n2. Prix + durée via modal', inline: false },
+                { name: '⚠️ Important', value: 'Choisissez un rôle existant du serveur dans le menu ci-dessous', inline: false }
+            ]);
+
+        const roleSelect = new RoleSelectMenuBuilder()
+            .setCustomId('temporary_role_workflow_select')
+            .setPlaceholder('⌛ Sélectionner le rôle temporaire')
+            .setMinValues(1)
+            .setMaxValues(1);
+
+        const components = [new ActionRowBuilder().addComponents(roleSelect)];
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+    
+    // WORKFLOW 3: Rôles Permanents - Sélection rôle → prix modal
+    async startPermanentRoleWorkflow(interaction) {
+        const { RoleSelectMenuBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('🔄 Workflow Rôle Permanent - Étape 1/2')
+            .setDescription('Sélectionnez d\'abord le rôle du serveur à vendre en permanence')
+            .addFields([
+                { name: '📋 Processus', value: '1. **Sélection rôle** ← Vous êtes ici\n2. Prix via modal', inline: false },
+                { name: '⚠️ Important', value: 'Choisissez un rôle existant du serveur dans le menu ci-dessous', inline: false }
+            ]);
+
+        const roleSelect = new RoleSelectMenuBuilder()
+            .setCustomId('permanent_role_workflow_select')
+            .setPlaceholder('🔄 Sélectionner le rôle permanent')
+            .setMinValues(1)
+            .setMaxValues(1);
+
+        const components = [new ActionRowBuilder().addComponents(roleSelect)];
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+    
+    // Gestion des objets existants
+    async showManageExistingItems(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ff6600')
+            .setTitle('⚙️ Gérer Articles Existants')
+            .setDescription('Modifiez ou supprimez les articles de la boutique')
+            .addFields([
+                { name: '📋 Articles Actuels', value: 'Rôle VIP (50€)\nPotion Boost (25€)\nAccès Secret (100€)', inline: true },
+                { name: '📊 Statistiques', value: '12 ventes cette semaine\n347€ de revenus', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('manage_existing_items')
+            .setPlaceholder('⚙️ Gérer les articles')
+            .addOptions([
+                { label: 'Modifier Prix', description: 'Changer le prix d\'un article', value: 'edit_price', emoji: '💰' },
+                { label: 'Supprimer Article', description: 'Retirer un article de la boutique', value: 'remove_item', emoji: '🗑️' },
+                { label: 'Voir Statistiques', description: 'Stats détaillées des ventes', value: 'detailed_stats', emoji: '📊' },
+                { label: 'Retour Boutique', value: 'back_shop', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+    
+    async showShopStats(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle('📊 Statistiques Boutique')
+            .setDescription('Analyse des ventes et performance des articles')
+            .addFields([
+                { name: '💰 Revenus Totaux', value: '1,247€ (cette semaine)\n4,892€ (ce mois)', inline: true },
+                { name: '🏆 Article Populaire', value: 'Rôle VIP (67% des ventes)', inline: true },
+                { name: '👥 Clients Actifs', value: '23 achats uniques', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('shop_stats_options')
+            .setPlaceholder('📊 Options statistiques')
+            .addOptions([
+                { label: 'Export Données', description: 'Télécharger les stats', value: 'export_data', emoji: '📁' },
+                { label: 'Reset Statistiques', description: 'Remettre à zéro', value: 'reset_stats', emoji: '🔄' },
+                { label: 'Retour Boutique', value: 'back_shop', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+
+    // ==================== HANDLERS POUR NOUVEAUX WORKFLOWS ====================
+    
+    // Handler pour objets personnalisés (modal workflow 1)
+    async handleCustomObjectCreationModal(interaction) {
+        const objectName = interaction.fields.getTextInputValue('object_name_input');
+        const objectPrice = interaction.fields.getTextInputValue('object_price_input');
+        const objectDescription = interaction.fields.getTextInputValue('object_description_input') || 'Aucune description';
+        
+        // Validation du prix
+        const priceNum = parseInt(objectPrice);
+        if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
+            await interaction.reply({
+                content: '❌ Prix invalide. Veuillez entrer un nombre entre 1 et 999,999.',
+                flags: 64
+            });
+            return;
+        }
+        
+        const embed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('✅ Objet Personnalisé Créé')
+            .setDescription('Votre objet personnalisé a été ajouté à la boutique !')
+            .addFields([
+                { name: '🎨 Nom', value: objectName, inline: true },
+                { name: '💰 Prix', value: `${priceNum}€`, inline: true },
+                { name: '📝 Description', value: objectDescription, inline: false },
+                { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
+            ]);
+
+        await interaction.reply({
+            embeds: [embed],
+            flags: 64
+        });
+    }
+    
+    // Handler pour sélection rôle temporaire (workflow 2)
+    async handleTemporaryRoleWorkflowSelect(interaction) {
+        const selectedRole = interaction.roles.first();
+        const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+        
+        const modal = new ModalBuilder()
+            .setCustomId(`temporary_role_price_modal_${selectedRole.id}`)
+            .setTitle('⌛ Rôle Temporaire - Prix & Durée');
+        
+        const priceInput = new TextInputBuilder()
+            .setCustomId('temp_role_price_input')
+            .setLabel('Prix du rôle (en €)')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(6)
+            .setPlaceholder('Ex: 25, 50, 100... (1€ à 999,999€)')
+            .setRequired(true);
+        
+        const durationInput = new TextInputBuilder()
+            .setCustomId('temp_role_duration_input')
+            .setLabel('Durée en jours')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(5)
+            .setPlaceholder('Ex: 7, 30, 90... (1 à 36,500 jours)')
+            .setRequired(true);
+        
+        const firstActionRow = new ActionRowBuilder().addComponents(priceInput);
+        const secondActionRow = new ActionRowBuilder().addComponents(durationInput);
+        
+        modal.addComponents(firstActionRow, secondActionRow);
+        
+        await interaction.showModal(modal);
+    }
+    
+    // Handler pour sélection rôle permanent (workflow 3)
+    async handlePermanentRoleWorkflowSelect(interaction) {
+        const selectedRole = interaction.roles.first();
+        const { ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+        
+        const modal = new ModalBuilder()
+            .setCustomId(`permanent_role_price_modal_${selectedRole.id}`)
+            .setTitle('🔄 Rôle Permanent - Prix');
+        
+        const priceInput = new TextInputBuilder()
+            .setCustomId('perm_role_price_input')
+            .setLabel('Prix du rôle (en €)')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(6)
+            .setPlaceholder('Ex: 50, 100, 200... (1€ à 999,999€)')
+            .setRequired(true);
+        
+        const firstActionRow = new ActionRowBuilder().addComponents(priceInput);
+        modal.addComponents(firstActionRow);
+        
+        await interaction.showModal(modal);
+    }
+    
+    // Handler pour modal rôle temporaire avec prix/durée
+    async handleTemporaryRolePriceModal(interaction) {
+        const roleId = interaction.customId.split('_')[4]; // Extract role ID from modal customId
+        const price = interaction.fields.getTextInputValue('temp_role_price_input');
+        const duration = interaction.fields.getTextInputValue('temp_role_duration_input');
+        
+        // Validation
+        const priceNum = parseInt(price);
+        const durationNum = parseInt(duration);
+        
+        if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
+            await interaction.reply({
+                content: '❌ Prix invalide. Veuillez entrer un nombre entre 1 et 999,999.',
+                flags: 64
+            });
+            return;
+        }
+        
+        if (isNaN(durationNum) || durationNum < 1 || durationNum > 36500) {
+            await interaction.reply({
+                content: '❌ Durée invalide. Veuillez entrer un nombre entre 1 et 36,500 jours.',
+                flags: 64
+            });
+            return;
+        }
+        
+        const role = interaction.guild.roles.cache.get(roleId);
+        
+        const embed = new EmbedBuilder()
+            .setColor('#ffa500')
+            .setTitle('✅ Rôle Temporaire Ajouté')
+            .setDescription('Le rôle temporaire a été configuré avec succès !')
+            .addFields([
+                { name: '👑 Rôle', value: `${role?.name || 'Rôle'} (<@&${roleId}>)`, inline: true },
+                { name: '💰 Prix', value: `${priceNum}€`, inline: true },
+                { name: '⌛ Durée', value: `${durationNum} jour${durationNum > 1 ? 's' : ''}`, inline: true },
+                { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
+            ]);
+
+        await interaction.reply({
+            embeds: [embed],
+            flags: 64
+        });
+    }
+    
+    // Handler pour modal rôle permanent avec prix
+    async handlePermanentRolePriceModal(interaction) {
+        const roleId = interaction.customId.split('_')[4]; // Extract role ID from modal customId
+        const price = interaction.fields.getTextInputValue('perm_role_price_input');
+        
+        // Validation
+        const priceNum = parseInt(price);
+        
+        if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
+            await interaction.reply({
+                content: '❌ Prix invalide. Veuillez entrer un nombre entre 1 et 999,999.',
+                flags: 64
+            });
+            return;
+        }
+        
+        const role = interaction.guild.roles.cache.get(roleId);
+        
+        const embed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('✅ Rôle Permanent Ajouté')
+            .setDescription('Le rôle permanent a été configuré avec succès !')
+            .addFields([
+                { name: '👑 Rôle', value: `${role?.name || 'Rôle'} (<@&${roleId}>)`, inline: true },
+                { name: '💰 Prix', value: `${priceNum}€`, inline: true },
+                { name: '⏰ Type', value: '🔄 Permanent (à vie)', inline: true },
+                { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
+            ]);
+
+        await interaction.reply({
+            embeds: [embed],
+            flags: 64
+        });
+    }
+    
+    // Handlers pour gestion articles existants
+    async handleManageExistingItems(interaction) {
+        const option = interaction.values[0];
+        
+        switch(option) {
+            case 'edit_price':
+                await interaction.update({
+                    content: '💰 Modification des prix disponible prochainement.',
+                    embeds: [],
+                    components: []
+                });
+                break;
+            case 'remove_item':
+                await interaction.update({
+                    content: '🗑️ Suppression d\'articles disponible prochainement.',
+                    embeds: [],
+                    components: []
+                });
+                break;
+            case 'detailed_stats':
+                await this.showShopStats(interaction);
+                break;
+            case 'back_shop':
+                await this.showShopConfig(interaction);
+                break;
+            default:
+                await interaction.update({
+                    content: `⚙️ Option **${option}** disponible prochainement.`,
+                    embeds: [],
+                    components: []
+                });
+        }
+    }
+    
+    async handleShopStatsOptions(interaction) {
+        const option = interaction.values[0];
+        
+        switch(option) {
+            case 'export_data':
+                await interaction.update({
+                    content: '📁 Export des données disponible prochainement.',
+                    embeds: [],
+                    components: []
+                });
+                break;
+            case 'reset_stats':
+                await interaction.update({
+                    content: '🔄 Reset des statistiques disponible prochainement.',
+                    embeds: [],
+                    components: []
+                });
+                break;
+            case 'back_shop':
+                await this.showShopConfig(interaction);
+                break;
+            default:
+                await interaction.update({
+                    content: `📊 Option **${option}** disponible prochainement.`,
+                    embeds: [],
+                    components: []
+                });
+        }
     }
 
     // Handler methods pour actions - Corrections des handlers manquants

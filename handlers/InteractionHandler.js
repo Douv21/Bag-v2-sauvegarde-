@@ -79,13 +79,20 @@ class InteractionHandler {
         this.handlers.selectMenu.set('economy_shop_permanent_price_select', this.economyHandler.handleShopPermanentPriceSelect.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_shop_temporary_duration_select', this.economyHandler.handleShopTemporaryDurationSelect.bind(this.economyHandler));
         
+        // HANDLERS pour nouveaux workflows boutique
+        this.handlers.selectMenu.set('economy_shop_workflow_select', this.economyHandler.handleEconomyShopConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('manage_existing_items', this.economyHandler.handleManageExistingItems.bind(this.economyHandler));
+        this.handlers.selectMenu.set('shop_stats_options', this.economyHandler.handleShopStatsOptions.bind(this.economyHandler));
+        
         // HANDLERS pour sélection de rôles serveur (RoleSelectMenuBuilder) - Pattern matching
         // Les handlers dynamiques seront gérés dans handleRoleSelect
         
-        // HANDLERS pour modals boutique
+        // HANDLERS pour modals boutique (anciens + nouveaux)
         this.handlers.modal = this.handlers.modal || new Map();
         this.handlers.modal.set('shop_permanent_price_modal', this.economyHandler.handlePermanentPriceModal.bind(this.economyHandler));
         this.handlers.modal.set('shop_temporary_duration_modal', this.economyHandler.handleTemporaryDurationModal.bind(this.economyHandler));
+        this.handlers.modal.set('custom_object_creation_modal', this.economyHandler.handleCustomObjectCreationModal.bind(this.economyHandler));
+        // Les modals dynamiques avec role ID seront gérés dans handleModal
         
         // Handlers pour les valeurs spécifiques 
         this.handlers.selectMenu.set('economy_rewards_value_config', this.economyHandler.handleRewardsValueConfig.bind(this.economyHandler));
@@ -214,7 +221,7 @@ class InteractionHandler {
     async handleRoleSelect(interaction) {
         console.log(`🔍 Role Select Interaction: ${interaction.customId}`);
         
-        // Gestion des patterns dynamiques pour la boutique
+        // Gestion des patterns dynamiques pour la boutique (anciens workflows)
         if (interaction.customId.startsWith('shop_permanent_role_select_')) {
             const price = interaction.customId.split('_')[4];
             await this.economyHandler.handleShopPermanentRoleSelect(interaction, price);
@@ -226,6 +233,17 @@ class InteractionHandler {
             const price = parts[4];
             const duration = parts[5];
             await this.economyHandler.handleShopTemporaryRoleSelect(interaction, price, duration);
+            return;
+        }
+        
+        // Nouveaux workflows boutique
+        if (interaction.customId === 'temporary_role_workflow_select') {
+            await this.economyHandler.handleTemporaryRoleWorkflowSelect(interaction);
+            return;
+        }
+        
+        if (interaction.customId === 'permanent_role_workflow_select') {
+            await this.economyHandler.handlePermanentRoleWorkflowSelect(interaction);
             return;
         }
         
@@ -260,7 +278,18 @@ class InteractionHandler {
         const customId = interaction.customId;
         console.log(`🔍 Modal soumis: ${customId}`);
         
-        // Vérifier les nouveaux handlers de modals boutique
+        // Gestion des nouveaux modals dynamiques pour workflows boutique
+        if (customId.startsWith('temporary_role_price_modal_')) {
+            await this.economyHandler.handleTemporaryRolePriceModal(interaction);
+            return;
+        }
+        
+        if (customId.startsWith('permanent_role_price_modal_')) {
+            await this.economyHandler.handlePermanentRolePriceModal(interaction);
+            return;
+        }
+        
+        // Vérifier les handlers statiques de modals boutique
         const modalHandler = this.handlers.modal?.get(customId);
         if (modalHandler) {
             console.log(`✅ Handler modal trouvé pour: ${customId}`);
