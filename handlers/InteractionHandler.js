@@ -45,6 +45,13 @@ class InteractionHandler {
         this.handlers.selectMenu.set('confession_channels_config', this.handleConfessionChannelsConfig.bind(this));
         this.handlers.selectMenu.set('confession_autothread_config', this.handleConfessionAutothreadConfig.bind(this));
         this.handlers.selectMenu.set('confession_logs_config', this.handleConfessionLogsConfig.bind(this));
+
+        // Handlers pour sélecteurs canaux
+        this.handlers.selectMenu.set('autothread_add_channel', this.handleAutothreadAddChannel.bind(this));
+        this.handlers.selectMenu.set('autothread_remove_channel', this.handleAutothreadRemoveChannel.bind(this));
+        this.handlers.selectMenu.set('confession_add_channel', this.handleConfessionAddChannel.bind(this));
+        this.handlers.selectMenu.set('confession_remove_channel', this.handleConfessionRemoveChannel.bind(this));
+        this.handlers.selectMenu.set('confession_main_channel', this.handleConfessionMainChannel.bind(this));
         
         // Boutons Navigation
         this.handlers.button.set('economy_back_main', this.handleBackToMain.bind(this));
@@ -1166,21 +1173,65 @@ class InteractionHandler {
 
     // Nouveaux handlers pour autothread global
     async handleAutothreadChannelsConfig(interaction) {
+        const { ChannelSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
         const value = interaction.values[0];
         
         if (value === 'add_channel') {
+            const embed = new EmbedBuilder()
+                .setColor('#00FF00')
+                .setTitle('➕ Ajouter Canal Auto-Thread')
+                .setDescription('Sélectionnez un canal à ajouter pour l\'auto-thread global');
+
+            const channelSelect = new ChannelSelectMenuBuilder()
+                .setCustomId('autothread_add_channel')
+                .setPlaceholder('📱 Sélectionnez un canal à ajouter')
+                .setChannelTypes([0]); // Text channels
+
+            const components = [new ActionRowBuilder().addComponents(channelSelect)];
+
             await interaction.reply({
-                content: '➕ Sélectionnez un canal à ajouter pour l\'auto-thread.',
+                embeds: [embed],
+                components: components,
                 flags: 64
             });
         } else if (value === 'remove_channel') {
+            const embed = new EmbedBuilder()
+                .setColor('#FF0000')
+                .setTitle('➖ Retirer Canal Auto-Thread')
+                .setDescription('Sélectionnez un canal à retirer de l\'auto-thread global');
+
+            const channelSelect = new ChannelSelectMenuBuilder()
+                .setCustomId('autothread_remove_channel')
+                .setPlaceholder('📱 Sélectionnez un canal à retirer')
+                .setChannelTypes([0]); // Text channels
+
+            const components = [new ActionRowBuilder().addComponents(channelSelect)];
+
             await interaction.reply({
-                content: '➖ Sélectionnez un canal à retirer de l\'auto-thread.',
+                embeds: [embed],
+                components: components,
                 flags: 64
             });
         } else if (value === 'list_channels') {
+            const embed = new EmbedBuilder()
+                .setColor('#7289da')
+                .setTitle('📋 Canaux Auto-Thread Configurés')
+                .setDescription('Liste des canaux configurés pour l\'auto-thread global')
+                .addFields([
+                    {
+                        name: '📱 Canaux Actifs',
+                        value: '• Aucun canal configuré pour le moment',
+                        inline: false
+                    },
+                    {
+                        name: '💡 Information',
+                        value: 'Utilisez "Ajouter Canal" pour configurer l\'auto-thread sur vos canaux',
+                        inline: false
+                    }
+                ]);
+
             await interaction.reply({
-                content: '📋 Liste des canaux configurés pour l\'auto-thread:\n• Aucun canal configuré',
+                embeds: [embed],
                 flags: 64
             });
         }
@@ -1251,26 +1302,83 @@ class InteractionHandler {
 
     // Nouveaux handlers pour config-confession
     async handleConfessionChannelsConfig(interaction) {
+        const { ChannelSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
         const value = interaction.values[0];
         
         if (value === 'add_channel') {
+            const embed = new EmbedBuilder()
+                .setColor('#00FF00')
+                .setTitle('➕ Ajouter Canal Confessions')
+                .setDescription('Sélectionnez un canal pour recevoir les confessions anonymes');
+
+            const channelSelect = new ChannelSelectMenuBuilder()
+                .setCustomId('confession_add_channel')
+                .setPlaceholder('💭 Sélectionnez un canal confessions')
+                .setChannelTypes([0]); // Text channels
+
+            const components = [new ActionRowBuilder().addComponents(channelSelect)];
+
             await interaction.reply({
-                content: '➕ Sélectionnez un canal à ajouter pour les confessions.',
+                embeds: [embed],
+                components: components,
                 flags: 64
             });
         } else if (value === 'remove_channel') {
+            const embed = new EmbedBuilder()
+                .setColor('#FF0000')
+                .setTitle('➖ Retirer Canal Confessions')
+                .setDescription('Sélectionnez un canal à retirer des confessions');
+
+            const channelSelect = new ChannelSelectMenuBuilder()
+                .setCustomId('confession_remove_channel')
+                .setPlaceholder('💭 Canal à retirer')
+                .setChannelTypes([0]); // Text channels
+
+            const components = [new ActionRowBuilder().addComponents(channelSelect)];
+
             await interaction.reply({
-                content: '➖ Sélectionnez un canal à retirer des confessions.',
+                embeds: [embed],
+                components: components,
                 flags: 64
             });
         } else if (value === 'list_channels') {
+            const embed = new EmbedBuilder()
+                .setColor('#7289da')
+                .setTitle('📋 Canaux Confessions Configurés')
+                .setDescription('Liste des canaux configurés pour les confessions')
+                .addFields([
+                    {
+                        name: '💭 Canaux Actifs',
+                        value: '• Aucun canal configuré pour le moment',
+                        inline: false
+                    },
+                    {
+                        name: '💡 Information',
+                        value: 'Utilisez "Ajouter Canal" pour configurer la réception des confessions',
+                        inline: false
+                    }
+                ]);
+
             await interaction.reply({
-                content: '📋 Liste des canaux confessions:\n• Aucun canal configuré',
+                embeds: [embed],
                 flags: 64
             });
         } else if (value === 'main_channel') {
+            const embed = new EmbedBuilder()
+                .setColor('#FFD700')
+                .setTitle('🎯 Canal Principal Confessions')
+                .setDescription('Définissez le canal principal par défaut pour les confessions');
+
+            const channelSelect = new ChannelSelectMenuBuilder()
+                .setCustomId('confession_main_channel')
+                .setPlaceholder('🎯 Sélectionnez le canal principal')
+                .setChannelTypes([0]); // Text channels
+
+            const components = [new ActionRowBuilder().addComponents(channelSelect)];
+
             await interaction.reply({
-                content: '🎯 Définissez le canal principal pour les confessions.',
+                embeds: [embed],
+                components: components,
                 flags: 64
             });
         }
@@ -1326,6 +1434,57 @@ class InteractionHandler {
                 flags: 64
             });
         }
+    }
+
+    // Handlers pour channel selects
+    async handleAutothreadAddChannel(interaction) {
+        const channelId = interaction.values[0];
+        const channel = interaction.guild.channels.cache.get(channelId);
+        
+        await interaction.reply({
+            content: `✅ Canal **${channel.name}** ajouté à l'auto-thread global !`,
+            flags: 64
+        });
+    }
+
+    async handleAutothreadRemoveChannel(interaction) {
+        const channelId = interaction.values[0];
+        const channel = interaction.guild.channels.cache.get(channelId);
+        
+        await interaction.reply({
+            content: `❌ Canal **${channel.name}** retiré de l'auto-thread global !`,
+            flags: 64
+        });
+    }
+
+    async handleConfessionAddChannel(interaction) {
+        const channelId = interaction.values[0];
+        const channel = interaction.guild.channels.cache.get(channelId);
+        
+        await interaction.reply({
+            content: `✅ Canal **${channel.name}** ajouté aux canaux confessions !`,
+            flags: 64
+        });
+    }
+
+    async handleConfessionRemoveChannel(interaction) {
+        const channelId = interaction.values[0];
+        const channel = interaction.guild.channels.cache.get(channelId);
+        
+        await interaction.reply({
+            content: `❌ Canal **${channel.name}** retiré des canaux confessions !`,
+            flags: 64
+        });
+    }
+
+    async handleConfessionMainChannel(interaction) {
+        const channelId = interaction.values[0];
+        const channel = interaction.guild.channels.cache.get(channelId);
+        
+        await interaction.reply({
+            content: `🎯 Canal **${channel.name}** défini comme canal principal pour les confessions !`,
+            flags: 64
+        });
     }
 
     async handleBackToMain(interaction) {
