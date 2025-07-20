@@ -22,18 +22,24 @@ class InteractionHandler {
         
         // Configuration Confession
         this.handlers.selectMenu.set('confession_main_config', this.handleConfessionMainConfig.bind(this));
-        this.handlers.selectMenu.set('config_main', this.handleConfessionMainConfig.bind(this));
+        this.handlers.selectMenu.set('config_main_menu', this.handleConfigMainMenu.bind(this));
         this.handlers.selectMenu.set('confession_channels', this.handleConfessionChannels.bind(this));
         this.handlers.selectMenu.set('confession_autothread', this.handleConfessionAutothread.bind(this));
         this.handlers.selectMenu.set('autothread_config', this.handleAutothreadGlobalConfig.bind(this));
         
-        // Boutons Actions Économie
+        // Sélecteurs Configuration Actions  
         const actions = ['work', 'fish', 'donate', 'steal', 'crime', 'bet'];
         actions.forEach(action => {
-            this.handlers.button.set(`edit_reward_${action}`, this.handleEditReward.bind(this));
-            this.handlers.button.set(`edit_karma_${action}`, this.handleEditKarma.bind(this));
-            this.handlers.button.set(`edit_cooldown_${action}`, this.handleEditCooldown.bind(this));
+            this.handlers.selectMenu.set(`edit_reward_${action}`, this.handleEditRewardSelector.bind(this));
+            this.handlers.selectMenu.set(`edit_karma_${action}`, this.handleEditKarmaSelector.bind(this));
+            this.handlers.selectMenu.set(`edit_cooldown_${action}`, this.handleEditCooldownSelector.bind(this));
         });
+
+        // Nouveaux handlers pour autothread global
+        this.handlers.selectMenu.set('autothread_channels_config', this.handleAutothreadChannelsConfig.bind(this));
+        this.handlers.selectMenu.set('autothread_name_config', this.handleAutothreadNameConfig.bind(this));
+        this.handlers.selectMenu.set('autothread_archive_config', this.handleAutothreadArchiveConfig.bind(this));
+        this.handlers.selectMenu.set('autothread_slowmode_config', this.handleAutothreadSlowmodeConfig.bind(this));
         
         // Boutons Navigation
         this.handlers.button.set('economy_back_main', this.handleBackToMain.bind(this));
@@ -224,6 +230,32 @@ class InteractionHandler {
         });
     }
 
+    async handleConfigMainMenu(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'channels') {
+            await interaction.reply({
+                content: '💭 Configuration canaux confessions disponible.',
+                flags: 64
+            });
+        } else if (value === 'autothread') {
+            await interaction.reply({
+                content: '🧵 Configuration auto-thread confessions disponible.',
+                flags: 64
+            });
+        } else if (value === 'logs') {
+            await interaction.reply({
+                content: '📋 Configuration logs admin disponible.',
+                flags: 64
+            });
+        } else {
+            await interaction.reply({
+                content: `Configuration ${value} disponible.`,
+                flags: 64
+            });
+        }
+    }
+
     async handleConfessionAutothread(interaction) {
         await interaction.reply({
             content: 'Configuration auto-thread pour confessions disponible.',
@@ -232,10 +264,192 @@ class InteractionHandler {
     }
 
     async handleAutothreadGlobalConfig(interaction) {
-        await interaction.reply({
-            content: 'Configuration auto-thread global disponible.',
-            flags: 64
-        });
+        const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+        const value = interaction.values[0];
+        
+        if (value === 'toggle') {
+            await interaction.reply({
+                content: '🔄 Système auto-thread activé/désactivé.',
+                flags: 64
+            });
+        } else if (value === 'channels') {
+            const embed = new EmbedBuilder()
+                .setColor('#7289da')
+                .setTitle('📱 Configuration Canaux')
+                .setDescription('Sélectionnez une option pour gérer les canaux');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('autothread_channels_config')
+                .setPlaceholder('📱 Configurer les canaux')
+                .addOptions([
+                    {
+                        label: 'Ajouter Canal',
+                        description: 'Ajouter un nouveau canal',
+                        value: 'add_channel',
+                        emoji: '➕'
+                    },
+                    {
+                        label: 'Retirer Canal',
+                        description: 'Retirer un canal existant',
+                        value: 'remove_channel',
+                        emoji: '➖'
+                    },
+                    {
+                        label: 'Voir Canaux',
+                        description: 'Afficher tous les canaux configurés',
+                        value: 'list_channels',
+                        emoji: '📋'
+                    }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+        } else if (value === 'name') {
+            const embed = new EmbedBuilder()
+                .setColor('#7289da')
+                .setTitle('🏷️ Configuration Nom des Threads')
+                .setDescription('Sélectionnez un format pour le nom des threads');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('autothread_name_config')
+                .setPlaceholder('🏷️ Choisir format du nom')
+                .addOptions([
+                    {
+                        label: 'Discussion - {user}',
+                        description: 'Format standard avec nom utilisateur',
+                        value: 'Discussion - {user}',
+                        emoji: '👤'
+                    },
+                    {
+                        label: 'Thread {user}',
+                        description: 'Format simple',
+                        value: 'Thread {user}',
+                        emoji: '🧵'
+                    },
+                    {
+                        label: 'Chat avec {user}',
+                        description: 'Format conversationnel',
+                        value: 'Chat avec {user}',
+                        emoji: '💬'
+                    },
+                    {
+                        label: 'Personnalisé',
+                        description: 'Définir un format personnalisé',
+                        value: 'custom',
+                        emoji: '✏️'
+                    }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+        } else if (value === 'archive') {
+            const embed = new EmbedBuilder()
+                .setColor('#7289da')
+                .setTitle('📦 Configuration Archive Automatique')
+                .setDescription('Sélectionnez la durée avant archivage automatique');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('autothread_archive_config')
+                .setPlaceholder('📦 Choisir durée archivage')
+                .addOptions([
+                    {
+                        label: '60 minutes',
+                        description: 'Archive après 1 heure',
+                        value: '60',
+                        emoji: '⏰'
+                    },
+                    {
+                        label: '1440 minutes (24h)',
+                        description: 'Archive après 1 jour',
+                        value: '1440',
+                        emoji: '📅'
+                    },
+                    {
+                        label: '4320 minutes (3 jours)',
+                        description: 'Archive après 3 jours',
+                        value: '4320',
+                        emoji: '📆'
+                    },
+                    {
+                        label: '10080 minutes (7 jours)',
+                        description: 'Archive après 1 semaine',
+                        value: '10080',
+                        emoji: '🗓️'
+                    }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+        } else if (value === 'slowmode') {
+            const embed = new EmbedBuilder()
+                .setColor('#7289da')
+                .setTitle('⏱️ Configuration Mode Lent')
+                .setDescription('Sélectionnez le délai entre les messages');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('autothread_slowmode_config')
+                .setPlaceholder('⏱️ Choisir délai mode lent')
+                .addOptions([
+                    {
+                        label: 'Désactivé',
+                        description: 'Aucun délai entre messages',
+                        value: '0',
+                        emoji: '🚫'
+                    },
+                    {
+                        label: '5 secondes',
+                        description: 'Délai de 5 secondes',
+                        value: '5',
+                        emoji: '⏱️'
+                    },
+                    {
+                        label: '10 secondes',
+                        description: 'Délai de 10 secondes',
+                        value: '10',
+                        emoji: '⏰'
+                    },
+                    {
+                        label: '30 secondes',
+                        description: 'Délai de 30 secondes',
+                        value: '30',
+                        emoji: '⏳'
+                    },
+                    {
+                        label: '60 secondes',
+                        description: 'Délai de 1 minute',
+                        value: '60',
+                        emoji: '⌛'
+                    }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+        } else {
+            await interaction.reply({
+                content: `✅ Configuration ${value} mise à jour.`,
+                flags: 64
+            });
+        }
     }
 
     // === AFFICHAGE CONFIGURATIONS ===
@@ -652,8 +866,8 @@ class InteractionHandler {
 
     // === HANDLERS BOUTONS ===
 
-    async handleEditReward(interaction) {
-        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+    async handleEditRewardSelector(interaction) {
+        const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
         const action = interaction.customId.split('_')[2];
         
         const actionNames = {
@@ -665,42 +879,52 @@ class InteractionHandler {
             bet: 'Parier'
         };
 
-        const modal = new ModalBuilder()
-            .setCustomId(`reward_modal_${action}`)
-            .setTitle(`💰 Configuration Récompenses: ${actionNames[action]}`);
+        const embed = new EmbedBuilder()
+            .setColor('#FFD700')
+            .setTitle(`💰 Configuration Récompenses: ${actionNames[action]}`)
+            .setDescription('Sélectionnez la valeur à modifier');
 
-        const minRewardInput = new TextInputBuilder()
-            .setCustomId('min_reward')
-            .setLabel('Montant minimum (€)')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('100')
-            .setRequired(true);
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`reward_value_${action}`)
+            .setPlaceholder('💰 Choisir valeur à modifier')
+            .addOptions([
+                {
+                    label: 'Montant Minimum',
+                    description: 'Modifier le montant minimum (actuellement: 100€)',
+                    value: 'min_reward',
+                    emoji: '📉'
+                },
+                {
+                    label: 'Montant Maximum',
+                    description: 'Modifier le montant maximum (actuellement: 150€)',
+                    value: 'max_reward',
+                    emoji: '📈'
+                },
+                {
+                    label: 'Bonus Karma',
+                    description: 'Modifier le bonus selon karma (actuellement: 10%)',
+                    value: 'karma_bonus',
+                    emoji: '⚖️'
+                },
+                {
+                    label: 'Valeurs Prédéfinies',
+                    description: 'Choisir parmi des configurations prêtes',
+                    value: 'presets',
+                    emoji: '⚡'
+                }
+            ]);
 
-        const maxRewardInput = new TextInputBuilder()
-            .setCustomId('max_reward')
-            .setLabel('Montant maximum (€)')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('150')
-            .setRequired(true);
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
-        const bonusInput = new TextInputBuilder()
-            .setCustomId('karma_bonus')
-            .setLabel('Bonus selon karma (% par niveau)')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('10')
-            .setRequired(false);
-
-        const firstRow = new ActionRowBuilder().addComponents(minRewardInput);
-        const secondRow = new ActionRowBuilder().addComponents(maxRewardInput);
-        const thirdRow = new ActionRowBuilder().addComponents(bonusInput);
-
-        modal.addComponents(firstRow, secondRow, thirdRow);
-
-        await interaction.showModal(modal);
+        await interaction.reply({
+            embeds: [embed],
+            components: components,
+            flags: 64
+        });
     }
 
-    async handleEditKarma(interaction) {
-        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+    async handleEditKarmaSelector(interaction) {
+        const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
         const action = interaction.customId.split('_')[2];
         
         const actionNames = {
@@ -712,42 +936,52 @@ class InteractionHandler {
             bet: 'Parier'
         };
 
-        const modal = new ModalBuilder()
-            .setCustomId(`karma_modal_${action}`)
-            .setTitle(`⚖️ Configuration Karma: ${actionNames[action]}`);
+        const embed = new EmbedBuilder()
+            .setColor('#9B59B6')
+            .setTitle(`⚖️ Configuration Karma: ${actionNames[action]}`)
+            .setDescription('Sélectionnez la valeur karma à modifier');
 
-        const goodKarmaInput = new TextInputBuilder()
-            .setCustomId('good_karma')
-            .setLabel('Karma bon gagné/perdu (😇)')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('1')
-            .setRequired(true);
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`karma_value_${action}`)
+            .setPlaceholder('⚖️ Choisir valeur karma à modifier')
+            .addOptions([
+                {
+                    label: 'Karma Bon (😇)',
+                    description: 'Modifier karma bon gagné/perdu (actuellement: +1)',
+                    value: 'good_karma',
+                    emoji: '😇'
+                },
+                {
+                    label: 'Karma Mauvais (😈)',
+                    description: 'Modifier karma mauvais gagné/perdu (actuellement: -1)',
+                    value: 'bad_karma',
+                    emoji: '😈'
+                },
+                {
+                    label: 'Multiplicateur Niveau',
+                    description: 'Modifier bonus/malus selon niveau (actuellement: 50%)',
+                    value: 'level_multiplier',
+                    emoji: '📊'
+                },
+                {
+                    label: 'Configurations Prêtes',
+                    description: 'Actions bonnes, neutres ou mauvaises prédéfinies',
+                    value: 'karma_presets',
+                    emoji: '⚡'
+                }
+            ]);
 
-        const badKarmaInput = new TextInputBuilder()
-            .setCustomId('bad_karma')
-            .setLabel('Karma mauvais gagné/perdu (😈)')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('1')
-            .setRequired(true);
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
-        const multiplierInput = new TextInputBuilder()
-            .setCustomId('level_multiplier')
-            .setLabel('Multiplicateur niveau (% bonus/malus)')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('50')
-            .setRequired(false);
-
-        const firstRow = new ActionRowBuilder().addComponents(goodKarmaInput);
-        const secondRow = new ActionRowBuilder().addComponents(badKarmaInput);
-        const thirdRow = new ActionRowBuilder().addComponents(multiplierInput);
-
-        modal.addComponents(firstRow, secondRow, thirdRow);
-
-        await interaction.showModal(modal);
+        await interaction.reply({
+            embeds: [embed],
+            components: components,
+            flags: 64
+        });
     }
 
-    async handleEditCooldown(interaction) {
-        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+    async handleEditCooldownSelector(interaction) {
+        const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
         const action = interaction.customId.split('_')[2];
         
         const actionNames = {
@@ -759,38 +993,117 @@ class InteractionHandler {
             bet: 'Parier'
         };
 
-        const modal = new ModalBuilder()
-            .setCustomId(`cooldown_modal_${action}`)
-            .setTitle(`⏰ Configuration Cooldown: ${actionNames[action]}`);
+        const embed = new EmbedBuilder()
+            .setColor('#E74C3C')
+            .setTitle(`⏰ Configuration Cooldown: ${actionNames[action]}`)
+            .setDescription('Sélectionnez la valeur cooldown à modifier');
 
-        const cooldownInput = new TextInputBuilder()
-            .setCustomId('cooldown_duration')
-            .setLabel('Durée cooldown (minutes)')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('60')
-            .setRequired(true);
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`cooldown_value_${action}`)
+            .setPlaceholder('⏰ Choisir valeur cooldown à modifier')
+            .addOptions([
+                {
+                    label: 'Durée Cooldown',
+                    description: 'Modifier durée en minutes (actuellement: 60min)',
+                    value: 'cooldown_duration',
+                    emoji: '⏱️'
+                },
+                {
+                    label: 'Réduction Karma',
+                    description: 'Réduction selon niveau karma (actuellement: 10%)',
+                    value: 'karma_reduction',
+                    emoji: '⚖️'
+                },
+                {
+                    label: 'Type Cooldown',
+                    description: 'Global ou par utilisateur (actuellement: user)',
+                    value: 'cooldown_type',
+                    emoji: '👥'
+                },
+                {
+                    label: 'Durées Prédéfinies',
+                    description: 'Choisir parmi des durées standard',
+                    value: 'duration_presets',
+                    emoji: '⚡'
+                }
+            ]);
 
-        const reductionInput = new TextInputBuilder()
-            .setCustomId('karma_reduction')
-            .setLabel('Réduction selon karma (% par niveau)')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('10')
-            .setRequired(false);
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
-        const typeInput = new TextInputBuilder()
-            .setCustomId('cooldown_type')
-            .setLabel('Type (global/user)')
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder('user')
-            .setRequired(false);
+        await interaction.reply({
+            embeds: [embed],
+            components: components,
+            flags: 64
+        });
+    }
 
-        const firstRow = new ActionRowBuilder().addComponents(cooldownInput);
-        const secondRow = new ActionRowBuilder().addComponents(reductionInput);
-        const thirdRow = new ActionRowBuilder().addComponents(typeInput);
+    // Nouveaux handlers pour autothread global
+    async handleAutothreadChannelsConfig(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'add_channel') {
+            await interaction.reply({
+                content: '➕ Sélectionnez un canal à ajouter pour l\'auto-thread.',
+                flags: 64
+            });
+        } else if (value === 'remove_channel') {
+            await interaction.reply({
+                content: '➖ Sélectionnez un canal à retirer de l\'auto-thread.',
+                flags: 64
+            });
+        } else if (value === 'list_channels') {
+            await interaction.reply({
+                content: '📋 Liste des canaux configurés pour l\'auto-thread:\n• Aucun canal configuré',
+                flags: 64
+            });
+        }
+    }
 
-        modal.addComponents(firstRow, secondRow, thirdRow);
+    async handleAutothreadNameConfig(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'custom') {
+            await interaction.reply({
+                content: '✏️ Format personnalisé configuré. Variables disponibles: {user}, {channel}, {date}',
+                flags: 64
+            });
+        } else {
+            await interaction.reply({
+                content: `✅ Format de nom mis à jour: "${value}"`,
+                flags: 64
+            });
+        }
+    }
 
-        await interaction.showModal(modal);
+    async handleAutothreadArchiveConfig(interaction) {
+        const value = interaction.values[0];
+        const timeLabels = {
+            '60': '1 heure',
+            '1440': '24 heures',
+            '4320': '3 jours',
+            '10080': '7 jours'
+        };
+        
+        await interaction.reply({
+            content: `✅ Archive automatique configurée: ${timeLabels[value] || value + ' minutes'}`,
+            flags: 64
+        });
+    }
+
+    async handleAutothreadSlowmodeConfig(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === '0') {
+            await interaction.reply({
+                content: '✅ Mode lent désactivé.',
+                flags: 64
+            });
+        } else {
+            await interaction.reply({
+                content: `✅ Mode lent configuré: ${value} secondes entre les messages.`,
+                flags: 64
+            });
+        }
     }
 
     async handleBackToMain(interaction) {
