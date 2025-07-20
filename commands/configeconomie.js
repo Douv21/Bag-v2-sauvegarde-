@@ -74,21 +74,27 @@ module.exports = {
                 },
                 {
                     label: 'Système Karma',
-                    description: 'Configuration karma 😇😈 et effets',
+                    description: 'Configuration sanctions et récompenses',
                     value: 'karma',
                     emoji: '⚖️'
                 },
                 {
-                    label: 'Configuration Daily',
-                    description: 'Récompense quotidienne des utilisateurs',
+                    label: 'Daily/Récompenses',
+                    description: 'Récompenses quotidiennes et streaks',
                     value: 'daily',
                     emoji: '🎁'
                 },
                 {
-                    label: 'Récompenses Messages',
-                    description: 'Gains automatiques pour chaque message',
+                    label: 'Messages',
+                    description: 'Gains automatiques par message',
                     value: 'messages',
                     emoji: '💬'
+                },
+                {
+                    label: 'Statistiques',
+                    description: 'Données du système économique',
+                    value: 'stats',
+                    emoji: '📊'
                 }
             ]);
 
