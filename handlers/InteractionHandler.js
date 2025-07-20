@@ -74,6 +74,11 @@ class InteractionHandler {
         // STATISTIQUES
         this.handlers.selectMenu.set('economy_stats_action', this.economyHandler.handleStatsAction.bind(this.economyHandler));
         
+        // CARTE HOLOGRAPHIQUE PROFIL-UTILISATEUR
+        this.handlers.button.set('card_flip', this.handleCardFlip.bind(this));
+        this.handlers.button.set('card_shine', this.handleCardShine.bind(this));
+        this.handlers.button.set('card_stats', this.handleCardStats.bind(this));
+        
         // NOUVEAUX HANDLERS BOUTIQUE AVANCÉE
         this.handlers.selectMenu.set('economy_shop_role_type_select', this.economyHandler.handleShopRoleTypeSelect.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_shop_permanent_price_select', this.economyHandler.handleShopPermanentPriceSelect.bind(this.economyHandler));
@@ -2616,6 +2621,219 @@ class InteractionHandler {
                 flags: 64
             });
         }
+    }
+
+    // === HANDLERS CARTE HOLOGRAPHIQUE ===
+    
+    async handleCardFlip(interaction) {
+        try {
+            const userId = interaction.customId.split('_')[2];
+            const targetUser = await this.client.users.fetch(userId);
+            const guildId = interaction.guild.id;
+            
+            // Récupérer données utilisateur pour la face arrière
+            const users = await this.dataManager.getData('users');
+            const userKey = `${userId}_${guildId}`;
+            const userData = users[userKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
+            
+            // Créer embed face arrière avec historique des actions
+            const backEmbed = new EmbedBuilder()
+                .setColor('#2f3136')
+                .setTitle('🔄 Face Arrière - Historique des Actions')
+                .setDescription(`\`\`\`
+╔═══════════════════════════════════════════╗
+║           HISTORIQUE D'ACTIVITÉ           ║
+╠═══════════════════════════════════════════╣
+║                                           ║
+║  💼 Dernière activité:                    ║
+║     ${userData.lastWork ? '✅ Travail récent' : '❌ Pas de travail'}                     ║
+║     ${userData.lastFish ? '✅ Pêche récente' : '❌ Pas de pêche'}                      ║
+║     ${userData.lastDonate ? '✅ Don récent' : '❌ Pas de don'}                        ║
+║                                           ║
+║  🎲 Actions risquées:                     ║
+║     ${userData.lastSteal ? '🔴 Vol récent' : '🟢 Pas de vol'}                        ║
+║     ${userData.lastCrime ? '🔴 Crime récent' : '🟢 Pas de crime'}                      ║
+║     ${userData.lastBet ? '🔴 Pari récent' : '🟢 Pas de pari'}                       ║
+║                                           ║
+║  📊 Progression morale:                   ║
+║     Karma Positif: ${(userData.karmaGood || 0).toString().padStart(3)} actions           ║
+║     Karma Négatif: ${(userData.karmaBad || 0).toString().padStart(3)} actions           ║
+║                                           ║
+║  🏆 Réalisations:                         ║
+║     Messages: ${(userData.messageCount || 0).toString().padStart(5)} messages           ║
+║     Streak Daily: ${(userData.dailyStreak || 0).toString().padStart(3)} jours             ║
+║                                           ║
+╚═══════════════════════════════════════════╝
+\`\`\``)
+                .setThumbnail(targetUser.displayAvatarURL())
+                .setFooter({ text: 'Carte retournée • Cliquez encore pour revenir' });
+
+            await interaction.update({
+                embeds: [backEmbed]
+            });
+
+        } catch (error) {
+            console.error('❌ Erreur card flip:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du retournement de carte.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleCardShine(interaction) {
+        try {
+            const userId = interaction.customId.split('_')[2];
+            const targetUser = await this.client.users.fetch(userId);
+            
+            // Effet holographique avec animations textuelles
+            const shineEmbed = new EmbedBuilder()
+                .setColor('#ff6b9d')
+                .setTitle('✨ EFFET HOLOGRAPHIQUE ACTIVÉ ✨')
+                .setDescription(`\`\`\`
+    ✦       ✧       ✦       ✧       ✦
+  ✧   ✦ ${targetUser.displayName} ✦   ✧
+✦       ✧       ✦       ✧       ✦
+  ✧   ✦  CARTE BRILLANTE  ✦   ✧
+✦       ✧       ✦       ✧       ✦
+  ✧   ✦   EFFET SPÉCIAL   ✦   ✧
+✦       ✧       ✦       ✧       ✦
+
+💫 Particules holographiques activées
+🌟 Reflets arc-en-ciel visibles
+⭐ Texture métallisée brillante
+✨ Effet 3D en mouvement
+🎆 Scintillement premium
+
+╔═══════════════════════════════════════╗
+║ Cette carte possède des propriétés   ║
+║ holographiques uniques qui changent  ║
+║ d'aspect selon l'angle de vue !      ║
+╚═══════════════════════════════════════╝
+\`\`\``)
+                .setThumbnail(targetUser.displayAvatarURL())
+                .setFooter({ text: 'Effet holographique • Durée: 10 secondes' });
+
+            await interaction.update({
+                embeds: [shineEmbed]
+            });
+
+            // Retour automatique après 10 secondes
+            setTimeout(async () => {
+                try {
+                    const originalEmbed = new EmbedBuilder()
+                        .setColor('#4CAF50')
+                        .setTitle('🎴 Carte Profil Holographique')
+                        .setDescription(`Profil de ${targetUser.displayName} restauré`)
+                        .setThumbnail(targetUser.displayAvatarURL())
+                        .setFooter({ text: 'Effet holographique terminé' });
+
+                    await interaction.editReply({
+                        embeds: [originalEmbed]
+                    });
+                } catch (timeoutError) {
+                    console.error('❌ Erreur timeout shine:', timeoutError);
+                }
+            }, 10000);
+
+        } catch (error) {
+            console.error('❌ Erreur card shine:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de l\'effet holographique.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleCardStats(interaction) {
+        try {
+            const userId = interaction.customId.split('_')[2];
+            const targetUser = await this.client.users.fetch(userId);
+            const guildId = interaction.guild.id;
+            
+            // Récupérer données utilisateur
+            const users = await this.dataManager.getData('users');
+            const userKey = `${userId}_${guildId}`;
+            const userData = users[userKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
+            
+            // Calculer statistiques avancées
+            const karmaNet = (userData.karmaGood || 0) - (userData.karmaBad || 0);
+            const totalActions = [
+                userData.lastWork, userData.lastFish, userData.lastSteal,
+                userData.lastCrime, userData.lastBet, userData.lastDonate
+            ].filter(Boolean).length;
+            
+            // Calculer temps depuis dernières actions
+            const now = Date.now();
+            const getTimeAgo = (timestamp) => {
+                if (!timestamp) return 'Jamais';
+                const hours = Math.floor((now - timestamp) / (1000 * 60 * 60));
+                if (hours < 1) return 'Moins d\'1h';
+                if (hours < 24) return `${hours}h`;
+                return `${Math.floor(hours/24)}j`;
+            };
+
+            const statsEmbed = new EmbedBuilder()
+                .setColor('#e74c3c')
+                .setTitle('📊 Statistiques Détaillées')
+                .setDescription(`Analyse complète du profil de ${targetUser.displayName}`)
+                .addFields([
+                    {
+                        name: '💰 Économie Avancée',
+                        value: `**Balance:** ${(userData.balance || 0).toLocaleString()}€
+**Rang Économique:** ${this.getEconomicRank(userData.balance)}
+**Activité:** ${totalActions} actions totales`,
+                        inline: true
+                    },
+                    {
+                        name: '⚖️ Analyse Karma',
+                        value: `**😇 Positif:** ${userData.karmaGood || 0}
+**😈 Négatif:** ${userData.karmaBad || 0}
+**📊 Balance:** ${karmaNet >= 0 ? '+' : ''}${karmaNet}
+**Ratio:** ${this.getKarmaRatio(userData.karmaGood, userData.karmaBad)}`,
+                        inline: true
+                    },
+                    {
+                        name: '⏰ Dernières Activités',
+                        value: `**💼 Travail:** ${getTimeAgo(userData.lastWork)}
+**🎣 Pêche:** ${getTimeAgo(userData.lastFish)}
+**💖 Don:** ${getTimeAgo(userData.lastDonate)}
+**🎲 Pari:** ${getTimeAgo(userData.lastBet)}
+**💀 Crime:** ${getTimeAgo(userData.lastCrime)}
+**🦹 Vol:** ${getTimeAgo(userData.lastSteal)}`,
+                        inline: false
+                    }
+                ])
+                .setThumbnail(targetUser.displayAvatarURL())
+                .setFooter({ text: 'Statistiques complètes • Données en temps réel' });
+
+            await interaction.update({
+                embeds: [statsEmbed]
+            });
+
+        } catch (error) {
+            console.error('❌ Erreur card stats:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de l\'affichage des statistiques.',
+                flags: 64
+            });
+        }
+    }
+
+    // Méthodes utilitaires pour les cartes
+    getEconomicRank(balance) {
+        if (balance >= 10000) return 'Millionnaire 💎';
+        if (balance >= 5000) return 'Riche 💰';
+        if (balance >= 1000) return 'Aisé 💵';
+        if (balance >= 500) return 'Modeste 💳';
+        return 'Débutant 🪙';
+    }
+
+    getKarmaRatio(good, bad) {
+        if (!bad) return good ? '100% Bon' : 'Neutre';
+        if (!good) return '100% Mauvais';
+        const ratio = Math.round((good / (good + bad)) * 100);
+        return `${ratio}% Bon`;
     }
 }
 
