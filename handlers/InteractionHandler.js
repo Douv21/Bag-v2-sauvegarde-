@@ -29,6 +29,7 @@ class InteractionHandler {
         // === CONFIGURATION ÉCONOMIE ===
         this.handlers.selectMenu.set('economy_main_config', this.handleEconomyMainConfig.bind(this));
         this.handlers.selectMenu.set('economy_action_config', this.handleEconomyActionConfig.bind(this));
+        this.handlers.selectMenu.set('karma_config_menu', this.handleKarmaConfigMenu.bind(this));
         this.handlers.selectMenu.set('shop_purchase', this.handleShopPurchase.bind(this));
         
         // === CONFESSION SYSTEM ===
@@ -57,6 +58,7 @@ class InteractionHandler {
         this.handlers.button.set('edit_cooldown_bet', this.handleEditCooldown.bind(this));
         this.handlers.button.set('economy_back_actions', this.handleBackToActions.bind(this));
         this.handlers.button.set('toggle_message_rewards', this.handleToggleMessageRewards.bind(this));
+        this.handlers.button.set('karma_force_reset', this.handleKarmaForceReset.bind(this));
     }
 
     async handle(interaction) {
@@ -229,17 +231,22 @@ class InteractionHandler {
         const embed = new EmbedBuilder()
             .setColor('#9932cc')
             .setTitle('💼 Configuration Actions Économiques')
-            .setDescription('Configurez toutes les actions économiques avec leurs récompenses et karma')
+            .setDescription('Configurez toutes les actions avec karma paramétrable et récompenses automatiques')
             .addFields([
                 {
                     name: '😇 Actions Positives',
-                    value: '**Travailler** - Gain argent + karma bon\n**Pêcher** - Gain variable + karma bon\n**Donner** - Transfert + gros karma bon',
+                    value: '**Travailler** (+1😇 -1😈)\n**Pêcher** (+1😇 -1😈)\n**Donner** (+3😇 -2😈)',
                     inline: true
                 },
                 {
-                    name: '😈 Actions Négatives',
-                    value: '**Voler** - Gain/risque + karma mauvais\n**Crime** - Gros gain/risque + gros karma mauvais\n**Parier** - Gambling + karma mauvais',
+                    name: '😈 Actions Négatives', 
+                    value: '**Voler** (-1😇 +1😈)\n**Crime** (-3😇 +3😈)\n**Parier** (-1😇 +1😈)',
                     inline: true
+                },
+                {
+                    name: '⚖️ Système Automatique',
+                    value: 'Récompenses/sanctions selon karma\nReset hebdomadaire configurable\nMultiplicateurs bonus/malus',
+                    inline: false
                 }
             ]);
 
@@ -302,35 +309,77 @@ class InteractionHandler {
     }
 
     async showKarmaConfig(interaction) {
-        const { EmbedBuilder } = require('discord.js');
+        const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
         
         const embed = new EmbedBuilder()
             .setColor('#9932cc')
-            .setTitle('⚖️ Configuration Système Karma')
-            .setDescription('Configurez les effets du karma sur l\'économie')
+            .setTitle('⚖️ Configuration Système Karma Avancé')
+            .setDescription('Système automatique avec récompenses/sanctions et reset hebdomadaire')
             .addFields([
                 {
-                    name: '😇 Karma Positif',
-                    value: '• Bonus daily rewards\n• Accès objets spéciaux\n• Réduction cooldowns',
-                    inline: true
-                },
-                {
-                    name: '😈 Karma Négatif',
-                    value: '• Malus sur gains\n• Cooldowns prolongés\n• Restrictions boutique',
-                    inline: true
-                },
-                {
-                    name: '⚖️ Statuts Moraux',
-                    value: '**😇 Saint** (+10+)\n**😇 Bon** (+1 à +9)\n**😐 Neutre** (0)\n**😈 Mauvais** (-1 à -9)\n**😈 Diabolique** (-10-)',
+                    name: '🏆 Niveaux et Récompenses',
+                    value: '**😇 Saint** (+10+): +500€, x1.5 daily, -30% cooldown\n**😇 Bon** (+1/+9): +200€, x1.2 daily, -10% cooldown\n**😐 Neutre** (0): Aucun effet\n**😈 Mauvais** (-1/-9): -100€, x0.8 daily, +20% cooldown\n**😈 Diabolique** (-10-): -300€, x0.5 daily, +50% cooldown',
                     inline: false
+                },
+                {
+                    name: '📅 Reset Automatique',
+                    value: 'Reset chaque semaine (configurable)\nRécompenses distribuées avant reset\nTous les karma remis à 0',
+                    inline: true
+                },
+                {
+                    name: '⚙️ Actions Configurables',
+                    value: 'Gains karma bon/mauvais par action\nEffets personnalisables\nActivation/désactivation par action',
+                    inline: true
                 }
             ]);
 
-        await interaction.reply({
-            embeds: [embed],
-            content: 'Configuration karma en cours de développement.',
-            flags: 64
-        });
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('karma_config_menu')
+            .setPlaceholder('⚖️ Configurer le système karma')
+            .addOptions([
+                {
+                    label: 'Niveaux et Récompenses',
+                    description: 'Configurer les récompenses par niveau karma',
+                    value: 'levels',
+                    emoji: '🏆'
+                },
+                {
+                    label: 'Reset Hebdomadaire',
+                    description: 'Jour et fréquence de réinitialisation',
+                    value: 'reset',
+                    emoji: '📅'
+                },
+                {
+                    label: 'Karma par Action',
+                    description: 'Configurer karma gagné/perdu par action',
+                    value: 'actions',
+                    emoji: '⚙️'
+                }
+            ]);
+
+        const resetButton = new ButtonBuilder()
+            .setCustomId('karma_force_reset')
+            .setLabel('Reset Immédiat')
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji('🔄');
+
+        const components = [
+            new ActionRowBuilder().addComponents(selectMenu),
+            new ActionRowBuilder().addComponents(resetButton)
+        ];
+
+        if (interaction.deferred) {
+            await interaction.editReply({
+                embeds: [embed],
+                components: components
+            });
+        } else {
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+        }
     }
 
     async showShopConfig(interaction) {
@@ -566,6 +615,155 @@ class InteractionHandler {
     async handleToggleMessageRewards(interaction) {
         await interaction.reply({
             content: 'Toggle récompenses messages en cours de développement.',
+            flags: 64
+        });
+    }
+
+    async handleKarmaConfigMenu(interaction) {
+        const value = interaction.values[0];
+        
+        switch(value) {
+            case 'levels':
+                await this.showKarmaLevelsConfig(interaction);
+                break;
+            case 'reset':
+                await this.showKarmaResetConfig(interaction);
+                break;
+            case 'actions':
+                await this.showKarmaActionsConfig(interaction);
+                break;
+            default:
+                await interaction.reply({
+                    content: `Configuration ${value} en cours de développement.`,
+                    flags: 64
+                });
+        }
+    }
+
+    async handleKarmaForceReset(interaction) {
+        await interaction.reply({
+            content: '🔄 Reset karma forcé en cours de développement.\n\nCette action va :\n• Distribuer les récompenses actuelles\n• Remettre tous les karma à 0\n• Logger l\'action dans les statistiques',
+            flags: 64
+        });
+    }
+
+    async showKarmaLevelsConfig(interaction) {
+        const { EmbedBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#ffd700')
+            .setTitle('🏆 Configuration Niveaux Karma')
+            .setDescription('Récompenses automatiques selon le niveau de karma')
+            .addFields([
+                {
+                    name: '😇 Saint (+10 karma+)',
+                    value: '💰 +500€ | 🎁 x1.5 daily | ⏰ -30% cooldown',
+                    inline: true
+                },
+                {
+                    name: '😇 Bon (+1 à +9 karma)',
+                    value: '💰 +200€ | 🎁 x1.2 daily | ⏰ -10% cooldown',
+                    inline: true
+                },
+                {
+                    name: '😐 Neutre (0 karma)',
+                    value: '💰 Aucun effet | 🎁 Normal | ⏰ Normal',
+                    inline: true
+                },
+                {
+                    name: '😈 Mauvais (-1 à -9 karma)',
+                    value: '💰 -100€ | 🎁 x0.8 daily | ⏰ +20% cooldown',
+                    inline: true
+                },
+                {
+                    name: '😈 Diabolique (-10 karma-)',
+                    value: '💰 -300€ | 🎁 x0.5 daily | ⏰ +50% cooldown',
+                    inline: true
+                }
+            ]);
+
+        await interaction.reply({
+            embeds: [embed],
+            content: '⚙️ Configuration des récompenses par niveau en cours de développement.',
+            flags: 64
+        });
+    }
+
+    async showKarmaResetConfig(interaction) {
+        const { EmbedBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#ff6b6b')
+            .setTitle('📅 Configuration Reset Hebdomadaire')
+            .setDescription('Paramètres de réinitialisation automatique du karma')
+            .addFields([
+                {
+                    name: 'Jour actuel',
+                    value: 'Lundi (configurable)',
+                    inline: true
+                },
+                {
+                    name: 'Prochain reset',
+                    value: 'Dans 5 jours',
+                    inline: true
+                },
+                {
+                    name: 'Actions du reset',
+                    value: '1. Distribution récompenses\n2. Reset karma à 0\n3. Log des statistiques',
+                    inline: false
+                }
+            ]);
+
+        await interaction.reply({
+            embeds: [embed],
+            content: '📅 Configuration du jour de reset en cours de développement.',
+            flags: 64
+        });
+    }
+
+    async showKarmaActionsConfig(interaction) {
+        const { EmbedBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle('⚙️ Configuration Karma par Action')
+            .setDescription('Paramètres karma gagnés/perdus pour chaque action économique')
+            .addFields([
+                {
+                    name: '💼 Travailler',
+                    value: '😇 +1 karma bon | 😈 -1 karma mauvais',
+                    inline: true
+                },
+                {
+                    name: '🎣 Pêcher', 
+                    value: '😇 +1 karma bon | 😈 -1 karma mauvais',
+                    inline: true
+                },
+                {
+                    name: '💝 Donner',
+                    value: '😇 +3 karma bon | 😈 -2 karma mauvais',
+                    inline: true
+                },
+                {
+                    name: '💸 Voler',
+                    value: '😇 -1 karma bon | 😈 +1 karma mauvais',
+                    inline: true
+                },
+                {
+                    name: '🔫 Crime',
+                    value: '😇 -3 karma bon | 😈 +3 karma mauvais',
+                    inline: true
+                },
+                {
+                    name: '🎰 Parier',
+                    value: '😇 -1 karma bon | 😈 +1 karma mauvais',
+                    inline: true
+                }
+            ]);
+
+        await interaction.reply({
+            embeds: [embed],
+            content: '⚙️ Configuration karma par action en cours de développement.',
             flags: 64
         });
     }
