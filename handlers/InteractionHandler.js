@@ -38,7 +38,23 @@ class InteractionHandler {
         this.handlers.button.set('economy_back_main', this.handleBackToMain.bind(this));
         this.handlers.button.set('config_back_main', this.handleBackToMain.bind(this));
         this.handlers.button.set('edit_reward_work', this.handleEditReward.bind(this));
+        this.handlers.button.set('edit_karma_work', this.handleEditKarma.bind(this));
         this.handlers.button.set('edit_cooldown_work', this.handleEditCooldown.bind(this));
+        this.handlers.button.set('edit_reward_fish', this.handleEditReward.bind(this));
+        this.handlers.button.set('edit_karma_fish', this.handleEditKarma.bind(this));
+        this.handlers.button.set('edit_cooldown_fish', this.handleEditCooldown.bind(this));
+        this.handlers.button.set('edit_reward_donate', this.handleEditReward.bind(this));
+        this.handlers.button.set('edit_karma_donate', this.handleEditKarma.bind(this));
+        this.handlers.button.set('edit_cooldown_donate', this.handleEditCooldown.bind(this));
+        this.handlers.button.set('edit_reward_steal', this.handleEditReward.bind(this));
+        this.handlers.button.set('edit_karma_steal', this.handleEditKarma.bind(this));
+        this.handlers.button.set('edit_cooldown_steal', this.handleEditCooldown.bind(this));
+        this.handlers.button.set('edit_reward_crime', this.handleEditReward.bind(this));
+        this.handlers.button.set('edit_karma_crime', this.handleEditKarma.bind(this));
+        this.handlers.button.set('edit_cooldown_crime', this.handleEditCooldown.bind(this));
+        this.handlers.button.set('edit_reward_bet', this.handleEditReward.bind(this));
+        this.handlers.button.set('edit_karma_bet', this.handleEditKarma.bind(this));
+        this.handlers.button.set('edit_cooldown_bet', this.handleEditCooldown.bind(this));
         this.handlers.button.set('economy_back_actions', this.handleBackToActions.bind(this));
         this.handlers.button.set('toggle_message_rewards', this.handleToggleMessageRewards.bind(this));
     }
@@ -232,38 +248,38 @@ class InteractionHandler {
             .setPlaceholder('💼 Sélectionner une action à configurer')
             .addOptions([
                 {
-                    label: 'Travailler',
-                    description: 'Configurer travail (+argent +😇)',
+                    label: 'Travailler 💼',
+                    description: 'Gains: 100-150€ | Karma: +1😇 | Cooldown: 1h',
                     value: 'work',
                     emoji: '💼'
                 },
                 {
-                    label: 'Pêcher',
-                    description: 'Configurer pêche (+argent +😇)',
+                    label: 'Pêcher 🎣',
+                    description: 'Gains variables | Karma: +1😇 | Cooldown: 1h30',
                     value: 'fish',
                     emoji: '🎣'
                 },
                 {
-                    label: 'Donner',
-                    description: 'Configurer dons (+3😇)',
+                    label: 'Donner 💝',
+                    description: 'Transfert argent | Karma: +3😇 | Cooldown: 1h',
                     value: 'donate',
                     emoji: '💝'
                 },
                 {
-                    label: 'Voler',
-                    description: 'Configurer vol (+😈)',
+                    label: 'Voler 💸',
+                    description: 'Vol avec risque | Karma: +1😈 | Cooldown: 2h',
                     value: 'steal',
                     emoji: '💸'
                 },
                 {
-                    label: 'Crime',
-                    description: 'Configurer crime (+3😈)',
+                    label: 'Crime 🔫',
+                    description: 'Gros gains/risques | Karma: +3😈 | Cooldown: 4h',
                     value: 'crime',
                     emoji: '🔫'
                 },
                 {
-                    label: 'Parier',
-                    description: 'Configurer pari (+😈)',
+                    label: 'Parier 🎰',
+                    description: 'Gambling 45% | Karma: +1😈 | Cooldown: 30min',
                     value: 'bet',
                     emoji: '🎰'
                 }
@@ -363,19 +379,151 @@ class InteractionHandler {
     }
 
     async showActionSettings(interaction, action) {
-        const actionNames = {
-            work: 'Travailler 💼',
-            fish: 'Pêcher 🎣',
-            donate: 'Donner 💝',
-            steal: 'Voler 💸',
-            crime: 'Crime 🔫',
-            bet: 'Parier 🎰'
+        const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
+        
+        const actionConfig = {
+            work: {
+                name: 'Travailler 💼',
+                description: 'Action positive qui génère de l\'argent et du karma bon',
+                currentSettings: {
+                    minReward: 100,
+                    maxReward: 150,
+                    karmaGood: 1,
+                    karmaBad: 0,
+                    cooldown: 3600000 // 1h en ms
+                }
+            },
+            fish: {
+                name: 'Pêcher 🎣',
+                description: 'Action positive avec gains variables selon la chance',
+                currentSettings: {
+                    minReward: 50,
+                    maxReward: 200,
+                    karmaGood: 1,
+                    karmaBad: 0,
+                    cooldown: 5400000 // 1h30 en ms
+                }
+            },
+            donate: {
+                name: 'Donner 💝',
+                description: 'Action très positive qui transfère de l\'argent',
+                currentSettings: {
+                    minReward: 0,
+                    maxReward: 0,
+                    karmaGood: 3,
+                    karmaBad: 0,
+                    cooldown: 3600000 // 1h en ms
+                }
+            },
+            steal: {
+                name: 'Voler 💸',
+                description: 'Action négative avec risques et récompenses',
+                currentSettings: {
+                    minReward: 50,
+                    maxReward: 100,
+                    karmaGood: 0,
+                    karmaBad: 1,
+                    cooldown: 7200000 // 2h en ms
+                }
+            },
+            crime: {
+                name: 'Crime 🔫',
+                description: 'Action très négative avec gros gains mais gros risques',
+                currentSettings: {
+                    minReward: 200,
+                    maxReward: 500,
+                    karmaGood: 0,
+                    karmaBad: 3,
+                    cooldown: 14400000 // 4h en ms
+                }
+            },
+            bet: {
+                name: 'Parier 🎰',
+                description: 'Action négative de gambling avec 45% de chance',
+                currentSettings: {
+                    minReward: 0,
+                    maxReward: 200,
+                    karmaGood: 0,
+                    karmaBad: 1,
+                    cooldown: 1800000 // 30min en ms
+                }
+            }
         };
 
-        await interaction.reply({
-            content: `Configuration de l'action ${actionNames[action] || action} en cours de développement.`,
-            flags: 64
-        });
+        const config = actionConfig[action];
+        if (!config) {
+            await interaction.reply({
+                content: 'Action non trouvée.',
+                flags: 64
+            });
+            return;
+        }
+
+        const cooldownHours = Math.floor(config.currentSettings.cooldown / 3600000);
+        const cooldownMins = Math.floor((config.currentSettings.cooldown % 3600000) / 60000);
+        const cooldownText = cooldownHours > 0 ? `${cooldownHours}h${cooldownMins > 0 ? cooldownMins + 'min' : ''}` : `${cooldownMins}min`;
+
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle(`⚙️ Configuration: ${config.name}`)
+            .setDescription(config.description)
+            .addFields([
+                {
+                    name: '💰 Récompenses',
+                    value: config.currentSettings.minReward === config.currentSettings.maxReward 
+                        ? `**${config.currentSettings.minReward}€**`
+                        : `**${config.currentSettings.minReward}€** - **${config.currentSettings.maxReward}€**`,
+                    inline: true
+                },
+                {
+                    name: '⚖️ Karma',
+                    value: `😇 +${config.currentSettings.karmaGood} | 😈 +${config.currentSettings.karmaBad}`,
+                    inline: true
+                },
+                {
+                    name: '⏰ Cooldown',
+                    value: `**${cooldownText}**`,
+                    inline: true
+                }
+            ]);
+
+        const buttons = [
+            new ButtonBuilder()
+                .setCustomId(`edit_reward_${action}`)
+                .setLabel('Modifier Récompenses')
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji('💰'),
+            new ButtonBuilder()
+                .setCustomId(`edit_karma_${action}`)
+                .setLabel('Modifier Karma')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('⚖️'),
+            new ButtonBuilder()
+                .setCustomId(`edit_cooldown_${action}`)
+                .setLabel('Modifier Cooldown')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('⏰'),
+            new ButtonBuilder()
+                .setCustomId('economy_back_actions')
+                .setLabel('Retour')
+                .setStyle(ButtonStyle.Danger)
+                .setEmoji('↩️')
+        ];
+
+        const components = [new ActionRowBuilder().addComponents(buttons)];
+
+        if (interaction.deferred) {
+            await interaction.editReply({
+                embeds: [embed],
+                components: components
+            });
+        } else {
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+        }
     }
 
     async sendNotImplemented(interaction, feature) {
@@ -388,15 +536,25 @@ class InteractionHandler {
     // === HANDLERS BOUTONS ===
 
     async handleEditReward(interaction) {
+        const action = interaction.customId.split('_')[2]; // extract action from button id
         await interaction.reply({
-            content: 'Modification des récompenses en cours de développement.',
+            content: `💰 Modification des récompenses pour l'action ${action} en cours de développement.\n\nProchainement vous pourrez configurer:\n• Montant minimum\n• Montant maximum\n• Bonus selon le karma`,
+            flags: 64
+        });
+    }
+
+    async handleEditKarma(interaction) {
+        const action = interaction.customId.split('_')[2]; // extract action from button id
+        await interaction.reply({
+            content: `⚖️ Configuration karma pour l'action ${action} en cours de développement.\n\nProchainement vous pourrez configurer:\n• Karma bon gagné (😇)\n• Karma mauvais gagné (😈)\n• Multiplicateurs selon le niveau`,
             flags: 64
         });
     }
 
     async handleEditCooldown(interaction) {
+        const action = interaction.customId.split('_')[2]; // extract action from button id
         await interaction.reply({
-            content: 'Modification des cooldowns en cours de développement.',
+            content: `⏰ Configuration cooldown pour l'action ${action} en cours de développement.\n\nProchainement vous pourrez configurer:\n• Durée du cooldown\n• Réduction selon le karma\n• Cooldown global ou par utilisateur`,
             flags: 64
         });
     }
