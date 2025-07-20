@@ -9,7 +9,9 @@ class InteractionHandler {
         this.handlers = {
             selectMenu: new Map(),
             button: new Map(),
-            modal: new Map()
+            modal: new Map(),
+            channelSelect: new Map(),
+            roleSelect: new Map()
         };
         
         this.setupHandlers();
@@ -58,6 +60,10 @@ class InteractionHandler {
         this.handlers.channelSelect.set('confession_remove_channel', this.handleConfessionRemoveChannel.bind(this));
         this.handlers.channelSelect.set('confession_log_channel', this.confessionHandler.handleConfessionLogChannel.bind(this.confessionHandler));
         
+        // Handlers pour sélecteurs de rôles
+        this.handlers.roleSelect.set('confession_log_ping_roles', this.confessionHandler.handleConfessionLogPingRoles.bind(this.confessionHandler));
+        this.handlers.roleSelect.set('confession_ping_roles', this.confessionHandler.handleConfessionPingRoles.bind(this.confessionHandler));
+        
         // Handlers pour sélecteurs modaux et toggles
         this.handlers.selectMenu.set('confession_archive_time', this.handleConfessionArchiveTime.bind(this));
         this.handlers.selectMenu.set('confession_thread_format', this.handleConfessionThreadFormat.bind(this));
@@ -93,6 +99,8 @@ class InteractionHandler {
                     await this.handleButton(interaction);
                 } else if (interaction.isModalSubmit()) {
                     await this.handleModal(interaction);
+                } else if (interaction.isRoleSelectMenu()) {
+                    await this.handleRoleSelect(interaction);
                 }
             } catch (error) {
                 console.error('Erreur interaction:', error);
@@ -134,6 +142,23 @@ class InteractionHandler {
             console.log('Handlers disponibles:', Array.from(this.handlers.channelSelect.keys()));
             await interaction.reply({
                 content: `Handler canal non trouvé pour ${interaction.customId}.`,
+                flags: 64
+            });
+        }
+    }
+
+    async handleRoleSelect(interaction) {
+        console.log(`🔍 Role Select Interaction: ${interaction.customId}`);
+        
+        const handler = this.handlers.roleSelect?.get(interaction.customId);
+        if (handler) {
+            console.log(`✅ Handler trouvé pour ${interaction.customId}`);
+            await handler(interaction);
+        } else {
+            console.log(`❌ Aucun handler pour ${interaction.customId}`);
+            console.log('Handlers disponibles:', Array.from(this.handlers.roleSelect.keys()));
+            await interaction.reply({
+                content: `Handler rôle non trouvé pour ${interaction.customId}.`,
                 flags: 64
             });
         }
@@ -494,6 +519,18 @@ class InteractionHandler {
                         description: `${logImages ? 'Désactiver' : 'Activer'} l'affichage des images`,
                         value: 'log_images',
                         emoji: logImages ? '🔴' : '🟢'
+                    },
+                    {
+                        label: 'Ping Rôles Logs',
+                        description: 'Rôles à mentionner dans les logs admin',
+                        value: 'log_ping_roles',
+                        emoji: '🔔'
+                    },
+                    {
+                        label: 'Ping Rôles Confessions',
+                        description: 'Rôles à mentionner lors de nouvelles confessions',
+                        value: 'confession_ping_roles',
+                        emoji: '📢'
                     }
                 ]);
 
@@ -1168,9 +1205,90 @@ class InteractionHandler {
     }
 
     async showLogsConfig(interaction) {
-        await interaction.reply({
-            content: 'Configuration logs disponible.',
-            flags: 64
+        const guildId = interaction.guild.id;
+        const config = await this.dataManager.getData('config');
+        
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}',
+                logLevel: 'basic',
+                logImages: true
+            };
+        }
+
+        const logChannel = config.confessions[guildId].logChannel;
+        const logLevel = config.confessions[guildId].logLevel || 'basic';
+        const logImages = config.confessions[guildId].logImages !== false;
+        
+        const levels = {
+            'basic': '📄 Basique',
+            'detailed': '📋 Détaillé', 
+            'full': '🔍 Complet'
+        };
+
+        const channelName = logChannel ? 
+            (interaction.guild.channels.cache.get(logChannel)?.name || 'Canal supprimé') : 
+            'Aucun configuré';
+
+        const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+
+        const embed = new EmbedBuilder()
+            .setColor('#2196F3')
+            .setTitle('📋 Configuration Logs Admin')
+            .setDescription('Configurez les logs des confessions pour la modération')
+            .addFields([
+                {
+                    name: '📊 Configuration Actuelle',
+                    value: `**Canal :** ${channelName}\n**Niveau :** ${levels[logLevel]}\n**Images :** ${logImages ? '🟢 Incluses' : '🔴 Masquées'}`,
+                    inline: false
+                }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('confession_logs_config')
+            .setPlaceholder('📋 Configurer les logs admin')
+            .addOptions([
+                {
+                    label: 'Canal Logs',
+                    description: `Actuel: ${channelName.substring(0, 40)}`,
+                    value: 'log_channel',
+                    emoji: '📝'
+                },
+                {
+                    label: 'Niveau de Détail',
+                    description: `Actuel: ${levels[logLevel]}`,
+                    value: 'log_level',
+                    emoji: '🔍'
+                },
+                {
+                    label: 'Images dans Logs',
+                    description: `${logImages ? 'Désactiver' : 'Activer'} l'affichage des images`,
+                    value: 'log_images',
+                    emoji: logImages ? '🔴' : '🟢'
+                },
+                {
+                    label: 'Ping Rôles Logs',
+                    description: 'Rôles à mentionner dans les logs admin',
+                    value: 'log_ping_roles',
+                    emoji: '🔔'
+                },
+                {
+                    label: 'Ping Rôles Confessions',
+                    description: 'Rôles à mentionner lors de nouvelles confessions',
+                    value: 'confession_ping_roles',
+                    emoji: '📢'
+                }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
         });
     }
 
