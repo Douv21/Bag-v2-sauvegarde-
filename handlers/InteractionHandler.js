@@ -2170,8 +2170,7 @@ class InteractionHandler {
 
     async handleConfessionArchiveTime(interaction) {
         const archiveTime = parseInt(interaction.values[0]);
-        const dataManager = require('../managers/DataManager');
-        const config = await dataManager.getData('config');
+        const config = await this.dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (!config.confessions) config.confessions = {};
@@ -2186,7 +2185,7 @@ class InteractionHandler {
         }
 
         config.confessions[guildId].archiveTime = archiveTime;
-        await dataManager.saveData('config', config);
+        await this.dataManager.saveData('config', config);
 
         const durations = {
             60: '1 heure',
@@ -2202,8 +2201,7 @@ class InteractionHandler {
     }
 
     async handleToggleConfessionAutothread(interaction) {
-        const dataManager = require('../managers/DataManager');
-        const config = await dataManager.getData('config');
+        const config = await this.dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (!config.confessions) config.confessions = {};
@@ -2219,7 +2217,7 @@ class InteractionHandler {
 
         // Toggle l'état
         config.confessions[guildId].autoThread = !config.confessions[guildId].autoThread;
-        await dataManager.saveData('config', config);
+        await this.dataManager.saveData('config', config);
 
         const status = config.confessions[guildId].autoThread ? '🟢 Activé' : '🔴 Désactivé';
         const description = config.confessions[guildId].autoThread 
@@ -2234,8 +2232,7 @@ class InteractionHandler {
 
     async handleConfessionThreadFormat(interaction) {
         const format = interaction.values[0];
-        const dataManager = require('../managers/DataManager');
-        const config = await dataManager.getData('config');
+        const config = await this.dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (!config.confessions) config.confessions = {};
@@ -2250,7 +2247,7 @@ class InteractionHandler {
         }
 
         config.confessions[guildId].threadName = format;
-        await dataManager.saveData('config', config);
+        await this.dataManager.saveData('config', config);
 
         const examples = {
             'Confession #{number}': 'Confession #1, Confession #2...',
