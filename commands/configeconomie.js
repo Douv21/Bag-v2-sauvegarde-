@@ -46,12 +46,12 @@ module.exports = {
                 },
                 {
                     name: '💬 Messages',
-                    value: 'Gains automatiques pour chaque message',
+                    value: 'Récompenses automatiques par message',
                     inline: true
                 },
                 {
                     name: '📊 Statistiques',
-                    value: 'Voir les données du système économique',
+                    value: 'Données et métriques du système',
                     inline: true
                 }
             ]);
