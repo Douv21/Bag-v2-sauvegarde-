@@ -1221,24 +1221,26 @@ class EconomyHandler {
     
     // Handler pour objets personnalisés (modal workflow 1)
     async handleCustomObjectCreationModal(interaction) {
-        const objectName = interaction.fields.getTextInputValue('object_name_input');
-        const objectPrice = interaction.fields.getTextInputValue('object_price_input');
-        const objectDescription = interaction.fields.getTextInputValue('object_description_input') || 'Aucune description';
-        
-        // Validation du prix
-        const priceNum = parseInt(objectPrice);
-        if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
-            await interaction.reply({
-                content: '❌ Prix invalide. Veuillez entrer un nombre entre 1 et 999,999.',
-                flags: 64
-            });
-            return;
-        }
-        
-        // Sauvegarder dans shop.json
-        const guildId = interaction.guild.id;
-        const dataManager = require('../managers/DataManager');
-        const shop = await dataManager.getData('shop');
+        try {
+            const objectName = interaction.fields.getTextInputValue('object_name_input');
+            const objectPrice = interaction.fields.getTextInputValue('object_price_input');
+            const objectDescription = interaction.fields.getTextInputValue('object_description_input') || 'Aucune description';
+            
+            // Validation du prix
+            const priceNum = parseInt(objectPrice);
+            if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
+                await interaction.reply({
+                    content: '❌ Prix invalide. Veuillez entrer un nombre entre 1 et 999,999.',
+                    flags: 64
+                });
+                return;
+            }
+            
+            // Sauvegarder dans shop.json
+            const guildId = interaction.guild.id;
+            const DataManager = require('../managers/DataManager');
+            const dataManager = new DataManager();
+            const shop = await dataManager.getData('shop');
         
         if (!shop[guildId]) {
             shop[guildId] = [];
@@ -1254,24 +1256,31 @@ class EconomyHandler {
             createdBy: interaction.user.id
         };
         
-        shop[guildId].push(newItem);
-        await dataManager.saveData('shop', shop);
-        
-        const embed = new EmbedBuilder()
-            .setColor('#00ff00')
-            .setTitle('✅ Objet Personnalisé Créé')
-            .setDescription('Votre objet personnalisé a été ajouté à la boutique !')
-            .addFields([
-                { name: '🎨 Nom', value: objectName, inline: true },
-                { name: '💰 Prix', value: `${priceNum}€`, inline: true },
-                { name: '📝 Description', value: objectDescription, inline: false },
-                { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
-            ]);
+            shop[guildId].push(newItem);
+            await dataManager.saveData('shop', shop);
+            
+            const embed = new EmbedBuilder()
+                .setColor('#00ff00')
+                .setTitle('✅ Objet Personnalisé Créé')
+                .setDescription('Votre objet personnalisé a été ajouté à la boutique !')
+                .addFields([
+                    { name: '🎨 Nom', value: objectName, inline: true },
+                    { name: '💰 Prix', value: `${priceNum}€`, inline: true },
+                    { name: '📝 Description', value: objectDescription, inline: false },
+                    { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
+                ]);
 
-        await interaction.reply({
-            embeds: [embed],
-            flags: 64
-        });
+            await interaction.reply({
+                embeds: [embed],
+                flags: 64
+            });
+        } catch (error) {
+            console.error('❌ Erreur handleCustomObjectCreationModal:', error);
+            await interaction.reply({
+                content: '❌ Une erreur est survenue lors de la création de l\'objet. Veuillez réessayer.',
+                flags: 64
+            }).catch(() => {});
+        }
     }
     
     // Handler pour sélection rôle temporaire (workflow 2)
@@ -1335,127 +1344,145 @@ class EconomyHandler {
     
     // Handler pour modal rôle temporaire avec prix/durée
     async handleTemporaryRolePriceModal(interaction) {
-        const roleId = interaction.customId.split('_')[4]; // Extract role ID from modal customId
-        const price = interaction.fields.getTextInputValue('temp_role_price_input');
-        const duration = interaction.fields.getTextInputValue('temp_role_duration_input');
-        
-        // Validation
-        const priceNum = parseInt(price);
-        const durationNum = parseInt(duration);
-        
-        if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
-            await interaction.reply({
-                content: '❌ Prix invalide. Veuillez entrer un nombre entre 1 et 999,999.',
-                flags: 64
-            });
-            return;
-        }
-        
-        if (isNaN(durationNum) || durationNum < 1 || durationNum > 36500) {
-            await interaction.reply({
-                content: '❌ Durée invalide. Veuillez entrer un nombre entre 1 et 36,500 jours.',
-                flags: 64
-            });
-            return;
-        }
-        
-        // Sauvegarder dans shop.json
-        const guildId = interaction.guild.id;
-        const dataManager = require('../managers/DataManager');
-        const shop = await dataManager.getData('shop');
-        
-        if (!shop[guildId]) {
-            shop[guildId] = [];
-        }
-        
-        const role = interaction.guild.roles.cache.get(roleId);
-        const newItem = {
-            id: Date.now().toString(),
-            name: role?.name || `Rôle ${roleId}`,
-            price: priceNum,
-            description: `Rôle temporaire valable ${durationNum} jour${durationNum > 1 ? 's' : ''}`,
-            type: 'temp_role',
-            roleId: roleId,
-            duration: durationNum,
-            createdAt: new Date().toISOString(),
-            createdBy: interaction.user.id
-        };
-        
-        shop[guildId].push(newItem);
-        await dataManager.saveData('shop', shop);
-        
-        const embed = new EmbedBuilder()
-            .setColor('#ffa500')
-            .setTitle('✅ Rôle Temporaire Ajouté')
-            .setDescription('Le rôle temporaire a été configuré avec succès !')
-            .addFields([
-                { name: '👑 Rôle', value: `${role?.name || 'Rôle'} (<@&${roleId}>)`, inline: true },
-                { name: '💰 Prix', value: `${priceNum}€`, inline: true },
-                { name: '⌛ Durée', value: `${durationNum} jour${durationNum > 1 ? 's' : ''}`, inline: true },
-                { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
-            ]);
+        try {
+            const roleId = interaction.customId.split('_')[4]; // Extract role ID from modal customId
+            const price = interaction.fields.getTextInputValue('temp_role_price_input');
+            const duration = interaction.fields.getTextInputValue('temp_role_duration_input');
+            
+            // Validation
+            const priceNum = parseInt(price);
+            const durationNum = parseInt(duration);
+            
+            if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
+                await interaction.reply({
+                    content: '❌ Prix invalide. Veuillez entrer un nombre entre 1 et 999,999.',
+                    flags: 64
+                });
+                return;
+            }
+            
+            if (isNaN(durationNum) || durationNum < 1 || durationNum > 36500) {
+                await interaction.reply({
+                    content: '❌ Durée invalide. Veuillez entrer un nombre entre 1 et 36,500 jours.',
+                    flags: 64
+                });
+                return;
+            }
+            
+            // Sauvegarder dans shop.json
+            const guildId = interaction.guild.id;
+            const DataManager = require('../managers/DataManager');
+            const dataManager = new DataManager();
+                const shop = await dataManager.getData('shop');
+            
+            if (!shop[guildId]) {
+                shop[guildId] = [];
+            }
+            
+            const role = interaction.guild.roles.cache.get(roleId);
+            const newItem = {
+                id: Date.now().toString(),
+                name: role?.name || `Rôle ${roleId}`,
+                price: priceNum,
+                description: `Rôle temporaire valable ${durationNum} jour${durationNum > 1 ? 's' : ''}`,
+                type: 'temp_role',
+                roleId: roleId,
+                duration: durationNum,
+                createdAt: new Date().toISOString(),
+                createdBy: interaction.user.id
+            };
+            
+            shop[guildId].push(newItem);
+            await dataManager.saveData('shop', shop);
+            
+            const embed = new EmbedBuilder()
+                .setColor('#ffa500')
+                .setTitle('✅ Rôle Temporaire Ajouté')
+                .setDescription('Le rôle temporaire a été configuré avec succès !')
+                .addFields([
+                    { name: '👑 Rôle', value: `${role?.name || 'Rôle'} (<@&${roleId}>)`, inline: true },
+                    { name: '💰 Prix', value: `${priceNum}€`, inline: true },
+                    { name: '⌛ Durée', value: `${durationNum} jour${durationNum > 1 ? 's' : ''}`, inline: true },
+                    { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
+                ]);
 
-        await interaction.reply({
-            embeds: [embed],
-            flags: 64
-        });
+            await interaction.reply({
+                embeds: [embed],
+                flags: 64
+            });
+        } catch (error) {
+            console.error('❌ Erreur handleTemporaryRolePriceModal:', error);
+            await interaction.reply({
+                content: '❌ Une erreur est survenue lors de la création du rôle temporaire. Veuillez réessayer.',
+                flags: 64
+            }).catch(() => {});
+        }
     }
     
     // Handler pour modal rôle permanent avec prix
     async handlePermanentRolePriceModal(interaction) {
-        const roleId = interaction.customId.split('_')[4]; // Extract role ID from modal customId
-        const price = interaction.fields.getTextInputValue('perm_role_price_input');
-        
-        // Validation
-        const priceNum = parseInt(price);
-        
-        if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
+        try {
+            const roleId = interaction.customId.split('_')[4]; // Extract role ID from modal customId
+            const price = interaction.fields.getTextInputValue('perm_role_price_input');
+            
+            // Validation
+            const priceNum = parseInt(price);
+            
+            if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
+                await interaction.reply({
+                    content: '❌ Prix invalide. Veuillez entrer un nombre entre 1 et 999,999.',
+                    flags: 64
+                });
+                return;
+            }
+            
+            // Sauvegarder dans shop.json
+            const guildId = interaction.guild.id;
+            const DataManager = require('../managers/DataManager');
+            const dataManager = new DataManager();
+                const shop = await dataManager.getData('shop');
+            
+            if (!shop[guildId]) {
+                shop[guildId] = [];
+            }
+            
+            const role = interaction.guild.roles.cache.get(roleId);
+            const newItem = {
+                id: Date.now().toString(),
+                name: role?.name || `Rôle ${roleId}`,
+                price: priceNum,
+                description: 'Rôle permanent à vie',
+                type: 'perm_role',
+                roleId: roleId,
+                createdAt: new Date().toISOString(),
+                createdBy: interaction.user.id
+            };
+            
+            shop[guildId].push(newItem);
+            await dataManager.saveData('shop', shop);
+            
+            const embed = new EmbedBuilder()
+                .setColor('#00ff00')
+                .setTitle('✅ Rôle Permanent Ajouté')
+                .setDescription('Le rôle permanent a été configuré avec succès !')
+                .addFields([
+                    { name: '👑 Rôle', value: `${role?.name || 'Rôle'} (<@&${roleId}>)`, inline: true },
+                    { name: '💰 Prix', value: `${priceNum}€`, inline: true },
+                    { name: '⏰ Type', value: '🔄 Permanent (à vie)', inline: true },
+                    { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
+                ]);
+
             await interaction.reply({
-                content: '❌ Prix invalide. Veuillez entrer un nombre entre 1 et 999,999.',
+                embeds: [embed],
                 flags: 64
             });
-            return;
+        } catch (error) {
+            console.error('❌ Erreur handlePermanentRolePriceModal:', error);
+            await interaction.reply({
+                content: '❌ Une erreur est survenue lors de la création du rôle permanent. Veuillez réessayer.',
+                flags: 64
+            }).catch(() => {});
         }
-        
-        // Sauvegarder dans shop.json
-        const guildId = interaction.guild.id;
-        const dataManager = require('../managers/DataManager');
-        const shop = await dataManager.getData('shop');
-        
-        if (!shop[guildId]) {
-            shop[guildId] = [];
-        }
-        
-        const role = interaction.guild.roles.cache.get(roleId);
-        const newItem = {
-            id: Date.now().toString(),
-            name: role?.name || `Rôle ${roleId}`,
-            price: priceNum,
-            description: 'Rôle permanent à vie',
-            type: 'perm_role',
-            roleId: roleId,
-            createdAt: new Date().toISOString(),
-            createdBy: interaction.user.id
-        };
-        
-        shop[guildId].push(newItem);
-        await dataManager.saveData('shop', shop);
-        
-        const embed = new EmbedBuilder()
-            .setColor('#00ff00')
-            .setTitle('✅ Rôle Permanent Ajouté')
-            .setDescription('Le rôle permanent a été configuré avec succès !')
-            .addFields([
-                { name: '👑 Rôle', value: `${role?.name || 'Rôle'} (<@&${roleId}>)`, inline: true },
-                { name: '💰 Prix', value: `${priceNum}€`, inline: true },
-                { name: '⏰ Type', value: '🔄 Permanent (à vie)', inline: true },
-                { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
-            ]);
-
-        await interaction.reply({
-            embeds: [embed],
-            flags: 64
-        });
     }
     
     // Handlers pour gestion articles existants
