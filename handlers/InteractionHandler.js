@@ -29,19 +29,11 @@ class InteractionHandler {
         this.handlers.selectMenu.set('economy_daily_config', this.economyHandler.handleEconomyDailyConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_messages_config', this.economyHandler.handleEconomyMessagesConfig.bind(this.economyHandler));
         
-        // Handlers pour actions individuelles
-        const economyActions = ['travailler', 'pecher', 'donner', 'voler', 'crime', 'parier'];
-        economyActions.forEach(action => {
-            this.handlers.selectMenu.set(`economy_action_${action}_config`, this.economyHandler.handleEconomyActionsConfig.bind(this.economyHandler));
-        });
-        
-        // Handlers pour sous-configurations d'actions (rewards, karma, cooldown, toggle)
-        const actionSubOptions = ['rewards', 'karma', 'cooldown', 'toggle'];
-        economyActions.forEach(action => {
-            actionSubOptions.forEach(subOption => {
-                this.handlers.selectMenu.set(`economy_action_${subOption}_config`, this.economyHandler.handleActionSubConfig.bind(this.economyHandler));
-            });
-        });
+        // Handler principal pour toutes les actions (supprime tous doublons)
+        this.handlers.selectMenu.set('economy_action_rewards_config', this.economyHandler.showActionRewardsConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_action_karma_config', this.economyHandler.showActionKarmaConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_action_cooldown_config', this.economyHandler.showActionCooldownConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_action_toggle_config', this.economyHandler.showActionToggleConfig.bind(this.economyHandler));
         
         // Handlers pour édition des configurations spécifiques
         this.handlers.selectMenu.set('economy_rewards_edit_config', this.economyHandler.handleRewardsEditConfig.bind(this.economyHandler));
@@ -68,13 +60,7 @@ class InteractionHandler {
         // this.handlers.selectMenu.set('confession_autothread', this.handleConfessionAutothread.bind(this)); // Retiré car dupliqué
         this.handlers.selectMenu.set('autothread_config', this.handleAutothreadGlobalConfig.bind(this));
         
-        // Sélecteurs Configuration Actions Legacy
-        const legacyActions = ['work', 'fish', 'donate', 'steal', 'crime', 'bet'];
-        legacyActions.forEach(action => {
-            this.handlers.selectMenu.set(`edit_reward_${action}`, this.handleEditRewardSelector.bind(this));
-            this.handlers.selectMenu.set(`edit_karma_${action}`, this.handleEditKarmaSelector.bind(this));
-            this.handlers.selectMenu.set(`edit_cooldown_${action}`, this.handleEditCooldownSelector.bind(this));
-        });
+        // Legacy handlers supprimés pour éviter conflits
 
         // Nouveaux handlers pour autothread global
         this.handlers.selectMenu.set('autothread_channels_config', this.handleAutothreadChannelsConfig.bind(this));
