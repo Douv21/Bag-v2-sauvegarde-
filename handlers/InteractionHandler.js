@@ -60,6 +60,7 @@ class InteractionHandler {
         this.handlers.selectMenu.set('confession_archive_time', this.handleConfessionArchiveTime.bind(this));
         this.handlers.selectMenu.set('confession_thread_format', this.handleConfessionThreadFormat.bind(this));
         this.handlers.selectMenu.set('confession_autothread_config', this.handleConfessionAutothreadConfig.bind(this));
+        this.handlers.selectMenu.set('confession_log_level', this.handleConfessionLogLevel.bind(this));
         
         // Handlers pour boutons confession
         this.handlers.button.set('toggle_confession_autothread', this.handleToggleConfessionAutothread.bind(this));
@@ -630,8 +631,7 @@ class InteractionHandler {
 
     async handleConfessionLogLevel(interaction) {
         const level = interaction.values[0];
-        const dataManager = require('../managers/DataManager');
-        const config = await dataManager.getData('config');
+        const config = await this.dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (!config.confessions) config.confessions = {};
@@ -644,7 +644,7 @@ class InteractionHandler {
         }
 
         config.confessions[guildId].logLevel = level;
-        await dataManager.saveData('config', config);
+        await this.dataManager.saveData('config', config);
 
         const levels = {
             'basic': '📄 Basique - Contenu et utilisateur seulement',
@@ -1549,8 +1549,7 @@ class InteractionHandler {
 
     async handleConfessionLogsConfig(interaction) {
         const value = interaction.values[0];
-        const dataManager = require('../managers/DataManager');
-        const config = await dataManager.getData('config');
+        const config = await this.dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (value === 'log_channel') {
@@ -1610,7 +1609,7 @@ class InteractionHandler {
             };
 
             config.confessions[guildId].logImages = !config.confessions[guildId].logImages;
-            await dataManager.saveData('config', config);
+            await this.dataManager.saveData('config', config);
 
             const status = config.confessions[guildId].logImages ? '🟢 Activé' : '🔴 Désactivé';
             await interaction.reply({
@@ -1618,6 +1617,37 @@ class InteractionHandler {
                 flags: 64
             });
         }
+    }
+
+    async handleConfessionLogLevel(interaction) {
+        const value = interaction.values[0];
+        const config = await this.dataManager.getData('config');
+        const guildId = interaction.guild.id;
+
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}',
+                logLevel: 'basic'
+            };
+        }
+
+        config.confessions[guildId].logLevel = value;
+        await this.dataManager.saveData('config', config);
+
+        const levels = {
+            'basic': '📄 Basique - Contenu et utilisateur seulement',
+            'detailed': '📋 Détaillé - Toutes les informations',
+            'full': '🔍 Complet - Inclut métadonnées et traces'
+        };
+
+        await interaction.reply({
+            content: `✅ Niveau de détail mis à jour: ${levels[value]}`,
+            flags: 64
+        });
     }
 
     async handleAutothreadNameConfig(interaction) {
