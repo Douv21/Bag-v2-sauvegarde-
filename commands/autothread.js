@@ -29,6 +29,12 @@ module.exports = {
             slowMode: 0
         };
 
+        // Afficher la vraie information des canaux configurés
+        let channelsDisplay = '0';
+        if (autoThreadConfig.channels && autoThreadConfig.channels.length > 0) {
+            channelsDisplay = autoThreadConfig.channels.length.toString();
+        }
+
         const embed = new EmbedBuilder()
             .setColor('#7289da')
             .setTitle('🧵 Configuration Auto-Thread Global')
@@ -41,7 +47,7 @@ module.exports = {
                 },
                 {
                     name: '📱 Canaux Configurés',
-                    value: autoThreadConfig.channels.length.toString() || '0',
+                    value: channelsDisplay,
                     inline: true
                 },
                 {
