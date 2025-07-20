@@ -35,6 +35,14 @@ class InteractionHandler {
             this.handlers.selectMenu.set(`economy_action_${action}_config`, this.economyHandler.handleEconomyActionsConfig.bind(this.economyHandler));
         });
         
+        // Handlers pour sous-configurations d'actions (rewards, karma, cooldown, toggle)
+        const actionSubOptions = ['rewards', 'karma', 'cooldown', 'toggle'];
+        economyActions.forEach(action => {
+            actionSubOptions.forEach(subOption => {
+                this.handlers.selectMenu.set(`economy_action_${subOption}_config`, this.economyHandler.handleActionSubConfig.bind(this.economyHandler));
+            });
+        });
+        
         // Configuration Confession
         this.handlers.selectMenu.set('confession_main_config', this.handleConfessionMainConfig.bind(this));
         this.handlers.selectMenu.set('config_main_menu', this.handleConfigMainMenu.bind(this));

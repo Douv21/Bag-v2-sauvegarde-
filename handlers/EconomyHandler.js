@@ -532,6 +532,100 @@ class EconomyHandler {
             components: []
         });
     }
+
+    // Handler pour les sous-configurations d'actions
+    async handleActionSubConfig(interaction) {
+        const configType = interaction.values[0];
+        
+        switch(configType) {
+            case 'rewards':
+                await this.showActionRewardsConfig(interaction);
+                break;
+            case 'karma':
+                await this.showActionKarmaConfig(interaction);
+                break;
+            case 'cooldown':
+                await this.showActionCooldownConfig(interaction);
+                break;
+            case 'toggle':
+                await this.showActionToggleConfig(interaction);
+                break;
+            default:
+                await interaction.update({
+                    content: `⚙️ Configuration **${configType}** disponible prochainement.`,
+                    embeds: [],
+                    components: []
+                });
+        }
+    }
+
+    async showActionRewardsConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ffd700')
+            .setTitle('💰 Configuration Récompenses Action')
+            .setDescription('Configurez les montants min/max pour cette action')
+            .addFields(
+                { name: 'Montant Minimum', value: '50€', inline: true },
+                { name: 'Montant Maximum', value: '200€', inline: true },
+                { name: 'Bonus Karma', value: '+10%', inline: true }
+            );
+
+        await interaction.update({
+            embeds: [embed],
+            components: []
+        });
+    }
+
+    async showActionKarmaConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle('⚖️ Configuration Karma Action')
+            .setDescription('Configurez les gains/pertes de karma')
+            .addFields(
+                { name: 'Karma Bon', value: '+2 😇', inline: true },
+                { name: 'Karma Mauvais', value: '-1 😈', inline: true },
+                { name: 'Multiplicateur', value: 'x1.5', inline: true }
+            );
+
+        await interaction.update({
+            embeds: [embed],
+            components: []
+        });
+    }
+
+    async showActionCooldownConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ff6347')
+            .setTitle('⏰ Configuration Cooldown Action')
+            .setDescription('Configurez le temps d\'attente entre utilisations')
+            .addFields(
+                { name: 'Cooldown Actuel', value: '1 heure', inline: true },
+                { name: 'Cooldown Minimum', value: '30 minutes', inline: true },
+                { name: 'Cooldown Maximum', value: '24 heures', inline: true }
+            );
+
+        await interaction.update({
+            embeds: [embed],
+            components: []
+        });
+    }
+
+    async showActionToggleConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#32cd32')
+            .setTitle('🔄 Activer/Désactiver Action')
+            .setDescription('Activez ou désactivez cette action économique')
+            .addFields(
+                { name: 'Statut Actuel', value: '✅ Activé', inline: true },
+                { name: 'Utilisations Aujourd\'hui', value: '47', inline: true },
+                { name: 'Dernière Utilisation', value: 'Il y a 12 min', inline: true }
+            );
+
+        await interaction.update({
+            embeds: [embed],
+            components: []
+        });
+    }
 }
 
 module.exports = EconomyHandler;
