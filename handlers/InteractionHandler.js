@@ -107,12 +107,17 @@ class InteractionHandler {
     }
 
     async handleChannelSelect(interaction) {
-        const handler = this.handlers.channelSelect.get(interaction.customId);
+        console.log(`🔍 Channel Select Interaction: ${interaction.customId}`);
+        
+        const handler = this.handlers.channelSelect?.get(interaction.customId);
         if (handler) {
+            console.log(`✅ Handler trouvé pour ${interaction.customId}`);
             await handler(interaction);
         } else {
+            console.log(`❌ Aucun handler pour ${interaction.customId}`);
+            console.log('Handlers disponibles:', Array.from(this.handlers.channelSelect.keys()));
             await interaction.reply({
-                content: `Sélecteur canal ${interaction.customId} non géré.`,
+                content: `Handler canal non trouvé pour ${interaction.customId}.`,
                 flags: 64
             });
         }
@@ -1476,27 +1481,7 @@ class InteractionHandler {
                 flags: 64
             });
         } else if (value === 'list_channels') {
-            const embed = new EmbedBuilder()
-                .setColor('#7289da')
-                .setTitle('📋 Canaux Confessions Configurés')
-                .setDescription('Liste des canaux configurés pour les confessions')
-                .addFields([
-                    {
-                        name: '💭 Canaux Actifs',
-                        value: '• Aucun canal configuré pour le moment',
-                        inline: false
-                    },
-                    {
-                        name: '💡 Information',
-                        value: 'Utilisez "Ajouter Canal" pour configurer la réception des confessions',
-                        inline: false
-                    }
-                ]);
-
-            await interaction.reply({
-                embeds: [embed],
-                flags: 64
-            });
+            await this.handleConfessionChannels(interaction);
         } else if (value === 'main_channel') {
             const embed = new EmbedBuilder()
                 .setColor('#FFD700')
