@@ -57,7 +57,7 @@ class InteractionHandler {
         
         // KARMA
         this.handlers.selectMenu.set('economy_karma_levels_edit', this.economyHandler.handleKarmaLevelsEdit.bind(this.economyHandler));
-        this.handlers.selectMenu.set('economy_karma_rewards_edit', this.economyHandler.handleKarmaRewardsEdit.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_karma_rewards_edit', this.economyHandler.handleKarmaRewardConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_karma_reset_edit', this.economyHandler.handleKarmaResetEdit.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_action_karma_values', this.economyHandler.handleActionKarmaValues.bind(this.economyHandler));
         

@@ -145,14 +145,8 @@ class EconomyHandler {
             .setPlaceholder('⚖️ Configurer le karma')
             .addOptions([
                 {
-                    label: 'Niveaux Karma',
-                    description: 'Configurer les seuils et noms des niveaux',
-                    value: 'levels',
-                    emoji: '📊'
-                },
-                {
                     label: 'Récompenses Automatiques',
-                    description: 'Récompenses hebdomadaires par niveau',
+                    description: 'Créer et gérer vos niveaux karma personnalisés',
                     value: 'rewards',
                     emoji: '🎁'
                 },
@@ -374,9 +368,6 @@ class EconomyHandler {
         const option = interaction.values[0];
         
         switch(option) {
-            case 'levels':
-                await this.showKarmaLevelsConfig(interaction);
-                break;
             case 'rewards':
                 await this.showKarmaRewardsConfig(interaction);
                 break;
@@ -3277,9 +3268,6 @@ class EconomyHandler {
         const value = interaction.values[0];
         
         switch(value) {
-            case 'levels':
-                await this.showKarmaLevelsConfig(interaction);
-                break;
             case 'rewards':
                 await this.showKarmaRewardsConfig(interaction);
                 break;
