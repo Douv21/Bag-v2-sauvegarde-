@@ -43,9 +43,16 @@ module.exports = {
                 userData.lastDonate
             ].filter(Boolean).length;
 
-            // Récupérer niveau karma personnalisé
-            const karmaConfig = await dataManager.getData('karma_config') || { customRewards: [] };
-            let karmaLevel = this.calculateKarmaLevel(karmaNet, karmaConfig.customRewards);
+            // Récupérer niveau karma personnalisé avec sécurité
+            let karmaLevel;
+            try {
+                const karmaConfig = await dataManager.getData('karma_config') || {};
+                const customRewards = karmaConfig[guildId]?.customRewards || [];
+                karmaLevel = this.calculateKarmaLevel(karmaNet, customRewards);
+            } catch (error) {
+                console.error('❌ Erreur karma config:', error);
+                karmaLevel = this.getDefaultKarmaLevel(karmaNet);
+            }
 
             // Calculer niveau et XP (basé sur argent et actions)
             const xpFromMoney = Math.floor((userData.balance || 0) / 100);
@@ -104,24 +111,32 @@ module.exports = {
     },
 
     calculateKarmaLevel(karmaNet, customRewards) {
+        // Vérifier si customRewards existe et est un tableau
+        if (!customRewards || !Array.isArray(customRewards) || customRewards.length === 0) {
+            return this.getDefaultKarmaLevel(karmaNet);
+        }
+
         // Trier les récompenses par seuil décroissant
         const sortedRewards = customRewards
-            .filter(reward => reward && typeof reward.karmaThreshold === 'number')
+            .filter(reward => reward && 
+                typeof reward.karmaThreshold === 'number' && 
+                reward.name && 
+                reward.description)
             .sort((a, b) => b.karmaThreshold - a.karmaThreshold);
 
         // Trouver le niveau correspondant
         for (const reward of sortedRewards) {
             if (karmaNet >= reward.karmaThreshold) {
                 return {
-                    name: reward.name,
-                    description: reward.description,
-                    money: reward.money,
+                    name: reward.name || 'Niveau Personnalisé',
+                    description: reward.description || 'Niveau karma personnalisé',
+                    money: reward.money || 0,
                     icon: this.getKarmaIcon(reward.karmaThreshold)
                 };
             }
         }
 
-        // Niveau par défaut si aucun niveau personnalisé
+        // Niveau par défaut si aucun niveau personnalisé correspondant
         return this.getDefaultKarmaLevel(karmaNet);
     },
 
