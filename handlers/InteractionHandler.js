@@ -43,6 +43,12 @@ class InteractionHandler {
             });
         });
         
+        // Handlers pour édition des configurations spécifiques
+        this.handlers.selectMenu.set('economy_rewards_edit_config', this.economyHandler.handleRewardsEditConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_karma_edit_config', this.economyHandler.handleKarmaEditConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_cooldown_edit_config', this.economyHandler.handleCooldownEditConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_toggle_edit_config', this.economyHandler.handleToggleEditConfig.bind(this.economyHandler));
+        
         // Configuration Confession
         this.handlers.selectMenu.set('confession_main_config', this.handleConfessionMainConfig.bind(this));
         this.handlers.selectMenu.set('config_main_menu', this.handleConfigMainMenu.bind(this));

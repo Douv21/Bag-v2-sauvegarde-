@@ -570,9 +570,41 @@ class EconomyHandler {
                 { name: 'Bonus Karma', value: '+10%', inline: true }
             );
 
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_rewards_edit_config')
+            .setPlaceholder('⚙️ Modifier les récompenses')
+            .addOptions([
+                {
+                    label: 'Montant Minimum',
+                    description: 'Modifier le montant minimum (actuellement 50€)',
+                    value: 'min_amount',
+                    emoji: '📉'
+                },
+                {
+                    label: 'Montant Maximum', 
+                    description: 'Modifier le montant maximum (actuellement 200€)',
+                    value: 'max_amount',
+                    emoji: '📈'
+                },
+                {
+                    label: 'Bonus Karma',
+                    description: 'Modifier le bonus karma (+10%)',
+                    value: 'karma_bonus',
+                    emoji: '⭐'
+                },
+                {
+                    label: 'Retour Actions',
+                    description: 'Retourner au menu des actions',
+                    value: 'back_actions',
+                    emoji: '🔙'
+                }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
             embeds: [embed],
-            components: []
+            components: components
         });
     }
 
@@ -587,9 +619,41 @@ class EconomyHandler {
                 { name: 'Multiplicateur', value: 'x1.5', inline: true }
             );
 
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_karma_edit_config')
+            .setPlaceholder('⚙️ Modifier les gains karma')
+            .addOptions([
+                {
+                    label: 'Karma Bon (😇)',
+                    description: 'Modifier le gain de bon karma (+2)',
+                    value: 'good_karma',
+                    emoji: '😇'
+                },
+                {
+                    label: 'Karma Mauvais (😈)',
+                    description: 'Modifier la perte de mauvais karma (-1)',
+                    value: 'bad_karma',
+                    emoji: '😈'
+                },
+                {
+                    label: 'Multiplicateur',
+                    description: 'Modifier le multiplicateur (x1.5)',
+                    value: 'multiplier',
+                    emoji: '✨'
+                },
+                {
+                    label: 'Retour Actions',
+                    description: 'Retourner au menu des actions',
+                    value: 'back_actions',
+                    emoji: '🔙'
+                }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
             embeds: [embed],
-            components: []
+            components: components
         });
     }
 
@@ -604,9 +668,47 @@ class EconomyHandler {
                 { name: 'Cooldown Maximum', value: '24 heures', inline: true }
             );
 
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_cooldown_edit_config')
+            .setPlaceholder('⚙️ Modifier le temps d\'attente')
+            .addOptions([
+                {
+                    label: '30 Minutes',
+                    description: 'Définir cooldown à 30 minutes',
+                    value: '30min',
+                    emoji: '🕐'
+                },
+                {
+                    label: '1 Heure',
+                    description: 'Définir cooldown à 1 heure (défaut)',
+                    value: '1hour',
+                    emoji: '🕒'
+                },
+                {
+                    label: '2 Heures',
+                    description: 'Définir cooldown à 2 heures',
+                    value: '2hours',
+                    emoji: '🕔'
+                },
+                {
+                    label: 'Personnalisé',
+                    description: 'Définir un cooldown personnalisé',
+                    value: 'custom',
+                    emoji: '⚙️'
+                },
+                {
+                    label: 'Retour Actions',
+                    description: 'Retourner au menu des actions',
+                    value: 'back_actions',
+                    emoji: '🔙'
+                }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
             embeds: [embed],
-            components: []
+            components: components
         });
     }
 
@@ -621,8 +723,97 @@ class EconomyHandler {
                 { name: 'Dernière Utilisation', value: 'Il y a 12 min', inline: true }
             );
 
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_toggle_edit_config')
+            .setPlaceholder('⚙️ Modifier le statut')
+            .addOptions([
+                {
+                    label: 'Désactiver Action',
+                    description: 'Désactiver temporairement cette action',
+                    value: 'disable',
+                    emoji: '❌'
+                },
+                {
+                    label: 'Activer Action',
+                    description: 'Réactiver cette action',
+                    value: 'enable',
+                    emoji: '✅'
+                },
+                {
+                    label: 'Statistiques',
+                    description: 'Voir les statistiques détaillées',
+                    value: 'stats',
+                    emoji: '📊'
+                },
+                {
+                    label: 'Retour Actions',
+                    description: 'Retourner au menu des actions',
+                    value: 'back_actions',
+                    emoji: '🔙'
+                }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
             embeds: [embed],
+            components: components
+        });
+    }
+
+    // Handlers pour l'édition des configurations spécifiques
+    async handleRewardsEditConfig(interaction) {
+        const option = interaction.values[0];
+        
+        if (option === 'back_actions') {
+            return await this.showActionsConfig(interaction);
+        }
+        
+        await interaction.update({
+            content: `💰 **Modification ${option}**\n\nConfiguration en cours de développement...`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleKarmaEditConfig(interaction) {
+        const option = interaction.values[0];
+        
+        if (option === 'back_actions') {
+            return await this.showActionsConfig(interaction);
+        }
+        
+        await interaction.update({
+            content: `⚖️ **Modification ${option}**\n\nConfiguration en cours de développement...`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleCooldownEditConfig(interaction) {
+        const option = interaction.values[0];
+        
+        if (option === 'back_actions') {
+            return await this.showActionsConfig(interaction);
+        }
+        
+        await interaction.update({
+            content: `⏰ **Modification cooldown: ${option}**\n\nConfiguration en cours de développement...`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleToggleEditConfig(interaction) {
+        const option = interaction.values[0];
+        
+        if (option === 'back_actions') {
+            return await this.showActionsConfig(interaction);
+        }
+        
+        await interaction.update({
+            content: `🔄 **Action ${option}**\n\nConfiguration en cours de développement...`,
+            embeds: [],
             components: []
         });
     }
