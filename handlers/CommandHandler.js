@@ -1,5 +1,5 @@
 /**
- * GESTIONNAIRE DE COMMANDES
+ * GESTIONNAIRE DE COMMANDES CORRIGÉ
  * Chargement et gestion des commandes Discord
  */
 
@@ -35,14 +35,24 @@ class CommandHandler {
                     
                     const command = require(filePath);
                     
+                    // Vérification de la structure corrigée
                     if ('data' in command && 'execute' in command) {
-                        // Injecter le dataManager dans chaque commande
-                        command.dataManager = this.dataManager;
+                        // Vérifier que data a bien une propriété name
+                        if (!command.data || !command.data.name) {
+                            console.log(`⚠️ ${file} - Commande sans nom valide`);
+                            continue;
+                        }
+
+                        // Vérifier que execute est bien une fonction
+                        if (typeof command.execute !== 'function') {
+                            console.log(`⚠️ ${file} - execute n'est pas une fonction`);
+                            continue;
+                        }
                         
                         this.client.commands.set(command.data.name, command);
                         console.log(`✅ ${command.data.name}`);
                     } else {
-                        console.log(`⚠️ ${file} - Structure invalide`);
+                        console.log(`⚠️ ${file} - Structure invalide (manque 'data' ou 'execute')`);
                     }
                 } catch (error) {
                     console.error(`❌ Erreur chargement ${file}:`, error.message);
@@ -57,23 +67,14 @@ class CommandHandler {
 
     async createDefaultCommands() {
         // Créer les commandes essentielles pour Web Service
-
-        // Commande confession
         await this.createConfessCommand();
-        
-        // Commande économie
         await this.createEconomieCommand();
-        
-        // Commande configuration
         await this.createConfigCommand();
-        
-        // Commande stats
         await this.createStatsCommand();
     }
 
     async createConfessCommand() {
-        const confessCommand = `
-const { SlashCommandBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+        const confessCommand = `const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -89,7 +90,7 @@ module.exports = {
                 .setDescription('Image à joindre (optionnel)')
                 .setRequired(false)),
 
-    async execute(interaction, dataManager) {
+    async execute(interaction) {
         try {
             const text = interaction.options.getString('texte');
             const image = interaction.options.getAttachment('image');
@@ -98,7 +99,16 @@ module.exports = {
             if (!text && !image) {
                 return await interaction.reply({
                     content: '❌ Vous devez fournir au moins un texte ou une image.',
-                    flags: 64
+                    ephemeral: true
+                });
+            }
+
+            // Accéder au dataManager via le client
+            const dataManager = interaction.client.dataManager;
+            if (!dataManager) {
+                return await interaction.reply({
+                    content: '❌ Erreur système - dataManager non disponible.',
+                    ephemeral: true
                 });
             }
 
@@ -109,7 +119,7 @@ module.exports = {
             if (!guildConfig.confessionChannels || guildConfig.confessionChannels.length === 0) {
                 return await interaction.reply({
                     content: '❌ Aucun canal de confession configuré sur ce serveur.',
-                    flags: 64
+                    ephemeral: true
                 });
             }
 
@@ -120,7 +130,7 @@ module.exports = {
             if (!channel) {
                 return await interaction.reply({
                     content: '❌ Canal de confession introuvable.',
-                    flags: 64
+                    ephemeral: true
                 });
             }
 
@@ -155,15 +165,17 @@ module.exports = {
             // Confirmer à l'utilisateur
             await interaction.reply({
                 content: '✅ Votre confession a été envoyée anonymement.',
-                flags: 64
+                ephemeral: true
             });
 
         } catch (error) {
             console.error('❌ Erreur confession:', error);
-            await interaction.reply({
-                content: '❌ Une erreur est survenue.',
-                flags: 64
-            });
+            if (!interaction.replied) {
+                await interaction.reply({
+                    content: '❌ Une erreur est survenue.',
+                    ephemeral: true
+                });
+            }
         }
     },
 
@@ -201,16 +213,23 @@ module.exports = {
     }
 
     async createEconomieCommand() {
-        const economieCommand = `
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+        const economieCommand = `const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('economie')
         .setDescription('Voir votre profil économique'),
 
-    async execute(interaction, dataManager) {
+    async execute(interaction) {
         try {
+            const dataManager = interaction.client.dataManager;
+            if (!dataManager) {
+                return await interaction.reply({
+                    content: '❌ Erreur système - dataManager non disponible.',
+                    ephemeral: true
+                });
+            }
+
             const user = await dataManager.getUser(interaction.user.id, interaction.guild.id);
             
             const level = Math.floor(user.xp / 1000);
@@ -275,15 +294,17 @@ module.exports = {
 
             await interaction.reply({
                 embeds: [embed],
-                flags: 64
+                ephemeral: true
             });
 
         } catch (error) {
             console.error('❌ Erreur économie:', error);
-            await interaction.reply({
-                content: '❌ Une erreur est survenue.',
-                flags: 64
-            });
+            if (!interaction.replied) {
+                await interaction.reply({
+                    content: '❌ Une erreur est survenue.',
+                    ephemeral: true
+                });
+            }
         }
     }
 };`;
@@ -292,32 +313,50 @@ module.exports = {
     }
 
     async createConfigCommand() {
-        const configCommand = `
-const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+        const configCommand = `const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('config')
         .setDescription('Configuration du serveur')
-        .setDefaultMemberPermissions('0'),
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
-    async execute(interaction, dataManager) {
+    async execute(interaction) {
         try {
-            await this.showMainConfig(interaction, dataManager);
+            await this.showMainConfig(interaction);
         } catch (error) {
             console.error('❌ Erreur config:', error);
-            await interaction.reply({
-                content: '❌ Une erreur est survenue.',
-                flags: 64
-            });
+            if (!interaction.replied) {
+                await interaction.reply({
+                    content: '❌ Une erreur est survenue.',
+                    ephemeral: true
+                });
+            }
         }
     },
 
-    async showMainConfig(interaction, dataManager) {
+    async showMainConfig(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#2196F3')
             .setTitle('⚙️ Configuration Serveur')
-            .setDescription('Configurez les différents systèmes du bot');
+            .setDescription('Configurez les différents systèmes du bot')
+            .addFields([
+                {
+                    name: '💭 Confessions',
+                    value: 'Gérez les canaux de confessions anonymes',
+                    inline: true
+                },
+                {
+                    name: '🧵 Auto-Thread',
+                    value: 'Configuration des threads automatiques',
+                    inline: true
+                },
+                {
+                    name: '📋 Logs',
+                    value: 'Configuration des logs administrateur',
+                    inline: true
+                }
+            ]);
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('config_main_menu')
@@ -354,7 +393,7 @@ module.exports = {
             await interaction.reply({
                 embeds: [embed],
                 components: components,
-                flags: 64
+                ephemeral: true
             });
         }
     }
@@ -364,17 +403,33 @@ module.exports = {
     }
 
     async createStatsCommand() {
-        const statsCommand = `
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+        const statsCommand = `const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('stats')
         .setDescription('Statistiques du bot'),
 
-    async execute(interaction, dataManager) {
+    async execute(interaction) {
         try {
+            const dataManager = interaction.client.dataManager;
+            if (!dataManager) {
+                return await interaction.reply({
+                    content: '❌ Erreur système - dataManager non disponible.',
+                    ephemeral: true
+                });
+            }
+
             const stats = await dataManager.getStats();
+            
+            // Calculer l'uptime
+            const uptime = process.uptime();
+            const hours = Math.floor(uptime / 3600);
+            const minutes = Math.floor((uptime % 3600) / 60);
+            
+            // Mémoire utilisée
+            const memoryUsage = process.memoryUsage();
+            const memoryUsedMB = Math.round(memoryUsage.rss / 1024 / 1024);
             
             const embed = new EmbedBuilder()
                 .setColor('#9C27B0')
@@ -382,22 +437,22 @@ module.exports = {
                 .addFields([
                     {
                         name: '👥 Utilisateurs',
-                        value: \`\${stats.totalUsers}\`,
+                        value: \`\${stats.totalUsers || 0}\`,
                         inline: true
                     },
                     {
                         name: '💭 Confessions',
-                        value: \`\${stats.totalConfessions}\`,
+                        value: \`\${stats.totalConfessions || 0}\`,
                         inline: true
                     },
                     {
                         name: '⚡ Uptime',
-                        value: \`\${Math.floor(stats.uptime / 3600)}h \${Math.floor((stats.uptime % 3600) / 60)}m\`,
+                        value: \`\${hours}h \${minutes}m\`,
                         inline: true
                     },
                     {
                         name: '🔧 Mémoire',
-                        value: \`\${Math.round(stats.memory.used / 1024 / 1024)}MB\`,
+                        value: \`\${memoryUsedMB}MB\`,
                         inline: true
                     },
                     {
@@ -415,15 +470,17 @@ module.exports = {
 
             await interaction.reply({
                 embeds: [embed],
-                flags: 64
+                ephemeral: true
             });
 
         } catch (error) {
             console.error('❌ Erreur stats:', error);
-            await interaction.reply({
-                content: '❌ Une erreur est survenue.',
-                flags: 64
-            });
+            if (!interaction.replied) {
+                await interaction.reply({
+                    content: '❌ Une erreur est survenue.',
+                    ephemeral: true
+                });
+            }
         }
     }
 };`;
