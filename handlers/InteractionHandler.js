@@ -1,11 +1,13 @@
 const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const ConfessionHandler = require('./ConfessionHandler');
+const EconomyHandler = require('./EconomyHandler');
 
 class InteractionHandler {
     constructor(client, dataManager) {
         this.client = client;
         this.dataManager = dataManager;
         this.confessionHandler = new ConfessionHandler(dataManager);
+        this.economyHandler = new EconomyHandler(dataManager);
         this.handlers = {
             selectMenu: new Map(),
             button: new Map(),
@@ -19,10 +21,13 @@ class InteractionHandler {
     }
 
     setupHandlers() {
-        // Configuration Économie
-        this.handlers.selectMenu.set('economy_main_config', this.handleEconomyMainConfig.bind(this));
-        this.handlers.selectMenu.set('economy_action_config', this.handleEconomyActionConfig.bind(this));
-        this.handlers.selectMenu.set('karma_config_menu', this.handleKarmaConfigMenu.bind(this));
+        // Configuration Économie (délégués à EconomyHandler)
+        this.handlers.selectMenu.set('economy_main_config', this.economyHandler.handleEconomyMainConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_actions_config', this.economyHandler.handleEconomyActionsConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_shop_config', this.economyHandler.handleEconomyShopConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_karma_config', this.economyHandler.handleEconomyKarmaConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_daily_config', this.economyHandler.handleEconomyDailyConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_messages_config', this.economyHandler.handleEconomyMessagesConfig.bind(this.economyHandler));
         
         // Configuration Confession
         this.handlers.selectMenu.set('confession_main_config', this.handleConfessionMainConfig.bind(this));
@@ -229,57 +234,7 @@ class InteractionHandler {
         });
     }
 
-    // === HANDLERS CONFIGURATION ÉCONOMIE ===
-
-    async handleEconomyMainConfig(interaction) {
-        const value = interaction.values[0];
-        
-        switch(value) {
-            case 'actions':
-                await this.showActionsConfig(interaction);
-                break;
-            case 'shop':
-                await this.showShopConfig(interaction);
-                break;
-            case 'karma':
-                await this.showKarmaConfig(interaction);
-                break;
-            case 'rewards':
-                await this.showRewardsConfig(interaction);
-                break;
-            default:
-                await interaction.reply({
-                    content: `Configuration ${value} disponible.`,
-                    flags: 64
-                });
-        }
-    }
-
-    async handleEconomyActionConfig(interaction) {
-        const action = interaction.values[0];
-        await this.showActionSettings(interaction, action);
-    }
-
-    async handleKarmaConfigMenu(interaction) {
-        const value = interaction.values[0];
-        
-        switch(value) {
-            case 'levels':
-                await this.showKarmaLevelsConfig(interaction);
-                break;
-            case 'reset':
-                await this.showKarmaResetConfig(interaction);
-                break;
-            case 'actions':
-                await this.showKarmaActionsConfig(interaction);
-                break;
-            default:
-                await interaction.reply({
-                    content: `Configuration karma ${value} disponible.`,
-                    flags: 64
-                });
-        }
-    }
+    // === HANDLERS CONFIGURATION ÉCONOMIE - Délégués à EconomyHandler ===
 
     // === HANDLERS CONFIGURATION CONFESSION ===
 
