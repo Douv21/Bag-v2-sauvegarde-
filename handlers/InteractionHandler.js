@@ -55,6 +55,7 @@ class InteractionHandler {
         this.handlers.channelSelect.set('confession_add_channel', this.handleConfessionAddChannel.bind(this));
         this.handlers.channelSelect.set('confession_remove_channel', this.handleConfessionRemoveChannel.bind(this));
         this.handlers.channelSelect.set('confession_log_channel', this.handleConfessionLogChannel.bind(this));
+        this.handlers.selectMenu.set('confession_logs_config', this.handleConfessionLogsConfig.bind(this));
         
         // Handlers pour sélecteurs modaux et toggles
         this.handlers.selectMenu.set('confession_archive_time', this.handleConfessionArchiveTime.bind(this));
@@ -1610,9 +1611,9 @@ class InteractionHandler {
             await this.dataManager.saveData('config', config);
 
             const status = config.confessions[guildId].logImages ? '🟢 Activé' : '🔴 Désactivé';
-            await interaction.update({
+            await interaction.reply({
                 content: `🖼️ Images dans logs : ${status}`,
-                components: []
+                flags: 64
             });
         }
     }
@@ -1642,9 +1643,9 @@ class InteractionHandler {
             'full': '🔍 Complet - Inclut métadonnées et traces'
         };
 
-        await interaction.reply({
+        await interaction.update({
             content: `✅ Niveau de détail mis à jour: ${levels[value]}`,
-            flags: 64
+            components: []
         });
     }
 
