@@ -29,6 +29,7 @@ class InteractionHandler {
         // === CONFIGURATION ÉCONOMIE ===
         this.handlers.selectMenu.set('economy_main_config', this.handleEconomyMainConfig.bind(this));
         this.handlers.selectMenu.set('economy_action_config', this.handleEconomyActionConfig.bind(this));
+        this.handlers.selectMenu.set('shop_purchase', this.handleShopPurchase.bind(this));
         
         // === CONFESSION SYSTEM ===
         this.handlers.selectMenu.set('config_main_menu', this.handleConfigMainMenu.bind(this));
@@ -140,19 +141,48 @@ class InteractionHandler {
     async handleConfigMainMenu(interaction) {
         const value = interaction.values[0];
         
-        switch (value) {
-            case 'channels':
-                await this.showChannelsConfig(interaction);
-                break;
-            case 'autothread':
-                await this.showAutoThreadConfig(interaction);
-                break;
-            case 'logs':
-                await this.showLogsConfig(interaction);
-                break;
-            default:
-                await this.sendNotImplemented(interaction, value);
-        }
+        await interaction.reply({
+            content: `Configuration ${value} en cours de développement.`,
+            flags: 64
+        });
+    }
+    
+    async handleAutoThreadConfig(interaction) {
+        const value = interaction.values[0];
+        await interaction.reply({
+            content: `Auto-thread: ${value} (En développement)`,
+            flags: 64
+        });
+    }
+    
+    async showChannelsConfig(interaction) {
+        await interaction.reply({
+            content: 'Configuration des canaux en cours de développement.',
+            flags: 64
+        });
+    }
+    
+    async showAutoThreadConfig(interaction) {
+        await interaction.reply({
+            content: 'Configuration auto-thread en cours de développement.',
+            flags: 64
+        });
+    }
+    
+    async showLogsConfig(interaction) {
+        await interaction.reply({
+            content: 'Configuration des logs en cours de développement.',
+            flags: 64
+        });
+    }
+    
+    async handleShopPurchase(interaction) {
+        const itemId = interaction.values[0];
+        
+        await interaction.reply({
+            content: `Achat d'objet ${itemId} en cours de développement.`,
+            flags: 64
+        });
     }
 
     async handleBackToMain(interaction) {
