@@ -40,18 +40,20 @@ class InteractionHandler {
         this.handlers.selectMenu.set('autothread_name_config', this.handleAutothreadNameConfig.bind(this));
         this.handlers.selectMenu.set('autothread_archive_config', this.handleAutothreadArchiveConfig.bind(this));
         this.handlers.selectMenu.set('autothread_slowmode_config', this.handleAutothreadSlowmodeConfig.bind(this));
+        this.handlers.selectMenu.set('autothread_toggle_status', this.handleAutothreadToggleStatus.bind(this));
 
         // Nouveaux handlers pour config-confession
         this.handlers.selectMenu.set('confession_channels_config', this.handleConfessionChannelsConfig.bind(this));
         this.handlers.selectMenu.set('confession_autothread_config', this.handleConfessionAutothreadConfig.bind(this));
         this.handlers.selectMenu.set('confession_logs_config', this.handleConfessionLogsConfig.bind(this));
 
-        // Handlers pour sélecteurs canaux
-        this.handlers.selectMenu.set('autothread_add_channel', this.handleAutothreadAddChannel.bind(this));
-        this.handlers.selectMenu.set('autothread_remove_channel', this.handleAutothreadRemoveChannel.bind(this));
-        this.handlers.selectMenu.set('confession_add_channel', this.handleConfessionAddChannel.bind(this));
-        this.handlers.selectMenu.set('confession_remove_channel', this.handleConfessionRemoveChannel.bind(this));
-        this.handlers.selectMenu.set('confession_main_channel', this.handleConfessionMainChannel.bind(this));
+        // Handlers pour sélecteurs canaux (ChannelSelectMenuBuilder)
+        this.handlers.channelSelect = new Map();
+        this.handlers.channelSelect.set('autothread_add_channel', this.handleAutothreadAddChannel.bind(this));
+        this.handlers.channelSelect.set('autothread_remove_channel', this.handleAutothreadRemoveChannel.bind(this));
+        this.handlers.channelSelect.set('confession_add_channel', this.handleConfessionAddChannel.bind(this));
+        this.handlers.channelSelect.set('confession_remove_channel', this.handleConfessionRemoveChannel.bind(this));
+        this.handlers.channelSelect.set('confession_main_channel', this.handleConfessionMainChannel.bind(this));
         
         // Boutons Navigation
         this.handlers.button.set('economy_back_main', this.handleBackToMain.bind(this));
@@ -73,6 +75,8 @@ class InteractionHandler {
             try {
                 if (interaction.isStringSelectMenu()) {
                     await this.handleSelectMenu(interaction);
+                } else if (interaction.isChannelSelectMenu()) {
+                    await this.handleChannelSelect(interaction);
                 } else if (interaction.isButton()) {
                     await this.handleButton(interaction);
                 } else if (interaction.isModalSubmit()) {
@@ -97,6 +101,18 @@ class InteractionHandler {
         } else {
             await interaction.reply({
                 content: `Sélecteur ${interaction.customId} non géré.`,
+                flags: 64
+            });
+        }
+    }
+
+    async handleChannelSelect(interaction) {
+        const handler = this.handlers.channelSelect.get(interaction.customId);
+        if (handler) {
+            await handler(interaction);
+        } else {
+            await interaction.reply({
+                content: `Sélecteur canal ${interaction.customId} non géré.`,
                 flags: 64
             });
         }
@@ -402,8 +418,34 @@ class InteractionHandler {
         const value = interaction.values[0];
         
         if (value === 'toggle') {
+            const embed = new EmbedBuilder()
+                .setColor('#7289da')
+                .setTitle('🔄 Activer/Désactiver Auto-Thread')
+                .setDescription('Choisissez l\'état du système auto-thread global');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('autothread_toggle_status')
+                .setPlaceholder('🔄 Choisir l\'état du système')
+                .addOptions([
+                    {
+                        label: 'Activer',
+                        description: 'Activer le système auto-thread sur tous les canaux configurés',
+                        value: 'enable',
+                        emoji: '🟢'
+                    },
+                    {
+                        label: 'Désactiver',
+                        description: 'Désactiver complètement le système auto-thread',
+                        value: 'disable',
+                        emoji: '🔴'
+                    }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
             await interaction.reply({
-                content: '🔄 Système auto-thread activé/désactivé.',
+                embeds: [embed],
+                components: components,
                 flags: 64
             });
         } else if (value === 'channels') {
@@ -1485,6 +1527,22 @@ class InteractionHandler {
             content: `🎯 Canal **${channel.name}** défini comme canal principal pour les confessions !`,
             flags: 64
         });
+    }
+
+    async handleAutothreadToggleStatus(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'enable') {
+            await interaction.reply({
+                content: `✅ **Système auto-thread activé !**\n\nTous les messages dans les canaux configurés créeront automatiquement des threads.`,
+                flags: 64
+            });
+        } else if (value === 'disable') {
+            await interaction.reply({
+                content: `❌ **Système auto-thread désactivé !**\n\nAucun thread ne sera créé automatiquement.`,
+                flags: 64
+            });
+        }
     }
 
     async handleBackToMain(interaction) {
