@@ -335,12 +335,6 @@ class InteractionHandler {
                         description: 'Afficher tous les canaux configurés',
                         value: 'list_channels',
                         emoji: '📋'
-                    },
-                    {
-                        label: 'Canal Principal',
-                        description: 'Définir le canal principal par défaut',
-                        value: 'main_channel',
-                        emoji: '🎯'
                     }
                 ]);
 
@@ -1482,24 +1476,6 @@ class InteractionHandler {
             });
         } else if (value === 'list_channels') {
             await this.handleConfessionChannels(interaction);
-        } else if (value === 'main_channel') {
-            const embed = new EmbedBuilder()
-                .setColor('#FFD700')
-                .setTitle('🎯 Canal Principal Confessions')
-                .setDescription('Définissez le canal principal par défaut pour les confessions');
-
-            const channelSelect = new ChannelSelectMenuBuilder()
-                .setCustomId('confession_main_channel')
-                .setPlaceholder('🎯 Sélectionnez le canal principal')
-                .setChannelTypes([0]); // Text channels
-
-            const components = [new ActionRowBuilder().addComponents(channelSelect)];
-
-            await interaction.reply({
-                embeds: [embed],
-                components: components,
-                flags: 64
-            });
         }
     }
 
