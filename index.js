@@ -10,6 +10,7 @@ const fs = require('fs');
 
 // Gestionnaires centralisés
 const DataManager = require('./managers/DataManager');
+const KarmaManager = require('./managers/KarmaManager');
 const InteractionHandler = require('./handlers/InteractionHandler');
 const CommandHandler = require('./handlers/CommandHandler');
 
@@ -28,6 +29,7 @@ class BagBotRender {
 
         // Gestionnaires
         this.dataManager = new DataManager();
+        this.karmaManager = new KarmaManager(this.dataManager);
         this.interactionHandler = new InteractionHandler(this.client, this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
 
