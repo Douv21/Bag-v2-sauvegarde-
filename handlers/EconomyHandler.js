@@ -602,27 +602,44 @@ class EconomyHandler {
     }
 
     async showKarmaRewardsConfig(interaction) {
+        const DataManager = require('../managers/DataManager');
+        const dataManager = new DataManager();
+        const karmaConfig = await dataManager.getData('karma_config') || {};
+        const rewards = karmaConfig.rewards || {};
+        
         const embed = new EmbedBuilder()
             .setColor('#ffd700')
             .setTitle('⚖️ Récompenses Automatiques Karma')
-            .setDescription('Configuration des récompenses/sanctions hebdomadaires')
+            .setDescription('Configuration des récompenses/sanctions hebdomadaires personnalisables')
             .addFields([
-                { name: '👼 Récompenses Positives', value: 'Saint: +500€\nBon: +250€\nNeutre: +100€', inline: true },
-                { name: '😈 Sanctions Négatives', value: 'Sombre: -100€\nCriminel: -200€\nEvil: -300€', inline: true },
-                { name: '📅 Distribution', value: 'Chaque dimanche à minuit', inline: false }
+                { 
+                    name: '👼 Récompenses Positives', 
+                    value: `Saint: ${rewards.saint?.money || 500}€ (Bonus: x${rewards.saint?.dailyBonus || 1.5})\nBon: ${rewards.good?.money || 200}€ (Bonus: x${rewards.good?.dailyBonus || 1.2})\nNeutre: ${rewards.neutral?.money || 0}€ (Bonus: x${rewards.neutral?.dailyBonus || 1.0})`, 
+                    inline: false 
+                },
+                { 
+                    name: '😈 Sanctions Négatives', 
+                    value: `Mauvais: ${rewards.bad?.money || -100}€ (Malus: x${rewards.bad?.dailyBonus || 0.8})\nEvil: ${rewards.evil?.money || -300}€ (Malus: x${rewards.evil?.dailyBonus || 0.5})`, 
+                    inline: false 
+                },
+                { 
+                    name: '📅 Distribution', 
+                    value: `Jour: ${this.getDayName(karmaConfig.resetDay || 1)}\nProchain reset: ${this.getNextResetDate(karmaConfig.resetDay || 1)}`, 
+                    inline: false 
+                }
             ]);
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('economy_karma_rewards_edit')
             .setPlaceholder('🎁 Modifier les récompenses karma')
             .addOptions([
-                { label: 'Récompense Saint', value: 'saint_reward', emoji: '👼' },
-                { label: 'Récompense Bon', value: 'good_reward', emoji: '😇' },
-                { label: 'Récompense Neutre', value: 'neutral_reward', emoji: '⚖️' },
-                { label: 'Sanction Sombre', value: 'dark_penalty', emoji: '🖤' },
-                { label: 'Sanction Criminel', value: 'criminal_penalty', emoji: '😈' },
-                { label: 'Sanction Evil', value: 'evil_penalty', emoji: '👹' },
-                { label: 'Jour Distribution', value: 'distribution_day', emoji: '📅' },
+                { label: 'Récompenses Saint', description: 'Argent + bonus + cooldown', value: 'saint_reward', emoji: '👼' },
+                { label: 'Récompenses Bon', description: 'Argent + bonus + cooldown', value: 'good_reward', emoji: '😇' },
+                { label: 'Récompenses Neutre', description: 'Argent + bonus + cooldown', value: 'neutral_reward', emoji: '⚖️' },
+                { label: 'Sanctions Mauvais', description: 'Argent + malus + cooldown', value: 'bad_penalty', emoji: '🖤' },
+                { label: 'Sanctions Evil', description: 'Argent + malus + cooldown', value: 'evil_penalty', emoji: '👹' },
+                { label: 'Jour Distribution', description: 'Changer jour reset hebdomadaire', value: 'distribution_day', emoji: '📅' },
+                { label: 'Reset Défaut', description: 'Remettre valeurs par défaut', value: 'reset_rewards', emoji: '🔄' },
                 { label: 'Retour Karma', value: 'back_karma', emoji: '🔙' }
             ]);
 
@@ -1483,6 +1500,314 @@ class EconomyHandler {
                 flags: 64
             }).catch(() => {});
         }
+    }
+    
+    // ==================== MÉTHODES UTILITAIRES KARMA ====================
+    
+    getDayName(dayNum) {
+        const days = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+        return days[dayNum] || 'Inconnu';
+    }
+    
+    getNextResetDate(dayNum) {
+        const now = new Date();
+        const currentDay = now.getDay();
+        let daysUntilReset = dayNum - currentDay;
+        
+        if (daysUntilReset <= 0) {
+            daysUntilReset += 7;
+        }
+        
+        const nextReset = new Date(now);
+        nextReset.setDate(now.getDate() + daysUntilReset);
+        nextReset.setHours(0, 0, 0, 0);
+        
+        return nextReset.toLocaleDateString('fr-FR', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+    }
+    
+    // ==================== HANDLERS KARMA PERSONNALISABLES ====================
+    
+    async handleKarmaRewardConfig(interaction) {
+        const level = interaction.values[0];
+        
+        if (level === 'back_karma') {
+            await this.showKarmaConfig(interaction);
+            return;
+        }
+        
+        if (level === 'reset_rewards') {
+            await this.resetKarmaRewardsToDefault(interaction);
+            return;
+        }
+        
+        if (level === 'distribution_day') {
+            await this.showDistributionDayConfig(interaction);
+            return;
+        }
+        
+        // Créer modal de configuration pour le niveau sélectionné
+        await this.createKarmaRewardModal(interaction, level);
+    }
+    
+    async createKarmaRewardModal(interaction, level) {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+        
+        const levelNames = {
+            'saint_reward': { name: '👼 Saint', emoji: '👼' },
+            'good_reward': { name: '😇 Bon', emoji: '😇' },
+            'neutral_reward': { name: '⚖️ Neutre', emoji: '⚖️' },
+            'bad_penalty': { name: '🖤 Mauvais', emoji: '🖤' },
+            'evil_penalty': { name: '👹 Evil', emoji: '👹' }
+        };
+        
+        const levelInfo = levelNames[level];
+        
+        const modal = new ModalBuilder()
+            .setCustomId(`karma_reward_config_modal_${level}`)
+            .setTitle(`${levelInfo.emoji} Configuration ${levelInfo.name}`);
+        
+        const moneyInput = new TextInputBuilder()
+            .setCustomId('karma_money_reward')
+            .setLabel('Récompense/Sanction Argent (€)')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(6)
+            .setPlaceholder('Ex: 500, -300, 0... (-999,999€ à +999,999€)')
+            .setRequired(true);
+        
+        const dailyBonusInput = new TextInputBuilder()
+            .setCustomId('karma_daily_bonus')
+            .setLabel('Multiplicateur Bonus Daily (x)')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(3)
+            .setMaxLength(4)
+            .setPlaceholder('Ex: 1.5, 0.8, 2.0... (x0.1 à x5.0)')
+            .setRequired(true);
+        
+        const cooldownInput = new TextInputBuilder()
+            .setCustomId('karma_cooldown_modifier')
+            .setLabel('Modificateur Cooldown (x)')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(3)
+            .setMaxLength(4)
+            .setPlaceholder('Ex: 0.7, 1.2, 1.0... (x0.1 à x3.0)')
+            .setRequired(true);
+        
+        const descriptionInput = new TextInputBuilder()
+            .setCustomId('karma_level_description')
+            .setLabel('Description du niveau (optionnel)')
+            .setStyle(TextInputStyle.Paragraph)
+            .setMinLength(0)
+            .setMaxLength(100)
+            .setPlaceholder('Description personnalisée pour ce niveau karma')
+            .setRequired(false);
+        
+        const firstRow = new ActionRowBuilder().addComponents(moneyInput);
+        const secondRow = new ActionRowBuilder().addComponents(dailyBonusInput);
+        const thirdRow = new ActionRowBuilder().addComponents(cooldownInput);
+        const fourthRow = new ActionRowBuilder().addComponents(descriptionInput);
+        
+        modal.addComponents(firstRow, secondRow, thirdRow, fourthRow);
+        
+        await interaction.showModal(modal);
+    }
+    
+    async handleKarmaRewardConfigModal(interaction) {
+        try {
+            const level = interaction.customId.split('_').pop(); // Extract level from modal ID
+            const money = parseInt(interaction.fields.getTextInputValue('karma_money_reward'));
+            const dailyBonus = parseFloat(interaction.fields.getTextInputValue('karma_daily_bonus'));
+            const cooldown = parseFloat(interaction.fields.getTextInputValue('karma_cooldown_modifier'));
+            const description = interaction.fields.getTextInputValue('karma_level_description') || '';
+            
+            // Validation
+            if (isNaN(money) || money < -999999 || money > 999999) {
+                await interaction.reply({
+                    content: '❌ Récompense argent invalide. Valeur entre -999,999€ et +999,999€ requise.',
+                    flags: 64
+                });
+                return;
+            }
+            
+            if (isNaN(dailyBonus) || dailyBonus < 0.1 || dailyBonus > 5.0) {
+                await interaction.reply({
+                    content: '❌ Multiplicateur daily invalide. Valeur entre x0.1 et x5.0 requise.',
+                    flags: 64
+                });
+                return;
+            }
+            
+            if (isNaN(cooldown) || cooldown < 0.1 || cooldown > 3.0) {
+                await interaction.reply({
+                    content: '❌ Modificateur cooldown invalide. Valeur entre x0.1 et x3.0 requise.',
+                    flags: 64
+                });
+                return;
+            }
+            
+            // Sauvegarder la configuration
+            await this.saveKarmaLevelConfig(level, {
+                money: money,
+                dailyBonus: dailyBonus,
+                cooldownReduction: cooldown,
+                description: description
+            });
+            
+            const levelNames = {
+                'saint_reward': '👼 Saint',
+                'good_reward': '😇 Bon',
+                'neutral_reward': '⚖️ Neutre',
+                'bad_penalty': '🖤 Mauvais',
+                'evil_penalty': '👹 Evil'
+            };
+            
+            const embed = new EmbedBuilder()
+                .setColor('#00ff00')
+                .setTitle('✅ Configuration Karma Sauvegardée')
+                .setDescription(`Niveau ${levelNames[level]} configuré avec succès !`)
+                .addFields([
+                    { name: '💰 Récompense/Sanction', value: `${money >= 0 ? '+' : ''}${money}€`, inline: true },
+                    { name: '⚡ Multiplicateur Daily', value: `x${dailyBonus}`, inline: true },
+                    { name: '⏰ Modificateur Cooldown', value: `x${cooldown}`, inline: true },
+                    { name: '📝 Description', value: description || 'Aucune description', inline: false }
+                ]);
+            
+            await interaction.reply({
+                embeds: [embed],
+                flags: 64
+            });
+            
+        } catch (error) {
+            console.error('❌ Erreur handleKarmaRewardConfigModal:', error);
+            await interaction.reply({
+                content: '❌ Une erreur est survenue lors de la sauvegarde. Veuillez réessayer.',
+                flags: 64
+            }).catch(() => {});
+        }
+    }
+    
+    async saveKarmaLevelConfig(level, config) {
+        const DataManager = require('../managers/DataManager');
+        const dataManager = new DataManager();
+        const karmaConfig = await dataManager.getData('karma_config') || {};
+        
+        if (!karmaConfig.rewards) {
+            karmaConfig.rewards = {};
+        }
+        
+        const levelKey = level.replace('_reward', '').replace('_penalty', '');
+        karmaConfig.rewards[levelKey] = config;
+        
+        await dataManager.saveData('karma_config', karmaConfig);
+        console.log(`✅ Configuration karma ${levelKey} sauvegardée:`, config);
+    }
+    
+    async resetKarmaRewardsToDefault(interaction) {
+        const DataManager = require('../managers/DataManager');
+        const dataManager = new DataManager();
+        
+        const defaultRewards = {
+            saint: { money: 500, dailyBonus: 1.5, cooldownReduction: 0.7 },
+            good: { money: 200, dailyBonus: 1.2, cooldownReduction: 0.9 },
+            neutral: { money: 0, dailyBonus: 1.0, cooldownReduction: 1.0 },
+            bad: { money: -100, dailyBonus: 0.8, cooldownReduction: 1.2 },
+            evil: { money: -300, dailyBonus: 0.5, cooldownReduction: 1.5 }
+        };
+        
+        const karmaConfig = await dataManager.getData('karma_config') || {};
+        karmaConfig.rewards = defaultRewards;
+        await dataManager.saveData('karma_config', karmaConfig);
+        
+        const embed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('✅ Récompenses Karma Réinitialisées')
+            .setDescription('Toutes les récompenses ont été remises aux valeurs par défaut')
+            .addFields([
+                { name: '👼 Saint', value: '+500€, Daily x1.5, Cooldown x0.7', inline: true },
+                { name: '😇 Bon', value: '+200€, Daily x1.2, Cooldown x0.9', inline: true },
+                { name: '⚖️ Neutre', value: '0€, Daily x1.0, Cooldown x1.0', inline: true },
+                { name: '🖤 Mauvais', value: '-100€, Daily x0.8, Cooldown x1.2', inline: true },
+                { name: '👹 Evil', value: '-300€, Daily x0.5, Cooldown x1.5', inline: true }
+            ]);
+        
+        await interaction.update({
+            embeds: [embed],
+            components: []
+        });
+    }
+    
+    async showDistributionDayConfig(interaction) {
+        const DataManager = require('../managers/DataManager');
+        const dataManager = new DataManager();
+        const karmaConfig = await dataManager.getData('karma_config') || {};
+        const currentDay = karmaConfig.resetDay || 1;
+        
+        const embed = new EmbedBuilder()
+            .setColor('#ff6600')
+            .setTitle('📅 Configuration Jour Distribution')
+            .setDescription('Choisissez le jour de distribution des récompenses karma hebdomadaires')
+            .addFields([
+                { name: '📅 Jour Actuel', value: this.getDayName(currentDay), inline: true },
+                { name: '⏰ Heure', value: '00:00 (minuit)', inline: true },
+                { name: '🔄 Prochain Reset', value: this.getNextResetDate(currentDay), inline: false }
+            ]);
+        
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_karma_distribution_day')
+            .setPlaceholder('📅 Choisir le jour de distribution')
+            .addOptions([
+                { label: 'Lundi', value: '1', emoji: '📅' },
+                { label: 'Mardi', value: '2', emoji: '📅' },
+                { label: 'Mercredi', value: '3', emoji: '📅' },
+                { label: 'Jeudi', value: '4', emoji: '📅' },
+                { label: 'Vendredi', value: '5', emoji: '📅' },
+                { label: 'Samedi', value: '6', emoji: '📅' },
+                { label: 'Dimanche', value: '0', emoji: '📅' },
+                { label: 'Retour Récompenses', value: 'back_rewards', emoji: '🔙' }
+            ]);
+        
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+        
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+    
+    async handleDistributionDaySelection(interaction) {
+        const selectedDay = interaction.values[0];
+        
+        if (selectedDay === 'back_rewards') {
+            await this.showKarmaRewardsConfig(interaction);
+            return;
+        }
+        
+        const DataManager = require('../managers/DataManager');
+        const dataManager = new DataManager();
+        const karmaConfig = await dataManager.getData('karma_config') || {};
+        
+        karmaConfig.resetDay = parseInt(selectedDay);
+        await dataManager.saveData('karma_config', karmaConfig);
+        
+        const embed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('✅ Jour Distribution Configuré')
+            .setDescription('Le jour de distribution des récompenses karma a été modifié')
+            .addFields([
+                { name: '📅 Nouveau Jour', value: this.getDayName(parseInt(selectedDay)), inline: true },
+                { name: '⏰ Heure', value: '00:00 (minuit)', inline: true },
+                { name: '🔄 Prochain Reset', value: this.getNextResetDate(parseInt(selectedDay)), inline: false }
+            ]);
+        
+        await interaction.update({
+            embeds: [embed],
+            components: []
+        });
     }
     
     // Handlers pour gestion articles existants
@@ -2787,6 +3112,32 @@ class EconomyHandler {
             embeds: [embed],
             components: []
         });
+    }
+    
+    // ==================== HANDLERS KARMA CONFIG ====================
+    
+    async handleKarmaConfigSelection(interaction) {
+        const value = interaction.values[0];
+        
+        switch(value) {
+            case 'levels':
+                await this.showKarmaLevelsConfig(interaction);
+                break;
+            case 'rewards':
+                await this.showKarmaRewardsConfig(interaction);
+                break;
+            case 'reset':
+                await this.showKarmaResetConfig(interaction);
+                break;
+            case 'action_karma':
+                await this.showActionKarmaConfig(interaction);
+                break;
+            default:
+                await interaction.reply({
+                    content: `Configuration karma ${value} disponible prochainement.`,
+                    flags: 64
+                });
+        }
     }
 }
 

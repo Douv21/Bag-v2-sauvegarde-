@@ -294,6 +294,12 @@ class InteractionHandler {
             return;
         }
         
+        // Karma reward configuration modals
+        if (customId.startsWith('karma_reward_config_modal_')) {
+            await this.economyHandler.handleKarmaRewardConfigModal(interaction);
+            return;
+        }
+        
         // Vérifier les handlers statiques de modals boutique
         const modalHandler = this.handlers.modal?.get(customId);
         if (modalHandler) {
