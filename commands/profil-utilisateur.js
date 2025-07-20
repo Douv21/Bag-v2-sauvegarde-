@@ -78,26 +78,8 @@ module.exports = {
                 totalActions
             });
 
-            // Boutons d'interaction
-            const row = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`card_flip_${userId}`)
-                        .setLabel('🔄 Retourner Carte')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId(`card_shine_${userId}`)
-                        .setLabel('✨ Effet Holographique')
-                        .setStyle(ButtonStyle.Secondary),
-                    new ButtonBuilder()
-                        .setCustomId(`card_stats_${userId}`)
-                        .setLabel('📊 Statistiques Détaillées')
-                        .setStyle(ButtonStyle.Success)
-                );
-
             await interaction.reply({
                 embeds: [embed],
-                components: [row],
                 flags: 64
             });
 
@@ -169,63 +151,74 @@ module.exports = {
     createHolographicCard(user, userData, stats) {
         const { karmaNet, karmaLevel, level, xpProgress, nextLevelXP, totalXP, cardRarity, totalActions } = stats;
 
-        // Créer barre de progression XP visuelle
-        const progressBarLength = 20;
-        const filledBars = Math.floor((xpProgress / nextLevelXP) * progressBarLength);
-        const emptyBars = progressBarLength - filledBars;
-        const progressBar = '█'.repeat(filledBars) + '░'.repeat(emptyBars);
-
-        // Créer jauge karma visuelle
-        const karmaBarLength = 10;
-        const karmaPosition = Math.min(Math.max(karmaNet + 50, 0), 100);
-        const karmaFilled = Math.floor((karmaPosition / 100) * karmaBarLength);
-        const karmaEmpty = karmaBarLength - karmaFilled;
-        const karmaBar = '😈' + '▓'.repeat(karmaFilled) + '░'.repeat(karmaEmpty) + '😇';
+        // Design futuriste avec circuits électroniques bleu cyan
+        const cardDesign = `\`\`\`
+    ╔═══○═══════════════════════════════════○═══╗
+   ╔╝ ◦ ○ ◦                             ◦ ○ ◦ ╚╗
+  ╔╝  ╔═○═╗    🎴 CARTE HOLOGRAPHIQUE   ╔═○═╗  ╚╗
+ ╔╝   ║   ║          ${user.displayName.padEnd(12).substring(0, 12)}        ║   ║   ╚╗
+╔╝ ◦  ╚═○═╝                             ╚═○═╝  ◦ ╚╗
+║                                                 ║
+║  ╔══○══════════════════════════════════○══╗   ║
+║  ║                                       ║   ║
+║  ║  💎 LVL ${level.toString().padStart(2)}  💰 ${(userData.balance || 0).toLocaleString().padStart(8)}€      ║   ║
+║  ║  ⚖️  ${karmaNet >= 0 ? '+' : ''}${karmaNet.toString().padStart(3)} ${karmaLevel.icon}  🎯 ${totalActions} actions    ║   ║
+║  ║                                       ║   ║
+║  ║  ┌─○─────────────────────────○─┐     ║   ║
+║  ║  │    ${cardRarity.name.toUpperCase().padEnd(16)}    │     ║   ║
+║  ║  │    ${karmaLevel.name.padEnd(16)}    │     ║   ║
+║  ║  └─○─────────────────────────○─┘     ║   ║
+║  ║                                       ║   ║
+║  ╚══○══════════════════════════════════○══╝   ║
+║                                                 ║
+╚╗ ◦  ╔═○═╗                             ╔═○═╗  ◦ ╔╝
+ ╚╗   ║   ║      ${cardRarity.icon} ${cardRarity.name}      ║   ║   ╔╝
+  ╚╗  ╚═○═╝                             ╚═○═╝  ╔╝
+   ╚╗ ◦ ○ ◦                             ◦ ○ ◦ ╔╝
+    ╚═══○═══════════════════════════════════○═══╝
+\`\`\``;
 
         const embed = new EmbedBuilder()
-            .setColor(cardRarity.color)
-            .setTitle(`${cardRarity.icon} CARTE ${cardRarity.name.toUpperCase()} ${cardRarity.icon}`)
-            .setDescription(`
-\`\`\`
-${cardRarity.border}
-║ ${user.displayName.padEnd(25)} LVL ${level.toString().padStart(3)} ║
-${cardRarity.border}
-║                                     ║
-║  ${karmaLevel.icon} ${karmaLevel.name.padEnd(12)} ${(userData.balance || 0).toLocaleString().padStart(10)}€ ║
-║                                     ║
-║  XP: ${progressBar} ║
-║      ${xpProgress}/${nextLevelXP} (${totalXP} total)   ║
-║                                     ║
-║  KARMA: ${karmaBar} ║
-║         Net: ${karmaNet >= 0 ? '+' : ''}${karmaNet}           ║
-║                                     ║
-║  📊 Actions: ${totalActions.toString().padStart(2)}   🔥 Streak: ${(userData.dailyStreak || 0).toString().padStart(2)} ║
-║  💬 Messages: ${(userData.messageCount || 0).toString().padStart(4)}   ${karmaLevel.description} ║
-${cardRarity.border}
-\`\`\``)
-            .setThumbnail(user.displayAvatarURL({ size: 256 }))
+            .setColor('#00FFFF') // Cyan futuriste
+            .setTitle(`${cardRarity.icon} SYSTÈME HOLOGRAPHIQUE ACTIVÉ`)
+            .setDescription(cardDesign)
             .addFields([
                 {
-                    name: '💰 Économie',
-                    value: `**Solde:** ${(userData.balance || 0).toLocaleString()}€\n**Niveau:** ${level}\n**XP Total:** ${totalXP.toLocaleString()}`,
+                    name: '🔋 DONNÉES BIOMÉTRIQUES',
+                    value: `\`\`\`
+○ KARMA POSITIF: ${(userData.karmaGood || 0).toString().padStart(3)}
+○ KARMA NÉGATIF: ${(userData.karmaBad || 0).toString().padStart(3)}  
+○ BALANCE NET:   ${karmaNet >= 0 ? '+' : ''}${karmaNet}
+○ STREAK DAILY:  ${(userData.dailyStreak || 0)} jours
+\`\`\``,
                     inline: true
                 },
                 {
-                    name: '⚖️ Karma',
-                    value: `**😇 Positif:** ${userData.karmaGood || 0}\n**😈 Négatif:** ${userData.karmaBad || 0}\n**📊 Net:** ${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
+                    name: '⚡ PROGRESSION SYSTÈME',
+                    value: `\`\`\`
+○ NIVEAU ACTUEL: ${level}
+○ XP TOTAL:      ${totalXP.toLocaleString()}
+○ XP RESTANT:    ${nextLevelXP - totalXP}
+○ RARETÉ:        ${cardRarity.name}
+\`\`\``,
                     inline: true
                 },
                 {
-                    name: '🏆 Statistiques',
-                    value: `**🎯 Actions:** ${totalActions}\n**🔥 Streak:** ${userData.dailyStreak || 0} jours\n**💬 Messages:** ${userData.messageCount || 0}`,
-                    inline: true
+                    name: '🌐 STATUT HOLOGRAPHIQUE',
+                    value: `\`\`\`
+○ TYPE: ${karmaLevel.name}
+○ DESCRIPTION: ${karmaLevel.description}
+○ SCORE GLOBAL: ${Math.floor(cardRarity.score)}
+○ ID UNIQUE: ${user.id.slice(-8)}
+\`\`\``,
+                    inline: false
                 }
             ])
+            .setThumbnail(user.displayAvatarURL())
             .setFooter({ 
-                text: `${cardRarity.name} • Holographic Card • ${new Date().toLocaleDateString('fr-FR')}`,
-                iconURL: user.displayAvatarURL()
-            })
-            .setTimestamp();
+                text: `◦ HOLOGRAM-TECH © ${new Date().getFullYear()} ◦ SCAN COMPLETED ◦`,
+                iconURL: user.displayAvatarURL() 
+            });
 
         return embed;
     }
