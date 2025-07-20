@@ -2267,14 +2267,13 @@ class InteractionHandler {
 
     async handleConfessionAutothreadConfig(interaction) {
         const value = interaction.values[0];
-        const dataManager = require('../managers/DataManager');
         const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
 
         if (value === 'toggle_autothread') {
             // Bouton toggle pour activer/désactiver
             const { ButtonBuilder, ButtonStyle } = require('discord.js');
             
-            const config = await dataManager.getData('config');
+            const config = await this.dataManager.getData('config');
             const guildId = interaction.guild.id;
             const currentStatus = config.confessions?.[guildId]?.autoThread || false;
             
@@ -2302,7 +2301,7 @@ class InteractionHandler {
 
         } else if (value === 'thread_name') {
             // Sélecteur pour format nom
-            const config = await dataManager.getData('config');
+            const config = await this.dataManager.getData('config');
             const guildId = interaction.guild.id;
             const currentFormat = config.confessions?.[guildId]?.threadName || 'Confession #{number}';
             
@@ -2354,7 +2353,7 @@ class InteractionHandler {
 
         } else if (value === 'archive_time') {
             // Sélecteur pour durée archive
-            const config = await dataManager.getData('config');
+            const config = await this.dataManager.getData('config');
             const guildId = interaction.guild.id;
             const currentTime = config.confessions?.[guildId]?.archiveTime || 1440;
             
