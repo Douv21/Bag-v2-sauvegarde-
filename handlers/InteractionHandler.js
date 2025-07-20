@@ -630,7 +630,8 @@ class InteractionHandler {
 
     async handleConfessionLogLevel(interaction) {
         const level = interaction.values[0];
-        const config = await this.dataManager.getData('config');
+        const dataManager = require('../managers/DataManager');
+        const config = await dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (!config.confessions) config.confessions = {};
@@ -643,7 +644,7 @@ class InteractionHandler {
         }
 
         config.confessions[guildId].logLevel = level;
-        await this.dataManager.saveData('config', config);
+        await dataManager.saveData('config', config);
 
         const levels = {
             'basic': '📄 Basique - Contenu et utilisateur seulement',
@@ -1548,7 +1549,8 @@ class InteractionHandler {
 
     async handleConfessionLogsConfig(interaction) {
         const value = interaction.values[0];
-        const config = await this.dataManager.getData('config');
+        const dataManager = require('../managers/DataManager');
+        const config = await dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (value === 'log_channel') {
@@ -1608,7 +1610,7 @@ class InteractionHandler {
             };
 
             config.confessions[guildId].logImages = !config.confessions[guildId].logImages;
-            await this.dataManager.saveData('config', config);
+            await dataManager.saveData('config', config);
 
             const status = config.confessions[guildId].logImages ? '🟢 Activé' : '🔴 Désactivé';
             await interaction.reply({
