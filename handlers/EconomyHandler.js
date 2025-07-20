@@ -1762,25 +1762,48 @@ class EconomyHandler {
     }
     
     async saveCustomKarmaLevel(levelData, editIndex = null) {
-        const DataManager = require('../managers/DataManager');
-        const dataManager = new DataManager();
-        const karmaConfig = await dataManager.getData('karma_config') || {};
-        
-        if (!karmaConfig.customRewards) {
-            karmaConfig.customRewards = [];
+        try {
+            const DataManager = require('../managers/DataManager');
+            const dataManager = new DataManager();
+            
+            console.log('📁 Sauvegarde niveau karma:', levelData);
+            console.log('📝 Index d\'édition:', editIndex);
+            
+            const karmaConfig = await dataManager.getData('karma_config') || {};
+            
+            if (!karmaConfig.customRewards) {
+                karmaConfig.customRewards = [];
+            }
+            
+            // Créer l'objet niveau avec timestamp
+            const levelWithTimestamp = {
+                ...levelData,
+                createdAt: new Date().toISOString(),
+                id: editIndex !== null ? karmaConfig.customRewards[editIndex]?.id || Date.now() : Date.now()
+            };
+            
+            if (editIndex !== null && editIndex >= 0 && editIndex < karmaConfig.customRewards.length) {
+                // Modification niveau existant
+                karmaConfig.customRewards[editIndex] = levelWithTimestamp;
+                console.log(`✅ Niveau karma modifié à l'index ${editIndex}:`, levelWithTimestamp);
+            } else {
+                // Nouveau niveau
+                karmaConfig.customRewards.push(levelWithTimestamp);
+                console.log(`✅ Nouveau niveau karma ajouté:`, levelWithTimestamp);
+            }
+            
+            // Trier par karma threshold décroissant
+            karmaConfig.customRewards.sort((a, b) => b.karmaThreshold - a.karmaThreshold);
+            
+            await dataManager.saveData('karma_config', karmaConfig);
+            console.log('💾 Configuration karma sauvegardée avec succès');
+            
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Erreur saveCustomKarmaLevel:', error);
+            throw error;
         }
-        
-        if (editIndex !== null) {
-            // Modification niveau existant
-            karmaConfig.customRewards[editIndex] = levelData;
-            console.log(`✅ Niveau karma modifié à l'index ${editIndex}:`, levelData);
-        } else {
-            // Nouveau niveau
-            karmaConfig.customRewards.push(levelData);
-            console.log(`✅ Nouveau niveau karma ajouté:`, levelData);
-        }
-        
-        await dataManager.saveData('karma_config', karmaConfig);
     }
     
     async resetKarmaRewardsToDefault(interaction) {
