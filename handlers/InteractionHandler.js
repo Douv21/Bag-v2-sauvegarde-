@@ -1,9 +1,11 @@
 const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const ConfessionHandler = require('./ConfessionHandler');
 
 class InteractionHandler {
     constructor(client, dataManager) {
         this.client = client;
         this.dataManager = dataManager;
+        this.confessionHandler = new ConfessionHandler(dataManager);
         this.handlers = {
             selectMenu: new Map(),
             button: new Map(),
@@ -42,11 +44,11 @@ class InteractionHandler {
         this.handlers.selectMenu.set('autothread_slowmode_config', this.handleAutothreadSlowmodeConfig.bind(this));
         this.handlers.selectMenu.set('autothread_toggle_status', this.handleAutothreadToggleStatus.bind(this));
 
-        // Nouveaux handlers pour config-confession
+        // Nouveaux handlers pour config-confession (délégués au ConfessionHandler)
         this.handlers.selectMenu.set('confession_channels_config', this.handleConfessionChannelsConfig.bind(this));
         this.handlers.selectMenu.set('confession_autothread_config', this.handleConfessionAutothreadConfig.bind(this));
-        this.handlers.selectMenu.set('confession_logs_config', this.handleConfessionLogsConfig.bind(this));
-        this.handlers.selectMenu.set('confession_log_level', this.handleConfessionLogLevel.bind(this));
+        this.handlers.selectMenu.set('confession_logs_config', this.confessionHandler.handleConfessionLogsConfig.bind(this.confessionHandler));
+        this.handlers.selectMenu.set('confession_log_level', this.confessionHandler.handleConfessionLogLevel.bind(this.confessionHandler));
 
         // Handlers pour sélecteurs canaux (ChannelSelectMenuBuilder)
         this.handlers.channelSelect = new Map();
@@ -54,7 +56,7 @@ class InteractionHandler {
         this.handlers.channelSelect.set('autothread_remove_channel', this.handleAutothreadRemoveChannel.bind(this));
         this.handlers.channelSelect.set('confession_add_channel', this.handleConfessionAddChannel.bind(this));
         this.handlers.channelSelect.set('confession_remove_channel', this.handleConfessionRemoveChannel.bind(this));
-        this.handlers.channelSelect.set('confession_log_channel', this.handleConfessionLogChannel.bind(this));
+        this.handlers.channelSelect.set('confession_log_channel', this.confessionHandler.handleConfessionLogChannel.bind(this.confessionHandler));
         
         // Handlers pour sélecteurs modaux et toggles
         this.handlers.selectMenu.set('confession_archive_time', this.handleConfessionArchiveTime.bind(this));
@@ -1895,31 +1897,7 @@ class InteractionHandler {
         }
     }
 
-    async handleConfessionLogsConfig(interaction) {
-        const value = interaction.values[0];
-        
-        if (value === 'log_channel') {
-            await interaction.reply({
-                content: '📝 Canal de logs configuré.',
-                flags: 64
-            });
-        } else if (value === 'log_level') {
-            await interaction.reply({
-                content: '🔍 Niveau de détail des logs configuré.',
-                flags: 64
-            });
-        } else if (value === 'confession_logs') {
-            await interaction.reply({
-                content: '💭 Logs des confessions activés/désactivés.',
-                flags: 64
-            });
-        } else if (value === 'moderation_logs') {
-            await interaction.reply({
-                content: '🛡️ Logs de modération activés/désactivés.',
-                flags: 64
-            });
-        }
-    }
+    // Handler délégué au ConfessionHandler
 
     // Handlers pour channel selects
     async handleAutothreadAddChannel(interaction) {
