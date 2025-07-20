@@ -37,6 +37,10 @@ class InteractionHandler {
         // === BOUTONS ===
         this.handlers.button.set('economy_back_main', this.handleBackToMain.bind(this));
         this.handlers.button.set('config_back_main', this.handleBackToMain.bind(this));
+        this.handlers.button.set('edit_reward_work', this.handleEditReward.bind(this));
+        this.handlers.button.set('edit_cooldown_work', this.handleEditCooldown.bind(this));
+        this.handlers.button.set('economy_back_actions', this.handleBackToActions.bind(this));
+        this.handlers.button.set('toggle_message_rewards', this.handleToggleMessageRewards.bind(this));
     }
 
     async handle(interaction) {
@@ -122,6 +126,9 @@ class InteractionHandler {
             case 'shop':
                 await this.showShopConfig(interaction);
                 break;
+            case 'karma':
+                await this.showKarmaConfig(interaction);
+                break;
             case 'daily':
                 await this.showDailyConfig(interaction);
                 break;
@@ -140,11 +147,24 @@ class InteractionHandler {
 
     async handleConfigMainMenu(interaction) {
         const value = interaction.values[0];
+        const configCommand = this.client.commands.get('config-confession');
         
-        await interaction.reply({
-            content: `Configuration ${value} en cours de développement.`,
-            flags: 64
-        });
+        switch(value) {
+            case 'channels':
+                await this.showChannelsConfig(interaction);
+                break;
+            case 'autothread':
+                await this.showAutoThreadConfig(interaction);
+                break;
+            case 'logs':
+                await this.showLogsConfig(interaction);
+                break;
+            default:
+                await interaction.reply({
+                    content: `Configuration ${value} disponible bientôt.`,
+                    flags: 64
+                });
+        }
     }
     
     async handleAutoThreadConfig(interaction) {
@@ -181,6 +201,213 @@ class InteractionHandler {
         
         await interaction.reply({
             content: `Achat d'objet ${itemId} en cours de développement.`,
+            flags: 64
+        });
+    }
+
+    // === MÉTHODES D'AFFICHAGE ===
+
+    async showActionsConfig(interaction) {
+        const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle('💼 Configuration Actions Économiques')
+            .setDescription('Configurez toutes les actions économiques avec leurs récompenses et karma')
+            .addFields([
+                {
+                    name: '😇 Actions Positives',
+                    value: '**Travailler** - Gain argent + karma bon\n**Pêcher** - Gain variable + karma bon\n**Donner** - Transfert + gros karma bon',
+                    inline: true
+                },
+                {
+                    name: '😈 Actions Négatives',
+                    value: '**Voler** - Gain/risque + karma mauvais\n**Crime** - Gros gain/risque + gros karma mauvais\n**Parier** - Gambling + karma mauvais',
+                    inline: true
+                }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_action_config')
+            .setPlaceholder('💼 Sélectionner une action à configurer')
+            .addOptions([
+                {
+                    label: 'Travailler',
+                    description: 'Configurer travail (+argent +😇)',
+                    value: 'work',
+                    emoji: '💼'
+                },
+                {
+                    label: 'Pêcher',
+                    description: 'Configurer pêche (+argent +😇)',
+                    value: 'fish',
+                    emoji: '🎣'
+                },
+                {
+                    label: 'Donner',
+                    description: 'Configurer dons (+3😇)',
+                    value: 'donate',
+                    emoji: '💝'
+                },
+                {
+                    label: 'Voler',
+                    description: 'Configurer vol (+😈)',
+                    value: 'steal',
+                    emoji: '💸'
+                },
+                {
+                    label: 'Crime',
+                    description: 'Configurer crime (+3😈)',
+                    value: 'crime',
+                    emoji: '🔫'
+                },
+                {
+                    label: 'Parier',
+                    description: 'Configurer pari (+😈)',
+                    value: 'bet',
+                    emoji: '🎰'
+                }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+        if (interaction.deferred) {
+            await interaction.editReply({
+                embeds: [embed],
+                components: components
+            });
+        } else {
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+        }
+    }
+
+    async showKarmaConfig(interaction) {
+        const { EmbedBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle('⚖️ Configuration Système Karma')
+            .setDescription('Configurez les effets du karma sur l\'économie')
+            .addFields([
+                {
+                    name: '😇 Karma Positif',
+                    value: '• Bonus daily rewards\n• Accès objets spéciaux\n• Réduction cooldowns',
+                    inline: true
+                },
+                {
+                    name: '😈 Karma Négatif',
+                    value: '• Malus sur gains\n• Cooldowns prolongés\n• Restrictions boutique',
+                    inline: true
+                },
+                {
+                    name: '⚖️ Statuts Moraux',
+                    value: '**😇 Saint** (+10+)\n**😇 Bon** (+1 à +9)\n**😐 Neutre** (0)\n**😈 Mauvais** (-1 à -9)\n**😈 Diabolique** (-10-)',
+                    inline: false
+                }
+            ]);
+
+        await interaction.reply({
+            embeds: [embed],
+            content: 'Configuration karma en cours de développement.',
+            flags: 64
+        });
+    }
+
+    async showShopConfig(interaction) {
+        const { EmbedBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#00AAFF')
+            .setTitle('🛒 Configuration Boutique')
+            .setDescription('Gérez les objets et rôles en vente');
+
+        await interaction.reply({
+            embeds: [embed],
+            content: 'Configuration boutique en cours de développement.',
+            flags: 64
+        });
+    }
+
+    async showDailyConfig(interaction) {
+        const { EmbedBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#ffd700')
+            .setTitle('🎁 Configuration Daily')
+            .setDescription('Configurez les récompenses quotidiennes');
+
+        await interaction.reply({
+            embeds: [embed],
+            content: 'Configuration daily en cours de développement.',
+            flags: 64
+        });
+    }
+
+    async showMessageRewardsConfig(interaction) {
+        const { EmbedBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#32cd32')
+            .setTitle('💬 Configuration Récompenses Messages')
+            .setDescription('Configurez les gains automatiques par message');
+
+        await interaction.reply({
+            embeds: [embed],
+            content: 'Configuration messages en cours de développement.',
+            flags: 64
+        });
+    }
+
+    async showActionSettings(interaction, action) {
+        const actionNames = {
+            work: 'Travailler 💼',
+            fish: 'Pêcher 🎣',
+            donate: 'Donner 💝',
+            steal: 'Voler 💸',
+            crime: 'Crime 🔫',
+            bet: 'Parier 🎰'
+        };
+
+        await interaction.reply({
+            content: `Configuration de l'action ${actionNames[action] || action} en cours de développement.`,
+            flags: 64
+        });
+    }
+
+    async sendNotImplemented(interaction, feature) {
+        await interaction.reply({
+            content: `La fonctionnalité ${feature} sera bientôt disponible.`,
+            flags: 64
+        });
+    }
+
+    // === HANDLERS BOUTONS ===
+
+    async handleEditReward(interaction) {
+        await interaction.reply({
+            content: 'Modification des récompenses en cours de développement.',
+            flags: 64
+        });
+    }
+
+    async handleEditCooldown(interaction) {
+        await interaction.reply({
+            content: 'Modification des cooldowns en cours de développement.',
+            flags: 64
+        });
+    }
+
+    async handleBackToActions(interaction) {
+        await this.showActionsConfig(interaction);
+    }
+
+    async handleToggleMessageRewards(interaction) {
+        await interaction.reply({
+            content: 'Toggle récompenses messages en cours de développement.',
             flags: 64
         });
     }
