@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discor
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -74,10 +75,18 @@ module.exports = {
             const discordJoinDate = targetUser.createdAt.toLocaleDateString('fr-FR');
             const serverJoinDate = member ? member.joinedAt.toLocaleDateString('fr-FR') : 'Inconnu';
 
+            // Télécharger et encoder l'avatar en base64
+            let avatarBase64 = null;
+            try {
+                avatarBase64 = await this.downloadAndEncodeAvatar(targetUser.displayAvatarURL({ format: 'png', size: 128 }));
+            } catch (error) {
+                console.error('❌ Erreur téléchargement avatar:', error);
+            }
+
             // Créer le SVG
             const svgCard = this.createSVGCard(targetUser, userData, {
                 karmaNet, karmaLevel, level, xpProgress, nextLevelXP,
-                cardRarity, discordJoinDate, serverJoinDate
+                cardRarity, discordJoinDate, serverJoinDate, avatarBase64
             });
 
             // Convertir SVG en PNG avec Sharp
@@ -109,10 +118,9 @@ module.exports = {
     },
 
     createSVGCard(user, userData, stats) {
-        const { karmaNet, karmaLevel, cardRarity } = stats;
+        const { karmaNet, karmaLevel, cardRarity, avatarBase64 } = stats;
         const balance = (userData.balance || 0).toLocaleString();
         const userName = user.displayName.length > 18 ? user.displayName.substring(0, 15) + '...' : user.displayName;
-        const avatarUrl = user.displayAvatarURL({ format: 'png', size: 256 });
 
         return `
 <svg width="500" height="800" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -334,9 +342,15 @@ module.exports = {
   </circle>
   
   <!-- Image de profil utilisateur -->
-  <image x="210" y="160" width="80" height="80" href="${avatarUrl}" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice">
+  ${avatarBase64 ? `
+  <image x="210" y="160" width="80" height="80" href="data:image/png;base64,${avatarBase64}" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice">
     <animate attributeName="opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite"/>
-  </image>
+  </image>` : `
+  <text x="250" y="210" text-anchor="middle" fill="${cardRarity.color}" 
+        font-family="Arial, sans-serif" font-size="36">
+    <animate attributeName="fill" values="${cardRarity.color};#ffffff;${cardRarity.color}" dur="3s" repeatCount="indefinite"/>
+    👤
+  </text>`}
 
   <!-- Nom utilisateur -->
   <text x="250" y="270" text-anchor="middle" fill="white" 
@@ -458,5 +472,46 @@ module.exports = {
         if (score >= 50) return { name: 'Épique', color: '#a8e6cf', icon: '💎' };
         if (score >= 25) return { name: 'Rare', color: '#87ceeb', icon: '💙' };
         return { name: 'Commune', color: '#dda0dd', icon: '🤍' };
+    },
+
+    /**
+     * Télécharger et encoder l'avatar en base64
+     */
+    async downloadAndEncodeAvatar(avatarUrl) {
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('Timeout téléchargement avatar'));
+            }, 5000);
+
+            https.get(avatarUrl, (response) => {
+                if (response.statusCode !== 200) {
+                    clearTimeout(timeout);
+                    reject(new Error(`Erreur HTTP: ${response.statusCode}`));
+                    return;
+                }
+
+                const chunks = [];
+                response.on('data', (chunk) => chunks.push(chunk));
+                
+                response.on('end', () => {
+                    clearTimeout(timeout);
+                    try {
+                        const buffer = Buffer.concat(chunks);
+                        const base64 = buffer.toString('base64');
+                        resolve(base64);
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+
+                response.on('error', (error) => {
+                    clearTimeout(timeout);
+                    reject(error);
+                });
+            }).on('error', (error) => {
+                clearTimeout(timeout);
+                reject(error);
+            });
+        });
     }
 };
