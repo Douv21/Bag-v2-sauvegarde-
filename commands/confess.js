@@ -17,14 +17,16 @@ module.exports = {
 
     async execute(interaction, dataManager) {
         try {
+            // Répondre immédiatement pour éviter les timeouts
+            await interaction.deferReply({ ephemeral: true });
+            
             const text = interaction.options.getString('texte');
             const image = interaction.options.getAttachment('image');
 
             // Vérifier qu'au moins un contenu est fourni
             if (!text && !image) {
-                return await interaction.reply({
-                    content: '❌ Vous devez fournir au moins un texte ou une image.',
-                    flags: 64
+                return await interaction.editReply({
+                    content: '❌ Vous devez fournir au moins un texte ou une image.'
                 });
             }
 
@@ -38,9 +40,8 @@ module.exports = {
             };
             
             if (!confessionConfig.channels || confessionConfig.channels.length === 0) {
-                return await interaction.reply({
-                    content: '❌ Aucun canal de confession configuré sur ce serveur.\n\nUtilisez `/config-confession` pour configurer les canaux.',
-                    flags: 64
+                return await interaction.editReply({
+                    content: '❌ Aucun canal de confession configuré sur ce serveur.\n\nUtilisez `/config-confession` pour configurer les canaux.'
                 });
             }
 
@@ -49,9 +50,8 @@ module.exports = {
             const channel = interaction.guild.channels.cache.get(channelId);
 
             if (!channel) {
-                return await interaction.reply({
-                    content: '❌ Canal de confession introuvable.',
-                    flags: 64
+                return await interaction.editReply({
+                    content: '❌ Canal de confession introuvable.'
                 });
             }
 
@@ -74,17 +74,17 @@ module.exports = {
 
             // Créer un thread si configuré
             if (confessionConfig.autoThread) {
-                // Obtenir le compteur de threads pour ce serveur
-                const threadCounters = await dataManager.getData('threadCounters') || {};
-                if (!threadCounters[interaction.guild.id]) {
-                    threadCounters[interaction.guild.id] = 1;
+                // Utiliser la configuration existante pour stocker le compteur
+                const config = await dataManager.getData('config');
+                if (!config.confessions[interaction.guild.id].threadCounter) {
+                    config.confessions[interaction.guild.id].threadCounter = 1;
                 } else {
-                    threadCounters[interaction.guild.id]++;
+                    config.confessions[interaction.guild.id].threadCounter++;
                 }
-                await dataManager.saveData('threadCounters', threadCounters);
+                await dataManager.saveData('config', config);
 
                 let threadName = confessionConfig.threadName || 'Confession #{number}';
-                threadName = threadName.replace('#{number}', threadCounters[interaction.guild.id]);
+                threadName = threadName.replace('#{number}', config.confessions[interaction.guild.id].threadCounter);
                 threadName = threadName.replace('{date}', new Date().toLocaleDateString('fr-FR'));
                 
                 await confessionMessage.startThread({
@@ -97,17 +97,18 @@ module.exports = {
             // Logger la confession
             await this.logConfession(interaction, text, image?.url, dataManager);
 
-            // Confirmer à l'utilisateur (une seule fois)
-            if (!interaction.replied) {
-                await interaction.reply({
-                    content: '✅ Votre confession a été envoyée anonymement.',
-                    flags: 64
-                });
-            }
+            // Confirmer à l'utilisateur
+            await interaction.editReply({
+                content: '✅ Votre confession a été envoyée anonymement.'
+            });
 
         } catch (error) {
             console.error('❌ Erreur confession:', error);
-            if (!interaction.replied) {
+            if (interaction.deferred) {
+                await interaction.editReply({
+                    content: '❌ Une erreur est survenue.'
+                });
+            } else {
                 await interaction.reply({
                     content: '❌ Une erreur est survenue.',
                     flags: 64
