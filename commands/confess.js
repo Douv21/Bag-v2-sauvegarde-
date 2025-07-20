@@ -38,6 +38,18 @@ module.exports = {
                 autoThread: false,
                 threadName: 'Confession #{number}'
             };
+
+            // Générer le numéro de confession unique
+            if (!confessionConfig.confessionCounter) {
+                confessionConfig.confessionCounter = 0;
+            }
+            confessionConfig.confessionCounter++;
+            const confessionNumber = confessionConfig.confessionCounter;
+
+            // Sauvegarder le compteur mis à jour
+            if (!config.confessions) config.confessions = {};
+            config.confessions[interaction.guild.id] = confessionConfig;
+            await dataManager.saveData('config', config);
             
             if (!confessionConfig.channels || confessionConfig.channels.length === 0) {
                 return await interaction.editReply({
@@ -55,10 +67,10 @@ module.exports = {
                 });
             }
 
-            // Créer l'embed de confession
+            // Créer l'embed de confession avec numéro
             const confessionEmbed = new EmbedBuilder()
                 .setColor('#9932cc')
-                .setTitle('💭 Confession Anonyme')
+                .setTitle(`💭 Confession Anonyme #${confessionNumber}`)
                 .setTimestamp();
 
             if (text) {
@@ -93,7 +105,8 @@ module.exports = {
                 await dataManager.saveData('config', config);
 
                 let threadName = confessionConfig.threadName || 'Confession #{number}';
-                threadName = threadName.replace('#{number}', config.confessions[interaction.guild.id].threadCounter);
+                threadName = threadName.replace('#{number}', confessionNumber);
+                threadName = threadName.replace('{number}', confessionNumber);
                 threadName = threadName.replace('{date}', new Date().toLocaleDateString('fr-FR'));
                 
                 await confessionMessage.startThread({
@@ -104,7 +117,7 @@ module.exports = {
             }
 
             // Envoyer les logs admin si configuré
-            await this.sendAdminLog(interaction, text, image, dataManager);
+            await this.sendAdminLog(interaction, text, image, confessionNumber, dataManager);
 
             // Logger la confession
             await this.logConfession(interaction, text, image?.url, dataManager);
@@ -129,7 +142,7 @@ module.exports = {
         }
     },
 
-    async sendAdminLog(interaction, text, image, dataManager) {
+    async sendAdminLog(interaction, text, image, confessionNumber, dataManager) {
         try {
             const config = await dataManager.getData('config');
             const confessionConfig = config.confessions?.[interaction.guild.id];
@@ -142,15 +155,16 @@ module.exports = {
             const logLevel = confessionConfig.logLevel || 'basic';
             const includeImages = confessionConfig.logImages !== false;
             
-            // Créer l'embed de log selon le niveau
+            // Créer l'embed de log selon le niveau avec numéro
             const logEmbed = new EmbedBuilder()
                 .setColor('#ff6b6b')
-                .setTitle('📋 Nouvelle Confession')
+                .setTitle(`📋 Nouvelle Confession #${confessionNumber}`)
                 .setTimestamp();
 
-            // Niveau basique : contenu et utilisateur
+            // Niveau basique : numéro, contenu et utilisateur
             if (logLevel === 'basic') {
                 logEmbed.addFields([
+                    { name: '#️⃣ Numéro', value: `${confessionNumber}`, inline: true },
                     { name: '👤 Utilisateur', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
                     { name: '💬 Contenu', value: text || '*Image uniquement*', inline: false }
                 ]);
@@ -159,6 +173,7 @@ module.exports = {
             // Niveau détaillé : + canal et horodatage
             else if (logLevel === 'detailed') {
                 logEmbed.addFields([
+                    { name: '#️⃣ Numéro', value: `${confessionNumber}`, inline: true },
                     { name: '👤 Utilisateur', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
                     { name: '📍 Canal', value: `<#${interaction.channelId}>`, inline: true },
                     { name: '⏰ Envoyé le', value: `<t:${Math.floor(Date.now() / 1000)}:f>`, inline: true },
@@ -169,6 +184,7 @@ module.exports = {
             // Niveau complet : + métadonnées et traces
             else if (logLevel === 'full') {
                 logEmbed.addFields([
+                    { name: '#️⃣ Numéro', value: `${confessionNumber}`, inline: true },
                     { name: '👤 Utilisateur', value: `${interaction.user.tag} (${interaction.user.id})`, inline: true },
                     { name: '📍 Canal', value: `<#${interaction.channelId}>`, inline: true },
                     { name: '⏰ Envoyé le', value: `<t:${Math.floor(Date.now() / 1000)}:f>`, inline: true },
