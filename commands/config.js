@@ -3,8 +3,8 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBui
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('config')
-        .setDescription('Configuration du serveur')
+        .setName('config-confession')
+        .setDescription('Configuration des confessions (Admin uniquement)')
         .setDefaultMemberPermissions('0'),
 
     async execute(interaction, dataManager) {
