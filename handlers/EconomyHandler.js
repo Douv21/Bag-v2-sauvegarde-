@@ -1727,14 +1727,17 @@ class EconomyHandler {
             }
             
             // Sauvegarder le niveau karma personnalisé
-            await this.saveCustomKarmaLevel({
+            const levelData = {
                 name: name.trim(),
                 karmaThreshold: karmaThreshold,
                 money: money,
                 dailyBonus: dailyBonus,
                 cooldownModifier: cooldownModifier,
                 description: description.trim()
-            }, editIndex);
+            };
+            
+            console.log('💾 Tentative sauvegarde niveau:', levelData);
+            await this.saveCustomKarmaLevel(levelData, editIndex);
             
             const embed = new EmbedBuilder()
                 .setColor('#00ff00')
@@ -1763,13 +1766,15 @@ class EconomyHandler {
     
     async saveCustomKarmaLevel(levelData, editIndex = null) {
         try {
+            console.log('🔧 Initialisation DataManager pour karma...');
             const DataManager = require('../managers/DataManager');
             const dataManager = new DataManager();
             
             console.log('📁 Sauvegarde niveau karma:', levelData);
             console.log('📝 Index d\'édition:', editIndex);
+            console.log('📊 Récupération configuration karma...');
             
-            const karmaConfig = await dataManager.getData('karma_config') || {};
+            const karmaConfig = await dataManager.getData('karma_config') || { customRewards: [], distributionDay: 1, enabled: true };
             
             if (!karmaConfig.customRewards) {
                 karmaConfig.customRewards = [];
