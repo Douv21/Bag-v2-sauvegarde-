@@ -36,10 +36,11 @@ class InteractionHandler {
         });
         
         // Handlers pour sous-configurations d'actions
-        this.handlers.selectMenu.set('economy_action_rewards_config', this.economyHandler.showActionRewardsConfig.bind(this.economyHandler));
-        this.handlers.selectMenu.set('economy_action_karma_config', this.economyHandler.showActionKarmaConfig.bind(this.economyHandler));
-        this.handlers.selectMenu.set('economy_action_cooldown_config', this.economyHandler.showActionCooldownConfig.bind(this.economyHandler));
-        this.handlers.selectMenu.set('economy_action_toggle_config', this.economyHandler.showActionToggleConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_action_rewards_config', this.economyHandler.handleActionSubConfig.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_action_reward_amounts', this.economyHandler.handleActionRewardAmounts.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_action_karma_amounts', this.economyHandler.handleActionKarmaAmounts.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_action_cooldown_amounts', this.economyHandler.handleActionCooldownAmounts.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_action_toggle_status', this.economyHandler.handleActionToggleStatus.bind(this.economyHandler));
         
         // Handlers pour édition des configurations spécifiques
         this.handlers.selectMenu.set('economy_rewards_edit_config', this.economyHandler.handleRewardsEditConfig.bind(this.economyHandler));
@@ -78,9 +79,8 @@ class InteractionHandler {
         this.handlers.selectMenu.set('economy_shop_permanent_price_select', this.economyHandler.handleShopPermanentPriceSelect.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_shop_temporary_duration_select', this.economyHandler.handleShopTemporaryDurationSelect.bind(this.economyHandler));
         
-        // HANDLERS pour sélection de rôles serveur (RoleSelectMenuBuilder)
-        this.handlers.roleSelect.set('shop_permanent_role_select', this.economyHandler.handleShopPermanentRoleSelect.bind(this.economyHandler));
-        this.handlers.roleSelect.set('shop_temporary_role_select', this.economyHandler.handleShopTemporaryRoleSelect.bind(this.economyHandler));
+        // HANDLERS pour sélection de rôles serveur (RoleSelectMenuBuilder) - Pattern matching
+        // Les handlers dynamiques seront gérés dans handleRoleSelect
         
         // HANDLERS pour modals boutique
         this.handlers.modal = this.handlers.modal || new Map();
@@ -214,6 +214,22 @@ class InteractionHandler {
     async handleRoleSelect(interaction) {
         console.log(`🔍 Role Select Interaction: ${interaction.customId}`);
         
+        // Gestion des patterns dynamiques pour la boutique
+        if (interaction.customId.startsWith('shop_permanent_role_select_')) {
+            const price = interaction.customId.split('_')[4];
+            await this.economyHandler.handleShopPermanentRoleSelect(interaction, price);
+            return;
+        }
+        
+        if (interaction.customId.startsWith('shop_temporary_role_select_')) {
+            const parts = interaction.customId.split('_');
+            const price = parts[4];
+            const duration = parts[5];
+            await this.economyHandler.handleShopTemporaryRoleSelect(interaction, price, duration);
+            return;
+        }
+        
+        // Handlers statiques
         const handler = this.handlers.roleSelect?.get(interaction.customId);
         if (handler) {
             console.log(`✅ Handler trouvé pour ${interaction.customId}`);

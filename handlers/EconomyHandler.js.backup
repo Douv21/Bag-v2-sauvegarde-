@@ -1066,38 +1066,21 @@ class EconomyHandler {
             components: components
         });
     }
-
-    // Handler methods pour actions - Corrections des handlers manquants
-    async handleActionRewardAmounts(interaction) {
-        await interaction.update({
-            content: '✅ Configuration des récompenses disponible via les commandes admin.',
-            embeds: [],
-            components: []
-        });
-    }
-
-    async handleActionKarmaAmounts(interaction) {
-        await interaction.update({
-            content: '✅ Configuration du karma disponible via les commandes admin.',
-            embeds: [],
-            components: []
-        });
-    }
-
-    async handleActionCooldownAmounts(interaction) {
-        await interaction.update({
-            content: '✅ Configuration des cooldowns disponible via les commandes admin.',
-            embeds: [],
-            components: []
-        });
-    }
-
-    async handleActionToggleStatus(interaction) {
-        await interaction.update({
-            content: '✅ Configuration des activations disponible via les commandes admin.',
-            embeds: [],
-            components: []
-        });
+                await this.showActionKarmaConfig(interaction);
+                break;
+            case 'cooldown':
+                await this.showActionCooldownConfig(interaction);
+                break;
+            case 'toggle':
+                await this.showActionToggleConfig(interaction);
+                break;
+            default:
+                await interaction.update({
+                    content: `⚙️ Configuration **${configType}** disponible prochainement.`,
+                    embeds: [],
+                    components: []
+                });
+        }
     }
 
     async showActionRewardsConfig(interaction) {
