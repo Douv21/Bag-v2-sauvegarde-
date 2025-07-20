@@ -60,8 +60,14 @@ module.exports = {
             const nextLevelXP = (level + 1) * 1000;
             const xpProgress = (userData.xp || 0) - (level * 1000);
 
-            // Calculer le niveau karma et la rareté
-            const karmaLevel = this.getKarmaLevel(karmaNet);
+            // Calculer niveau de karma comme dans economie.js
+            let karmaLevelName = 'Neutre';
+            if (karmaNet >= 50) karmaLevelName = 'Saint 😇';
+            else if (karmaNet >= 20) karmaLevelName = 'Bon 😊';
+            else if (karmaNet <= -50) karmaLevelName = 'Diabolique 😈';
+            else if (karmaNet <= -20) karmaLevelName = 'Mauvais 😠';
+            
+            const karmaLevel = { name: karmaLevelName };
             const cardRarity = this.getCardRarity(level, karmaNet, balance, userData.dailyStreak || 0);
 
             // Dates
@@ -106,9 +112,10 @@ module.exports = {
         const { karmaNet, karmaLevel, cardRarity } = stats;
         const balance = (userData.balance || 0).toLocaleString();
         const userName = user.displayName.length > 18 ? user.displayName.substring(0, 15) + '...' : user.displayName;
+        const avatarUrl = user.displayAvatarURL({ format: 'png', size: 256 });
 
         return `
-<svg width="500" height="800" xmlns="http://www.w3.org/2000/svg">
+<svg width="500" height="800" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <!-- Dégradé arrière-plan sombre -->
     <radialGradient id="bgGradient" cx="50%" cy="50%" r="80%">
@@ -118,6 +125,11 @@ module.exports = {
       <stop offset="50%" style="stop-color:#000d1a;stop-opacity:1"/>
       <stop offset="100%" style="stop-color:#000000;stop-opacity:1"/>
     </radialGradient>
+    
+    <!-- Masque circulaire pour l'avatar -->
+    <clipPath id="avatarClip">
+      <circle cx="250" cy="200" r="40"/>
+    </clipPath>
     
     <!-- Motif X diagonal -->
     <pattern id="xPattern" width="100" height="100" patternUnits="userSpaceOnUse">
@@ -314,17 +326,17 @@ module.exports = {
     <animate attributeName="stroke-width" values="0.5;1.5;0.5" dur="4s" repeatCount="indefinite"/>
   </rect>
 
-  <!-- Avatar circulaire -->
-  <circle cx="250" cy="200" r="45" fill="rgba(0,255,255,0.1)" 
-          stroke="${cardRarity.color}" stroke-width="2" filter="url(#glow)">
+  <!-- Photo de profil -->
+  <circle cx="250" cy="200" r="42" fill="rgba(0,255,255,0.05)" 
+          stroke="${cardRarity.color}" stroke-width="3" filter="url(#glow)">
     <animate attributeName="stroke" values="${cardRarity.color};#ffffff;${cardRarity.color}" dur="3s" repeatCount="indefinite"/>
-    <animate attributeName="stroke-width" values="2;3;2" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-width" values="2;4;2" dur="2s" repeatCount="indefinite"/>
   </circle>
-  <text x="250" y="210" text-anchor="middle" fill="${cardRarity.color}" 
-        font-family="Arial, sans-serif" font-size="36">
-    <animate attributeName="fill" values="${cardRarity.color};#ffffff;${cardRarity.color}" dur="3s" repeatCount="indefinite"/>
-    👤
-  </text>
+  
+  <!-- Image de profil utilisateur -->
+  <image x="210" y="160" width="80" height="80" href="${avatarUrl}" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice">
+    <animate attributeName="opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite"/>
+  </image>
 
   <!-- Nom utilisateur -->
   <text x="250" y="270" text-anchor="middle" fill="white" 
