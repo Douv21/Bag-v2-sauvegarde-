@@ -279,9 +279,51 @@ class EconomyHandler {
         });
     }
 
-    // Handler unifié pour sélection d'actions (évite doublons)
+    // Handlers pour les actions spécifiques
     async handleEconomyActionsConfig(interaction) {
-        return await this.showActionsConfig(interaction);
+        const action = interaction.values[0];
+        
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle(`⚙️ Configuration Action: ${action}`)
+            .setDescription(`Configurez les paramètres pour l'action **${action}**`);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`economy_action_rewards_config`)
+            .setPlaceholder('⚙️ Configurer les paramètres')
+            .addOptions([
+                {
+                    label: 'Récompenses',
+                    description: 'Modifier les montants min/max',
+                    value: 'rewards',
+                    emoji: '💰'
+                },
+                {
+                    label: 'Karma',
+                    description: 'Configuration gains/pertes karma',
+                    value: 'karma',
+                    emoji: '⚖️'
+                },
+                {
+                    label: 'Cooldown',
+                    description: 'Temps d\'attente entre utilisations',
+                    value: 'cooldown',
+                    emoji: '⏰'
+                },
+                {
+                    label: 'Activer/Désactiver',
+                    description: 'Activer ou désactiver cette action',
+                    value: 'toggle',
+                    emoji: '🔄'
+                }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
     }
 
     async handleEconomyShopConfig(interaction) {

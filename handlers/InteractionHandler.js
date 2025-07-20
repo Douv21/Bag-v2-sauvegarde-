@@ -29,7 +29,13 @@ class InteractionHandler {
         this.handlers.selectMenu.set('economy_daily_config', this.economyHandler.handleEconomyDailyConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_messages_config', this.economyHandler.handleEconomyMessagesConfig.bind(this.economyHandler));
         
-        // Handler principal pour toutes les actions (supprime tous doublons)
+        // Handlers pour actions individuelles (architecture originale)
+        const economyActions = ['travailler', 'pecher', 'donner', 'voler', 'crime', 'parier'];
+        economyActions.forEach(action => {
+            this.handlers.selectMenu.set(`economy_action_${action}_config`, this.economyHandler.handleEconomyActionsConfig.bind(this.economyHandler));
+        });
+        
+        // Handlers pour sous-configurations d'actions
         this.handlers.selectMenu.set('economy_action_rewards_config', this.economyHandler.showActionRewardsConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_action_karma_config', this.economyHandler.showActionKarmaConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_action_cooldown_config', this.economyHandler.showActionCooldownConfig.bind(this.economyHandler));
@@ -103,12 +109,7 @@ class InteractionHandler {
         this.handlers.button.set('karma_force_reset', this.handleKarmaForceReset.bind(this));
         this.handlers.button.set('toggle_message_rewards', this.handleToggleMessageRewards.bind(this));
 
-        // Boutons Actions Économiques (pour compatibilité)
-        legacyActions.forEach(action => {
-            this.handlers.button.set(`edit_reward_${action}`, this.handleEditRewardButton.bind(this));
-            this.handlers.button.set(`edit_karma_${action}`, this.handleEditKarmaButton.bind(this));
-            this.handlers.button.set(`edit_cooldown_${action}`, this.handleEditCooldownButton.bind(this));
-        });
+        // Legacy button handlers supprimés pour éviter erreurs
     }
 
     registerEventListeners() {
