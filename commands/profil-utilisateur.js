@@ -70,8 +70,8 @@ module.exports = {
             // Récupérer le membre du serveur pour la date d'entrée
             const member = interaction.guild.members.cache.get(targetUser.id);
             
-            // Créer la carte SVG
-            const svgCard = await this.createUserCard(targetUser, userData, {
+            // Créer la carte
+            const cardData = await this.createUserCard(targetUser, userData, {
                 karmaNet,
                 karmaLevel,
                 level,
@@ -82,7 +82,7 @@ module.exports = {
                 totalActions
             }, member);
 
-            // Sauvegarder temporairement le SVG comme fichier
+            // Sauvegarder temporairement comme fichier
             const fs = require('fs');
             const path = require('path');
             
@@ -91,9 +91,11 @@ module.exports = {
                 fs.mkdirSync(cardPath, { recursive: true });
             }
             
-            const fileName = `card_${targetUser.id}_${Date.now()}.svg`;
+            // Détecter le type de données (PNG ou SVG)
+            const isPNG = Buffer.isBuffer(cardData);
+            const fileName = `card_${targetUser.id}_${Date.now()}.${isPNG ? 'png' : 'svg'}`;
             const filePath = path.join(cardPath, fileName);
-            fs.writeFileSync(filePath, svgCard);
+            fs.writeFileSync(filePath, cardData);
 
             const embed = new EmbedBuilder()
                 .setColor(cardRarity.color || '#00FFFF')
@@ -225,8 +227,170 @@ module.exports = {
         
         const cardColor = colors[cardRarity.name] || colors.Commune;
 
-        // Créer SVG de la carte
-        const svgCard = `
+        try {
+            const { createCanvas } = require('canvas');
+            
+            // Créer canvas
+            const canvas = createCanvas(800, 500);
+            const ctx = canvas.getContext('2d');
+
+            // Fonction pour dessiner rectangle arrondi
+            function roundRect(x, y, width, height, radius) {
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+            }
+
+            // Fond de carte avec gradient
+            const gradient = ctx.createLinearGradient(0, 0, 800, 500);
+            gradient.addColorStop(0, cardColor.bg);
+            gradient.addColorStop(1, '#23272A');
+            ctx.fillStyle = gradient;
+            roundRect(0, 0, 800, 500, 20);
+            ctx.fill();
+
+            // Bordure principale
+            ctx.strokeStyle = cardColor.accent;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // En-tête
+            ctx.fillStyle = cardColor.accent + '33'; // 20% opacity
+            roundRect(20, 20, 760, 80, 10);
+            ctx.fill();
+
+            // Titre
+            ctx.fillStyle = cardColor.glow;
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${cardRarity.icon} CARTE PROFIL UTILISATEUR ${cardRarity.icon}`, 400, 50);
+
+            // Sous-titre
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '16px Arial';
+            ctx.fillText(`${cardRarity.name.toUpperCase()} • ${userName}`, 400, 80);
+
+            // Zone avatar (cercle)
+            ctx.beginPath();
+            ctx.arc(150, 200, 70, 0, 2 * Math.PI);
+            ctx.fillStyle = cardColor.accent + '4D'; // 30% opacity
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(150, 200, 65, 0, 2 * Math.PI);
+            ctx.fillStyle = '#36393F';
+            ctx.fill();
+            ctx.strokeStyle = cardColor.glow;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Icône utilisateur
+            ctx.fillStyle = cardColor.glow;
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('👤', 150, 220);
+
+            // Nom utilisateur sous l'avatar
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText(userName, 150, 290);
+
+            ctx.fillStyle = cardColor.accent;
+            ctx.font = '14px Arial';
+            ctx.fillText(`Niveau ${level} • ${totalXP.toLocaleString()} XP`, 150, 315);
+
+            // Section statistiques (rectangle de droite)
+            ctx.fillStyle = '#36393F80'; // 50% opacity
+            roundRect(300, 130, 480, 340, 15);
+            ctx.fill();
+            ctx.strokeStyle = cardColor.accent;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Contenu de la section stats
+            ctx.textAlign = 'left';
+            
+            // Solde
+            ctx.fillStyle = cardColor.glow;
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText('💰 SOLDE', 320, 160);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 24px Arial';
+            ctx.fillText(`${balance}€`, 320, 185);
+
+            // Karma
+            ctx.fillStyle = cardColor.glow;
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText('⚖️ KARMA', 320, 220);
+            ctx.fillStyle = '#43B581';
+            ctx.font = '16px Arial';
+            ctx.fillText(`😇 Positif: ${karmaGood}`, 320, 245);
+            ctx.fillStyle = '#F04747';
+            ctx.fillText(`😈 Négatif: ${karmaBad}`, 320, 270);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText(`📊 Net: ${karmaNet >= 0 ? '+' : ''}${karmaNet} (${karmaLevel.name})`, 320, 295);
+
+            // Dates
+            ctx.fillStyle = cardColor.glow;
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText('📅 DATES', 320, 330);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '14px Arial';
+            ctx.fillText(`🌐 Discord: ${discordJoinDate}`, 320, 355);
+            ctx.fillText(`🏠 Serveur: ${serverJoinDate}`, 320, 380);
+
+            // Statistiques
+            ctx.fillStyle = cardColor.glow;
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText('🏆 STATS', 320, 415);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '14px Arial';
+            ctx.fillText(`🎯 Actions: ${totalActions} • 🔥 Streak: ${userData.dailyStreak || 0} • 💬 Messages: ${userData.messageCount || 0}`, 320, 440);
+
+            // Barre de progression XP
+            ctx.fillStyle = '#36393F';
+            roundRect(550, 160, 200, 20, 10);
+            ctx.fill();
+            ctx.strokeStyle = cardColor.accent;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Progression remplie
+            const progressWidth = Math.min((xpProgress / nextLevelXP) * 200, 200);
+            const progressGradient = ctx.createLinearGradient(550, 160, 750, 160);
+            progressGradient.addColorStop(0, cardColor.accent);
+            progressGradient.addColorStop(1, cardColor.glow);
+            ctx.fillStyle = progressGradient;
+            roundRect(550, 160, progressWidth, 20, 10);
+            ctx.fill();
+
+            // Texte progression
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${xpProgress}/${nextLevelXP}`, 650, 175);
+
+            // Footer
+            ctx.fillStyle = cardColor.accent + 'B3'; // 70% opacity
+            ctx.font = '12px Arial';
+            ctx.fillText(`ID: ${user.id.slice(-8)} • Généré le ${new Date().toLocaleDateString('fr-FR')}`, 400, 485);
+
+            return canvas.toBuffer('image/png');
+            
+        } catch (error) {
+            console.error('❌ Erreur Canvas, fallback vers SVG:', error);
+            
+            // Fallback vers SVG si Canvas n'est pas disponible
+            const svgCard = `
 <svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -237,80 +401,55 @@ module.exports = {
       <stop offset="0%" style="stop-color:${cardColor.accent};stop-opacity:1" />
       <stop offset="100%" style="stop-color:${cardColor.glow};stop-opacity:0.8" />
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-      <feMerge> 
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
   </defs>
   
   <!-- Fond de carte -->
   <rect width="800" height="500" rx="20" fill="url(#cardGradient)" stroke="${cardColor.accent}" stroke-width="3"/>
   
-  <!-- Bordure d'accentuation -->
-  <rect x="10" y="10" width="780" height="480" rx="15" fill="none" stroke="url(#accentGradient)" stroke-width="2" opacity="0.6"/>
-  
   <!-- En-tête -->
   <rect x="20" y="20" width="760" height="80" rx="10" fill="${cardColor.accent}" opacity="0.2"/>
-  <text x="400" y="50" text-anchor="middle" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="24" font-weight="bold" filter="url(#glow)">
+  <text x="400" y="50" text-anchor="middle" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="24" font-weight="bold">
     ${cardRarity.icon} CARTE PROFIL UTILISATEUR ${cardRarity.icon}
   </text>
-  <text x="400" y="80" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16" opacity="0.8">
+  <text x="400" y="80" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16">
     ${cardRarity.name.toUpperCase()} • ${userName}
   </text>
   
-  <!-- Section Gauche - Avatar et Info -->
-  <circle cx="150" cy="200" r="70" fill="${cardColor.accent}" opacity="0.3"/>
+  <!-- Section Gauche - Avatar -->
   <circle cx="150" cy="200" r="65" fill="#36393F" stroke="${cardColor.glow}" stroke-width="3"/>
-  <text x="150" y="210" text-anchor="middle" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="48" font-weight="bold">
-    👤
-  </text>
+  <text x="150" y="220" text-anchor="middle" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="48">👤</text>
+  <text x="150" y="290" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="bold">${userName}</text>
+  <text x="150" y="315" text-anchor="middle" fill="${cardColor.accent}" font-family="Arial, sans-serif" font-size="14">Niveau ${level} • ${totalXP.toLocaleString()} XP</text>
   
-  <!-- Nom utilisateur -->
-  <text x="150" y="290" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" font-weight="bold">
-    ${userName}
-  </text>
-  <text x="150" y="315" text-anchor="middle" fill="${cardColor.accent}" font-family="Arial, sans-serif" font-size="14">
-    Niveau ${level} • ${totalXP.toLocaleString()} XP
-  </text>
-  
-  <!-- Section Droite - Statistiques -->
+  <!-- Section Droite - Stats -->
   <rect x="300" y="130" width="480" height="340" rx="15" fill="#36393F" opacity="0.5" stroke="${cardColor.accent}" stroke-width="1"/>
   
-  <!-- Solde -->
-  <text x="320" y="160" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">💰 SOLDE</text>
-  <text x="320" y="185" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24" font-weight="bold">${balance}€</text>
+  <!-- Contenu -->
+  <text x="320" y="160" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">💰 SOLDE: ${balance}€</text>
+  <text x="320" y="190" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">⚖️ KARMA</text>
+  <text x="320" y="215" fill="#43B581" font-family="Arial, sans-serif" font-size="16">😇 Positif: ${karmaGood}</text>
+  <text x="320" y="240" fill="#F04747" font-family="Arial, sans-serif" font-size="16">😈 Négatif: ${karmaBad}</text>
+  <text x="320" y="265" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16">📊 Net: ${karmaNet >= 0 ? '+' : ''}${karmaNet} (${karmaLevel.name})</text>
   
-  <!-- Karma -->
-  <text x="320" y="220" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">⚖️ KARMA</text>
-  <text x="320" y="245" fill="#43B581" font-family="Arial, sans-serif" font-size="16">😇 Positif: ${karmaGood}</text>
-  <text x="320" y="270" fill="#F04747" font-family="Arial, sans-serif" font-size="16">😈 Négatif: ${karmaBad}</text>
-  <text x="320" y="295" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16" font-weight="bold">📊 Net: ${karmaNet >= 0 ? '+' : ''}${karmaNet} (${karmaLevel.name})</text>
+  <text x="320" y="300" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">📅 DATES</text>
+  <text x="320" y="325" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14">🌐 Discord: ${discordJoinDate}</text>
+  <text x="320" y="350" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14">🏠 Serveur: ${serverJoinDate}</text>
   
-  <!-- Dates -->
-  <text x="320" y="330" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">📅 DATES</text>
-  <text x="320" y="355" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14">🌐 Discord: ${discordJoinDate}</text>
-  <text x="320" y="380" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14">🏠 Serveur: ${serverJoinDate}</text>
+  <text x="320" y="385" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">🏆 STATS</text>
+  <text x="320" y="410" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14">🎯 Actions: ${totalActions} • 🔥 Streak: ${userData.dailyStreak || 0}</text>
+  <text x="320" y="435" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14">💬 Messages: ${userData.messageCount || 0}</text>
   
-  <!-- Statistiques -->
-  <text x="320" y="415" fill="${cardColor.glow}" font-family="Arial, sans-serif" font-size="18" font-weight="bold">🏆 STATS</text>
-  <text x="320" y="440" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14">🎯 Actions: ${totalActions} • 🔥 Streak: ${userData.dailyStreak || 0} • 💬 Messages: ${userData.messageCount || 0}</text>
-  
-  <!-- Barre de progression XP -->
+  <!-- Barre XP -->
   <rect x="550" y="160" width="200" height="20" rx="10" fill="#36393F" stroke="${cardColor.accent}" stroke-width="1"/>
   <rect x="550" y="160" width="${Math.min((xpProgress / nextLevelXP) * 200, 200)}" height="20" rx="10" fill="url(#accentGradient)"/>
-  <text x="650" y="175" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12" font-weight="bold">
-    ${xpProgress}/${nextLevelXP}
-  </text>
+  <text x="650" y="175" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="12">${xpProgress}/${nextLevelXP}</text>
   
-  <!-- Footer -->
-  <text x="400" y="485" text-anchor="middle" fill="${cardColor.accent}" font-family="Arial, sans-serif" font-size="12" opacity="0.7">
-    ID: ${user.id.slice(-8)} • Généré le ${new Date().toLocaleDateString('fr-FR')}
+  <text x="400" y="485" text-anchor="middle" fill="${cardColor.accent}" font-family="Arial, sans-serif" font-size="12">
+    ID: ${user.id.slice(-8)} • ${new Date().toLocaleDateString('fr-FR')}
   </text>
 </svg>`;
 
-        return svgCard;
+            return Buffer.from(svgCard);
+        }
     }
 };
