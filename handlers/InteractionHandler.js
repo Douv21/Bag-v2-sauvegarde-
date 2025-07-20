@@ -47,6 +47,32 @@ class InteractionHandler {
         this.handlers.selectMenu.set('economy_cooldown_edit_config', this.economyHandler.handleCooldownEditConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_toggle_edit_config', this.economyHandler.handleToggleEditConfig.bind(this.economyHandler));
         
+        // Nouveaux handlers pour tous les sous-menus de configeconomie
+        // BOUTIQUE
+        this.handlers.selectMenu.set('economy_shop_add_role_price', this.economyHandler.handleShopAddRolePrice.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_shop_remove_role_confirm', this.economyHandler.handleShopRemoveRoleConfirm.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_shop_edit_price_value', this.economyHandler.handleShopEditPriceValue.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_shop_items_action', this.economyHandler.handleShopItemsAction.bind(this.economyHandler));
+        
+        // KARMA
+        this.handlers.selectMenu.set('economy_karma_levels_edit', this.economyHandler.handleKarmaLevelsEdit.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_karma_rewards_edit', this.economyHandler.handleKarmaRewardsEdit.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_karma_reset_edit', this.economyHandler.handleKarmaResetEdit.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_action_karma_values', this.economyHandler.handleActionKarmaValues.bind(this.economyHandler));
+        
+        // DAILY
+        this.handlers.selectMenu.set('economy_daily_amounts_edit', this.economyHandler.handleDailyAmountsEdit.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_daily_streak_edit', this.economyHandler.handleDailyStreakEdit.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_daily_reset_edit', this.economyHandler.handleDailyResetEdit.bind(this.economyHandler));
+        
+        // MESSAGES
+        this.handlers.selectMenu.set('economy_messages_toggle_edit', this.economyHandler.handleMessagesToggleEdit.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_messages_amount_edit', this.economyHandler.handleMessagesAmountEdit.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_messages_cooldown_edit', this.economyHandler.handleMessagesCooldownEdit.bind(this.economyHandler));
+        
+        // STATISTIQUES
+        this.handlers.selectMenu.set('economy_stats_action', this.economyHandler.handleStatsAction.bind(this.economyHandler));
+        
         // Handlers pour les valeurs spécifiques 
         this.handlers.selectMenu.set('economy_rewards_value_config', this.economyHandler.handleRewardsValueConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_karma_value_config', this.economyHandler.handleKarmaValueConfig.bind(this.economyHandler));

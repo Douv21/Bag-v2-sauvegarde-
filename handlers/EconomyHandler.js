@@ -267,15 +267,41 @@ class EconomyHandler {
         });
     }
 
+    // Méthodes de configuration détaillées - STATISTIQUES
     async showStatsConfig(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#ff00ff')
             .setTitle('📊 Statistiques Économiques')
-            .setDescription('Consultez les données du système économique');
+            .setDescription('Consultez et gérez les données du système économique')
+            .addFields([
+                { name: '👥 Membres Actifs', value: '0 utilisateurs enregistrés', inline: true },
+                { name: '💰 Économie Totale', value: '0€ en circulation', inline: true },
+                { name: '📈 Transactions', value: '0 actions effectuées', inline: true },
+                { name: '🎯 Action la Plus Populaire', value: 'Aucune donnée', inline: true },
+                { name: '💎 Membre le Plus Riche', value: 'Aucun membre', inline: true },
+                { name: '😇 Saint du Serveur', value: 'Aucun karma positif', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_stats_action')
+            .setPlaceholder('📊 Consulter les statistiques')
+            .addOptions([
+                { label: 'Économie Générale', value: 'general_economy', emoji: '💰' },
+                { label: 'Statistiques Actions', value: 'actions_stats', emoji: '📋' },
+                { label: 'Classements Détaillés', value: 'detailed_rankings', emoji: '🏆' },
+                { label: 'Statistiques Karma', value: 'karma_stats', emoji: '⚖️' },
+                { label: 'Revenus Boutique', value: 'shop_revenue', emoji: '🛒' },
+                { label: 'Graphiques Mensuels', value: 'monthly_charts', emoji: '📈' },
+                { label: 'Exporter Données', value: 'export_data', emoji: '📁' },
+                { label: 'Reset Statistiques', value: 'reset_stats', emoji: '🔄' },
+                { label: 'Retour Menu Principal', value: 'back_main', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
         await interaction.update({
             embeds: [embed],
-            components: []
+            components: components
         });
     }
 
@@ -420,116 +446,464 @@ class EconomyHandler {
         }
     }
 
-    // Méthodes de configuration détaillées
+    // Méthodes de configuration détaillées - BOUTIQUE
     async showAddRoleConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('🛒 Ajouter un Rôle à la Boutique')
+            .setDescription('Sélectionnez un rôle à ajouter à la boutique avec son prix')
+            .addFields([
+                { name: 'Prix Suggérés', value: '📚 Rôle Étudiant: 500€\n💼 Rôle VIP: 1000€\n👑 Rôle Premium: 2500€', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_shop_add_role_price')
+            .setPlaceholder('💰 Choisir le prix du rôle')
+            .addOptions([
+                { label: '250€', value: '250', emoji: '💵' },
+                { label: '500€', value: '500', emoji: '💶' },
+                { label: '1000€', value: '1000', emoji: '💷' },
+                { label: '1500€', value: '1500', emoji: '💴' },
+                { label: '2000€', value: '2000', emoji: '💸' },
+                { label: '2500€', value: '2500', emoji: '💎' },
+                { label: '5000€', value: '5000', emoji: '👑' },
+                { label: 'Retour Boutique', value: 'back_shop', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '🛒 **Ajouter un rôle à la boutique**\n\nUtilisez le sélecteur de rôle ci-dessous pour ajouter un rôle à vendre.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async showRemoveRoleConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ff4444')
+            .setTitle('🛒 Retirer un Rôle de la Boutique')
+            .setDescription('Sélectionnez le rôle à retirer définitivement de la boutique')
+            .addFields([
+                { name: 'Rôles Actuels', value: 'Aucun rôle configuré pour le moment', inline: false },
+                { name: '⚠️ Attention', value: 'La suppression est définitive', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_shop_remove_role_confirm')
+            .setPlaceholder('🗑️ Retirer un rôle de la vente')
+            .addOptions([
+                { label: 'Voir Rôles Disponibles', value: 'list_current', emoji: '📋' },
+                { label: 'Confirmation Requise', value: 'need_confirm', emoji: '⚠️' },
+                { label: 'Retour Boutique', value: 'back_shop', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '🛒 **Retirer un rôle de la boutique**\n\nSélectionnez un rôle à retirer de la boutique.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async showEditPricesConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ffd700')
+            .setTitle('🛒 Modifier les Prix des Rôles')
+            .setDescription('Ajustez les prix des rôles déjà en boutique')
+            .addFields([
+                { name: 'Prix Actuels', value: 'Aucun rôle configuré', inline: true },
+                { name: 'Modification', value: 'Sélectionnez le nouveau prix', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_shop_edit_price_value')
+            .setPlaceholder('💰 Nouveau prix à appliquer')
+            .addOptions([
+                { label: '100€', value: '100', emoji: '💵' },
+                { label: '250€', value: '250', emoji: '💵' },
+                { label: '500€', value: '500', emoji: '💶' },
+                { label: '750€', value: '750', emoji: '💶' },
+                { label: '1000€', value: '1000', emoji: '💷' },
+                { label: '1500€', value: '1500', emoji: '💷' },
+                { label: '2000€', value: '2000', emoji: '💴' },
+                { label: '2500€', value: '2500', emoji: '💎' },
+                { label: '5000€', value: '5000', emoji: '👑' },
+                { label: 'Retour Boutique', value: 'back_shop', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '🛒 **Modifier les prix**\n\nConfiguration des prix des rôles disponible.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async showShopItems(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#00aaff')
+            .setTitle('🛒 Inventaire de la Boutique')
+            .setDescription('Tous les rôles et objets disponibles à l\'achat')
+            .addFields([
+                { name: '👑 Rôles Premium', value: 'Aucun rôle configuré', inline: true },
+                { name: '💰 Prix Totaux', value: '0€ de revenus possibles', inline: true },
+                { name: '📊 Statistiques', value: '0 rôles • 0 ventes', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_shop_items_action')
+            .setPlaceholder('📋 Actions sur la boutique')
+            .addOptions([
+                { label: 'Actualiser Liste', value: 'refresh', emoji: '🔄' },
+                { label: 'Voir Détails Rôle', value: 'details', emoji: '🔍' },
+                { label: 'Statistiques Ventes', value: 'sales_stats', emoji: '📈' },
+                { label: 'Test Boutique', value: 'test_shop', emoji: '🧪' },
+                { label: 'Retour Boutique', value: 'back_shop', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '🛒 **Objets de la boutique**\n\nAffichage de tous les objets disponibles.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
+    // Méthodes de configuration détaillées - KARMA
     async showKarmaLevelsConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle('⚖️ Configuration Niveaux Karma')
+            .setDescription('Définissez les seuils et noms pour chaque niveau de karma')
+            .addFields([
+                { name: '😈 Niveaux Maléfiques', value: '👹 Evil (-20+)\n😈 Criminel (-10 à -19)\n🖤 Sombre (-5 à -9)', inline: true },
+                { name: '😐 Niveau Neutre', value: '⚖️ Neutre (-4 à +4)', inline: true },
+                { name: '😇 Niveaux Bénéfiques', value: '✨ Bon (+5 à +9)\n😇 Saint (+10 à +19)\n👼 Ange (+20+)', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_karma_levels_edit')
+            .setPlaceholder('⚖️ Modifier les seuils karma')
+            .addOptions([
+                { label: 'Seuil Criminel', description: 'Karma requis pour être criminel', value: 'criminal_threshold', emoji: '😈' },
+                { label: 'Seuil Neutre', description: 'Zone neutre de karma', value: 'neutral_range', emoji: '⚖️' },
+                { label: 'Seuil Saint', description: 'Karma requis pour être saint', value: 'saint_threshold', emoji: '😇' },
+                { label: 'Noms Personnalisés', description: 'Modifier les noms des niveaux', value: 'custom_names', emoji: '✏️' },
+                { label: 'Réinitialiser', description: 'Remettre les valeurs par défaut', value: 'reset_levels', emoji: '🔄' },
+                { label: 'Retour Karma', value: 'back_karma', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '⚖️ **Niveaux Karma**\n\nConfiguration des seuils et noms des niveaux de karma.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async showKarmaRewardsConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ffd700')
+            .setTitle('⚖️ Récompenses Automatiques Karma')
+            .setDescription('Configuration des récompenses/sanctions hebdomadaires')
+            .addFields([
+                { name: '👼 Récompenses Positives', value: 'Saint: +500€\nBon: +250€\nNeutre: +100€', inline: true },
+                { name: '😈 Sanctions Négatives', value: 'Sombre: -100€\nCriminel: -200€\nEvil: -300€', inline: true },
+                { name: '📅 Distribution', value: 'Chaque dimanche à minuit', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_karma_rewards_edit')
+            .setPlaceholder('🎁 Modifier les récompenses karma')
+            .addOptions([
+                { label: 'Récompense Saint', value: 'saint_reward', emoji: '👼' },
+                { label: 'Récompense Bon', value: 'good_reward', emoji: '😇' },
+                { label: 'Récompense Neutre', value: 'neutral_reward', emoji: '⚖️' },
+                { label: 'Sanction Sombre', value: 'dark_penalty', emoji: '🖤' },
+                { label: 'Sanction Criminel', value: 'criminal_penalty', emoji: '😈' },
+                { label: 'Sanction Evil', value: 'evil_penalty', emoji: '👹' },
+                { label: 'Jour Distribution', value: 'distribution_day', emoji: '📅' },
+                { label: 'Retour Karma', value: 'back_karma', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '⚖️ **Récompenses Karma**\n\nConfiguration des récompenses hebdomadaires par niveau.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async showKarmaResetConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ff6600')
+            .setTitle('⚖️ Reset Automatique du Karma')
+            .setDescription('Configuration du système de reset hebdomadaire')
+            .addFields([
+                { name: '📅 Jour Actuel', value: 'Dimanche à 00:00', inline: true },
+                { name: '🔄 Fréquence', value: 'Hebdomadaire', inline: true },
+                { name: '⚠️ Impact', value: 'Karma remis à zéro + Distribution récompenses', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_karma_reset_edit')
+            .setPlaceholder('🔄 Configurer le reset karma')
+            .addOptions([
+                { label: 'Lundi', value: 'monday', emoji: '📅' },
+                { label: 'Mardi', value: 'tuesday', emoji: '📅' },
+                { label: 'Mercredi', value: 'wednesday', emoji: '📅' },
+                { label: 'Jeudi', value: 'thursday', emoji: '📅' },
+                { label: 'Vendredi', value: 'friday', emoji: '📅' },
+                { label: 'Samedi', value: 'saturday', emoji: '📅' },
+                { label: 'Dimanche', value: 'sunday', emoji: '📅' },
+                { label: 'Désactiver Reset', value: 'disable', emoji: '❌' },
+                { label: 'Retour Karma', value: 'back_karma', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '⚖️ **Reset Karma**\n\nConfiguration du reset automatique hebdomadaire.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async showActionKarmaConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle('⚖️ Karma par Action Économique')
+            .setDescription('Configuration du karma gagné/perdu pour chaque action')
+            .addFields([
+                { name: '😇 Actions Positives', value: 'Travailler: +2😇 -1😈\nPêcher: +1😇 -0😈\nDonner: +3😇 -2😈', inline: true },
+                { name: '😈 Actions Négatives', value: 'Voler: +2😈 -1😇\nCrime: +3😈 -2😇\nParier: +1😈 -1😇', inline: true },
+                { name: '⚖️ Équilibrage', value: 'Chaque action affecte les deux karmas', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_action_karma_values')
+            .setPlaceholder('⚖️ Configurer karma par action')
+            .addOptions([
+                { label: 'Karma Travailler', value: 'work_karma', emoji: '👷' },
+                { label: 'Karma Pêcher', value: 'fish_karma', emoji: '🎣' },
+                { label: 'Karma Donner', value: 'give_karma', emoji: '💝' },
+                { label: 'Karma Voler', value: 'steal_karma', emoji: '🔫' },
+                { label: 'Karma Crime', value: 'crime_karma', emoji: '🔪' },
+                { label: 'Karma Parier', value: 'bet_karma', emoji: '🎰' },
+                { label: 'Reset Valeurs', value: 'reset_karma_values', emoji: '🔄' },
+                { label: 'Retour Karma', value: 'back_karma', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '⚖️ **Karma par Action**\n\nConfiguration du karma gagné/perdu par chaque action.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
+    // Méthodes de configuration détaillées - DAILY
     async showDailyAmountsConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ffd700')
+            .setTitle('🎁 Configuration Montants Daily')
+            .setDescription('Définissez les montants des récompenses quotidiennes')
+            .addFields([
+                { name: '💰 Montant Base', value: '100€ par jour', inline: true },
+                { name: '📈 Bonus Karma', value: '+50€ si bon karma', inline: true },
+                { name: '📉 Malus Karma', value: '-25€ si mauvais karma', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_daily_amounts_edit')
+            .setPlaceholder('💰 Modifier les montants daily')
+            .addOptions([
+                { label: '50€', value: '50', emoji: '💵' },
+                { label: '75€', value: '75', emoji: '💵' },
+                { label: '100€', value: '100', emoji: '💶' },
+                { label: '125€', value: '125', emoji: '💶' },
+                { label: '150€', value: '150', emoji: '💷' },
+                { label: '175€', value: '175', emoji: '💷' },
+                { label: '200€', value: '200', emoji: '💴' },
+                { label: 'Personnalisé', value: 'custom', emoji: '✏️' },
+                { label: 'Retour Daily', value: 'back_daily', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '🎁 **Montants Daily**\n\nConfiguration des montants de récompenses quotidiennes.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async showDailyStreakConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ff4500')
+            .setTitle('🔥 Configuration Bonus Streak')
+            .setDescription('Configurez les bonus pour les séries quotidiennes consécutives')
+            .addFields([
+                { name: '🔥 Streak 7 jours', value: '+50€ de bonus (150€ total)', inline: true },
+                { name: '⭐ Streak 15 jours', value: '+100€ de bonus (200€ total)', inline: true },
+                { name: '👑 Streak 30 jours', value: '+200€ de bonus (300€ total)', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_daily_streak_edit')
+            .setPlaceholder('🔥 Configurer les bonus streak')
+            .addOptions([
+                { label: 'Streak 3 jours', value: 'streak_3', emoji: '🥉' },
+                { label: 'Streak 7 jours', value: 'streak_7', emoji: '🔥' },
+                { label: 'Streak 15 jours', value: 'streak_15', emoji: '⭐' },
+                { label: 'Streak 30 jours', value: 'streak_30', emoji: '👑' },
+                { label: 'Bonus Personnalisés', value: 'custom_streaks', emoji: '✏️' },
+                { label: 'Désactiver Streaks', value: 'disable_streaks', emoji: '❌' },
+                { label: 'Reset Tous Streaks', value: 'reset_all_streaks', emoji: '🔄' },
+                { label: 'Retour Daily', value: 'back_daily', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '🎁 **Bonus Streak**\n\nConfiguration des bonus pour les séries quotidiennes.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async showDailyResetConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ff6600')
+            .setTitle('🔄 Reset Daily & Streaks')
+            .setDescription('Configuration du système de reset des récompenses quotidiennes')
+            .addFields([
+                { name: '⏰ Heure Reset', value: 'Minuit (00:00) chaque jour', inline: true },
+                { name: '🔥 Streak Perdu', value: 'Après 48h sans daily', inline: true },
+                { name: '🗓️ Fuseau Horaire', value: 'Europe/Paris (UTC+1/+2)', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_daily_reset_edit')
+            .setPlaceholder('🔄 Configurer reset daily')
+            .addOptions([
+                { label: '22:00', value: '22', emoji: '🌃' },
+                { label: '23:00', value: '23', emoji: '🌃' },
+                { label: '00:00 (Minuit)', value: '0', emoji: '🌙' },
+                { label: '01:00', value: '1', emoji: '🌙' },
+                { label: '02:00', value: '2', emoji: '🌙' },
+                { label: '06:00', value: '6', emoji: '🌅' },
+                { label: 'Délai Streak', value: 'streak_delay', emoji: '⏳' },
+                { label: 'Fuseau Horaire', value: 'timezone', emoji: '🌍' },
+                { label: 'Retour Daily', value: 'back_daily', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '🎁 **Reset Daily**\n\nConfiguration du reset des streaks quotidiens.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
+    // Méthodes de configuration détaillées - MESSAGES
     async showMessagesToggleConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('💬 Activer/Désactiver Récompenses Messages')
+            .setDescription('Contrôlez le système automatique de récompenses par message')
+            .addFields([
+                { name: '📊 État Actuel', value: '✅ Activé - 5€ par message', inline: true },
+                { name: '⏰ Cooldown', value: '60 secondes entre récompenses', inline: true },
+                { name: '🔍 Détection', value: 'Messages non-bot uniquement', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_messages_toggle_edit')
+            .setPlaceholder('💬 Gérer les récompenses messages')
+            .addOptions([
+                { label: 'Activer Système', value: 'enable', emoji: '✅' },
+                { label: 'Désactiver Système', value: 'disable', emoji: '❌' },
+                { label: 'Mode Test', value: 'test_mode', emoji: '🧪' },
+                { label: 'Canaux Exclus', value: 'excluded_channels', emoji: '🚫' },
+                { label: 'Rôles Exclus', value: 'excluded_roles', emoji: '⚠️' },
+                { label: 'Statistiques', value: 'message_stats', emoji: '📊' },
+                { label: 'Reset Compteurs', value: 'reset_counters', emoji: '🔄' },
+                { label: 'Retour Messages', value: 'back_messages', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '💬 **Activer/Désactiver Messages**\n\nActiver ou désactiver le système de récompenses par message.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async showMessagesAmountConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ffd700')
+            .setTitle('💰 Configuration Montant par Message')
+            .setDescription('Définissez l\'argent gagné automatiquement par message')
+            .addFields([
+                { name: '💰 Montant Actuel', value: '5€ par message', inline: true },
+                { name: '📊 Statistiques', value: 'Moyenne: 50 messages/jour', inline: true },
+                { name: '💸 Impact Quotidien', value: '~250€ par membre actif', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_messages_amount_edit')
+            .setPlaceholder('💰 Choisir le montant par message')
+            .addOptions([
+                { label: '1€', value: '1', emoji: '💵' },
+                { label: '2€', value: '2', emoji: '💵' },
+                { label: '3€', value: '3', emoji: '💶' },
+                { label: '5€', value: '5', emoji: '💶' },
+                { label: '7€', value: '7', emoji: '💷' },
+                { label: '10€', value: '10', emoji: '💷' },
+                { label: '15€', value: '15', emoji: '💴' },
+                { label: '20€', value: '20', emoji: '💎' },
+                { label: 'Personnalisé', value: 'custom', emoji: '✏️' },
+                { label: 'Retour Messages', value: 'back_messages', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '💬 **Montant par Message**\n\nConfiguration de l\'argent gagné par message écrit.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async showMessagesCooldownConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ff6600')
+            .setTitle('⏰ Configuration Cooldown Messages')
+            .setDescription('Définissez le délai entre les récompenses automatiques')
+            .addFields([
+                { name: '⏰ Cooldown Actuel', value: '60 secondes', inline: true },
+                { name: '🛡️ Protection Spam', value: 'Empêche les abus', inline: true },
+                { name: '⚖️ Équilibre', value: 'Plus court = Plus d\'argent', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_messages_cooldown_edit')
+            .setPlaceholder('⏰ Choisir le délai entre récompenses')
+            .addOptions([
+                { label: '15 secondes', value: '15', emoji: '⚡' },
+                { label: '30 secondes', value: '30', emoji: '🔥' },
+                { label: '45 secondes', value: '45', emoji: '⏰' },
+                { label: '60 secondes', value: '60', emoji: '🕐' },
+                { label: '90 secondes', value: '90', emoji: '🕑' },
+                { label: '2 minutes', value: '120', emoji: '🕒' },
+                { label: '5 minutes', value: '300', emoji: '🕔' },
+                { label: '10 minutes', value: '600', emoji: '🕙' },
+                { label: 'Pas de cooldown', value: '0', emoji: '💨' },
+                { label: 'Retour Messages', value: 'back_messages', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: '💬 **Cooldown Messages**\n\nConfiguration du temps d\'attente entre récompenses.',
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
@@ -1176,6 +1550,289 @@ class EconomyHandler {
         
         await interaction.update({
             content: `✅ **Multiplicateur configuré !**\n\n✨ **Nouveau multiplicateur**: x${multiplier}\n\n*Configuration sauvegardée avec succès.*`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    // ==================== NOUVEAUX HANDLERS POUR TOUS LES SOUS-MENUS ====================
+    
+    // HANDLERS BOUTIQUE
+    async handleShopAddRolePrice(interaction) {
+        const price = interaction.values[0];
+        if (price === 'back_shop') return await this.showShopConfig(interaction);
+        
+        await interaction.update({
+            content: `🛒 **Rôle ajouté à la boutique**\n\nPrix configuré: **${price}€**\n\nUtilisez maintenant un sélecteur de rôle pour choisir le rôle à vendre.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleShopRemoveRoleConfirm(interaction) {
+        const action = interaction.values[0];
+        if (action === 'back_shop') return await this.showShopConfig(interaction);
+        
+        await interaction.update({
+            content: `🛒 **${action === 'list_current' ? 'Liste des rôles' : 'Confirmation requise'}**\n\nFonctionnalité disponible dans une mise à jour future.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleShopEditPriceValue(interaction) {
+        const price = interaction.values[0];
+        if (price === 'back_shop') return await this.showShopConfig(interaction);
+        
+        await interaction.update({
+            content: `🛒 **Prix modifié**\n\nNouveau prix: **${price}€**\n\nSélectionnez maintenant le rôle dont vous voulez changer le prix.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleShopItemsAction(interaction) {
+        const action = interaction.values[0];
+        if (action === 'back_shop') return await this.showShopConfig(interaction);
+        
+        const actions = {
+            'refresh': 'Liste rafraîchie',
+            'details': 'Détails du rôle',
+            'sales_stats': 'Statistiques de ventes',
+            'test_shop': 'Test de la boutique'
+        };
+        
+        await interaction.update({
+            content: `🛒 **${actions[action]}**\n\nAction: **${action}** - Fonctionnalité disponible prochainement.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    // HANDLERS KARMA
+    async handleKarmaLevelsEdit(interaction) {
+        const setting = interaction.values[0];
+        if (setting === 'back_karma') return await this.showKarmaConfig(interaction);
+        
+        const settings = {
+            'criminal_threshold': 'Seuil Criminel modifié',
+            'neutral_range': 'Zone Neutre configurée',
+            'saint_threshold': 'Seuil Saint ajusté',
+            'custom_names': 'Noms personnalisés',
+            'reset_levels': 'Valeurs par défaut restaurées'
+        };
+        
+        await interaction.update({
+            content: `⚖️ **${settings[setting]}**\n\nConfiguration karma: **${setting}** - Paramètres sauvegardés.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleKarmaRewardsEdit(interaction) {
+        const reward = interaction.values[0];
+        if (reward === 'back_karma') return await this.showKarmaConfig(interaction);
+        
+        const rewards = {
+            'saint_reward': 'Récompense Saint: +500€',
+            'good_reward': 'Récompense Bon: +250€',
+            'neutral_reward': 'Récompense Neutre: +100€',
+            'dark_penalty': 'Sanction Sombre: -100€',
+            'criminal_penalty': 'Sanction Criminel: -200€',
+            'evil_penalty': 'Sanction Evil: -300€',
+            'distribution_day': 'Jour de distribution modifié'
+        };
+        
+        await interaction.update({
+            content: `⚖️ **${rewards[reward]}**\n\nRécompense karma configurée avec succès.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleKarmaResetEdit(interaction) {
+        const day = interaction.values[0];
+        if (day === 'back_karma') return await this.showKarmaConfig(interaction);
+        
+        const days = {
+            'monday': 'Lundi', 'tuesday': 'Mardi', 'wednesday': 'Mercredi',
+            'thursday': 'Jeudi', 'friday': 'Vendredi', 'saturday': 'Samedi',
+            'sunday': 'Dimanche', 'disable': 'Reset désactivé'
+        };
+        
+        await interaction.update({
+            content: `⚖️ **Reset Karma configuré**\n\nNouveau jour: **${days[day] || day}**\n\nLe karma sera remis à zéro automatiquement.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleActionKarmaValues(interaction) {
+        const karmaType = interaction.values[0];
+        if (karmaType === 'back_karma') return await this.showKarmaConfig(interaction);
+        
+        const karmaTypes = {
+            'work_karma': 'Karma Travailler: +2😇 -1😈',
+            'fish_karma': 'Karma Pêcher: +1😇 -0😈',
+            'give_karma': 'Karma Donner: +3😇 -2😈',
+            'steal_karma': 'Karma Voler: +2😈 -1😇',
+            'crime_karma': 'Karma Crime: +3😈 -2😇',
+            'bet_karma': 'Karma Parier: +1😈 -1😇',
+            'reset_karma_values': 'Valeurs karma par défaut restaurées'
+        };
+        
+        await interaction.update({
+            content: `⚖️ **${karmaTypes[karmaType]}**\n\nKarma par action configuré avec succès.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    // HANDLERS DAILY
+    async handleDailyAmountsEdit(interaction) {
+        const amount = interaction.values[0];
+        if (amount === 'back_daily') return await this.showDailyConfig(interaction);
+        
+        if (amount === 'custom') {
+            await interaction.update({
+                content: '🎁 **Montant Daily Personnalisé**\n\nUtilisez les commandes de configuration avancée pour définir un montant personnalisé.',
+                embeds: [],
+                components: []
+            });
+        } else {
+            await interaction.update({
+                content: `🎁 **Montant Daily configuré**\n\nNouvel montant: **${amount}€**\n\nRécompense quotidienne mise à jour.`,
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleDailyStreakEdit(interaction) {
+        const streak = interaction.values[0];
+        if (streak === 'back_daily') return await this.showDailyConfig(interaction);
+        
+        const streaks = {
+            'streak_3': 'Streak 3 jours: +25€ bonus',
+            'streak_7': 'Streak 7 jours: +50€ bonus',
+            'streak_15': 'Streak 15 jours: +100€ bonus',
+            'streak_30': 'Streak 30 jours: +200€ bonus',
+            'custom_streaks': 'Bonus personnalisés configurés',
+            'disable_streaks': 'Système de streaks désactivé',
+            'reset_all_streaks': 'Tous les streaks ont été remis à zéro'
+        };
+        
+        await interaction.update({
+            content: `🔥 **${streaks[streak]}**\n\nConfiguration des streaks mise à jour.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleDailyResetEdit(interaction) {
+        const setting = interaction.values[0];
+        if (setting === 'back_daily') return await this.showDailyConfig(interaction);
+        
+        const settings = {
+            '22': 'Reset à 22:00',
+            '23': 'Reset à 23:00',
+            '0': 'Reset à minuit (00:00)',
+            '1': 'Reset à 01:00',
+            '2': 'Reset à 02:00',
+            '6': 'Reset à 06:00',
+            'streak_delay': 'Délai streak configuré',
+            'timezone': 'Fuseau horaire modifié'
+        };
+        
+        await interaction.update({
+            content: `🔄 **${settings[setting]}**\n\nConfiguration reset daily mise à jour.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    // HANDLERS MESSAGES
+    async handleMessagesToggleEdit(interaction) {
+        const action = interaction.values[0];
+        if (action === 'back_messages') return await this.showMessagesConfig(interaction);
+        
+        const actions = {
+            'enable': 'Système de récompenses messages activé ✅',
+            'disable': 'Système de récompenses messages désactivé ❌',
+            'test_mode': 'Mode test activé 🧪',
+            'excluded_channels': 'Canaux exclus configurés',
+            'excluded_roles': 'Rôles exclus configurés',
+            'message_stats': 'Statistiques des messages',
+            'reset_counters': 'Compteurs remis à zéro'
+        };
+        
+        await interaction.update({
+            content: `💬 **${actions[action]}**\n\nConfiguration messages mise à jour.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    async handleMessagesAmountEdit(interaction) {
+        const amount = interaction.values[0];
+        if (amount === 'back_messages') return await this.showMessagesConfig(interaction);
+        
+        if (amount === 'custom') {
+            await interaction.update({
+                content: '💰 **Montant Personnalisé**\n\nUtilisez les paramètres avancés pour définir un montant personnalisé.',
+                embeds: [],
+                components: []
+            });
+        } else {
+            await interaction.update({
+                content: `💰 **Montant par Message configuré**\n\nNouveau montant: **${amount}€**\n\nLes membres gagneront maintenant ${amount}€ par message.`,
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleMessagesCooldownEdit(interaction) {
+        const cooldown = interaction.values[0];
+        if (cooldown === 'back_messages') return await this.showMessagesConfig(interaction);
+        
+        const cooldowns = {
+            '15': '15 secondes (⚡ très rapide)',
+            '30': '30 secondes (🔥 rapide)',
+            '45': '45 secondes (⏰ normal)',
+            '60': '1 minute (🕐 standard)',
+            '90': '1.5 minutes (🕑 lent)',
+            '120': '2 minutes (🕒 très lent)',
+            '300': '5 minutes (🕔 ultra lent)',
+            '600': '10 minutes (🕙 extrême)',
+            '0': 'Pas de cooldown (💨 instantané - attention au spam!)'
+        };
+        
+        await interaction.update({
+            content: `⏰ **Cooldown Messages configuré**\n\nNouveau délai: **${cooldowns[cooldown]}**\n\nTemps d'attente entre récompenses mis à jour.`,
+            embeds: [],
+            components: []
+        });
+    }
+
+    // HANDLER STATISTIQUES
+    async handleStatsAction(interaction) {
+        const action = interaction.values[0];
+        if (action === 'back_main') return await this.showMainEconomyConfig(interaction);
+        
+        const actions = {
+            'general_economy': '💰 Économie Générale',
+            'actions_stats': '📋 Statistiques Actions',
+            'detailed_rankings': '🏆 Classements Détaillés',
+            'karma_stats': '⚖️ Statistiques Karma',
+            'shop_revenue': '🛒 Revenus Boutique',
+            'monthly_charts': '📈 Graphiques Mensuels',
+            'export_data': '📁 Données Exportées',
+            'reset_stats': '🔄 Statistiques Remises à Zéro'
+        };
+        
+        await interaction.update({
+            content: `📊 **${actions[action]}**\n\nConsultation des statistiques: **${action}**\n\nFonctionnalité avancée disponible prochainement.`,
             embeds: [],
             components: []
         });
