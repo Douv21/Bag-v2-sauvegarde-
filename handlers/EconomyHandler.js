@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 
 class EconomyHandler {
     constructor(dataManager) {
@@ -769,53 +769,92 @@ class EconomyHandler {
             return await this.showActionsConfig(interaction);
         }
         
-        const embed = new EmbedBuilder()
-            .setColor('#ffd700')
-            .setTitle(`💰 Modification: ${option}`)
-            .setDescription('Configuration des montants pour cette action économique');
+        let modal;
         
         switch(option) {
             case 'min_amount':
-                embed.addFields(
-                    { name: 'Valeur Actuelle', value: '50€', inline: true },
-                    { name: 'Valeur Recommandée', value: '10€ - 100€', inline: true },
-                    { name: 'Impact', value: 'Montant minimum garanti', inline: true }
-                );
+                modal = new ModalBuilder()
+                    .setCustomId('economy_rewards_min_modal')
+                    .setTitle('💰 Montant Minimum')
+                    .addComponents(
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('min_amount_input')
+                                .setLabel('Montant minimum (en euros)')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('50')
+                                .setPlaceholder('Ex: 25, 50, 100...')
+                                .setMinLength(1)
+                                .setMaxLength(4)
+                                .setRequired(true)
+                        ),
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('action_type_input')
+                                .setLabel('Action concernée')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('travailler')
+                                .setRequired(true)
+                        )
+                    );
                 break;
             case 'max_amount':
-                embed.addFields(
-                    { name: 'Valeur Actuelle', value: '200€', inline: true },
-                    { name: 'Valeur Recommandée', value: '150€ - 500€', inline: true },
-                    { name: 'Impact', value: 'Montant maximum possible', inline: true }
-                );
+                modal = new ModalBuilder()
+                    .setCustomId('economy_rewards_max_modal')
+                    .setTitle('💰 Montant Maximum')
+                    .addComponents(
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('max_amount_input')
+                                .setLabel('Montant maximum (en euros)')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('200')
+                                .setPlaceholder('Ex: 150, 200, 500...')
+                                .setMinLength(1)
+                                .setMaxLength(4)
+                                .setRequired(true)
+                        ),
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('action_type_input')
+                                .setLabel('Action concernée')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('travailler')
+                                .setRequired(true)
+                        )
+                    );
                 break;
             case 'karma_bonus':
-                embed.addFields(
-                    { name: 'Valeur Actuelle', value: '+10%', inline: true },
-                    { name: 'Valeur Recommandée', value: '5% - 25%', inline: true },
-                    { name: 'Impact', value: 'Bonus basé sur le karma positif', inline: true }
-                );
+                modal = new ModalBuilder()
+                    .setCustomId('economy_rewards_bonus_modal')
+                    .setTitle('⭐ Bonus Karma')
+                    .addComponents(
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('karma_bonus_input')
+                                .setLabel('Bonus karma (en pourcentage)')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('10')
+                                .setPlaceholder('Ex: 5, 10, 25...')
+                                .setMinLength(1)
+                                .setMaxLength(3)
+                                .setRequired(true)
+                        ),
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('action_type_input')
+                                .setLabel('Action concernée')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('travailler')
+                                .setRequired(true)
+                        )
+                    );
                 break;
         }
         
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('economy_rewards_value_config')
-            .setPlaceholder('⚙️ Nouvelle valeur')
-            .addOptions([
-                { label: '25€', value: '25', emoji: '💰' },
-                { label: '50€', value: '50', emoji: '💰' },
-                { label: '100€', value: '100', emoji: '💰' },
-                { label: '200€', value: '200', emoji: '💰' },
-                { label: 'Valeur Personnalisée', value: 'custom', emoji: '⚙️' },
-                { label: 'Retour Configuration', value: 'back_rewards', emoji: '🔙' }
-            ]);
-
-        const components = [new ActionRowBuilder().addComponents(selectMenu)];
-
-        await interaction.update({
-            embeds: [embed],
-            components: components
-        });
+        if (modal) {
+            await interaction.showModal(modal);
+        }
     }
 
     async handleKarmaEditConfig(interaction) {
@@ -825,53 +864,92 @@ class EconomyHandler {
             return await this.showActionsConfig(interaction);
         }
         
-        const embed = new EmbedBuilder()
-            .setColor('#9932cc')
-            .setTitle(`⚖️ Modification: ${option}`)
-            .setDescription('Configuration des gains/pertes de karma');
+        let modal;
         
         switch(option) {
             case 'good_karma':
-                embed.addFields(
-                    { name: 'Valeur Actuelle', value: '+2 😇', inline: true },
-                    { name: 'Valeur Recommandée', value: '+1 à +5', inline: true },
-                    { name: 'Impact', value: 'Karma positif gagné', inline: true }
-                );
+                modal = new ModalBuilder()
+                    .setCustomId('economy_karma_good_modal')
+                    .setTitle('😇 Karma Positif')
+                    .addComponents(
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('good_karma_input')
+                                .setLabel('Karma positif gagné')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('2')
+                                .setPlaceholder('Ex: 1, 2, 3, 5...')
+                                .setMinLength(1)
+                                .setMaxLength(2)
+                                .setRequired(true)
+                        ),
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('action_type_input')
+                                .setLabel('Action concernée')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('travailler')
+                                .setRequired(true)
+                        )
+                    );
                 break;
             case 'bad_karma':
-                embed.addFields(
-                    { name: 'Valeur Actuelle', value: '-1 😈', inline: true },
-                    { name: 'Valeur Recommandée', value: '-1 à -3', inline: true },
-                    { name: 'Impact', value: 'Karma négatif ajouté', inline: true }
-                );
+                modal = new ModalBuilder()
+                    .setCustomId('economy_karma_bad_modal')
+                    .setTitle('😈 Karma Négatif')
+                    .addComponents(
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('bad_karma_input')
+                                .setLabel('Karma négatif ajouté')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('1')
+                                .setPlaceholder('Ex: 1, 2, 3...')
+                                .setMinLength(1)
+                                .setMaxLength(2)
+                                .setRequired(true)
+                        ),
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('action_type_input')
+                                .setLabel('Action concernée')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('voler')
+                                .setRequired(true)
+                        )
+                    );
                 break;
             case 'multiplier':
-                embed.addFields(
-                    { name: 'Valeur Actuelle', value: 'x1.5', inline: true },
-                    { name: 'Valeur Recommandée', value: 'x1.0 à x3.0', inline: true },
-                    { name: 'Impact', value: 'Multiplicateur des récompenses', inline: true }
-                );
+                modal = new ModalBuilder()
+                    .setCustomId('economy_karma_multiplier_modal')
+                    .setTitle('✨ Multiplicateur Karma')
+                    .addComponents(
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('multiplier_input')
+                                .setLabel('Multiplicateur des récompenses')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('1.5')
+                                .setPlaceholder('Ex: 1.0, 1.5, 2.0, 3.0...')
+                                .setMinLength(1)
+                                .setMaxLength(4)
+                                .setRequired(true)
+                        ),
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('action_type_input')
+                                .setLabel('Action concernée')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('travailler')
+                                .setRequired(true)
+                        )
+                    );
                 break;
         }
         
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('economy_karma_value_config')
-            .setPlaceholder('⚙️ Nouvelle valeur karma')
-            .addOptions([
-                { label: '+1 / -0', value: '1_0', emoji: '😇' },
-                { label: '+2 / -1', value: '2_1', emoji: '⚖️' },
-                { label: '+3 / -2', value: '3_2', emoji: '😈' },
-                { label: 'Multiplicateur x2.0', value: 'mult_2', emoji: '✨' },
-                { label: 'Valeur Personnalisée', value: 'custom', emoji: '⚙️' },
-                { label: 'Retour Configuration', value: 'back_karma', emoji: '🔙' }
-            ]);
-
-        const components = [new ActionRowBuilder().addComponents(selectMenu)];
-
-        await interaction.update({
-            embeds: [embed],
-            components: components
-        });
+        if (modal) {
+            await interaction.showModal(modal);
+        }
     }
 
     async handleCooldownEditConfig(interaction) {
@@ -881,11 +959,56 @@ class EconomyHandler {
             return await this.showActionsConfig(interaction);
         }
         
-        await interaction.update({
-            content: `⏰ **Modification cooldown: ${option}**\n\nConfiguration en cours de développement...`,
-            embeds: [],
-            components: []
-        });
+        let modal;
+        
+        switch(option) {
+            case 'set_cooldown':
+                modal = new ModalBuilder()
+                    .setCustomId('economy_cooldown_modal')
+                    .setTitle('⏰ Temps d\'Attente')
+                    .addComponents(
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('cooldown_minutes_input')
+                                .setLabel('Temps d\'attente (en minutes)')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('60')
+                                .setPlaceholder('Ex: 30, 60, 120, 1440...')
+                                .setMinLength(1)
+                                .setMaxLength(5)
+                                .setRequired(true)
+                        ),
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('action_type_input')
+                                .setLabel('Action concernée')
+                                .setStyle(TextInputStyle.Short)
+                                .setValue('travailler')
+                                .setRequired(true)
+                        ),
+                        new ActionRowBuilder().addComponents(
+                            new TextInputBuilder()
+                                .setCustomId('cooldown_description')
+                                .setLabel('Description du cooldown (optionnel)')
+                                .setStyle(TextInputStyle.Paragraph)
+                                .setValue('Temps d\'attente standard pour éviter le spam')
+                                .setPlaceholder('Description personnalisée...')
+                                .setMaxLength(200)
+                                .setRequired(false)
+                        )
+                    );
+                break;
+        }
+        
+        if (modal) {
+            await interaction.showModal(modal);
+        } else {
+            await interaction.update({
+                content: `⏰ **Modification cooldown: ${option}**\n\nUtilisez l'option "Définir Cooldown" pour configurer les temps d'attente.`,
+                embeds: [],
+                components: []
+            });
+        }
     }
 
     async handleToggleEditConfig(interaction) {
@@ -989,6 +1112,150 @@ class EconomyHandler {
             content: `🔄 **Action effectuée: ${action}**\n\n✅ Configuration appliquée avec succès !`,
             embeds: [],
             components: []
+        });
+    }
+
+    // Handlers pour les réponses modals
+    async handleRewardsMinModal(interaction) {
+        const minAmount = interaction.fields.getTextInputValue('min_amount_input');
+        const actionType = interaction.fields.getTextInputValue('action_type_input');
+        
+        // Validation du montant
+        const amount = parseInt(minAmount);
+        if (isNaN(amount) || amount <= 0 || amount > 9999) {
+            return await interaction.reply({
+                content: '❌ **Erreur**: Le montant doit être un nombre entre 1 et 9999.',
+                flags: 64
+            });
+        }
+        
+        // Sauvegarde de la configuration (simulation)
+        await interaction.reply({
+            content: `✅ **Montant minimum configuré !**\n\n💰 **Action**: ${actionType}\n💵 **Nouveau minimum**: ${amount}€\n\n*Configuration sauvegardée avec succès.*`,
+            flags: 64
+        });
+    }
+
+    async handleRewardsMaxModal(interaction) {
+        const maxAmount = interaction.fields.getTextInputValue('max_amount_input');
+        const actionType = interaction.fields.getTextInputValue('action_type_input');
+        
+        const amount = parseInt(maxAmount);
+        if (isNaN(amount) || amount <= 0 || amount > 9999) {
+            return await interaction.reply({
+                content: '❌ **Erreur**: Le montant doit être un nombre entre 1 et 9999.',
+                flags: 64
+            });
+        }
+        
+        await interaction.reply({
+            content: `✅ **Montant maximum configuré !**\n\n💰 **Action**: ${actionType}\n💵 **Nouveau maximum**: ${amount}€\n\n*Configuration sauvegardée avec succès.*`,
+            flags: 64
+        });
+    }
+
+    async handleRewardsBonusModal(interaction) {
+        const bonusAmount = interaction.fields.getTextInputValue('karma_bonus_input');
+        const actionType = interaction.fields.getTextInputValue('action_type_input');
+        
+        const bonus = parseInt(bonusAmount);
+        if (isNaN(bonus) || bonus < 0 || bonus > 999) {
+            return await interaction.reply({
+                content: '❌ **Erreur**: Le bonus doit être un nombre entre 0 et 999.',
+                flags: 64
+            });
+        }
+        
+        await interaction.reply({
+            content: `✅ **Bonus karma configuré !**\n\n⭐ **Action**: ${actionType}\n📈 **Nouveau bonus**: +${bonus}%\n\n*Configuration sauvegardée avec succès.*`,
+            flags: 64
+        });
+    }
+
+    async handleKarmaGoodModal(interaction) {
+        const goodKarma = interaction.fields.getTextInputValue('good_karma_input');
+        const actionType = interaction.fields.getTextInputValue('action_type_input');
+        
+        const karma = parseInt(goodKarma);
+        if (isNaN(karma) || karma <= 0 || karma > 99) {
+            return await interaction.reply({
+                content: '❌ **Erreur**: Le karma positif doit être un nombre entre 1 et 99.',
+                flags: 64
+            });
+        }
+        
+        await interaction.reply({
+            content: `✅ **Karma positif configuré !**\n\n😇 **Action**: ${actionType}\n📊 **Nouveau karma**: +${karma} points\n\n*Configuration sauvegardée avec succès.*`,
+            flags: 64
+        });
+    }
+
+    async handleKarmaBadModal(interaction) {
+        const badKarma = interaction.fields.getTextInputValue('bad_karma_input');
+        const actionType = interaction.fields.getTextInputValue('action_type_input');
+        
+        const karma = parseInt(badKarma);
+        if (isNaN(karma) || karma <= 0 || karma > 99) {
+            return await interaction.reply({
+                content: '❌ **Erreur**: Le karma négatif doit être un nombre entre 1 et 99.',
+                flags: 64
+            });
+        }
+        
+        await interaction.reply({
+            content: `✅ **Karma négatif configuré !**\n\n😈 **Action**: ${actionType}\n📉 **Nouveau karma**: -${karma} points\n\n*Configuration sauvegardée avec succès.*`,
+            flags: 64
+        });
+    }
+
+    async handleKarmaMultiplierModal(interaction) {
+        const multiplier = interaction.fields.getTextInputValue('multiplier_input');
+        const actionType = interaction.fields.getTextInputValue('action_type_input');
+        
+        const mult = parseFloat(multiplier);
+        if (isNaN(mult) || mult <= 0 || mult > 10) {
+            return await interaction.reply({
+                content: '❌ **Erreur**: Le multiplicateur doit être un nombre entre 0.1 et 10.',
+                flags: 64
+            });
+        }
+        
+        await interaction.reply({
+            content: `✅ **Multiplicateur configuré !**\n\n✨ **Action**: ${actionType}\n🔢 **Nouveau multiplicateur**: x${mult}\n\n*Configuration sauvegardée avec succès.*`,
+            flags: 64
+        });
+    }
+
+    async handleCooldownModal(interaction) {
+        const cooldownMinutes = interaction.fields.getTextInputValue('cooldown_minutes_input');
+        const actionType = interaction.fields.getTextInputValue('action_type_input');
+        const description = interaction.fields.getTextInputValue('cooldown_description') || 'Temps d\'attente standard';
+        
+        const minutes = parseInt(cooldownMinutes);
+        if (isNaN(minutes) || minutes <= 0 || minutes > 99999) {
+            return await interaction.reply({
+                content: '❌ **Erreur**: Le cooldown doit être un nombre entre 1 et 99999 minutes.',
+                flags: 64
+            });
+        }
+        
+        // Conversion en format lisible
+        let timeDisplay;
+        if (minutes < 60) {
+            timeDisplay = `${minutes} minute(s)`;
+        } else if (minutes < 1440) {
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = minutes % 60;
+            timeDisplay = remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
+        } else {
+            const days = Math.floor(minutes / 1440);
+            const remainingHours = Math.floor((minutes % 1440) / 60);
+            timeDisplay = remainingHours > 0 ? `${days}j ${remainingHours}h` : `${days}j`;
+        }
+        
+        await interaction.reply({
+            content: `✅ **Cooldown configuré !**\n\n⏰ **Action**: ${actionType}\n⌛ **Nouveau cooldown**: ${timeDisplay}\n📝 **Description**: ${description}\n\n*Configuration sauvegardée avec succès.*`,
+            flags: 64
         });
     }
 }

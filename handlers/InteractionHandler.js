@@ -54,6 +54,15 @@ class InteractionHandler {
         this.handlers.selectMenu.set('economy_karma_value_config', this.economyHandler.handleKarmaValueConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_toggle_action_config', this.economyHandler.handleToggleActionConfig.bind(this.economyHandler));
         
+        // Handlers pour les modals de configuration
+        this.handlers.modal.set('economy_rewards_min_modal', this.economyHandler.handleRewardsMinModal.bind(this.economyHandler));
+        this.handlers.modal.set('economy_rewards_max_modal', this.economyHandler.handleRewardsMaxModal.bind(this.economyHandler));
+        this.handlers.modal.set('economy_rewards_bonus_modal', this.economyHandler.handleRewardsBonusModal.bind(this.economyHandler));
+        this.handlers.modal.set('economy_karma_good_modal', this.economyHandler.handleKarmaGoodModal.bind(this.economyHandler));
+        this.handlers.modal.set('economy_karma_bad_modal', this.economyHandler.handleKarmaBadModal.bind(this.economyHandler));
+        this.handlers.modal.set('economy_karma_multiplier_modal', this.economyHandler.handleKarmaMultiplierModal.bind(this.economyHandler));
+        this.handlers.modal.set('economy_cooldown_modal', this.economyHandler.handleCooldownModal.bind(this.economyHandler));
+        
         // Configuration Confession
         this.handlers.selectMenu.set('confession_main_config', this.handleConfessionMainConfig.bind(this));
         this.handlers.selectMenu.set('config_main_menu', this.handleConfigMainMenu.bind(this));
