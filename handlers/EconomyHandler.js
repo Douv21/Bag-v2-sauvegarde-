@@ -605,43 +605,60 @@ class EconomyHandler {
         const DataManager = require('../managers/DataManager');
         const dataManager = new DataManager();
         const karmaConfig = await dataManager.getData('karma_config') || {};
-        const rewards = karmaConfig.rewards || {};
+        const customRewards = karmaConfig.customRewards || [];
         
         const embed = new EmbedBuilder()
             .setColor('#ffd700')
-            .setTitle('⚖️ Récompenses Automatiques Karma')
-            .setDescription('Configuration des récompenses/sanctions hebdomadaires personnalisables')
-            .addFields([
-                { 
-                    name: '👼 Récompenses Positives', 
-                    value: `Saint: ${rewards.saint?.money || 500}€ (Bonus: x${rewards.saint?.dailyBonus || 1.5})\nBon: ${rewards.good?.money || 200}€ (Bonus: x${rewards.good?.dailyBonus || 1.2})\nNeutre: ${rewards.neutral?.money || 0}€ (Bonus: x${rewards.neutral?.dailyBonus || 1.0})`, 
-                    inline: false 
-                },
-                { 
-                    name: '😈 Sanctions Négatives', 
-                    value: `Mauvais: ${rewards.bad?.money || -100}€ (Malus: x${rewards.bad?.dailyBonus || 0.8})\nEvil: ${rewards.evil?.money || -300}€ (Malus: x${rewards.evil?.dailyBonus || 0.5})`, 
-                    inline: false 
-                },
-                { 
-                    name: '📅 Distribution', 
-                    value: `Jour: ${this.getDayName(karmaConfig.resetDay || 1)}\nProchain reset: ${this.getNextResetDate(karmaConfig.resetDay || 1)}`, 
-                    inline: false 
-                }
+            .setTitle('⚖️ Système Récompenses Karma Personnalisé')
+            .setDescription('Créez vos propres niveaux de karma avec récompenses/sanctions personnalisées');
+        
+        if (customRewards.length === 0) {
+            embed.addFields([
+                { name: '📋 Aucune Récompense Configurée', value: 'Cliquez sur "Créer Niveau" pour ajouter votre premier niveau karma personnalisé', inline: false }
             ]);
+        } else {
+            const rewardsList = customRewards
+                .sort((a, b) => b.karmaThreshold - a.karmaThreshold)
+                .map(reward => {
+                    const moneyText = reward.money >= 0 ? `+${reward.money}€` : `${reward.money}€`;
+                    return `**${reward.name}** (≥${reward.karmaThreshold} karma net)\n${moneyText}, Daily x${reward.dailyBonus}, Cooldown x${reward.cooldownModifier}\n*${reward.description}*`;
+                })
+                .join('\n\n');
+            
+            embed.addFields([
+                { name: '🎯 Niveaux Karma Configurés', value: rewardsList, inline: false },
+                { name: '📅 Distribution', value: `Jour: ${this.getDayName(karmaConfig.resetDay || 1)}\nProchain reset: ${this.getNextResetDate(karmaConfig.resetDay || 1)}`, inline: false }
+            ]);
+        }
 
+        const options = [
+            { label: 'Créer Niveau', description: 'Ajouter un nouveau niveau karma personnalisé', value: 'create_custom_reward', emoji: '➕' }
+        ];
+        
+        // Ajouter options pour modifier les niveaux existants
+        if (customRewards.length > 0) {
+            customRewards.forEach((reward, index) => {
+                options.push({
+                    label: `Modifier ${reward.name}`,
+                    description: `Karma ≥${reward.karmaThreshold} | ${reward.money >= 0 ? '+' : ''}${reward.money}€`,
+                    value: `edit_custom_${index}`,
+                    emoji: reward.money >= 0 ? '📈' : '📉'
+                });
+            });
+            
+            options.push({ label: 'Supprimer Niveau', description: 'Supprimer un niveau karma existant', value: 'delete_custom_reward', emoji: '🗑️' });
+        }
+        
+        options.push(
+            { label: 'Jour Distribution', description: 'Changer jour reset hebdomadaire', value: 'distribution_day', emoji: '📅' },
+            { label: 'Reset Système', description: 'Remettre système par défaut', value: 'reset_rewards', emoji: '🔄' },
+            { label: 'Retour Karma', value: 'back_karma', emoji: '🔙' }
+        );
+        
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('economy_karma_rewards_edit')
-            .setPlaceholder('🎁 Modifier les récompenses karma')
-            .addOptions([
-                { label: 'Récompenses Saint', description: 'Argent + bonus + cooldown', value: 'saint_reward', emoji: '👼' },
-                { label: 'Récompenses Bon', description: 'Argent + bonus + cooldown', value: 'good_reward', emoji: '😇' },
-                { label: 'Récompenses Neutre', description: 'Argent + bonus + cooldown', value: 'neutral_reward', emoji: '⚖️' },
-                { label: 'Sanctions Mauvais', description: 'Argent + malus + cooldown', value: 'bad_penalty', emoji: '🖤' },
-                { label: 'Sanctions Evil', description: 'Argent + malus + cooldown', value: 'evil_penalty', emoji: '👹' },
-                { label: 'Jour Distribution', description: 'Changer jour reset hebdomadaire', value: 'distribution_day', emoji: '📅' },
-                { label: 'Reset Défaut', description: 'Remettre valeurs par défaut', value: 'reset_rewards', emoji: '🔄' },
-                { label: 'Retour Karma', value: 'back_karma', emoji: '🔙' }
-            ]);
+            .setPlaceholder('🎁 Gérer les récompenses karma personnalisées')
+            .addOptions(options);
 
         const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
@@ -1533,99 +1550,154 @@ class EconomyHandler {
     // ==================== HANDLERS KARMA PERSONNALISABLES ====================
     
     async handleKarmaRewardConfig(interaction) {
-        const level = interaction.values[0];
+        const selection = interaction.values[0];
         
-        if (level === 'back_karma') {
+        if (selection === 'back_karma') {
             await this.showKarmaConfig(interaction);
             return;
         }
         
-        if (level === 'reset_rewards') {
+        if (selection === 'reset_rewards') {
             await this.resetKarmaRewardsToDefault(interaction);
             return;
         }
         
-        if (level === 'distribution_day') {
+        if (selection === 'distribution_day') {
             await this.showDistributionDayConfig(interaction);
             return;
         }
         
-        // Créer modal de configuration pour le niveau sélectionné
-        await this.createKarmaRewardModal(interaction, level);
+        if (selection === 'create_custom_reward') {
+            await this.createCustomKarmaRewardModal(interaction);
+            return;
+        }
+        
+        if (selection.startsWith('edit_custom_')) {
+            const index = parseInt(selection.split('_')[2]);
+            await this.editCustomKarmaRewardModal(interaction, index);
+            return;
+        }
+        
+        if (selection === 'delete_custom_reward') {
+            await this.showDeleteCustomRewardMenu(interaction);
+            return;
+        }
     }
     
-    async createKarmaRewardModal(interaction, level) {
+    async createCustomKarmaRewardModal(interaction, editIndex = null) {
         const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
         
-        const levelNames = {
-            'saint_reward': { name: '👼 Saint', emoji: '👼' },
-            'good_reward': { name: '😇 Bon', emoji: '😇' },
-            'neutral_reward': { name: '⚖️ Neutre', emoji: '⚖️' },
-            'bad_penalty': { name: '🖤 Mauvais', emoji: '🖤' },
-            'evil_penalty': { name: '👹 Evil', emoji: '👹' }
-        };
-        
-        const levelInfo = levelNames[level];
+        let existingReward = null;
+        if (editIndex !== null) {
+            const DataManager = require('../managers/DataManager');
+            const dataManager = new DataManager();
+            const karmaConfig = await dataManager.getData('karma_config') || {};
+            existingReward = karmaConfig.customRewards?.[editIndex];
+        }
         
         const modal = new ModalBuilder()
-            .setCustomId(`karma_reward_config_modal_${level}`)
-            .setTitle(`${levelInfo.emoji} Configuration ${levelInfo.name}`);
+            .setCustomId(`custom_karma_reward_modal_${editIndex !== null ? editIndex : 'new'}`)
+            .setTitle(editIndex !== null ? '✏️ Modifier Niveau Karma' : '➕ Créer Niveau Karma');
+        
+        const nameInput = new TextInputBuilder()
+            .setCustomId('karma_reward_name')
+            .setLabel('Nom du Niveau Karma')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(30)
+            .setPlaceholder('Ex: Elite, Criminel, Neutre...')
+            .setRequired(true);
+        
+        const karmaThresholdInput = new TextInputBuilder()
+            .setCustomId('karma_threshold')
+            .setLabel('Karma Net Requis (😇 - 😈)')
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(4)
+            .setPlaceholder('Ex: 10, -5, 0... (-999 à +999)')
+            .setRequired(true);
         
         const moneyInput = new TextInputBuilder()
             .setCustomId('karma_money_reward')
             .setLabel('Récompense/Sanction Argent (€)')
             .setStyle(TextInputStyle.Short)
             .setMinLength(1)
-            .setMaxLength(6)
+            .setMaxLength(7)
             .setPlaceholder('Ex: 500, -300, 0... (-999,999€ à +999,999€)')
             .setRequired(true);
         
         const dailyBonusInput = new TextInputBuilder()
             .setCustomId('karma_daily_bonus')
-            .setLabel('Multiplicateur Bonus Daily (x)')
+            .setLabel('Multiplicateur Daily (x) | Cooldown (x)')
             .setStyle(TextInputStyle.Short)
-            .setMinLength(3)
-            .setMaxLength(4)
-            .setPlaceholder('Ex: 1.5, 0.8, 2.0... (x0.1 à x5.0)')
-            .setRequired(true);
-        
-        const cooldownInput = new TextInputBuilder()
-            .setCustomId('karma_cooldown_modifier')
-            .setLabel('Modificateur Cooldown (x)')
-            .setStyle(TextInputStyle.Short)
-            .setMinLength(3)
-            .setMaxLength(4)
-            .setPlaceholder('Ex: 0.7, 1.2, 1.0... (x0.1 à x3.0)')
+            .setMinLength(5)
+            .setMaxLength(10)
+            .setPlaceholder('Format: 1.5|0.8 (Daily x1.5, Cooldown x0.8)')
             .setRequired(true);
         
         const descriptionInput = new TextInputBuilder()
-            .setCustomId('karma_level_description')
-            .setLabel('Description du niveau (optionnel)')
+            .setCustomId('karma_description')
+            .setLabel('Description du Niveau')
             .setStyle(TextInputStyle.Paragraph)
-            .setMinLength(0)
-            .setMaxLength(100)
-            .setPlaceholder('Description personnalisée pour ce niveau karma')
-            .setRequired(false);
+            .setMinLength(5)
+            .setMaxLength(200)
+            .setPlaceholder('Description de ce niveau de karma et ses effets')
+            .setRequired(true);
         
-        const firstRow = new ActionRowBuilder().addComponents(moneyInput);
-        const secondRow = new ActionRowBuilder().addComponents(dailyBonusInput);
-        const thirdRow = new ActionRowBuilder().addComponents(cooldownInput);
-        const fourthRow = new ActionRowBuilder().addComponents(descriptionInput);
+        // Pré-remplir si modification
+        if (existingReward) {
+            nameInput.setValue(existingReward.name);
+            karmaThresholdInput.setValue(existingReward.karmaThreshold.toString());
+            moneyInput.setValue(existingReward.money.toString());
+            dailyBonusInput.setValue(`${existingReward.dailyBonus}|${existingReward.cooldownModifier}`);
+            descriptionInput.setValue(existingReward.description);
+        }
         
-        modal.addComponents(firstRow, secondRow, thirdRow, fourthRow);
+        const firstRow = new ActionRowBuilder().addComponents(nameInput);
+        const secondRow = new ActionRowBuilder().addComponents(karmaThresholdInput);
+        const thirdRow = new ActionRowBuilder().addComponents(moneyInput);
+        const fourthRow = new ActionRowBuilder().addComponents(dailyBonusInput);
+        const fifthRow = new ActionRowBuilder().addComponents(descriptionInput);
+        
+        modal.addComponents(firstRow, secondRow, thirdRow, fourthRow, fifthRow);
         
         await interaction.showModal(modal);
     }
     
-    async handleKarmaRewardConfigModal(interaction) {
+    async editCustomKarmaRewardModal(interaction, index) {
+        await this.createCustomKarmaRewardModal(interaction, index);
+    }
+    
+    async handleCustomKarmaRewardModal(interaction) {
         try {
-            const level = interaction.customId.split('_').pop(); // Extract level from modal ID
-            const money = parseInt(interaction.fields.getTextInputValue('karma_money_reward'));
-            const dailyBonus = parseFloat(interaction.fields.getTextInputValue('karma_daily_bonus'));
-            const cooldown = parseFloat(interaction.fields.getTextInputValue('karma_cooldown_modifier'));
-            const description = interaction.fields.getTextInputValue('karma_level_description') || '';
+            const modalId = interaction.customId;
+            const editIndex = modalId.includes('_new') ? null : parseInt(modalId.split('_').pop());
             
-            // Validation
+            const name = interaction.fields.getTextInputValue('karma_reward_name');
+            const karmaThreshold = parseInt(interaction.fields.getTextInputValue('karma_threshold'));
+            const money = parseInt(interaction.fields.getTextInputValue('karma_money_reward'));
+            const multipliers = interaction.fields.getTextInputValue('karma_daily_bonus');
+            const description = interaction.fields.getTextInputValue('karma_description');
+            
+            // Validation du nom
+            if (!name || name.trim().length === 0) {
+                await interaction.reply({
+                    content: '❌ Nom du niveau requis.',
+                    flags: 64
+                });
+                return;
+            }
+            
+            // Validation karma threshold
+            if (isNaN(karmaThreshold) || karmaThreshold < -999 || karmaThreshold > 999) {
+                await interaction.reply({
+                    content: '❌ Karma net invalide. Valeur entre -999 et +999 requise.',
+                    flags: 64
+                });
+                return;
+            }
+            
+            // Validation argent
             if (isNaN(money) || money < -999999 || money > 999999) {
                 await interaction.reply({
                     content: '❌ Récompense argent invalide. Valeur entre -999,999€ et +999,999€ requise.',
@@ -1633,6 +1705,19 @@ class EconomyHandler {
                 });
                 return;
             }
+            
+            // Validation multiplicateurs (format: daily|cooldown)
+            const multipliersParts = multipliers.split('|');
+            if (multipliersParts.length !== 2) {
+                await interaction.reply({
+                    content: '❌ Format multiplicateurs invalide. Utilisez: dailyBonus|cooldown (ex: 1.5|0.8)',
+                    flags: 64
+                });
+                return;
+            }
+            
+            const dailyBonus = parseFloat(multipliersParts[0]);
+            const cooldownModifier = parseFloat(multipliersParts[1]);
             
             if (isNaN(dailyBonus) || dailyBonus < 0.1 || dailyBonus > 5.0) {
                 await interaction.reply({
@@ -1642,7 +1727,7 @@ class EconomyHandler {
                 return;
             }
             
-            if (isNaN(cooldown) || cooldown < 0.1 || cooldown > 3.0) {
+            if (isNaN(cooldownModifier) || cooldownModifier < 0.1 || cooldownModifier > 3.0) {
                 await interaction.reply({
                     content: '❌ Modificateur cooldown invalide. Valeur entre x0.1 et x3.0 requise.',
                     flags: 64
@@ -1650,31 +1735,25 @@ class EconomyHandler {
                 return;
             }
             
-            // Sauvegarder la configuration
-            await this.saveKarmaLevelConfig(level, {
+            // Sauvegarder le niveau karma personnalisé
+            await this.saveCustomKarmaLevel({
+                name: name.trim(),
+                karmaThreshold: karmaThreshold,
                 money: money,
                 dailyBonus: dailyBonus,
-                cooldownReduction: cooldown,
-                description: description
-            });
-            
-            const levelNames = {
-                'saint_reward': '👼 Saint',
-                'good_reward': '😇 Bon',
-                'neutral_reward': '⚖️ Neutre',
-                'bad_penalty': '🖤 Mauvais',
-                'evil_penalty': '👹 Evil'
-            };
+                cooldownModifier: cooldownModifier,
+                description: description.trim()
+            }, editIndex);
             
             const embed = new EmbedBuilder()
                 .setColor('#00ff00')
-                .setTitle('✅ Configuration Karma Sauvegardée')
-                .setDescription(`Niveau ${levelNames[level]} configuré avec succès !`)
+                .setTitle(editIndex !== null ? '✅ Niveau Karma Modifié' : '✅ Niveau Karma Créé')
+                .setDescription(`**${name}** configuré avec succès !`)
                 .addFields([
+                    { name: '🎯 Karma Net Requis', value: `≥${karmaThreshold}`, inline: true },
                     { name: '💰 Récompense/Sanction', value: `${money >= 0 ? '+' : ''}${money}€`, inline: true },
-                    { name: '⚡ Multiplicateur Daily', value: `x${dailyBonus}`, inline: true },
-                    { name: '⏰ Modificateur Cooldown', value: `x${cooldown}`, inline: true },
-                    { name: '📝 Description', value: description || 'Aucune description', inline: false }
+                    { name: '⚡ Multiplicateurs', value: `Daily x${dailyBonus}\nCooldown x${cooldownModifier}`, inline: true },
+                    { name: '📝 Description', value: description, inline: false }
                 ]);
             
             await interaction.reply({
@@ -1683,7 +1762,7 @@ class EconomyHandler {
             });
             
         } catch (error) {
-            console.error('❌ Erreur handleKarmaRewardConfigModal:', error);
+            console.error('❌ Erreur handleCustomKarmaRewardModal:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue lors de la sauvegarde. Veuillez réessayer.',
                 flags: 64
@@ -1691,48 +1770,126 @@ class EconomyHandler {
         }
     }
     
-    async saveKarmaLevelConfig(level, config) {
+    async saveCustomKarmaLevel(levelData, editIndex = null) {
         const DataManager = require('../managers/DataManager');
         const dataManager = new DataManager();
         const karmaConfig = await dataManager.getData('karma_config') || {};
         
-        if (!karmaConfig.rewards) {
-            karmaConfig.rewards = {};
+        if (!karmaConfig.customRewards) {
+            karmaConfig.customRewards = [];
         }
         
-        const levelKey = level.replace('_reward', '').replace('_penalty', '');
-        karmaConfig.rewards[levelKey] = config;
+        if (editIndex !== null) {
+            // Modification niveau existant
+            karmaConfig.customRewards[editIndex] = levelData;
+            console.log(`✅ Niveau karma modifié à l'index ${editIndex}:`, levelData);
+        } else {
+            // Nouveau niveau
+            karmaConfig.customRewards.push(levelData);
+            console.log(`✅ Nouveau niveau karma ajouté:`, levelData);
+        }
         
         await dataManager.saveData('karma_config', karmaConfig);
-        console.log(`✅ Configuration karma ${levelKey} sauvegardée:`, config);
     }
     
     async resetKarmaRewardsToDefault(interaction) {
         const DataManager = require('../managers/DataManager');
         const dataManager = new DataManager();
         
-        const defaultRewards = {
-            saint: { money: 500, dailyBonus: 1.5, cooldownReduction: 0.7 },
-            good: { money: 200, dailyBonus: 1.2, cooldownReduction: 0.9 },
-            neutral: { money: 0, dailyBonus: 1.0, cooldownReduction: 1.0 },
-            bad: { money: -100, dailyBonus: 0.8, cooldownReduction: 1.2 },
-            evil: { money: -300, dailyBonus: 0.5, cooldownReduction: 1.5 }
-        };
-        
         const karmaConfig = await dataManager.getData('karma_config') || {};
-        karmaConfig.rewards = defaultRewards;
+        karmaConfig.customRewards = []; // Supprimer tous les niveaux personnalisés
         await dataManager.saveData('karma_config', karmaConfig);
         
         const embed = new EmbedBuilder()
             .setColor('#00ff00')
-            .setTitle('✅ Récompenses Karma Réinitialisées')
-            .setDescription('Toutes les récompenses ont été remises aux valeurs par défaut')
+            .setTitle('🔄 Système Karma Réinitialisé')
+            .setDescription('Tous les niveaux karma personnalisés ont été supprimés')
             .addFields([
-                { name: '👼 Saint', value: '+500€, Daily x1.5, Cooldown x0.7', inline: true },
-                { name: '😇 Bon', value: '+200€, Daily x1.2, Cooldown x0.9', inline: true },
-                { name: '⚖️ Neutre', value: '0€, Daily x1.0, Cooldown x1.0', inline: true },
-                { name: '🖤 Mauvais', value: '-100€, Daily x0.8, Cooldown x1.2', inline: true },
-                { name: '👹 Evil', value: '-300€, Daily x0.5, Cooldown x1.5', inline: true }
+                { name: '📋 État Actuel', value: 'Aucune récompense configurée', inline: false },
+                { name: '➕ Prochaine Étape', value: 'Utilisez "Créer Niveau" pour ajouter vos propres niveaux karma', inline: false }
+            ]);
+        
+        await interaction.update({
+            embeds: [embed],
+            components: []
+        });
+    }
+    
+    async showDeleteCustomRewardMenu(interaction) {
+        const DataManager = require('../managers/DataManager');
+        const dataManager = new DataManager();
+        const karmaConfig = await dataManager.getData('karma_config') || {};
+        const customRewards = karmaConfig.customRewards || [];
+        
+        if (customRewards.length === 0) {
+            await interaction.update({
+                content: '📋 Aucun niveau karma à supprimer.',
+                embeds: [],
+                components: []
+            });
+            return;
+        }
+        
+        const embed = new EmbedBuilder()
+            .setColor('#ff0000')
+            .setTitle('🗑️ Supprimer Niveau Karma')
+            .setDescription('Sélectionnez le niveau karma à supprimer définitivement');
+        
+        const options = customRewards.map((reward, index) => ({
+            label: reward.name,
+            description: `Karma ≥${reward.karmaThreshold} | ${reward.money >= 0 ? '+' : ''}${reward.money}€`,
+            value: `delete_${index}`,
+            emoji: '🗑️'
+        }));
+        
+        options.push({ label: 'Annuler', description: 'Retour au menu principal', value: 'cancel_delete', emoji: '❌' });
+        
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_karma_delete_confirm')
+            .setPlaceholder('🗑️ Choisir le niveau à supprimer')
+            .addOptions(options);
+        
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+        
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+    
+    async handleDeleteCustomReward(interaction) {
+        const selection = interaction.values[0];
+        
+        if (selection === 'cancel_delete') {
+            await this.showKarmaRewardsConfig(interaction);
+            return;
+        }
+        
+        const index = parseInt(selection.split('_')[1]);
+        const DataManager = require('../managers/DataManager');
+        const dataManager = new DataManager();
+        const karmaConfig = await dataManager.getData('karma_config') || {};
+        
+        if (!karmaConfig.customRewards || index >= karmaConfig.customRewards.length) {
+            await interaction.update({
+                content: '❌ Niveau karma introuvable.',
+                embeds: [],
+                components: []
+            });
+            return;
+        }
+        
+        const deletedReward = karmaConfig.customRewards[index];
+        karmaConfig.customRewards.splice(index, 1);
+        await dataManager.saveData('karma_config', karmaConfig);
+        
+        const embed = new EmbedBuilder()
+            .setColor('#ff0000')
+            .setTitle('✅ Niveau Karma Supprimé')
+            .setDescription(`**${deletedReward.name}** a été supprimé définitivement`)
+            .addFields([
+                { name: '🎯 Karma Net', value: `≥${deletedReward.karmaThreshold}`, inline: true },
+                { name: '💰 Récompense', value: `${deletedReward.money >= 0 ? '+' : ''}${deletedReward.money}€`, inline: true }
             ]);
         
         await interaction.update({

@@ -294,9 +294,9 @@ class InteractionHandler {
             return;
         }
         
-        // Karma reward configuration modals
-        if (customId.startsWith('karma_reward_config_modal_')) {
-            await this.economyHandler.handleKarmaRewardConfigModal(interaction);
+        // Custom karma reward modals
+        if (customId.startsWith('custom_karma_reward_modal_')) {
+            await this.economyHandler.handleCustomKarmaRewardModal(interaction);
             return;
         }
         
