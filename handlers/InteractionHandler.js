@@ -259,8 +259,42 @@ class InteractionHandler {
     }
 
     async handleConfessionChannels(interaction) {
+        const guildId = interaction.guild.id;
+        const config = await this.dataManager.getData('config');
+        const confessionConfig = config.confessions?.[guildId] || {
+            channels: [],
+            logChannel: null,
+            autoThread: false,
+            threadName: 'Confession #{number}'
+        };
+
+        let channelsList = '• Aucun canal configuré pour le moment';
+        if (confessionConfig.channels && confessionConfig.channels.length > 0) {
+            channelsList = confessionConfig.channels.map(channelId => {
+                const channel = interaction.guild.channels.cache.get(channelId);
+                return channel ? `• **#${channel.name}** (${channel.id})` : `• Canal supprimé (${channelId})`;
+            }).join('\n');
+        }
+
+        const embed = new EmbedBuilder()
+            .setColor('#7289da')
+            .setTitle('📋 Canaux Confession Configurés')
+            .setDescription('Liste des canaux configurés pour les confessions anonymes')
+            .addFields([
+                {
+                    name: `📱 Canaux Actifs (${confessionConfig.channels.length})`,
+                    value: channelsList,
+                    inline: false
+                },
+                {
+                    name: '⚙️ Configuration',
+                    value: `**Auto-Thread:** ${confessionConfig.autoThread ? '🟢 Activé' : '🔴 Désactivé'}\n**Format Thread:** \`${confessionConfig.threadName}\``,
+                    inline: false
+                }
+            ]);
+
         await interaction.reply({
-            content: 'Configuration des canaux de confession disponible.',
+            embeds: [embed],
             flags: 64
         });
     }
@@ -1601,9 +1635,28 @@ class InteractionHandler {
     async handleConfessionAddChannel(interaction) {
         const channelId = interaction.values[0];
         const channel = interaction.guild.channels.cache.get(channelId);
+        const guildId = interaction.guild.id;
+        
+        // Charger configuration actuelle
+        const config = await this.dataManager.getData('config');
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}'
+            };
+        }
+        
+        // Ajouter canal s'il n'existe pas déjà
+        if (!config.confessions[guildId].channels.includes(channelId)) {
+            config.confessions[guildId].channels.push(channelId);
+            await this.dataManager.saveData('config', config);
+        }
         
         await interaction.reply({
-            content: `✅ Canal **${channel.name}** ajouté aux canaux confessions !`,
+            content: `✅ Canal **${channel.name}** ajouté aux canaux confessions !\n\n📊 **${config.confessions[guildId].channels.length}** canaux configurés au total.`,
             flags: 64
         });
     }
@@ -1611,9 +1664,29 @@ class InteractionHandler {
     async handleConfessionRemoveChannel(interaction) {
         const channelId = interaction.values[0];
         const channel = interaction.guild.channels.cache.get(channelId);
+        const guildId = interaction.guild.id;
+        
+        // Charger configuration actuelle
+        const config = await this.dataManager.getData('config');
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}'
+            };
+        }
+        
+        // Retirer canal s'il existe
+        const index = config.confessions[guildId].channels.indexOf(channelId);
+        if (index > -1) {
+            config.confessions[guildId].channels.splice(index, 1);
+            await this.dataManager.saveData('config', config);
+        }
         
         await interaction.reply({
-            content: `❌ Canal **${channel.name}** retiré des canaux confessions !`,
+            content: `❌ Canal **${channel.name}** retiré des canaux confessions !\n\n📊 **${config.confessions[guildId].channels.length}** canaux configurés restants.`,
             flags: 64
         });
     }
