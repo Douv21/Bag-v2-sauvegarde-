@@ -125,10 +125,7 @@ class BagBotRender {
             await this.registerSlashCommands();
         });
 
-        // Gestionnaire d'interactions centralisé
-        this.client.on('interactionCreate', async (interaction) => {
-            await this.interactionHandler.handle(interaction);
-        });
+        // Les interactions sont gérées automatiquement dans InteractionHandler
 
         // Messages pour économie
         this.client.on('messageCreate', async (message) => {
