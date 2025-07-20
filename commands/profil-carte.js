@@ -2,7 +2,6 @@ const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require('discor
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -77,8 +76,16 @@ module.exports = {
 
             // Télécharger et encoder l'avatar en base64
             let avatarBase64 = null;
+            const avatarUrl = targetUser.displayAvatarURL({ format: 'png', size: 128 });
+            console.log(`🔄 Téléchargement avatar pour ${targetUser.displayName}: ${avatarUrl}`);
+            
             try {
-                avatarBase64 = await this.downloadAndEncodeAvatar(targetUser.displayAvatarURL({ format: 'png', size: 128 }));
+                avatarBase64 = await this.downloadAndEncodeAvatar(avatarUrl);
+                if (avatarBase64) {
+                    console.log(`✅ Avatar encodé avec succès: ${avatarBase64.substring(0, 50)}...`);
+                } else {
+                    console.log('⚠️ Aucun avatar encodé, utilisation fallback');
+                }
             } catch (error) {
                 console.error('❌ Erreur téléchargement avatar:', error);
             }
@@ -345,12 +352,16 @@ module.exports = {
   ${avatarBase64 ? `
   <image x="210" y="160" width="80" height="80" href="data:image/png;base64,${avatarBase64}" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice">
     <animate attributeName="opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite"/>
-  </image>` : `
+  </image>
+  <!-- Debug: Avatar chargé -->
+  <text x="250" y="290" text-anchor="middle" fill="#00ff00" font-family="Arial, sans-serif" font-size="8">AVATAR OK</text>` : `
   <text x="250" y="210" text-anchor="middle" fill="${cardRarity.color}" 
         font-family="Arial, sans-serif" font-size="36">
     <animate attributeName="fill" values="${cardRarity.color};#ffffff;${cardRarity.color}" dur="3s" repeatCount="indefinite"/>
     👤
-  </text>`}
+  </text>
+  <!-- Debug: Pas d'avatar -->
+  <text x="250" y="290" text-anchor="middle" fill="#ff0000" font-family="Arial, sans-serif" font-size="8">NO AVATAR</text>`}
 
   <!-- Nom utilisateur -->
   <text x="250" y="270" text-anchor="middle" fill="white" 
@@ -478,40 +489,54 @@ module.exports = {
      * Télécharger et encoder l'avatar en base64
      */
     async downloadAndEncodeAvatar(avatarUrl) {
-        return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error('Timeout téléchargement avatar'));
-            }, 5000);
-
-            https.get(avatarUrl, (response) => {
-                if (response.statusCode !== 200) {
-                    clearTimeout(timeout);
-                    reject(new Error(`Erreur HTTP: ${response.statusCode}`));
-                    return;
-                }
-
-                const chunks = [];
-                response.on('data', (chunk) => chunks.push(chunk));
-                
-                response.on('end', () => {
-                    clearTimeout(timeout);
-                    try {
-                        const buffer = Buffer.concat(chunks);
-                        const base64 = buffer.toString('base64');
-                        resolve(base64);
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-
-                response.on('error', (error) => {
-                    clearTimeout(timeout);
-                    reject(error);
-                });
-            }).on('error', (error) => {
-                clearTimeout(timeout);
-                reject(error);
+        try {
+            // Utiliser fetch avec des headers appropriés pour Discord
+            const fetch = (await import('node-fetch')).default;
+            
+            const response = await fetch(avatarUrl, {
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Accept': 'image/*',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Cache-Control': 'no-cache'
+                },
+                timeout: 5000
             });
-        });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const buffer = await response.buffer();
+            const base64 = buffer.toString('base64');
+            
+            console.log(`✅ Avatar téléchargé: ${buffer.length} bytes -> base64: ${base64.length} chars`);
+            return base64;
+
+        } catch (error) {
+            console.error('❌ Erreur téléchargement avatar:', error.message);
+            
+            // Fallback: essayer avec un avatar par défaut Discord
+            try {
+                const defaultUrl = 'https://cdn.discordapp.com/embed/avatars/0.png';
+                const fetch = (await import('node-fetch')).default;
+                
+                const response = await fetch(defaultUrl, {
+                    headers: { 'User-Agent': 'Mozilla/5.0' },
+                    timeout: 3000
+                });
+                
+                if (response.ok) {
+                    const buffer = await response.buffer();
+                    return buffer.toString('base64');
+                }
+            } catch (fallbackError) {
+                console.error('❌ Fallback avatar failed:', fallbackError.message);
+            }
+            
+            return null;
+        }
     }
 };
