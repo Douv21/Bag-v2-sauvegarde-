@@ -2,8 +2,8 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('profil-utilisateur')
-        .setDescription('Affiche votre profil utilisateur avec carte ASCII stylisée')
+        .setName('profil-simple')
+        .setDescription('Affiche votre profil utilisateur avec carte ASCII')
         .addUserOption(option =>
             option.setName('utilisateur')
                 .setDescription('Utilisateur dont afficher le profil (optionnel)')
@@ -34,7 +34,7 @@ module.exports = {
             const xpProgress = totalActions % 10;
             const nextLevelXP = 10;
 
-            // Calculer le niveau karma et la rareté
+            // Calculer le niveau karma
             const karmaLevel = this.getKarmaLevel(karmaNet);
             const cardRarity = this.getCardRarity(level, karmaNet, balance, userData.dailyStreak || 0);
 
@@ -92,11 +92,11 @@ module.exports = {
 
             await interaction.reply({
                 embeds: [embed],
-                flags: 64
+                flags: 64 // ephemeral
             });
 
         } catch (error) {
-            console.error('❌ Erreur profil-utilisateur:', error);
+            console.error('❌ Erreur profil-simple:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue lors de l\'affichage du profil.',
                 flags: 64
@@ -111,32 +111,28 @@ module.exports = {
         const karmaBad = userData.karmaBad || 0;
         const userName = user.displayName.length > 15 ? user.displayName.substring(0, 12) + '...' : user.displayName;
 
-        // Créer la barre de progression XP
-        const progressBar = '▓'.repeat(stats.xpProgress) + '░'.repeat(stats.nextLevelXP - stats.xpProgress);
-
         return `
 ╔═══════════════════════════════════════════════════════════════╗
 ║  ${cardRarity.icon} CARTE PROFIL UTILISATEUR ${cardRarity.icon}                          ║
-║                   ${cardRarity.name.toUpperCase()} • ${userName.padEnd(15)}                   ║
+║                   ${cardRarity.name.toUpperCase()} • ${userName}                    ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║                                                               ║
-║    👤              💰 SOLDE: ${balance.padEnd(10)}€              ║
+║    👤           💰 SOLDE: ${balance}€                     ║
 ║   ╭─╮                                                         ║
-║   │ │              ⚖️ KARMA                                    ║
-║   ╰─╯              😇 Positif: ${karmaGood.toString().padEnd(8)}              ║
-║                    😈 Négatif: ${karmaBad.toString().padEnd(8)}              ║
-║  ${userName.padEnd(12)}      📊 Net: ${(karmaNet >= 0 ? '+' : '') + karmaNet} (${karmaLevel.name.padEnd(8)})   ║
-║  Niveau ${level.toString().padEnd(8)}                                           ║
+║   │ │            ⚖️ KARMA                                    ║
+║   ╰─╯            😇 Positif: ${karmaGood}                          ║
+║                  😈 Négatif: ${karmaBad}                          ║
+║  ${userName}       📊 Net: ${karmaNet >= 0 ? '+' : ''}${karmaNet} (${karmaLevel.name})          ║
+║  Niveau ${level}                                                ║
+║                  📅 DATES                                      ║
+║                  🌐 Discord: ${stats.discordJoinDate}                    ║
+║                  🏠 Serveur: ${stats.serverJoinDate}                    ║
 ║                                                               ║
-║                    📅 DATES                                   ║
-║                    🌐 Discord: ${stats.discordJoinDate.padEnd(11)}           ║
-║                    🏠 Serveur: ${stats.serverJoinDate.padEnd(11)}           ║
+║                  🏆 STATISTIQUES                              ║
+║                  🎯 Actions: ${totalActions} • 🔥 Streak: ${userData.dailyStreak || 0}        ║
+║                  💬 Messages: ${userData.messageCount || 0}                       ║
 ║                                                               ║
-║                    🏆 STATISTIQUES                            ║
-║                    🎯 Actions: ${totalActions.toString().padEnd(4)} • 🔥 Streak: ${(userData.dailyStreak || 0).toString().padEnd(3)}   ║
-║                    💬 Messages: ${(userData.messageCount || 0).toString().padEnd(6)}                  ║
-║                                                               ║
-║                    ${progressBar} ${stats.xpProgress}/${stats.nextLevelXP} XP            ║
+║                  ▓▓▓▓▓▓▓▓░░ ${stats.xpProgress}/${stats.nextLevelXP} XP              ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 ID: ${user.id.slice(-8)} • Généré le ${new Date().toLocaleDateString('fr-FR')}`;
