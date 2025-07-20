@@ -1,1 +1,5 @@
-
+{
+  "enabled": false,
+  "amount": 1,
+  "cooldown": 60
+}
