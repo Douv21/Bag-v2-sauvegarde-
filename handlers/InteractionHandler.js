@@ -1481,6 +1481,79 @@ class InteractionHandler {
 
     async handleConfessionAutothreadConfig(interaction) {
         const value = interaction.values[0];
+        const dataManager = require('../managers/DataManager');
+        const config = await dataManager.getData('config');
+        const guildId = interaction.guild.id;
+
+        if (value === 'toggle_autothread') {
+            if (!config.confessions) config.confessions = {};
+            if (!config.confessions[guildId]) config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}'
+            };
+
+            config.confessions[guildId].autoThread = !config.confessions[guildId].autoThread;
+            await dataManager.saveData('config', config);
+
+            const status = config.confessions[guildId].autoThread ? '🟢 Activé' : '🔴 Désactivé';
+            await interaction.reply({
+                content: `🧵 Auto-thread confessions : ${status}`,
+                flags: 64
+            });
+
+        } else if (value === 'thread_name') {
+            const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+            
+            const modal = new ModalBuilder()
+                .setCustomId('confession_thread_name_modal')
+                .setTitle('🏷️ Format Nom Thread');
+
+            const nameInput = new TextInputBuilder()
+                .setCustomId('thread_name_input')
+                .setLabel('Format du nom des threads')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('Ex: Confession #{number} ou Discussion - {date}')
+                .setValue(config.confessions?.[guildId]?.threadName || 'Confession #{number}')
+                .setRequired(true)
+                .setMaxLength(100);
+
+            const row = new ActionRowBuilder().addComponents(nameInput);
+            modal.addComponents(row);
+
+            await interaction.showModal(modal);
+
+        } else if (value === 'archive_time') {
+            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+            
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('📦 Archive Automatique')
+                .setDescription('Choisissez la durée avant archivage automatique des threads');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('confession_archive_time')
+                .setPlaceholder('📦 Choisir durée archivage')
+                .addOptions([
+                    { label: '1 heure', value: '60', emoji: '⏰' },
+                    { label: '24 heures', value: '1440', emoji: '📅' },
+                    { label: '3 jours', value: '4320', emoji: '🗓️' },
+                    { label: '7 jours', value: '10080', emoji: '📆' }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+            await interaction.reply({
+                embeds: [embed],
+                components: components,
+                flags: 64
+            });
+        }
+    }
+
+    async handleConfessionAutothreadConfig(interaction) {
+        const value = interaction.values[0];
         
         if (value === 'toggle_autothread') {
             await interaction.reply({
@@ -1722,6 +1795,65 @@ class InteractionHandler {
             content: 'Toggle récompenses messages disponible.',
             flags: 64
         });
+    }
+
+    // Handler pour configeconomie menus
+    async handleEconomyMainConfig(interaction) {
+        const value = interaction.values[0];
+        const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+
+        if (value === 'actions') {
+            const embed = new EmbedBuilder()
+                .setColor('#9932cc')
+                .setTitle('💼 Actions Économiques')
+                .setDescription('Configurez les 6 actions économiques disponibles');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('economy_actions_config')
+                .setPlaceholder('💼 Choisir une action à configurer')
+                .addOptions([
+                    { label: 'Travailler', description: 'Configuration action travail (+😇)', value: 'travailler', emoji: '💼' },
+                    { label: 'Pêcher', description: 'Configuration action pêche (+😇)', value: 'pecher', emoji: '🎣' },
+                    { label: 'Donner', description: 'Configuration don argent (+😇)', value: 'donner', emoji: '💝' },
+                    { label: 'Voler', description: 'Configuration vol argent (+😈)', value: 'voler', emoji: '🥷' },
+                    { label: 'Crime', description: 'Configuration crime (+😈)', value: 'crime', emoji: '🔫' },
+                    { label: 'Parier', description: 'Configuration pari argent (+😈)', value: 'parier', emoji: '🎲' }
+                ]);
+
+            const components = [new ActionRowBuilder().addComponents(selectMenu)];
+            await interaction.reply({ embeds: [embed], components: components, flags: 64 });
+
+        } else if (value === 'shop') {
+            await interaction.reply({ content: '🛒 Configuration boutique disponible prochainement', flags: 64 });
+        } else if (value === 'karma') {
+            await interaction.reply({ content: '⚖️ Configuration karma disponible prochainement', flags: 64 });
+        } else if (value === 'daily') {
+            await interaction.reply({ content: '🎁 Configuration daily disponible prochainement', flags: 64 });
+        } else if (value === 'messages') {
+            await interaction.reply({ content: '💬 Configuration messages disponible prochainement', flags: 64 });
+        } else if (value === 'stats') {
+            await this.showEconomyStats(interaction);
+        }
+    }
+
+    async showEconomyStats(interaction) {
+        const dataManager = require('../managers/DataManager');
+        const users = await dataManager.getData('users');
+        const guildUsers = Object.values(users).filter(user => user.guildId === interaction.guild.id);
+        const totalUsers = guildUsers.length;
+        const totalMoney = guildUsers.reduce((sum, user) => sum + (user.money || 0), 0);
+
+        const { EmbedBuilder } = require('discord.js');
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle('📊 Statistiques Économiques')
+            .addFields([
+                { name: '👥 Utilisateurs', value: `**Total:** ${totalUsers}`, inline: true },
+                { name: '💰 Total Argent', value: `${totalMoney}€`, inline: true },
+                { name: '⚖️ Karma Saints', value: `${guildUsers.filter(u => (u.goodKarma || 0) > (u.badKarma || 0)).length}`, inline: true }
+            ]);
+
+        await interaction.reply({ embeds: [embed], flags: 64 });
     }
 }
 
