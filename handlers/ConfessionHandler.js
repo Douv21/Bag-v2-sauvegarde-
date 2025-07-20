@@ -68,6 +68,46 @@ class ConfessionHandler {
                 content: `🖼️ Images dans logs : ${status}`,
                 components: []
             });
+
+        } else if (value === 'log_ping_roles') {
+            const { EmbedBuilder, ActionRowBuilder, RoleSelectMenuBuilder } = require('discord.js');
+            
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('🔔 Ping Rôles Logs')
+                .setDescription('Sélectionnez les rôles à mentionner dans les logs admin');
+
+            const roleSelect = new RoleSelectMenuBuilder()
+                .setCustomId('confession_log_ping_roles')
+                .setPlaceholder('🔔 Sélectionnez les rôles à ping')
+                .setMaxValues(5);
+
+            const components = [new ActionRowBuilder().addComponents(roleSelect)];
+
+            await interaction.update({
+                embeds: [embed],
+                components: components
+            });
+
+        } else if (value === 'confession_ping_roles') {
+            const { EmbedBuilder, ActionRowBuilder, RoleSelectMenuBuilder } = require('discord.js');
+            
+            const embed = new EmbedBuilder()
+                .setColor('#2196F3')
+                .setTitle('📢 Ping Rôles Confessions')
+                .setDescription('Sélectionnez les rôles à mentionner lors de nouvelles confessions');
+
+            const roleSelect = new RoleSelectMenuBuilder()
+                .setCustomId('confession_ping_roles')
+                .setPlaceholder('📢 Sélectionnez les rôles à ping')
+                .setMaxValues(5);
+
+            const components = [new ActionRowBuilder().addComponents(roleSelect)];
+
+            await interaction.update({
+                embeds: [embed],
+                components: components
+            });
         }
     }
 
@@ -123,6 +163,56 @@ class ConfessionHandler {
         const channel = interaction.guild.channels.cache.get(channelId);
         await interaction.update({
             content: `✅ Canal logs configuré: ${channel ? channel.name : 'Canal inconnu'}`,
+            components: []
+        });
+    }
+
+    async handleConfessionLogPingRoles(interaction) {
+        const roleIds = interaction.values;
+        const config = await this.dataManager.getData('config');
+        const guildId = interaction.guild.id;
+
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}'
+            };
+        }
+
+        config.confessions[guildId].logPingRoles = roleIds;
+        await this.dataManager.saveData('config', config);
+
+        const roles = roleIds.map(id => `<@&${id}>`).join(', ');
+        await interaction.update({
+            content: `✅ Rôles ping logs configurés: ${roles || 'Aucun'}`,
+            components: []
+        });
+    }
+
+    async handleConfessionPingRoles(interaction) {
+        const roleIds = interaction.values;
+        const config = await this.dataManager.getData('config');
+        const guildId = interaction.guild.id;
+
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) {
+            config.confessions[guildId] = {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}'
+            };
+        }
+
+        config.confessions[guildId].confessionPingRoles = roleIds;
+        await this.dataManager.saveData('config', config);
+
+        const roles = roleIds.map(id => `<@&${id}>`).join(', ');
+        await interaction.update({
+            content: `✅ Rôles ping confessions configurés: ${roles || 'Aucun'}`,
             components: []
         });
     }
