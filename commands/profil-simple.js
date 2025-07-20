@@ -16,15 +16,32 @@ module.exports = {
             const member = interaction.guild?.members.cache.get(targetUser.id);
             
             // Charger les données utilisateur
-            const DataManager = require('../managers/DataManager');
-            const userData = DataManager.getUser(targetUser.id) || {
+            const fs = require('fs');
+            const path = require('path');
+            
+            let userData;
+            try {
+                const usersPath = path.join(__dirname, '..', 'data', 'users.json');
+                if (fs.existsSync(usersPath)) {
+                    const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+                    userData = usersData[targetUser.id] || {};
+                } else {
+                    userData = {};
+                }
+            } catch (error) {
+                console.error('❌ Erreur lecture données utilisateur:', error);
+                userData = {};
+            }
+            
+            // Valeurs par défaut
+            userData = Object.assign({
                 balance: 0,
                 karmaGood: 0,
                 karmaBad: 0,
                 dailyStreak: 0,
                 messageCount: 0,
                 actions: { travailler: 0, pecher: 0, voler: 0, crime: 0, parier: 0, donner: 0 }
-            };
+            }, userData);
 
             // Calculer les statistiques
             const karmaNet = (userData.karmaGood || 0) - (userData.karmaBad || 0);
