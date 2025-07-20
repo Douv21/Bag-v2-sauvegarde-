@@ -1614,9 +1614,9 @@ class InteractionHandler {
             await this.dataManager.saveData('config', config);
 
             const status = config.confessions[guildId].logImages ? '🟢 Activé' : '🔴 Désactivé';
-            await interaction.reply({
+            await interaction.update({
                 content: `🖼️ Images dans logs : ${status}`,
-                flags: 64
+                components: []
             });
         }
     }
