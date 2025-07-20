@@ -73,6 +73,20 @@ class InteractionHandler {
         // STATISTIQUES
         this.handlers.selectMenu.set('economy_stats_action', this.economyHandler.handleStatsAction.bind(this.economyHandler));
         
+        // NOUVEAUX HANDLERS BOUTIQUE AVANCÉE
+        this.handlers.selectMenu.set('economy_shop_role_type_select', this.economyHandler.handleShopRoleTypeSelect.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_shop_permanent_price_select', this.economyHandler.handleShopPermanentPriceSelect.bind(this.economyHandler));
+        this.handlers.selectMenu.set('economy_shop_temporary_duration_select', this.economyHandler.handleShopTemporaryDurationSelect.bind(this.economyHandler));
+        
+        // HANDLERS pour sélection de rôles serveur (RoleSelectMenuBuilder)
+        this.handlers.roleSelect.set('shop_permanent_role_select', this.economyHandler.handleShopPermanentRoleSelect.bind(this.economyHandler));
+        this.handlers.roleSelect.set('shop_temporary_role_select', this.economyHandler.handleShopTemporaryRoleSelect.bind(this.economyHandler));
+        
+        // HANDLERS pour modals boutique
+        this.handlers.modal = this.handlers.modal || new Map();
+        this.handlers.modal.set('shop_permanent_price_modal', this.economyHandler.handlePermanentPriceModal.bind(this.economyHandler));
+        this.handlers.modal.set('shop_temporary_duration_modal', this.economyHandler.handleTemporaryDurationModal.bind(this.economyHandler));
+        
         // Handlers pour les valeurs spécifiques 
         this.handlers.selectMenu.set('economy_rewards_value_config', this.economyHandler.handleRewardsValueConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_karma_value_config', this.economyHandler.handleKarmaValueConfig.bind(this.economyHandler));
@@ -228,7 +242,17 @@ class InteractionHandler {
 
     async handleModal(interaction) {
         const customId = interaction.customId;
+        console.log(`🔍 Modal soumis: ${customId}`);
         
+        // Vérifier les nouveaux handlers de modals boutique
+        const modalHandler = this.handlers.modal?.get(customId);
+        if (modalHandler) {
+            console.log(`✅ Handler modal trouvé pour: ${customId}`);
+            await modalHandler(interaction);
+            return;
+        }
+        
+        // Anciens handlers de modals
         if (customId.startsWith('reward_modal_')) {
             await this.handleRewardModal(interaction);
         } else if (customId.startsWith('karma_modal_')) {
@@ -236,6 +260,7 @@ class InteractionHandler {
         } else if (customId.startsWith('cooldown_modal_')) {
             await this.handleCooldownModal(interaction);
         } else {
+            console.log(`❌ Aucun handler modal pour: ${customId}`);
             await interaction.reply({
                 content: `Modal ${customId} non géré.`,
                 flags: 64

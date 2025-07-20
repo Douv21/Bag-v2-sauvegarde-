@@ -451,22 +451,29 @@ class EconomyHandler {
         const embed = new EmbedBuilder()
             .setColor('#00ff00')
             .setTitle('🛒 Ajouter un Rôle à la Boutique')
-            .setDescription('Sélectionnez un rôle à ajouter à la boutique avec son prix')
+            .setDescription('Configurez un nouveau rôle avec type, prix personnalisé et sélection parmi les rôles du serveur')
             .addFields([
-                { name: 'Prix Suggérés', value: '📚 Rôle Étudiant: 500€\n💼 Rôle VIP: 1000€\n👑 Rôle Premium: 2500€', inline: false }
+                { name: '⏰ Type de Rôle', value: '🔄 **Permanent** - Le rôle reste à vie\n⌛ **Temporaire** - Expire après X jours', inline: true },
+                { name: '💰 Prix Personnalisé', value: 'Définissez n\'importe quel montant\nDe 1€ à 999,999€', inline: true },
+                { name: '📋 Processus', value: '1. Type (Permanent/Temporaire)\n2. Prix personnalisé\n3. Sélection rôle serveur\n4. Confirmation', inline: false }
             ]);
 
         const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('economy_shop_add_role_price')
-            .setPlaceholder('💰 Choisir le prix du rôle')
+            .setCustomId('economy_shop_role_type_select')
+            .setPlaceholder('⏰ Choisir le type de rôle')
             .addOptions([
-                { label: '250€', value: '250', emoji: '💵' },
-                { label: '500€', value: '500', emoji: '💶' },
-                { label: '1000€', value: '1000', emoji: '💷' },
-                { label: '1500€', value: '1500', emoji: '💴' },
-                { label: '2000€', value: '2000', emoji: '💸' },
-                { label: '2500€', value: '2500', emoji: '💎' },
-                { label: '5000€', value: '5000', emoji: '👑' },
+                { 
+                    label: 'Rôle Permanent', 
+                    value: 'permanent', 
+                    emoji: '🔄',
+                    description: 'Le rôle reste à vie une fois acheté'
+                },
+                { 
+                    label: 'Rôle Temporaire', 
+                    value: 'temporary', 
+                    emoji: '⌛',
+                    description: 'Le rôle expire après une durée définie'
+                },
                 { label: 'Retour Boutique', value: 'back_shop', emoji: '🔙' }
             ]);
 
@@ -1557,7 +1564,87 @@ class EconomyHandler {
 
     // ==================== NOUVEAUX HANDLERS POUR TOUS LES SOUS-MENUS ====================
     
-    // HANDLERS BOUTIQUE
+    // ==================== NOUVEAUX HANDLERS BOUTIQUE AVANCÉE ====================
+    
+    // Handler pour le type de rôle (Permanent/Temporaire)
+    async handleShopRoleTypeSelect(interaction) {
+        const roleType = interaction.values[0];
+        if (roleType === 'back_shop') return await this.showShopConfig(interaction);
+        
+        if (roleType === 'permanent') {
+            await this.showShopPermanentRolePrice(interaction);
+        } else if (roleType === 'temporary') {
+            await this.showShopTemporaryRoleConfig(interaction);
+        }
+    }
+
+    // Configuration prix pour rôle permanent
+    async showShopPermanentRolePrice(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('🔄 Rôle Permanent - Prix Personnalisé')
+            .setDescription('Définissez le prix pour ce rôle permanent')
+            .addFields([
+                { name: '💰 Prix Personnalisé', value: 'Vous pouvez entrer n\'importe quel montant', inline: true },
+                { name: '🔄 Type', value: 'Rôle Permanent (à vie)', inline: true },
+                { name: '📝 Prochaine Étape', value: 'Après le prix, vous sélectionnerez le rôle du serveur', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_shop_permanent_price_select')
+            .setPlaceholder('💰 Saisir le prix personnalisé')
+            .addOptions([
+                { 
+                    label: 'Saisir Prix Personnalisé', 
+                    value: 'custom_price_modal', 
+                    emoji: '✏️',
+                    description: 'Entrer n\'importe quel montant via modal'
+                },
+                { label: 'Retour Type', value: 'back_type', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+
+    // Configuration pour rôle temporaire (avec durée)
+    async showShopTemporaryRoleConfig(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#ffa500')
+            .setTitle('⌛ Rôle Temporaire - Configuration')
+            .setDescription('Configurez la durée d\'expiration pour ce rôle temporaire')
+            .addFields([
+                { name: '⌛ Durée d\'Expiration', value: 'Le rôle sera automatiquement retiré', inline: true },
+                { name: '💰 Prix', value: 'Généralement moins cher que permanent', inline: true },
+                { name: '📝 Processus', value: '1. Durée d\'expiration\n2. Prix personnalisé\n3. Sélection rôle serveur', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_shop_temporary_duration_select')
+            .setPlaceholder('⌛ Définir la durée personnalisée')
+            .addOptions([
+                { 
+                    label: 'Durée Personnalisée', 
+                    value: 'custom_duration_modal', 
+                    emoji: '✏️', 
+                    description: 'Entrer nombre de jours via modal' 
+                },
+                { label: 'Retour Type', value: 'back_type', emoji: '🔙' }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+
+    // HANDLERS BOUTIQUE (mis à jour)
     async handleShopAddRolePrice(interaction) {
         const price = interaction.values[0];
         if (price === 'back_shop') return await this.showShopConfig(interaction);
@@ -1834,6 +1921,240 @@ class EconomyHandler {
         await interaction.update({
             content: `📊 **${actions[action]}**\n\nConsultation des statistiques: **${action}**\n\nFonctionnalité avancée disponible prochainement.`,
             embeds: [],
+            components: []
+        });
+    }
+
+    // ==================== NOUVEAUX HANDLERS BOUTIQUE AVANCÉE (SUITE) ====================
+    
+    // Handler pour prix permanent sélectionné
+    async handleShopPermanentPriceSelect(interaction) {
+        const action = interaction.values[0];
+        if (action === 'back_type') return await this.showAddRoleConfig(interaction);
+        
+        if (action === 'custom_price_modal') {
+            await this.showPermanentPriceModal(interaction);
+        }
+    }
+
+    // Modal pour saisie prix permanent personnalisé
+    async showPermanentPriceModal(interaction) {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+        
+        const modal = new ModalBuilder()
+            .setCustomId('shop_permanent_price_modal')
+            .setTitle('💰 Prix Rôle Permanent');
+
+        const priceInput = new TextInputBuilder()
+            .setCustomId('permanent_price_input')
+            .setLabel('Prix en euros (nombre uniquement)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ex: 500 (pour 500€)')
+            .setRequired(true)
+            .setMinLength(1)
+            .setMaxLength(10);
+
+        const firstRow = new ActionRowBuilder().addComponents(priceInput);
+        modal.addComponents(firstRow);
+
+        await interaction.showModal(modal);
+    }
+
+    // Handler pour durée temporaire sélectionnée
+    async handleShopTemporaryDurationSelect(interaction) {
+        const action = interaction.values[0];
+        if (action === 'back_type') return await this.showAddRoleConfig(interaction);
+        
+        if (action === 'custom_duration_modal') {
+            await this.showTemporaryDurationModal(interaction);
+        }
+    }
+
+    // Modal pour saisie durée temporaire personnalisée
+    async showTemporaryDurationModal(interaction) {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+        
+        const modal = new ModalBuilder()
+            .setCustomId('shop_temporary_duration_modal')
+            .setTitle('⌛ Durée Rôle Temporaire');
+
+        const durationInput = new TextInputBuilder()
+            .setCustomId('temporary_duration_input')
+            .setLabel('Durée en jours (nombre uniquement)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ex: 30 (pour 30 jours)')
+            .setRequired(true)
+            .setMinLength(1)
+            .setMaxLength(5);
+
+        const priceInput = new TextInputBuilder()
+            .setCustomId('temporary_price_input')
+            .setLabel('Prix en euros (nombre uniquement)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('Ex: 250 (pour 250€)')
+            .setRequired(true)
+            .setMinLength(1)
+            .setMaxLength(10);
+
+        const firstRow = new ActionRowBuilder().addComponents(durationInput);
+        const secondRow = new ActionRowBuilder().addComponents(priceInput);
+        modal.addComponents(firstRow, secondRow);
+
+        await interaction.showModal(modal);
+    }
+
+    // Handlers pour les modals soumis
+    async handlePermanentPriceModal(interaction) {
+        const price = interaction.fields.getTextInputValue('permanent_price_input');
+        const priceNum = parseInt(price);
+        
+        if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
+            await interaction.reply({
+                content: '❌ **Erreur de Prix**\n\nVeuillez entrer un nombre valide entre 1 et 999,999.',
+                flags: 64
+            });
+            return;
+        }
+        
+        await interaction.reply({
+            content: `✅ **Prix Configuré: ${priceNum}€**\n\nMaintenant, sélectionnez le rôle parmi ceux du serveur.`,
+            flags: 64
+        });
+        
+        // Afficher immédiatement le sélecteur de rôle
+        setTimeout(() => {
+            this.showShopPermanentRoleSelect(interaction, priceNum);
+        }, 1000);
+    }
+
+    async handleTemporaryDurationModal(interaction) {
+        const duration = interaction.fields.getTextInputValue('temporary_duration_input');
+        const price = interaction.fields.getTextInputValue('temporary_price_input');
+        
+        const durationNum = parseInt(duration);
+        const priceNum = parseInt(price);
+        
+        if (isNaN(durationNum) || durationNum < 1 || durationNum > 36500) {
+            await interaction.reply({
+                content: '❌ **Erreur de Durée**\n\nVeuillez entrer un nombre de jours valide entre 1 et 36,500.',
+                flags: 64
+            });
+            return;
+        }
+        
+        if (isNaN(priceNum) || priceNum < 1 || priceNum > 999999) {
+            await interaction.reply({
+                content: '❌ **Erreur de Prix**\n\nVeuillez entrer un prix valide entre 1 et 999,999€.',
+                flags: 64
+            });
+            return;
+        }
+        
+        await interaction.reply({
+            content: `✅ **Configuration Temporaire**\n\n⌛ **Durée**: ${durationNum} jour${durationNum > 1 ? 's' : ''}\n💰 **Prix**: ${priceNum}€\n\nMaintenant, sélectionnez le rôle parmi ceux du serveur.`,
+            flags: 64
+        });
+        
+        // Afficher immédiatement le sélecteur de rôle
+        setTimeout(() => {
+            this.showShopTemporaryRoleSelect(interaction, priceNum, durationNum);
+        }, 1000);
+    }
+
+    // Affichage sélection rôle permanent avec RoleSelectMenuBuilder
+    async showShopPermanentRoleSelect(interaction, price) {
+        const { RoleSelectMenuBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('🔄 Sélection Rôle Permanent')
+            .setDescription('Choisissez le rôle à vendre de façon permanente dans la boutique')
+            .addFields([
+                { name: '💰 Prix Configuré', value: `${price}€`, inline: true },
+                { name: '⏰ Type', value: 'Permanent (à vie)', inline: true },
+                { name: '📝 Instructions', value: 'Sélectionnez un rôle dans le menu déroulant ci-dessous', inline: false }
+            ]);
+
+        const roleSelect = new RoleSelectMenuBuilder()
+            .setCustomId('shop_permanent_role_select')
+            .setPlaceholder('👑 Sélectionner le rôle à vendre')
+            .setMinValues(1)
+            .setMaxValues(1);
+
+        const components = [new ActionRowBuilder().addComponents(roleSelect)];
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+
+    // Affichage sélection rôle temporaire avec RoleSelectMenuBuilder
+    async showShopTemporaryRoleSelect(interaction, price, duration = null) {
+        const { RoleSelectMenuBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor('#ffa500')
+            .setTitle('⌛ Sélection Rôle Temporaire')
+            .setDescription('Choisissez le rôle à vendre temporairement dans la boutique')
+            .addFields([
+                { name: '💰 Prix Configuré', value: `${price}€`, inline: true },
+                { name: '⏰ Type', value: `Temporaire (${duration ? duration + ' jour' + (duration > 1 ? 's' : '') : 'expire'})`, inline: true },
+                { name: '📝 Instructions', value: 'Sélectionnez un rôle dans le menu déroulant ci-dessous', inline: false }
+            ]);
+
+        const roleSelect = new RoleSelectMenuBuilder()
+            .setCustomId('shop_temporary_role_select')
+            .setPlaceholder('⌛ Sélectionner le rôle temporaire')
+            .setMinValues(1)
+            .setMaxValues(1);
+
+        const components = [new ActionRowBuilder().addComponents(roleSelect)];
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+
+    // Handler pour rôle permanent sélectionné (RoleSelectMenuBuilder)
+    async handleShopPermanentRoleSelect(interaction) {
+        const selectedRole = interaction.roles.first();
+        
+        const embed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('✅ Rôle Permanent Ajouté à la Boutique')
+            .setDescription('Configuration terminée avec succès!')
+            .addFields([
+                { name: '👑 Rôle', value: `${selectedRole.name} (<@&${selectedRole.id}>)`, inline: true },
+                { name: '💰 Prix', value: 'Prix configuré', inline: true },
+                { name: '⏰ Type', value: '🔄 Permanent', inline: true },
+                { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
+            ]);
+
+        await interaction.update({
+            embeds: [embed],
+            components: []
+        });
+    }
+
+    // Handler pour rôle temporaire sélectionné (RoleSelectMenuBuilder)
+    async handleShopTemporaryRoleSelect(interaction) {
+        const selectedRole = interaction.roles.first();
+        
+        const embed = new EmbedBuilder()
+            .setColor('#ffa500')
+            .setTitle('✅ Rôle Temporaire Ajouté à la Boutique')
+            .setDescription('Configuration terminée avec succès!')
+            .addFields([
+                { name: '👑 Rôle', value: `${selectedRole.name} (<@&${selectedRole.id}>)`, inline: true },
+                { name: '💰 Prix', value: 'Prix configuré', inline: true },
+                { name: '⏰ Type', value: '⌛ Temporaire', inline: true },
+                { name: '🛒 Statut', value: '✅ Disponible à l\'achat', inline: false }
+            ]);
+
+        await interaction.update({
+            embeds: [embed],
             components: []
         });
     }
