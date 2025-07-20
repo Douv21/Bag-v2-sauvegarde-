@@ -30,8 +30,8 @@ class InteractionHandler {
         this.handlers.selectMenu.set('economy_messages_config', this.economyHandler.handleEconomyMessagesConfig.bind(this.economyHandler));
         
         // Handlers pour actions individuelles
-        const actions = ['travailler', 'pecher', 'donner', 'voler', 'crime', 'parier'];
-        actions.forEach(action => {
+        const economyActions = ['travailler', 'pecher', 'donner', 'voler', 'crime', 'parier'];
+        economyActions.forEach(action => {
             this.handlers.selectMenu.set(`economy_action_${action}_config`, this.economyHandler.handleEconomyActionsConfig.bind(this.economyHandler));
         });
         
@@ -42,9 +42,9 @@ class InteractionHandler {
         // this.handlers.selectMenu.set('confession_autothread', this.handleConfessionAutothread.bind(this)); // Retiré car dupliqué
         this.handlers.selectMenu.set('autothread_config', this.handleAutothreadGlobalConfig.bind(this));
         
-        // Sélecteurs Configuration Actions  
-        const actions = ['work', 'fish', 'donate', 'steal', 'crime', 'bet'];
-        actions.forEach(action => {
+        // Sélecteurs Configuration Actions Legacy
+        const legacyActions = ['work', 'fish', 'donate', 'steal', 'crime', 'bet'];
+        legacyActions.forEach(action => {
             this.handlers.selectMenu.set(`edit_reward_${action}`, this.handleEditRewardSelector.bind(this));
             this.handlers.selectMenu.set(`edit_karma_${action}`, this.handleEditKarmaSelector.bind(this));
             this.handlers.selectMenu.set(`edit_cooldown_${action}`, this.handleEditCooldownSelector.bind(this));
@@ -92,7 +92,7 @@ class InteractionHandler {
         this.handlers.button.set('toggle_message_rewards', this.handleToggleMessageRewards.bind(this));
 
         // Boutons Actions Économiques (pour compatibilité)
-        actions.forEach(action => {
+        legacyActions.forEach(action => {
             this.handlers.button.set(`edit_reward_${action}`, this.handleEditRewardButton.bind(this));
             this.handlers.button.set(`edit_karma_${action}`, this.handleEditKarmaButton.bind(this));
             this.handlers.button.set(`edit_cooldown_${action}`, this.handleEditCooldownButton.bind(this));
