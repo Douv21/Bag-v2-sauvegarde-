@@ -93,31 +93,27 @@ module.exports = {
                 embeds: [confessionEmbed] 
             });
 
+            // Envoyer les logs admin IMMÉDIATEMENT après la confession
+            await this.sendAdminLog(interaction, text, image, confessionNumber, dataManager);
+
             // Créer un thread si configuré
             if (confessionConfig.autoThread) {
-                // Utiliser la configuration existante pour stocker le compteur
-                const config = await dataManager.getData('config');
-                if (!config.confessions[interaction.guild.id].threadCounter) {
-                    config.confessions[interaction.guild.id].threadCounter = 1;
-                } else {
-                    config.confessions[interaction.guild.id].threadCounter++;
+                try {
+                    let threadName = confessionConfig.threadName || 'Confession #{number}';
+                    threadName = threadName.replace('#{number}', confessionNumber);
+                    threadName = threadName.replace('{number}', confessionNumber);
+                    threadName = threadName.replace('{date}', new Date().toLocaleDateString('fr-FR'));
+                    
+                    await confessionMessage.startThread({
+                        name: threadName.substring(0, 100), // Limite Discord
+                        autoArchiveDuration: confessionConfig.archiveTime || 1440,
+                        reason: 'Auto-thread confession'
+                    });
+                } catch (threadError) {
+                    console.error('❌ Erreur création thread:', threadError);
+                    // Ne pas bloquer l'execution si le thread échoue
                 }
-                await dataManager.saveData('config', config);
-
-                let threadName = confessionConfig.threadName || 'Confession #{number}';
-                threadName = threadName.replace('#{number}', confessionNumber);
-                threadName = threadName.replace('{number}', confessionNumber);
-                threadName = threadName.replace('{date}', new Date().toLocaleDateString('fr-FR'));
-                
-                await confessionMessage.startThread({
-                    name: threadName.substring(0, 100), // Limite Discord
-                    autoArchiveDuration: confessionConfig.archiveTime || 1440,
-                    reason: 'Auto-thread confession'
-                });
             }
-
-            // Envoyer les logs admin si configuré
-            await this.sendAdminLog(interaction, text, image, confessionNumber, dataManager);
 
             // Logger la confession
             await this.logConfession(interaction, text, image?.url, dataManager);
@@ -203,13 +199,32 @@ module.exports = {
             // Préparer les pings pour logs admin
             let logPings = '';
             if (confessionConfig.logPingRoles && confessionConfig.logPingRoles.length > 0) {
-                logPings = confessionConfig.logPingRoles.map(roleId => `<@&${roleId}>`).join(' ') + '\n';
+                logPings = confessionConfig.logPingRoles.map(roleId => `<@&${roleId}>`).join(' ');
             }
 
-            await logChannel.send({
-                content: logPings,
-                embeds: [logEmbed]
-            });
+            // Envoyer avec gestion d'erreur pour les images
+            try {
+                await logChannel.send({
+                    content: logPings || undefined,
+                    embeds: [logEmbed]
+                });
+                console.log(`✅ Log admin envoyé pour confession #${confessionNumber}`);
+            } catch (logError) {
+                console.error('❌ Erreur envoi log admin:', logError);
+                // Fallback sans image si erreur
+                if (image) {
+                    try {
+                        logEmbed.setImage(null);
+                        await logChannel.send({
+                            content: logPings || undefined,
+                            embeds: [logEmbed]
+                        });
+                        console.log(`✅ Log admin envoyé (sans image) pour confession #${confessionNumber}`);
+                    } catch (fallbackError) {
+                        console.error('❌ Erreur log admin fallback:', fallbackError);
+                    }
+                }
+            }
 
         } catch (error) {
             console.error('❌ Erreur envoi log admin:', error);
