@@ -127,10 +127,15 @@ class BagBotRender {
 
         // Les interactions sont gérées automatiquement dans InteractionHandler
 
-        // Messages pour économie
+        // Messages pour économie et auto-thread
         this.client.on('messageCreate', async (message) => {
             if (message.author.bot) return;
+            
+            // Gestion récompenses économiques
             await this.dataManager.handleMessageReward(message);
+            
+            // Gestion auto-thread
+            await this.handleAutoThread(message);
         });
 
         // Gestion des erreurs
@@ -158,6 +163,50 @@ class BagBotRender {
             console.log(`✅ ${commands.length} commandes enregistrées`);
         } catch (error) {
             console.error('❌ Erreur enregistrement commandes:', error);
+        }
+    }
+
+    async handleAutoThread(message) {
+        try {
+            // Charger configuration auto-thread
+            const config = await this.dataManager.getData('config');
+            const guildId = message.guild.id;
+            const channelId = message.channel.id;
+            
+            // Vérifier si l'auto-thread est configuré pour cette guilde et ce canal
+            const autoThreadConfig = config.autoThread?.[guildId];
+            if (!autoThreadConfig || !autoThreadConfig.enabled) return;
+            if (!autoThreadConfig.channels.includes(channelId)) return;
+            
+            // Vérifier que c'est un canal texte et pas déjà un thread
+            if (message.channel.isThread() || message.channel.type !== 0) return;
+            
+            // Créer le nom du thread en remplaçant les variables
+            let threadName = autoThreadConfig.threadName || 'Discussion - {user}';
+            threadName = threadName
+                .replace('{user}', message.author.displayName || message.author.username)
+                .replace('{channel}', message.channel.name)
+                .replace('{date}', new Date().toLocaleDateString('fr-FR'));
+            
+            // Limiter le nom à 100 caractères (limite Discord)
+            threadName = threadName.substring(0, 100);
+            
+            // Créer le thread
+            const thread = await message.startThread({
+                name: threadName,
+                autoArchiveDuration: autoThreadConfig.archiveTime || 60,
+                reason: `Auto-thread créé par ${message.author.tag}`
+            });
+            
+            // Appliquer le mode lent si configuré
+            if (autoThreadConfig.slowMode > 0) {
+                await thread.setRateLimitPerUser(autoThreadConfig.slowMode);
+            }
+            
+            console.log(`🧵 Thread créé: "${threadName}" dans #${message.channel.name} par ${message.author.tag}`);
+            
+        } catch (error) {
+            console.error('❌ Erreur création auto-thread:', error);
         }
     }
 
