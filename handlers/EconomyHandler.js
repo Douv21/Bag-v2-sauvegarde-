@@ -283,48 +283,251 @@ class EconomyHandler {
     async handleEconomyActionsConfig(interaction) {
         const action = interaction.values[0];
         
+        const embed = new EmbedBuilder()
+            .setColor('#9932cc')
+            .setTitle(`⚙️ Configuration Action: ${action}`)
+            .setDescription(`Configurez les paramètres pour l'action **${action}**`);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`economy_action_${action}_config`)
+            .setPlaceholder('⚙️ Configurer les paramètres')
+            .addOptions([
+                {
+                    label: 'Récompenses',
+                    description: 'Modifier les montants min/max',
+                    value: 'rewards',
+                    emoji: '💰'
+                },
+                {
+                    label: 'Karma',
+                    description: 'Configuration gains/pertes karma',
+                    value: 'karma',
+                    emoji: '⚖️'
+                },
+                {
+                    label: 'Cooldown',
+                    description: 'Temps d\'attente entre utilisations',
+                    value: 'cooldown',
+                    emoji: '⏰'
+                },
+                {
+                    label: 'Activer/Désactiver',
+                    description: 'Activer ou désactiver cette action',
+                    value: 'toggle',
+                    emoji: '🔄'
+                }
+            ]);
+
+        const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
         await interaction.update({
-            content: `⚙️ Configuration de l'action **${action}** disponible prochainement.`,
-            embeds: [],
-            components: []
+            embeds: [embed],
+            components: components
         });
     }
 
     async handleEconomyShopConfig(interaction) {
         const option = interaction.values[0];
         
-        await interaction.update({
-            content: `🛒 Configuration boutique **${option}** disponible prochainement.`,
-            embeds: [],
-            components: []
-        });
+        switch(option) {
+            case 'add_role':
+                await this.showAddRoleConfig(interaction);
+                break;
+            case 'remove_role':
+                await this.showRemoveRoleConfig(interaction);
+                break;
+            case 'edit_prices':
+                await this.showEditPricesConfig(interaction);
+                break;
+            case 'list_items':
+                await this.showShopItems(interaction);
+                break;
+            default:
+                await interaction.update({
+                    content: `🛒 Configuration boutique **${option}** disponible prochainement.`,
+                    embeds: [],
+                    components: []
+                });
+        }
     }
 
     async handleEconomyKarmaConfig(interaction) {
         const option = interaction.values[0];
         
-        await interaction.update({
-            content: `⚖️ Configuration karma **${option}** disponible prochainement.`,
-            embeds: [],
-            components: []
-        });
+        switch(option) {
+            case 'levels':
+                await this.showKarmaLevelsConfig(interaction);
+                break;
+            case 'rewards':
+                await this.showKarmaRewardsConfig(interaction);
+                break;
+            case 'reset':
+                await this.showKarmaResetConfig(interaction);
+                break;
+            case 'action_karma':
+                await this.showActionKarmaConfig(interaction);
+                break;
+            default:
+                await interaction.update({
+                    content: `⚖️ Configuration karma **${option}** disponible prochainement.`,
+                    embeds: [],
+                    components: []
+                });
+        }
     }
 
     async handleEconomyDailyConfig(interaction) {
         const option = interaction.values[0];
         
-        await interaction.update({
-            content: `🎁 Configuration daily **${option}** disponible prochainement.`,
-            embeds: [],
-            components: []
-        });
+        switch(option) {
+            case 'amounts':
+                await this.showDailyAmountsConfig(interaction);
+                break;
+            case 'streak':
+                await this.showDailyStreakConfig(interaction);
+                break;
+            case 'reset':
+                await this.showDailyResetConfig(interaction);
+                break;
+            default:
+                await interaction.update({
+                    content: `🎁 Configuration daily **${option}** disponible prochainement.`,
+                    embeds: [],
+                    components: []
+                });
+        }
     }
 
     async handleEconomyMessagesConfig(interaction) {
         const option = interaction.values[0];
         
+        switch(option) {
+            case 'toggle':
+                await this.showMessagesToggleConfig(interaction);
+                break;
+            case 'amount':
+                await this.showMessagesAmountConfig(interaction);
+                break;
+            case 'cooldown':
+                await this.showMessagesCooldownConfig(interaction);
+                break;
+            default:
+                await interaction.update({
+                    content: `💬 Configuration messages **${option}** disponible prochainement.`,
+                    embeds: [],
+                    components: []
+                });
+        }
+    }
+
+    // Méthodes de configuration détaillées
+    async showAddRoleConfig(interaction) {
         await interaction.update({
-            content: `💬 Configuration messages **${option}** disponible prochainement.`,
+            content: '🛒 **Ajouter un rôle à la boutique**\n\nUtilisez le sélecteur de rôle ci-dessous pour ajouter un rôle à vendre.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showRemoveRoleConfig(interaction) {
+        await interaction.update({
+            content: '🛒 **Retirer un rôle de la boutique**\n\nSélectionnez un rôle à retirer de la boutique.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showEditPricesConfig(interaction) {
+        await interaction.update({
+            content: '🛒 **Modifier les prix**\n\nConfiguration des prix des rôles disponible.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showShopItems(interaction) {
+        await interaction.update({
+            content: '🛒 **Objets de la boutique**\n\nAffichage de tous les objets disponibles.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showKarmaLevelsConfig(interaction) {
+        await interaction.update({
+            content: '⚖️ **Niveaux Karma**\n\nConfiguration des seuils et noms des niveaux de karma.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showKarmaRewardsConfig(interaction) {
+        await interaction.update({
+            content: '⚖️ **Récompenses Karma**\n\nConfiguration des récompenses hebdomadaires par niveau.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showKarmaResetConfig(interaction) {
+        await interaction.update({
+            content: '⚖️ **Reset Karma**\n\nConfiguration du reset automatique hebdomadaire.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showActionKarmaConfig(interaction) {
+        await interaction.update({
+            content: '⚖️ **Karma par Action**\n\nConfiguration du karma gagné/perdu par chaque action.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showDailyAmountsConfig(interaction) {
+        await interaction.update({
+            content: '🎁 **Montants Daily**\n\nConfiguration des montants de récompenses quotidiennes.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showDailyStreakConfig(interaction) {
+        await interaction.update({
+            content: '🎁 **Bonus Streak**\n\nConfiguration des bonus pour les séries quotidiennes.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showDailyResetConfig(interaction) {
+        await interaction.update({
+            content: '🎁 **Reset Daily**\n\nConfiguration du reset des streaks quotidiens.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showMessagesToggleConfig(interaction) {
+        await interaction.update({
+            content: '💬 **Activer/Désactiver Messages**\n\nActiver ou désactiver le système de récompenses par message.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showMessagesAmountConfig(interaction) {
+        await interaction.update({
+            content: '💬 **Montant par Message**\n\nConfiguration de l\'argent gagné par message écrit.',
+            embeds: [],
+            components: []
+        });
+    }
+
+    async showMessagesCooldownConfig(interaction) {
+        await interaction.update({
+            content: '💬 **Cooldown Messages**\n\nConfiguration du temps d\'attente entre récompenses.',
             embeds: [],
             components: []
         });

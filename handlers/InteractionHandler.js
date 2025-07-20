@@ -29,6 +29,12 @@ class InteractionHandler {
         this.handlers.selectMenu.set('economy_daily_config', this.economyHandler.handleEconomyDailyConfig.bind(this.economyHandler));
         this.handlers.selectMenu.set('economy_messages_config', this.economyHandler.handleEconomyMessagesConfig.bind(this.economyHandler));
         
+        // Handlers pour actions individuelles
+        const actions = ['travailler', 'pecher', 'donner', 'voler', 'crime', 'parier'];
+        actions.forEach(action => {
+            this.handlers.selectMenu.set(`economy_action_${action}_config`, this.economyHandler.handleEconomyActionsConfig.bind(this.economyHandler));
+        });
+        
         // Configuration Confession
         this.handlers.selectMenu.set('confession_main_config', this.handleConfessionMainConfig.bind(this));
         this.handlers.selectMenu.set('config_main_menu', this.handleConfigMainMenu.bind(this));
