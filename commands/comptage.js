@@ -99,7 +99,13 @@ module.exports = {
                         countingConfig[guildId].channels[index] = channelConfig;
                     }
                     await dataManager.saveData('counting', countingConfig);
-                    await dataManager.createBackup('counting');
+                    
+                    // Backup manuel pour sécurité
+                    try {
+                        await dataManager.createBackup('counting.json');
+                    } catch (error) {
+                        console.log('Backup manuel non disponible:', error.message);
+                    }
                     
                     console.log(`✅ Comptage activé sur ${interaction.guild.name} dans #${channel.name}`);
                     
