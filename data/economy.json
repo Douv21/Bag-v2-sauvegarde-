@@ -1,11 +1,11 @@
 {
   "463272211269156865_1360897918504271882": {
-    "balance": 1020,
+    "balance": 1060,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 1
+    "messageCount": 3
   },
   "943487722738311219_1360897918504271882": {
     "balance": 1166,
@@ -17,5 +17,13 @@
     "karmaGood": 1,
     "karmaBad": 0,
     "lastWork": 1753120164155
+  },
+  "1150782046181015582_1360897918504271882": {
+    "balance": 1020,
+    "goodKarma": 0,
+    "badKarma": 0,
+    "dailyStreak": 0,
+    "lastDaily": null,
+    "messageCount": 1
   }
 }
