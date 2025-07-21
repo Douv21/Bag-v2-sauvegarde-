@@ -338,6 +338,18 @@ class RenderSolutionBot {
                         await handler.handleActionCooldownAmounts(interaction);
                     } else if (customId === 'economy_action_toggle_config') {
                         await handler.handleActionToggleStatus(interaction);
+                    } else if (customId === 'economy_rewards_edit_config') {
+                        await handler.handleRewardsEditConfig(interaction);
+                    } else if (customId === 'economy_shop_workflow_select') {
+                        await handler.handleShopWorkflowSelect(interaction);
+                    } else if (customId === 'economy_karma_delete_confirm') {
+                        await handler.handleDeleteCustomReward(interaction);
+                    } else if (customId.startsWith('custom_karma_reward_modal_')) {
+                        await handler.handleCustomKarmaRewardModal(interaction);
+                    } else if (customId.startsWith('economy_')) {
+                        // Router générique pour tous les handlers économie
+                        console.log(`🔄 Routing economy handler: ${customId}`);
+                        await handler.handleEconomyInteraction(interaction, customId);
                     } else {
                         console.log(`⚠️ Handler non trouvé pour: ${customId}`);
                     }
