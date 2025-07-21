@@ -2,7 +2,7 @@
  * Handler dédié à la configuration de l'économie
  */
 
-const { EmbedBuilder, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 
 class EconomyConfigHandler {
     constructor(dataManager) {
@@ -26,46 +26,44 @@ class EconomyConfigHandler {
                 { name: '📊 Statistiques', value: 'Affichage et reset des données', inline: true }
             ]);
 
-        const row = new ActionRowBuilder()
-            .addComponents([
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_config_main')
+            .setPlaceholder('Choisissez une section...')
+            .addOptions([
                 {
-                    type: 3,
-                    customId: 'economy_config_main',
-                    placeholder: 'Choisissez une section...',
-                    options: [
-                        {
-                            label: '⚡ Configuration Actions',
-                            value: 'actions',
-                            description: 'Travailler, voler, crime, pêcher, etc.'
-                        },
-                        {
-                            label: '🏪 Configuration Boutique',
-                            value: 'shop',
-                            description: 'Articles, prix, rôles temporaires'
-                        },
-                        {
-                            label: '⚖️ Configuration Karma',
-                            value: 'karma',
-                            description: 'Niveaux et récompenses karma'
-                        },
-                        {
-                            label: '📅 Configuration Daily',
-                            value: 'daily',
-                            description: 'Récompenses quotidiennes et streaks'
-                        },
-                        {
-                            label: '💬 Configuration Messages',
-                            value: 'messages',
-                            description: 'Récompenses par message écrit'
-                        },
-                        {
-                            label: '📊 Statistiques Système',
-                            value: 'stats',
-                            description: 'Données et reset du système'
-                        }
-                    ]
+                    label: '⚡ Configuration Actions',
+                    value: 'actions',
+                    description: 'Travailler, voler, crime, pêcher, etc.'
+                },
+                {
+                    label: '🏪 Configuration Boutique',
+                    value: 'shop',
+                    description: 'Articles, prix, rôles temporaires'
+                },
+                {
+                    label: '⚖️ Configuration Karma',
+                    value: 'karma',
+                    description: 'Niveaux et récompenses karma'
+                },
+                {
+                    label: '📅 Configuration Daily',
+                    value: 'daily',
+                    description: 'Récompenses quotidiennes et streaks'
+                },
+                {
+                    label: '💬 Configuration Messages',
+                    value: 'messages',
+                    description: 'Récompenses par message écrit'
+                },
+                {
+                    label: '📊 Statistiques Système',
+                    value: 'stats',
+                    description: 'Données et reset du système'
                 }
             ]);
+
+        const row = new ActionRowBuilder()
+            .addComponents(selectMenu);
 
         await interaction.reply({ embeds: [embed], components: [row], flags: 64 });
     }

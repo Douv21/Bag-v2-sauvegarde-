@@ -2,7 +2,7 @@
  * Handler dédié à la configuration des confessions
  */
 
-const { EmbedBuilder, ChannelSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, ChannelSelectMenuBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 
 class ConfessionConfigHandler {
     constructor(dataManager) {
@@ -23,31 +23,29 @@ class ConfessionConfigHandler {
                 { name: '🧵 Auto-Thread', value: 'Configuration des threads automatiques', inline: true }
             ]);
 
-        const row = new ActionRowBuilder()
-            .addComponents([
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('confession_config_main')
+            .setPlaceholder('Choisissez une option...')
+            .addOptions([
                 {
-                    type: 3, // SELECT_MENU
-                    customId: 'confession_config_main',
-                    placeholder: 'Choisissez une option...',
-                    options: [
-                        {
-                            label: '📝 Gestion des Canaux',
-                            value: 'channels',
-                            description: 'Ajouter/supprimer canaux de confessions'
-                        },
-                        {
-                            label: '📋 Configuration Logs Admin',
-                            value: 'admin_logs',
-                            description: 'Configurer les logs administrateur'
-                        },
-                        {
-                            label: '🧵 Configuration Auto-Thread',
-                            value: 'auto_thread',
-                            description: 'Gérer les threads automatiques'
-                        }
-                    ]
+                    label: '📝 Gestion des Canaux',
+                    value: 'channels',
+                    description: 'Ajouter/supprimer canaux de confessions'
+                },
+                {
+                    label: '📋 Configuration Logs Admin',
+                    value: 'admin_logs',
+                    description: 'Configurer les logs administrateur'
+                },
+                {
+                    label: '🧵 Configuration Auto-Thread',
+                    value: 'auto_thread',
+                    description: 'Gérer les threads automatiques'
                 }
             ]);
+
+        const row = new ActionRowBuilder()
+            .addComponents(selectMenu);
 
         await interaction.reply({ embeds: [embed], components: [row], flags: 64 });
     }

@@ -2,7 +2,7 @@
  * Handler dédié à la configuration du système de comptage
  */
 
-const { EmbedBuilder, ChannelSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, ChannelSelectMenuBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 
 class CountingConfigHandler {
     constructor(dataManager) {
@@ -41,36 +41,34 @@ class CountingConfigHandler {
                 }
             ]);
 
-        const row = new ActionRowBuilder()
-            .addComponents([
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('counting_config_main')
+            .setPlaceholder('Choisissez une option...')
+            .addOptions([
                 {
-                    type: 3,
-                    customId: 'counting_config_main',
-                    placeholder: 'Choisissez une option...',
-                    options: [
-                        {
-                            label: '📝 Gérer les Canaux',
-                            value: 'manage_channels',
-                            description: 'Ajouter/configurer canaux de comptage'
-                        },
-                        {
-                            label: '⚙️ Paramètres Globaux',
-                            value: 'global_settings',
-                            description: 'Configuration générale du système'
-                        },
-                        {
-                            label: '🏆 Gestion des Records',
-                            value: 'records_management',
-                            description: 'Voir et gérer les records'
-                        },
-                        {
-                            label: '📊 Statistiques',
-                            value: 'counting_stats',
-                            description: 'Données et performances'
-                        }
-                    ]
+                    label: '📝 Gérer les Canaux',
+                    value: 'manage_channels',
+                    description: 'Ajouter/configurer canaux de comptage'
+                },
+                {
+                    label: '⚙️ Paramètres Globaux',
+                    value: 'global_settings',
+                    description: 'Configuration générale du système'
+                },
+                {
+                    label: '🏆 Gestion des Records',
+                    value: 'records_management',
+                    description: 'Voir et gérer les records'
+                },
+                {
+                    label: '📊 Statistiques',
+                    value: 'counting_stats',
+                    description: 'Données et performances'
                 }
             ]);
+
+        const row = new ActionRowBuilder()
+            .addComponents(selectMenu);
 
         await interaction.reply({ embeds: [embed], components: [row], flags: 64 });
     }
