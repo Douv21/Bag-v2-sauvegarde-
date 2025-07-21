@@ -34,36 +34,43 @@ class MainRouterHandler {
      * Router principal pour toutes les interactions
      */
     async handleInteraction(interaction) {
-        if (!interaction.isSelectMenu() && !interaction.isButton()) {
+        if (!interaction.isStringSelectMenu() && !interaction.isChannelSelectMenu() && !interaction.isRoleSelectMenu() && !interaction.isButton()) {
             return false;
         }
 
         const customId = interaction.customId;
+        console.log(`🔄 MainRouter traite: ${customId}`);
 
         try {
             // Router basé sur le préfixe du customId
             if (customId.startsWith('confession_config') || customId.startsWith('confession_')) {
+                console.log(`➡️ Routage vers ConfessionHandler: ${customId}`);
                 return await this.routeToConfessionHandler(interaction, customId);
             }
             
             if (customId.startsWith('economy_config') || customId.startsWith('economy_')) {
+                console.log(`➡️ Routage vers EconomyHandler: ${customId}`);
                 return await this.routeToEconomyHandler(interaction, customId);
             }
             
             if (customId.startsWith('autothread_config') || customId.startsWith('autothread_')) {
+                console.log(`➡️ Routage vers AutoThreadHandler: ${customId}`);
                 return await this.routeToAutothreadHandler(interaction, customId);
             }
             
             if (customId.startsWith('counting_config') || customId.startsWith('counting_')) {
+                console.log(`➡️ Routage vers CountingHandler: ${customId}`);
                 return await this.routeToCountingHandler(interaction, customId);
             }
             
             if (customId.startsWith('dashboard_') || customId.includes('dashboard')) {
+                console.log(`➡️ Routage vers DashboardHandler: ${customId}`);
                 return await this.routeToDashboardHandler(interaction, customId);
             }
 
             // Routes spéciales pour les commandes principales
             if (customId === 'config_main_menu') {
+                console.log(`➡️ Routage config_main_menu vers ConfessionHandler`);
                 return await this.handlers.confession.showMainConfigMenu(interaction);
             }
 
