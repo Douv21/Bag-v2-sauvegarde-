@@ -16,12 +16,16 @@ module.exports = {
             const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
             const user = await dataManager.getUser(targetUser.id, interaction.guild.id);
             
-            const level = Math.floor(user.xp / 1000);
+            const level = Math.floor((user.xp || 0) / 1000);
             const nextLevelXP = (level + 1) * 1000;
-            const xpProgress = user.xp - (level * 1000);
+            const xpProgress = (user.xp || 0) - (level * 1000);
 
+            // Utiliser les bonnes propriétés karma (priorité aux nouvelles)
+            const goodKarma = user.karmaGood || user.karma_good || 0;
+            const badKarma = user.karmaBad || user.karma_bad || 0;
+            
             // Calculer niveau de karma
-            const karmaBalance = user.goodKarma - user.badKarma;
+            const karmaBalance = goodKarma - badKarma;
             let karmaLevel = 'Neutre';
             if (karmaBalance >= 50) karmaLevel = 'Saint 😇';
             else if (karmaBalance >= 20) karmaLevel = 'Bon 😊';
@@ -35,7 +39,7 @@ module.exports = {
                 .addFields([
                     {
                         name: '💰 Solde',
-                        value: `${user.balance}€`,
+                        value: `${user.balance || 1000}€`,
                         inline: true
                     },
                     {
@@ -45,32 +49,32 @@ module.exports = {
                     },
                     {
                         name: '⭐ XP',
-                        value: `${xpProgress}/${1000} (${user.xp} total)`,
+                        value: `${xpProgress}/${1000} (${user.xp || 0} total)`,
                         inline: true
                     },
                     {
                         name: '😇 Karma Bon',
-                        value: `${user.goodKarma}`,
+                        value: `${goodKarma}`,
                         inline: true
                     },
                     {
                         name: '😈 Karma Mauvais',
-                        value: `${user.badKarma}`,
+                        value: `${badKarma}`,
                         inline: true
                     },
                     {
                         name: '⚖️ Niveau Karma',
-                        value: karmaLevel,
+                        value: `${karmaLevel} (${karmaBalance >= 0 ? '+' : ''}${karmaBalance})`,
                         inline: true
                     },
                     {
                         name: '💬 Messages',
-                        value: `${user.messageCount}`,
+                        value: `${user.messageCount || 0}`,
                         inline: true
                     },
                     {
                         name: '🎁 Streak Daily',
-                        value: `${user.dailyStreak} jours`,
+                        value: `${user.dailyStreak || 0} jours`,
                         inline: true
                     }
                 ])
