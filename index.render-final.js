@@ -283,9 +283,57 @@ class RenderSolutionBot {
             }
         });
 
+        // Système de récompenses pour les messages
+        this.client.on('messageCreate', async (message) => {
+            // Ignorer les bots et les messages de commande
+            if (message.author.bot || message.content.startsWith('/')) return;
+            
+            // Ignorer les DM
+            if (!message.guild) return;
+            
+            await this.handleMessageReward(message);
+        });
+
         this.client.on('error', error => {
             console.error('❌ Erreur Discord:', error);
         });
+    }
+
+    async handleMessageReward(message) {
+        try {
+            const dataManager = require('./utils/dataManager');
+            const messageRewards = dataManager.getData('message_rewards.json');
+            const cooldowns = dataManager.getData('message_cooldowns.json');
+            
+            const guildConfig = messageRewards[message.guild.id];
+            if (!guildConfig || !guildConfig.enabled) return;
+            
+            // Vérifier le cooldown
+            const userId = message.author.id;
+            const guildId = message.guild.id;
+            const cooldownKey = `${userId}_${guildId}`;
+            const now = Date.now();
+            
+            if (cooldowns[cooldownKey] && (now - cooldowns[cooldownKey]) < (guildConfig.cooldown * 1000)) {
+                return; // Encore en cooldown
+            }
+            
+            // Mettre à jour le cooldown
+            cooldowns[cooldownKey] = now;
+            dataManager.setData('message_cooldowns.json', cooldowns);
+            
+            // Récompenser l'utilisateur
+            const user = await dataManager.getUser(userId, guildId);
+            user.balance = (user.balance || 1000) + guildConfig.amount;
+            user.messageCount = (user.messageCount || 0) + 1;
+            
+            await dataManager.updateUser(userId, guildId, user);
+            
+            console.log(`💰 ${message.author.tag} a gagné ${guildConfig.amount}€ en envoyant un message`);
+            
+        } catch (error) {
+            console.error('❌ Erreur récompense message:', error);
+        }
     }
 }
 
