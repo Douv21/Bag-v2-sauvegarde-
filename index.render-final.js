@@ -269,7 +269,7 @@ class RenderSolutionBot {
                     
                     try {
                         // Initialiser DataManager pour toutes les commandes
-                        const dataManager = require('./utils/dataManager');
+                        const dataManager = require('./utils/simpleDataManager');
                         
                         // Exécuter la commande avec dataManager
                         await command.execute(interaction, dataManager);
@@ -297,7 +297,7 @@ class RenderSolutionBot {
             // Gérer les interactions de menu
             else if (interaction.isStringSelectMenu() || interaction.isChannelSelectMenu() || interaction.isRoleSelectMenu()) {
                 try {
-                    const dataManager = require('./utils/dataManager');
+                    const dataManager = require('./utils/simpleDataManager');
                     const InteractionHandler = require('./handlers/InteractionHandler');
                     const handler = new InteractionHandler(dataManager);
                     
@@ -383,7 +383,7 @@ class RenderSolutionBot {
             // Gestion des modals
             else if (interaction.isModalSubmit()) {
                 try {
-                    const dataManager = require('./utils/dataManager');
+                    const dataManager = require('./utils/simpleDataManager');
                     const InteractionHandler = require('./handlers/InteractionHandler');
                     const handler = new InteractionHandler(dataManager);
                     
@@ -438,7 +438,7 @@ class RenderSolutionBot {
 
     async handleMessageReward(message) {
         try {
-            const dataManager = require('./utils/dataManager');
+            const dataManager = require('./utils/simpleDataManager');
             const messageRewards = dataManager.getData('message_rewards.json');
             const cooldowns = dataManager.getData('message_cooldowns.json');
             
