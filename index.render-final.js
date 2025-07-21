@@ -291,6 +291,10 @@ class RenderSolutionBot {
             // Ignorer les DM
             if (!message.guild) return;
             
+            // Gérer le système de comptage d'abord
+            await this.handleCounting(message);
+            
+            // Puis gérer les récompenses de messages
             await this.handleMessageReward(message);
         });
 
@@ -333,6 +337,141 @@ class RenderSolutionBot {
             
         } catch (error) {
             console.error('❌ Erreur récompense message:', error);
+        }
+    }
+
+    async handleCounting(message) {
+        try {
+            const dataManager = require('./utils/dataManager');
+            const countingConfig = await dataManager.getData('counting') || {};
+            const guildConfig = countingConfig[message.guild.id];
+            
+            // Vérifier si le comptage est activé et dans le bon canal
+            if (!guildConfig || !guildConfig.enabled || message.channel.id !== guildConfig.channelId) {
+                return;
+            }
+            
+            const content = message.content.trim();
+            
+            // Fonction pour évaluer les expressions mathématiques de base
+            function evaluateMath(expression) {
+                try {
+                    // Nettoyer l'expression - autoriser seulement les chiffres, +, -, *, /, (, ), espaces
+                    const cleanExpr = expression.replace(/[^0-9+\-*/().\s]/g, '');
+                    if (cleanExpr !== expression.replace(/\s/g, '')) return null;
+                    
+                    // Évaluation sécurisée
+                    const result = Function(`"use strict"; return (${cleanExpr})`)();
+                    return Number.isInteger(result) && result >= 0 ? result : null;
+                } catch {
+                    return null;
+                }
+            }
+            
+            // Déterminer si c'est un nombre ou calcul valide
+            let numberValue = null;
+            if (/^\d+$/.test(content)) {
+                // Nombre simple
+                numberValue = parseInt(content);
+            } else if (/^[0-9+\-*/().\s]+$/.test(content)) {
+                // Expression mathématique
+                numberValue = evaluateMath(content);
+            }
+            
+            // Si ce n'est pas un nombre valide, ignorer
+            if (numberValue === null || numberValue < 0) return;
+            
+            const isCorrect = numberValue === guildConfig.currentNumber;
+            const isSameUser = message.author.id === guildConfig.lastUserId;
+            const { EmbedBuilder } = require('discord.js');
+            
+            if (!isCorrect || isSameUser) {
+                // Reset nécessaire
+                let resetReason = '';
+                if (!isCorrect) {
+                    resetReason = `Mauvais nombre: attendu ${guildConfig.currentNumber}, reçu ${numberValue}`;
+                } else if (isSameUser) {
+                    resetReason = `${message.author.displayName} a compté deux fois de suite`;
+                }
+                
+                // Sauvegarder le record si atteint
+                const previousNumber = guildConfig.currentNumber - 1;
+                if (previousNumber > guildConfig.record) {
+                    guildConfig.record = previousNumber;
+                }
+                
+                // Reset la configuration
+                guildConfig.currentNumber = guildConfig.startNumber;
+                guildConfig.lastUserId = null;
+                guildConfig.lastResetReason = resetReason;
+                guildConfig.lastResetDate = new Date().toISOString();
+                
+                // Sauvegarder
+                countingConfig[message.guild.id] = guildConfig;
+                await dataManager.setData('counting', countingConfig);
+                
+                // Supprimer le message incorrect
+                try {
+                    await message.delete();
+                } catch (error) {
+                    console.error('Impossible de supprimer le message de comptage:', error);
+                }
+                
+                // Envoyer message de reset
+                const resetEmbed = new EmbedBuilder()
+                    .setColor('#FF0000')
+                    .setTitle('🔄 Comptage Remis à Zéro')
+                    .setDescription(`**Raison:** ${resetReason}\n\nProchain numéro: **${guildConfig.currentNumber}**`)
+                    .addFields([
+                        { name: '📊 Nombre atteint', value: previousNumber.toString(), inline: true },
+                        { name: '🏆 Record', value: guildConfig.record.toString(), inline: true }
+                    ])
+                    .setFooter({ text: `Erreur de ${message.author.displayName}` });
+                
+                await message.channel.send({ embeds: [resetEmbed] });
+                
+                console.log(`🔄 Comptage reset: ${resetReason} (Record: ${guildConfig.record})`);
+                
+            } else {
+                // Nombre correct !
+                guildConfig.currentNumber++;
+                guildConfig.lastUserId = message.author.id;
+                guildConfig.totalCounts = (guildConfig.totalCounts || 0) + 1;
+                
+                // Sauvegarder
+                countingConfig[message.guild.id] = guildConfig;
+                await dataManager.setData('counting', countingConfig);
+                
+                // Réaction de validation
+                try {
+                    await message.react('✅');
+                } catch (error) {
+                    console.error('Impossible d\'ajouter la réaction:', error);
+                }
+                
+                // Messages de félicitations aux paliers
+                const milestones = [10, 25, 50, 100, 250, 500, 1000];
+                const currentCount = numberValue;
+                
+                if (milestones.includes(currentCount)) {
+                    const milestoneEmbed = new EmbedBuilder()
+                        .setColor('#00FF00')
+                        .setTitle('🎉 Palier Atteint!')
+                        .setDescription(`Félicitations ! Vous avez atteint le nombre **${currentCount}** !`)
+                        .addFields([
+                            { name: '👤 Compteur', value: message.author.displayName, inline: true },
+                            { name: '🎯 Prochain nombre', value: guildConfig.currentNumber.toString(), inline: true }
+                        ])
+                        .setFooter({ text: `Total de comptages: ${guildConfig.totalCounts}` });
+                    
+                    await message.channel.send({ embeds: [milestoneEmbed] });
+                }
+                
+                console.log(`🔢 ${message.author.tag} a compté: ${numberValue} (prochain: ${guildConfig.currentNumber})`);
+            }
+            
+        } catch (error) {
+            console.error('❌ Erreur système comptage:', error);
         }
     }
 }
