@@ -10,11 +10,8 @@ module.exports = {
             const guildId = interaction.guild.id;
             const userId = interaction.user.id;
             
-            const users = await dataManager.getData('users');
+            const userData = await dataManager.getUser(userId, guildId);
             const shop = await dataManager.getData('shop');
-            
-            const userKey = `${userId}_${guildId}`;
-            const userData = users[userKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
             const shopItems = shop[guildId] || [];
 
             if (shopItems.length === 0) {

@@ -9,17 +9,18 @@ module.exports = {
         try {
             const guildId = interaction.guild.id;
             
-            const users = await dataManager.getData('users');
+            // Utiliser getAllUsers au lieu de getData('users')
+            const allUsers = await dataManager.getAllUsers(guildId);
             
             // Filtrer et calculer karma net pour le classement
-            const karmaUsers = Object.entries(users)
-                .filter(([key, user]) => key.endsWith(`_${guildId}`) && ((user.karmaGood || 0) > 0 || (user.karmaBad || 0) > 0))
-                .map(([key, user]) => ({
-                    userId: key.split('_')[0],
+            const karmaUsers = allUsers
+                .filter(user => ((user.karmaGood || 0) > 0 || (user.karmaBad || 0) > 0))
+                .map(user => ({
+                    userId: user.userId,
                     karmaGood: user.karmaGood || 0,
                     karmaBad: user.karmaBad || 0,
                     karmaNet: (user.karmaGood || 0) - (user.karmaBad || 0),
-                    balance: user.balance || 0
+                    balance: user.balance || 1000
                 }))
                 .sort((a, b) => b.karmaNet - a.karmaNet)
                 .slice(0, 10);
@@ -79,8 +80,7 @@ module.exports = {
             }]);
 
             // Position de l'utilisateur actuel
-            const currentUserKey = `${interaction.user.id}_${guildId}`;
-            const currentUser = users[currentUserKey];
+            const currentUser = await dataManager.getUser(interaction.user.id, guildId);
             if (currentUser && ((currentUser.karmaGood || 0) > 0 || (currentUser.karmaBad || 0) > 0)) {
                 const userPosition = karmaUsers.findIndex(u => u.userId === interaction.user.id) + 1;
                 const userKarmaNet = (currentUser.karmaGood || 0) - (currentUser.karmaBad || 0);

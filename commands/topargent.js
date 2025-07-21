@@ -9,14 +9,15 @@ module.exports = {
         try {
             const guildId = interaction.guild.id;
             
-            const users = await dataManager.getData('users');
+            // Utiliser getAllUsers au lieu de getData('users')
+            const allUsers = await dataManager.getAllUsers(guildId);
             
-            // Filtrer les utilisateurs du serveur et trier par solde
-            const guildUsers = Object.entries(users)
-                .filter(([key, user]) => key.endsWith(`_${guildId}`) && (user.balance || 0) > 0)
-                .map(([key, user]) => ({
-                    userId: key.split('_')[0],
-                    balance: user.balance || 0,
+            // Filtrer et trier par solde
+            const guildUsers = allUsers
+                .filter(user => (user.balance || 1000) > 1000) // Seulement ceux avec plus que le montant de base
+                .map(user => ({
+                    userId: user.userId,
+                    balance: user.balance || 1000,
                     karmaGood: user.karmaGood || 0,
                     karmaBad: user.karmaBad || 0
                 }))
@@ -68,8 +69,7 @@ module.exports = {
             }]);
 
             // Ajouter la position de l'utilisateur actuel
-            const currentUserKey = `${interaction.user.id}_${guildId}`;
-            const currentUser = users[currentUserKey];
+            const currentUser = await dataManager.getUser(interaction.user.id, guildId);
             if (currentUser && currentUser.balance > 0) {
                 const userPosition = guildUsers.findIndex(u => u.userId === interaction.user.id) + 1;
                 if (userPosition > 0) {

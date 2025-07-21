@@ -35,10 +35,12 @@ module.exports = {
             } else {
                 // Sélectionner une cible aléatoire
                 const members = await interaction.guild.members.fetch();
+                // Obtenir tous les utilisateurs du serveur pour trouver des cibles valides
+                const allUsers = await dataManager.getAllUsers(guildId);
                 const validTargets = members.filter(member => 
                     !member.user.bot && 
                     member.user.id !== userId &&
-                    users[`${member.user.id}_${guildId}`]?.balance > 0
+                    allUsers.some(u => u.userId === member.user.id && (u.balance || 1000) > 10)
                 );
                 
                 if (validTargets.size === 0) {
