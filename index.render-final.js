@@ -16,7 +16,11 @@ class RenderSolutionBot {
                 GatewayIntentBits.GuildMessages,
                 GatewayIntentBits.MessageContent,
                 GatewayIntentBits.GuildMembers
-            ]
+            ],
+            restRequestTimeout: 30000,
+            restGlobalRateLimit: 50,
+            restSweepInterval: 60,
+            failIfNotExists: false
         });
 
         this.client.commands = new Collection();
@@ -246,24 +250,31 @@ class RenderSolutionBot {
         });
 
         this.client.on('interactionCreate', async (interaction) => {
-            // Gérer les commandes slash
-            if (interaction.isChatInputCommand()) {
-                const command = this.client.commands.get(interaction.commandName);
-                if (!command) {
-                    console.log(`❓ Commande inconnue: ${interaction.commandName}`);
-                    return;
-                }
+            try {
+                // Gérer les commandes slash
+                if (interaction.isChatInputCommand()) {
+                    const command = this.client.commands.get(interaction.commandName);
+                    if (!command) {
+                        console.log(`❓ Commande inconnue: ${interaction.commandName}`);
+                        return;
+                    }
 
-                try {
                     console.log(`🔧 /${interaction.commandName} par ${interaction.user.tag}`);
                     
-                    // Initialiser DataManager pour toutes les commandes
-                    const dataManager = require('./utils/dataManager');
+                    // Vérifier si l'interaction n'est pas expirée
+                    if (interaction.replied || interaction.deferred) {
+                        console.log(`⚠️ Interaction déjà répondue pour ${interaction.commandName}`);
+                        return;
+                    }
                     
-                    // Exécuter la commande avec dataManager
-                    await command.execute(interaction, dataManager);
-                    
-                } catch (error) {
+                    try {
+                        // Initialiser DataManager pour toutes les commandes
+                        const dataManager = require('./utils/dataManager');
+                        
+                        // Exécuter la commande avec dataManager
+                        await command.execute(interaction, dataManager);
+                        
+                    } catch (error) {
                     console.error(`❌ Erreur ${interaction.commandName}:`, error);
                     
                     const errorMsg = {
@@ -281,11 +292,10 @@ class RenderSolutionBot {
                         console.error('❌ Impossible de répondre:', e);
                     }
                 }
-                return;
             }
 
             // Gérer les interactions de menu
-            if (interaction.isStringSelectMenu() || interaction.isChannelSelectMenu() || interaction.isRoleSelectMenu()) {
+            else if (interaction.isStringSelectMenu() || interaction.isChannelSelectMenu() || interaction.isRoleSelectMenu()) {
                 try {
                     const dataManager = require('./utils/dataManager');
                     const InteractionHandler = require('./handlers/InteractionHandler');
@@ -368,6 +378,35 @@ class RenderSolutionBot {
                         console.error('❌ Impossible de répondre interaction:', e);
                     }
                 }
+            }
+            
+            // Gestion des modals
+            else if (interaction.isModalSubmit()) {
+                try {
+                    const dataManager = require('./utils/dataManager');
+                    const InteractionHandler = require('./handlers/InteractionHandler');
+                    const handler = new InteractionHandler(dataManager);
+                    
+                    await handler.handleModalSubmit(interaction);
+                    
+                } catch (error) {
+                    console.error(`❌ Erreur modal ${interaction.customId}:`, error);
+                    
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({
+                                content: 'Erreur lors du traitement du modal.',
+                                flags: 64
+                            });
+                        }
+                    } catch (e) {
+                        console.error('❌ Impossible de répondre modal:', e);
+                    }
+                }
+            }
+            
+            } catch (mainError) {
+                console.error('❌ Erreur principale interactionCreate:', mainError);
             }
         });
 
