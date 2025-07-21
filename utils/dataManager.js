@@ -143,6 +143,17 @@ class DataManager {
     }
 
     // Méthodes pour l'économie
+    
+    // Obtenir tous les utilisateurs d'un serveur
+    async getAllUsers(guildId) {
+        const users = this.loadData('users.json');
+        return Object.entries(users)
+            .filter(([key, user]) => key.endsWith(`_${guildId}`))
+            .map(([key, user]) => ({
+                ...user,
+                userId: key.split('_')[0]
+            }));
+    }
     async getUser(userId, guildId) {
         const data = this.loadData('users.json');
         const key = `${userId}_${guildId}`;
