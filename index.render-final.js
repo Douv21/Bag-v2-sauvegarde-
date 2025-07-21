@@ -455,7 +455,7 @@ class RenderSolutionBot {
             }
             
             console.log(`🔢 Message comptage détecté: "${message.content}" dans #${message.channel.name}`);
-            console.log(`📊 État actuel: currentNumber=${channelConfig.currentNumber}, lastUserId=${channelConfig.lastUserId}`);
+            console.log(`📊 État actuel: currentNumber=${channelConfig.currentNumber}, lastUserId=${channelConfig.lastUserId}, active=${channelConfig.active}`);
             
             const content = message.content.trim();
             
