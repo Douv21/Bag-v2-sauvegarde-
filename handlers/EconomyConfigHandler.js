@@ -172,10 +172,10 @@ class EconomyConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'economy_action_select',
-                    placeholder: 'Choisissez une action à configurer...',
-                    options: [
+                    
+                    .setCustomId( 'economy_action_select',
+                    .setPlaceholder( 'Choisissez une action à configurer...',
+                    .addOptions( [
                         { label: '💪 Travailler', value: 'travailler', description: 'Configurer les récompenses du travail' },
                         { label: '🎣 Pêcher', value: 'pecher', description: 'Configurer les gains de la pêche' },
                         { label: '💝 Donner', value: 'donner', description: 'Configurer les donations' },
@@ -216,10 +216,10 @@ class EconomyConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'economy_shop_options',
-                    placeholder: 'Choisissez une option...',
-                    options: [
+                    
+                    .setCustomId( 'economy_shop_options',
+                    .setPlaceholder( 'Choisissez une option...',
+                    .addOptions( [
                         {
                             label: '➕ Ajouter Objet Personnalisé',
                             value: 'add_custom',
@@ -269,10 +269,10 @@ class EconomyConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'economy_karma_options',
-                    placeholder: 'Choisissez une option...',
-                    options: [
+                    
+                    .setCustomId( 'economy_karma_options',
+                    .setPlaceholder( 'Choisissez une option...',
+                    .addOptions( [
                         {
                             label: '🎯 Gérer Niveaux Karma',
                             value: 'karma_levels',
@@ -323,10 +323,10 @@ class EconomyConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'economy_daily_options',
-                    placeholder: 'Choisissez une option...',
-                    options: [
+                    
+                    .setCustomId( 'economy_daily_options',
+                    .setPlaceholder( 'Choisissez une option...',
+                    .addOptions( [
                         {
                             label: '💰 Montant de Base',
                             value: 'daily_amount',
@@ -389,10 +389,10 @@ class EconomyConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'economy_messages_options',
-                    placeholder: 'Choisissez une option...',
-                    options: [
+                    
+                    .setCustomId( 'economy_messages_options',
+                    .setPlaceholder( 'Choisissez une option...',
+                    .addOptions( [
                         {
                             label: messageConfig.enabled ? '❌ Désactiver' : '✅ Activer',
                             value: 'toggle_messages',
@@ -441,10 +441,10 @@ class EconomyConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'economy_stats_options',
-                    placeholder: 'Choisissez une option...',
-                    options: [
+                    
+                    .setCustomId( 'economy_stats_options',
+                    .setPlaceholder( 'Choisissez une option...',
+                    .addOptions( [
                         {
                             label: '📊 Voir Statistiques Détaillées',
                             value: 'detailed_stats',

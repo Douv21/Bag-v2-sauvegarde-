@@ -2,7 +2,7 @@
  * Handler dédié à la configuration des auto-threads
  */
 
-const { EmbedBuilder, ChannelSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, ChannelSelectMenuBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 
 class AutoThreadConfigHandler {
     constructor(dataManager) {
@@ -42,10 +42,10 @@ class AutoThreadConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'autothread_config_main',
-                    placeholder: 'Choisissez une option...',
-                    options: [
+                    
+                    .setCustomId( 'autothread_config_main',
+                    .setPlaceholder( 'Choisissez une option...',
+                    .addOptions( [
                         {
                             label: guildConfig.enabled ? '❌ Désactiver' : '✅ Activer',
                             value: 'toggle_system',
@@ -163,11 +163,11 @@ class AutoThreadConfigHandler {
         const row2 = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'autothread_channel_remove',
-                    placeholder: 'Retirer un canal...',
+                    
+                    .setCustomId( 'autothread_channel_remove',
+                    .setPlaceholder( 'Retirer un canal...',
                     disabled: guildConfig.channels.length === 0,
-                    options: guildConfig.channels.length > 0 
+                    .addOptions( guildConfig.channels.length > 0 
                         ? guildConfig.channels.map(chId => ({
                             label: `#${interaction.guild.channels.cache.get(chId)?.name || 'Canal supprimé'}`,
                             value: chId,
@@ -213,10 +213,10 @@ class AutoThreadConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'autothread_naming_presets',
-                    placeholder: 'Formats prédéfinis...',
-                    options: [
+                    
+                    .setCustomId( 'autothread_naming_presets',
+                    .setPlaceholder( 'Formats prédéfinis...',
+                    .addOptions( [
                         {
                             label: 'Thread #{number}',
                             value: 'Thread #{number}',
@@ -287,10 +287,10 @@ class AutoThreadConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'autothread_advanced_options',
-                    placeholder: 'Paramètres avancés...',
-                    options: [
+                    
+                    .setCustomId( 'autothread_advanced_options',
+                    .setPlaceholder( 'Paramètres avancés...',
+                    .addOptions( [
                         {
                             label: '📦 Durée d\'Archivage',
                             value: 'archive_duration',

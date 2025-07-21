@@ -105,11 +105,11 @@ class ConfessionConfigHandler {
         const row2 = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'confession_channel_remove',
-                    placeholder: 'Retirer un canal...',
+                    
+                    .setCustomId( 'confession_channel_remove',
+                    .setPlaceholder( 'Retirer un canal...',
                     disabled: guildConfig.channels.length === 0,
-                    options: guildConfig.channels.length > 0 
+                    .addOptions( guildConfig.channels.length > 0 
                         ? guildConfig.channels.map(chId => ({
                             label: `#${interaction.guild.channels.cache.get(chId)?.name || 'Canal supprimé'}`,
                             value: chId,
@@ -172,10 +172,10 @@ class ConfessionConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'confession_logs_options',
-                    placeholder: 'Choisissez une option...',
-                    options: [
+                    
+                    .setCustomId( 'confession_logs_options',
+                    .setPlaceholder( 'Choisissez une option...',
+                    .addOptions( [
                         {
                             label: '🏠 Canal Logs Admin',
                             value: 'log_channel',
@@ -221,10 +221,10 @@ class ConfessionConfigHandler {
         const row = new ActionRowBuilder()
             .addComponents([
                 {
-                    type: 3,
-                    customId: 'confession_autothread_options',
-                    placeholder: 'Choisissez une option...',
-                    options: [
+                    
+                    .setCustomId( 'confession_autothread_options',
+                    .setPlaceholder( 'Choisissez une option...',
+                    .addOptions( [
                         {
                             label: '🎯 Activer/Désactiver',
                             value: 'toggle_autothread',
