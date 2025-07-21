@@ -4,35 +4,12 @@ services:
     env: node
     plan: free
     buildCommand: npm install
-    startCommand: node index.js
+    startCommand: node index.render-final.js
     envVars:
       - key: NODE_ENV
         value: production
-    disk:
-      name: render-disk
-      mountPath: /opt/render/project/src
-      sizeGB: 1
-    # Dépendances système requises pour Canvas
-    buildFilter:
-      paths:
-        - package.json
-        - package-lock.json
-        - "**/*.js"
-    # Variables d'environnement pour Canvas
-    runtimeEnv:
-      - key: CANVAS_PREBUILT
-        value: "false"
-    # Build script personnalisé pour Canvas
-    preDeployCommand: |
-      apt-get update && \
-      apt-get install -y \
-      build-essential \
-      libcairo2-dev \
-      libpango1.0-dev \
-      libjpeg-dev \
-      libgif-dev \
-      librsvg2-dev \
-      libfontconfig1-dev \
-      python3 \
-      python3-pip \
-      pkg-config
+    healthCheckPath: /health
+    region: oregon
+    scaling:
+      minInstances: 1
+      maxInstances: 1

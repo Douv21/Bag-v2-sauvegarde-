@@ -42,7 +42,9 @@ class RenderSolutionBot {
                 bot: this.client.user?.tag || 'connecting',
                 commands_loaded: this.commandsLoaded,
                 guild_commands: this.client.commands.size,
-                uptime: Math.floor(process.uptime())
+                uptime: Math.floor(process.uptime()),
+                port: this.port,
+                render_compatible: true
             });
         });
 
@@ -95,14 +97,27 @@ class RenderSolutionBot {
 
     async init() {
         try {
+            console.log('🚀 BAG BOT V2 - Solution Render.com Finale');
+            
+            // Lancer le serveur web EN PREMIER - CRITIQUE pour Render.com
+            const server = this.app.listen(this.port, '0.0.0.0', () => {
+                console.log(`🌐 Serveur Web actif sur port ${this.port}`);
+                console.log(`📊 Status: http://localhost:${this.port}/commands-status`);
+                console.log(`✅ Port ${this.port} ouvert pour Render.com`);
+            });
+
+            // Vérifier que le serveur est bien démarré
+            server.on('error', (error) => {
+                console.error('❌ Erreur serveur Web:', error);
+                process.exit(1);
+            });
+
+            // Attendre un peu pour s'assurer que le serveur est prêt
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
             await this.loadCommands();
             this.setupDiscordEvents();
             await this.client.login(process.env.DISCORD_TOKEN);
-            
-            this.app.listen(this.port, '0.0.0.0', () => {
-                console.log(`🌐 Serveur Web actif sur port ${this.port}`);
-                console.log(`📊 Status: http://localhost:${this.port}/commands-status`);
-            });
             
         } catch (error) {
             console.error('❌ Erreur init:', error);
