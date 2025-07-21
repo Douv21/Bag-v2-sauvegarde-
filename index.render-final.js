@@ -330,6 +330,14 @@ class RenderSolutionBot {
                         await handler.handleEconomyDailyConfig(interaction);
                     } else if (customId === 'economy_messages_config') {
                         await handler.handleEconomyMessagesConfig(interaction);
+                    } else if (customId === 'economy_action_rewards_config') {
+                        await handler.handleActionSubConfig(interaction);
+                    } else if (customId === 'economy_action_karma_config') {
+                        await handler.handleActionKarmaAmounts(interaction);
+                    } else if (customId === 'economy_action_cooldown_config') {
+                        await handler.handleActionCooldownAmounts(interaction);
+                    } else if (customId === 'economy_action_toggle_config') {
+                        await handler.handleActionToggleStatus(interaction);
                     } else {
                         console.log(`⚠️ Handler non trouvé pour: ${customId}`);
                     }
