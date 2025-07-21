@@ -10,15 +10,7 @@ module.exports = {
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
             
-            const users = await dataManager.getData('users');
-            const userKey = `${userId}_${guildId}`;
-            const userData = users[userKey] || { 
-                balance: 0, 
-                karmaGood: 0, 
-                karmaBad: 0,
-                dailyStreak: 0,
-                lastDaily: 0
-            };
+            const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
             const oneDay = 24 * 60 * 60 * 1000; // 24h en millisecondes
@@ -42,13 +34,12 @@ module.exports = {
             const karmaBonus = Math.max(0, (userData.karmaGood || 0) - (userData.karmaBad || 0)) * 5;
             const totalReward = baseReward + streakBonus + karmaBonus;
             
-            // Mettre à jour utilisateur
-            userData.balance = (userData.balance || 0) + totalReward;
+            // Mettre à jour utilisateur avec dataManager
+            userData.balance = (userData.balance || 1000) + totalReward;
             userData.dailyStreak = newStreak;
             userData.lastDaily = now;
-            users[userKey] = userData;
             
-            await dataManager.saveData('users', users);
+            await dataManager.updateUser(userId, guildId, userData);
             
             const embed = new EmbedBuilder()
                 .setColor('#ffd700')

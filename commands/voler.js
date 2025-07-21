@@ -15,10 +15,8 @@ module.exports = {
             const guildId = interaction.guild.id;
             const targetUser = interaction.options.getUser('cible');
             
-            // Vérifier cooldown
-            const users = await dataManager.getData('users');
-            const userKey = `${userId}_${guildId}`;
-            const userData = users[userKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
+            // Vérifier cooldown avec dataManager
+            const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
             const cooldownTime = 7200000; // 2 heures
@@ -54,8 +52,7 @@ module.exports = {
                 target = randomTarget.user;
             }
 
-            const targetKey = `${target.id}_${guildId}`;
-            const targetData = users[targetKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
+            const targetData = await dataManager.getUser(target.id, guildId);
 
             if (target.id === userId) {
                 return await interaction.reply({
@@ -81,17 +78,15 @@ module.exports = {
                     Math.floor(Math.random() * 100) + 20 // 20-120€
                 );
                 
-                userData.balance = (userData.balance || 0) + stolenAmount;
+                userData.balance = (userData.balance || 1000) + stolenAmount;
                 userData.karmaBad = (userData.karmaBad || 0) + 1;
-                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1); // Réduit le karma positif
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1);
                 userData.lastSteal = now;
                 
                 targetData.balance -= stolenAmount;
                 
-                users[userKey] = userData;
-                users[targetKey] = targetData;
-                
-                await dataManager.saveData('users', users);
+                await dataManager.updateUser(userId, guildId, userData);
+                await dataManager.updateUser(target.id, guildId, targetData);
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')
@@ -121,13 +116,12 @@ module.exports = {
             } else {
                 // Vol échoué
                 const penalty = Math.floor(Math.random() * 50) + 25; // 25-75€
-                userData.balance = Math.max(0, (userData.balance || 0) - penalty);
+                userData.balance = Math.max(0, (userData.balance || 1000) - penalty);
                 userData.karmaBad = (userData.karmaBad || 0) + 1;
-                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1); // -1 karma positif
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1);
                 userData.lastSteal = now;
                 
-                users[userKey] = userData;
-                await dataManager.saveData('users', users);
+                await dataManager.updateUser(userId, guildId, userData);
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff4444')

@@ -16,10 +16,8 @@ module.exports = {
             const guildId = interaction.guild.id;
             const betAmount = interaction.options.getInteger('montant');
             
-            // Vérifier cooldown
-            const users = await dataManager.getData('users');
-            const userKey = `${userId}_${guildId}`;
-            const userData = users[userKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
+            // Vérifier cooldown avec dataManager
+            const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
             const cooldownTime = 1800000; // 30 minutes
@@ -45,13 +43,12 @@ module.exports = {
             if (win) {
                 // Victoire - double la mise
                 const winnings = betAmount * 2;
-                userData.balance = (userData.balance || 0) + betAmount; // +mise (car déjà déduite)
-                userData.karmaBad = (userData.karmaBad || 0) + 1; // +1 karma mauvais même en gagnant
-                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1); // -1 karma positif pour le jeu
+                userData.balance = (userData.balance || 1000) + betAmount;
+                userData.karmaBad = (userData.karmaBad || 0) + 1;
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1);
                 userData.lastBet = now;
                 
-                users[userKey] = userData;
-                await dataManager.saveData('users', users);
+                await dataManager.updateUser(userId, guildId, userData);
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ffd700')
@@ -90,13 +87,12 @@ module.exports = {
                 
             } else {
                 // Défaite - perte de la mise
-                userData.balance = (userData.balance || 0) - betAmount;
-                userData.karmaBad = (userData.karmaBad || 0) + 1; // +1 karma mauvais
-                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1); // -1 karma positif
+                userData.balance = (userData.balance || 1000) - betAmount;
+                userData.karmaBad = (userData.karmaBad || 0) + 1;
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1);
                 userData.lastBet = now;
                 
-                users[userKey] = userData;
-                await dataManager.saveData('users', users);
+                await dataManager.updateUser(userId, guildId, userData);
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')

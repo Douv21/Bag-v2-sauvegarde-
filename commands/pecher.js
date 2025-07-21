@@ -10,10 +10,8 @@ module.exports = {
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
             
-            // Vérifier cooldown
-            const users = await dataManager.getData('users');
-            const userKey = `${userId}_${guildId}`;
-            const userData = users[userKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
+            // Vérifier cooldown avec dataManager
+            const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
             const cooldownTime = 5400000; // 1h30
@@ -50,14 +48,13 @@ module.exports = {
                 }
             }
             
-            // Mettre à jour utilisateur
-            userData.balance = (userData.balance || 0) + selectedCatch.value;
-            userData.karmaGood = (userData.karmaGood || 0) + 1; // +1 karma positif
-            userData.karmaBad = Math.max(0, (userData.karmaBad || 0) - 1); // -1 karma négatif
+            // Mettre à jour utilisateur avec dataManager
+            userData.balance = (userData.balance || 1000) + selectedCatch.value;
+            userData.karmaGood = (userData.karmaGood || 0) + 1;
+            userData.karmaBad = Math.max(0, (userData.karmaBad || 0) - 1);
             userData.lastFish = now;
-            users[userKey] = userData;
             
-            await dataManager.saveData('users', users);
+            await dataManager.updateUser(userId, guildId, userData);
             
             let embed;
             

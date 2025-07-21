@@ -10,10 +10,8 @@ module.exports = {
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
             
-            // Vérifier cooldown
-            const users = await dataManager.getData('users');
-            const userKey = `${userId}_${guildId}`;
-            const userData = users[userKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
+            // Vérifier cooldown avec dataManager
+            const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
             const cooldownTime = 3600000; // 1 heure
@@ -31,14 +29,13 @@ module.exports = {
             const bonus = Math.floor(Math.random() * 50);
             const totalReward = baseReward + bonus;
             
-            // Mettre à jour utilisateur
-            userData.balance = (userData.balance || 0) + totalReward;
+            // Mettre à jour utilisateur avec dataManager
+            userData.balance = (userData.balance || 1000) + totalReward;
             userData.karmaGood = (userData.karmaGood || 0) + 1;
-            userData.karmaBad = Math.max(0, (userData.karmaBad || 0) - 1); // Réduit le karma négatif
+            userData.karmaBad = Math.max(0, (userData.karmaBad || 0) - 1);
             userData.lastWork = now;
-            users[userKey] = userData;
             
-            await dataManager.saveData('users', users);
+            await dataManager.updateUser(userId, guildId, userData);
             
             const workActions = [
                 'Vous avez travaillé dans un café',

@@ -10,10 +10,8 @@ module.exports = {
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
             
-            // Vérifier cooldown
-            const users = await dataManager.getData('users');
-            const userKey = `${userId}_${guildId}`;
-            const userData = users[userKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
+            // Vérifier cooldown avec dataManager
+            const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
             const cooldownTime = 14400000; // 4 heures
@@ -43,13 +41,12 @@ module.exports = {
                 // Crime réussi - gros gains
                 const earnings = Math.floor(Math.random() * 400) + 200; // 200-600€
                 
-                userData.balance = (userData.balance || 0) + earnings;
-                userData.karmaBad = (userData.karmaBad || 0) + 3; // +3 karma mauvais
-                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 2); // -2 karma positif
+                userData.balance = (userData.balance || 1000) + earnings;
+                userData.karmaBad = (userData.karmaBad || 0) + 3;
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 2);
                 userData.lastCrime = now;
                 
-                users[userKey] = userData;
-                await dataManager.saveData('users', users);
+                await dataManager.updateUser(userId, guildId, userData);
                 
                 const embed = new EmbedBuilder()
                     .setColor('#8b0000')
@@ -84,13 +81,12 @@ module.exports = {
             } else {
                 // Crime échoué - grosse amende
                 const penalty = Math.floor(Math.random() * 200) + 100; // 100-300€
-                userData.balance = Math.max(0, (userData.balance || 0) - penalty);
-                userData.karmaBad = (userData.karmaBad || 0) + 2; // +2 karma mauvais même en échec
-                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1); // -1 karma positif
+                userData.balance = Math.max(0, (userData.balance || 1000) - penalty);
+                userData.karmaBad = (userData.karmaBad || 0) + 2;
+                userData.karmaGood = Math.max(0, (userData.karmaGood || 0) - 1);
                 userData.lastCrime = now;
                 
-                users[userKey] = userData;
-                await dataManager.saveData('users', users);
+                await dataManager.updateUser(userId, guildId, userData);
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')

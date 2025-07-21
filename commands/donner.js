@@ -35,10 +35,8 @@ module.exports = {
                 });
             }
             
-            // Vérifier cooldown
-            const users = await dataManager.getData('users');
-            const userKey = `${userId}_${guildId}`;
-            const userData = users[userKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
+            // Vérifier cooldown avec dataManager
+            const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
             const cooldownTime = 3600000; // 1 heure
@@ -58,21 +56,18 @@ module.exports = {
                 });
             }
             
-            // Effectuer le don
-            const targetKey = `${targetUser.id}_${guildId}`;
-            const targetData = users[targetKey] || { balance: 0, karmaGood: 0, karmaBad: 0 };
+            // Effectuer le don avec dataManager
+            const targetData = await dataManager.getUser(targetUser.id, guildId);
             
-            userData.balance = (userData.balance || 0) - amount;
-            userData.karmaGood = (userData.karmaGood || 0) + 3; // +3 karma très positif pour la générosité
-            userData.karmaBad = Math.max(0, (userData.karmaBad || 0) - 2); // -2 karma négatif pour la générosité
+            userData.balance = (userData.balance || 1000) - amount;
+            userData.karmaGood = (userData.karmaGood || 0) + 3;
+            userData.karmaBad = Math.max(0, (userData.karmaBad || 0) - 2);
             userData.lastDonate = now;
             
-            targetData.balance = (targetData.balance || 0) + amount;
+            targetData.balance = (targetData.balance || 1000) + amount;
             
-            users[userKey] = userData;
-            users[targetKey] = targetData;
-            
-            await dataManager.saveData('users', users);
+            await dataManager.updateUser(userId, guildId, userData);
+            await dataManager.updateUser(targetUser.id, guildId, targetData);
             
             const embed = new EmbedBuilder()
                 .setColor('#32cd32')
