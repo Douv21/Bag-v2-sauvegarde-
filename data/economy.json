@@ -8,11 +8,14 @@
     "messageCount": 1
   },
   "943487722738311219_1360897918504271882": {
-    "balance": 1020,
+    "balance": 1166,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 1
+    "messageCount": 1,
+    "karmaGood": 1,
+    "karmaBad": 0,
+    "lastWork": 1753120164155
   }
 }
