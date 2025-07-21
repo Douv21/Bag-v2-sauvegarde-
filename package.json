@@ -4,7 +4,7 @@
   "description": "BAG Bot V2 - Architecture Web Service pour Render.com",
   "main": "index.js",
   "scripts": {
-    "start": "node index.production.js",
+    "start": "node index.render-final.js",
     "dev": "nodemon index.js",
     "build": "./build.sh",
     "render-build": "npm install && echo 'Canvas dependencies ready'",
