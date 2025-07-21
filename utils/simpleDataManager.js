@@ -48,7 +48,17 @@ class SimpleDataManager {
         }
     }
 
-    // Obtenir un utilisateur
+    // Compatibilité avec l'ancien dataManager
+    async saveData(filename, data) {
+        return this.setData(filename, data);
+    }
+
+    async loadData(filename, defaultValue = {}) {
+        const data = this.getData(filename);
+        return Object.keys(data).length === 0 ? defaultValue : data;
+    }
+
+    // Obtenir un utilisateur (fichiers locaux uniquement)
     async getUser(userId, guildId) {
         const economy = this.getData('economy.json');
         const key = `${userId}_${guildId}`;
@@ -58,17 +68,28 @@ class SimpleDataManager {
             goodKarma: 0,
             badKarma: 0,
             dailyStreak: 0,
-            lastDaily: null
+            lastDaily: null,
+            messageCount: 0
         };
     }
 
-    // Mettre à jour un utilisateur
+    // Mettre à jour un utilisateur (fichiers locaux uniquement)
     async updateUser(userId, guildId, userData) {
         const economy = this.getData('economy.json');
         const key = `${userId}_${guildId}`;
-        
         economy[key] = userData;
         this.setData('economy.json', economy);
+    }
+
+    // Sauvegarder (fichiers locaux uniquement)
+    async saveData(filename, data) {
+        this.setData(filename, data);
+    }
+
+    // Charger (fichiers locaux uniquement)
+    async loadData(filename, defaultValue = {}) {
+        const data = this.getData(filename);
+        return Object.keys(data).length === 0 ? defaultValue : data;
     }
 }
 
