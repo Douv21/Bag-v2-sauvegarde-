@@ -49,23 +49,32 @@ module.exports = {
                 });
             }
 
-            // Charger la configuration de comptage
+            // Charger la configuration de comptage (structure moderne avec channels array)
             let countingConfig = await dataManager.getData('counting') || {};
             if (!countingConfig[guildId]) {
                 countingConfig[guildId] = {
-                    enabled: false,
-                    channelId: null,
-                    currentNumber: 1,
-                    lastUserId: null,
-                    startNumber: 1,
-                    totalCounts: 0,
-                    record: 0,
-                    lastResetReason: null,
-                    lastResetDate: null
+                    channels: [],
+                    mathEnabled: true,
+                    reactionsEnabled: true
                 };
             }
+            
+            // Compatibilité: si une seule config channel existe, on l'utilise
+            let config = countingConfig[guildId];
+            let channelConfig = config.channels && config.channels.length > 0 ? config.channels[0] : {
+                channelId: null,
+                currentNumber: 1,
+                lastUserId: null,
+                lastMessageId: null,
+                enabled: false,
+                startNumber: 1,
+                totalCounts: 0,
+                record: 0,
+                lastResetReason: null,
+                lastResetDate: null
+            };
 
-            const config = countingConfig[guildId];
+            // config maintenant référence channelConfig pour compatibilité
             const embed = new EmbedBuilder()
                 .setColor('#00AAFF')
                 .setFooter({ text: `Serveur: ${interaction.guild.name}` });
@@ -74,19 +83,31 @@ module.exports = {
                 case 'activer':
                     const channel = interaction.options.getChannel('canal');
                     
-                    config.enabled = true;
-                    config.channelId = channel.id;
-                    config.currentNumber = config.startNumber;
-                    config.lastUserId = null;
+                    // Mise à jour de la structure moderne
+                    channelConfig.channelId = channel.id;
+                    channelConfig.currentNumber = channelConfig.startNumber || 1;
+                    channelConfig.lastUserId = null;
+                    channelConfig.enabled = true;
+                    channelConfig.activatedAt = new Date().toISOString();
                     
-                    countingConfig[guildId] = config;
-                    await dataManager.setData('counting', countingConfig);
+                    // S'assurer que le channel est dans l'array
+                    if (!countingConfig[guildId].channels.find(c => c.channelId === channel.id)) {
+                        countingConfig[guildId].channels = [channelConfig];
+                    } else {
+                        // Mettre à jour le channel existant
+                        const index = countingConfig[guildId].channels.findIndex(c => c.channelId === channel.id);
+                        countingConfig[guildId].channels[index] = channelConfig;
+                    }
+                    await dataManager.saveData('counting', countingConfig);
+                    await dataManager.createBackup('counting');
+                    
+                    console.log(`✅ Comptage activé sur ${interaction.guild.name} dans #${channel.name}`);
                     
                     embed.setTitle('✅ Système de Comptage Activé')
                         .setDescription(`Le système de comptage est maintenant actif dans ${channel}`)
                         .addFields([
-                            { name: '📊 Numéro actuel', value: config.currentNumber.toString(), inline: true },
-                            { name: '🎯 Numéro de départ', value: config.startNumber.toString(), inline: true },
+                            { name: '📊 Numéro actuel', value: channelConfig.currentNumber.toString(), inline: true },
+                            { name: '🎯 Numéro de départ', value: (channelConfig.startNumber || 1).toString(), inline: true },
                             { name: '📝 Règles', value: '• Compter dans l\'ordre\n• Pas deux fois de suite\n• Calculs mathématiques acceptés\n• Reset si erreur ou doublon', inline: false }
                         ]);
                     
@@ -98,7 +119,7 @@ module.exports = {
                             embeds: [new EmbedBuilder()
                                 .setColor('#00FF00')
                                 .setTitle('🔢 Système de Comptage Activé!')
-                                .setDescription(`Commencez à compter à partir de **${config.currentNumber}**`)
+                                .setDescription(`Commencez à compter à partir de **${channelConfig.currentNumber}**`)
                                 .addFields([
                                     { name: '✅ Autorisé', value: '• Nombres simples: `1`, `2`, `3`\n• Calculs: `2+1`, `4-1`, `2*2`, `8/2`\n• Expressions: `(3*2)-1`', inline: true },
                                     { name: '❌ Interdit', value: '• Compter deux fois de suite\n• Sauter des numéros\n• Texte avec les nombres\n• Nombres incorrects', inline: true },
@@ -120,8 +141,11 @@ module.exports = {
                     
                     config.enabled = false;
                     config.channelId = null;
+                    config.deactivatedAt = new Date().toISOString();
                     countingConfig[guildId] = config;
-                    await dataManager.setData('counting', countingConfig);
+                    await dataManager.saveData('counting', countingConfig);
+                    
+                    console.log(`🔴 Comptage désactivé sur ${interaction.guild.name}`);
                     
                     embed.setTitle('🔴 Système de Comptage Désactivé')
                         .setDescription('Le système de comptage a été désactivé sur ce serveur.')
