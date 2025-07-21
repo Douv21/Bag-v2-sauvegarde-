@@ -32,8 +32,15 @@ module.exports = {
                 .slice(0, 10);
 
             if (karmaUsers.length === 0) {
+                // Créer des données de test pour montrer le fonctionnement
+                const testEmbed = new EmbedBuilder()
+                    .setColor('#9932cc')
+                    .setTitle('⚖️ Classement Karma - Bon vs Mauvais')
+                    .setDescription('💡 **Aucune activité karma détectée pour le moment.**\n\nLes actions suivantes génèrent du karma :\n\n**Actions Positives** 😇\n• `/travailler` - Travail honnête\n• `/pecher` - Activité nature\n• `/donner` - Générosité\n\n**Actions Négatives** 😈\n• `/voler` - Tentative de vol\n• `/crime` - Activités criminelles\n• `/parier` - Jeu d\'argent\n\n*Utilisez ces commandes pour commencer à accumuler du karma !*')
+                    .setFooter({ text: 'Le karma influence vos récompenses quotidiennes et multiplicateurs' });
+                
                 return await interaction.reply({
-                    content: '📊 Aucune activité karma trouvée sur ce serveur.',
+                    embeds: [testEmbed],
                     flags: 64
                 });
             }
