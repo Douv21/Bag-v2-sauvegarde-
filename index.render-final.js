@@ -431,11 +431,20 @@ class RenderSolutionBot {
     async handleCounting(message) {
         try {
             const dataManager = require('./utils/dataManager');
-            const countingConfig = await dataManager.getData('counting') || {};
+            const countingConfig = await dataManager.loadData('counting.json', {});
             const guildConfig = countingConfig[message.guild.id];
             
-            // Vérifier si le comptage est activé et dans le bon canal
-            if (!guildConfig || !guildConfig.enabled || message.channel.id !== guildConfig.channelId) {
+            // Vérifier si le comptage est activé pour ce serveur
+            if (!guildConfig || !guildConfig.channels || !Array.isArray(guildConfig.channels)) {
+                return;
+            }
+            
+            // Trouver le canal de comptage actif
+            const channelConfig = guildConfig.channels.find(c => 
+                c.channelId === message.channel.id && c.active
+            );
+            
+            if (!channelConfig) {
                 return;
             }
             
@@ -469,34 +478,40 @@ class RenderSolutionBot {
             // Si ce n'est pas un nombre valide, ignorer
             if (numberValue === null || numberValue < 0) return;
             
-            const isCorrect = numberValue === guildConfig.currentNumber;
-            const isSameUser = message.author.id === guildConfig.lastUserId;
+            const isCorrect = numberValue === channelConfig.currentNumber;
+            const isSameUser = message.author.id === channelConfig.lastUserId;
             const { EmbedBuilder } = require('discord.js');
             
             if (!isCorrect || isSameUser) {
                 // Reset nécessaire
                 let resetReason = '';
                 if (!isCorrect) {
-                    resetReason = `Mauvais nombre: attendu ${guildConfig.currentNumber}, reçu ${numberValue}`;
+                    resetReason = `Mauvais nombre: attendu ${channelConfig.currentNumber}, reçu ${numberValue}`;
                 } else if (isSameUser) {
                     resetReason = `${message.author.displayName} a compté deux fois de suite`;
                 }
                 
                 // Sauvegarder le record si atteint
-                const previousNumber = guildConfig.currentNumber - 1;
-                if (previousNumber > guildConfig.record) {
-                    guildConfig.record = previousNumber;
+                const previousNumber = channelConfig.currentNumber - 1;
+                if (previousNumber > channelConfig.record) {
+                    channelConfig.record = previousNumber;
                 }
                 
-                // Reset la configuration
-                guildConfig.currentNumber = guildConfig.startNumber;
-                guildConfig.lastUserId = null;
-                guildConfig.lastResetReason = resetReason;
-                guildConfig.lastResetDate = new Date().toISOString();
+                // Reset la configuration du canal
+                channelConfig.currentNumber = channelConfig.startNumber || 1;
+                channelConfig.lastUserId = null;
+                channelConfig.lastResetReason = resetReason;
+                channelConfig.lastResetDate = new Date().toISOString();
+                
+                // Mettre à jour la configuration dans le tableau
+                const channelIndex = guildConfig.channels.findIndex(c => c.channelId === message.channel.id);
+                if (channelIndex >= 0) {
+                    guildConfig.channels[channelIndex] = channelConfig;
+                }
                 
                 // Sauvegarder
                 countingConfig[message.guild.id] = guildConfig;
-                await dataManager.setData('counting', countingConfig);
+                await dataManager.saveData('counting.json', countingConfig);
                 
                 // Supprimer le message incorrect
                 try {
@@ -509,26 +524,32 @@ class RenderSolutionBot {
                 const resetEmbed = new EmbedBuilder()
                     .setColor('#FF0000')
                     .setTitle('🔄 Comptage Remis à Zéro')
-                    .setDescription(`**Raison:** ${resetReason}\n\nProchain numéro: **${guildConfig.currentNumber}**`)
+                    .setDescription(`**Raison:** ${resetReason}\n\nProchain numéro: **${channelConfig.currentNumber}**`)
                     .addFields([
                         { name: '📊 Nombre atteint', value: previousNumber.toString(), inline: true },
-                        { name: '🏆 Record', value: guildConfig.record.toString(), inline: true }
+                        { name: '🏆 Record', value: channelConfig.record.toString(), inline: true }
                     ])
                     .setFooter({ text: `Erreur de ${message.author.displayName}` });
                 
                 await message.channel.send({ embeds: [resetEmbed] });
                 
-                console.log(`🔄 Comptage reset: ${resetReason} (Record: ${guildConfig.record})`);
+                console.log(`🔄 Comptage reset: ${resetReason} (Record: ${channelConfig.record})`);
                 
             } else {
                 // Nombre correct !
-                guildConfig.currentNumber++;
-                guildConfig.lastUserId = message.author.id;
-                guildConfig.totalCounts = (guildConfig.totalCounts || 0) + 1;
+                channelConfig.currentNumber++;
+                channelConfig.lastUserId = message.author.id;
+                channelConfig.totalCounts = (channelConfig.totalCounts || 0) + 1;
+                
+                // Mettre à jour la configuration dans le tableau
+                const channelIndex = guildConfig.channels.findIndex(c => c.channelId === message.channel.id);
+                if (channelIndex >= 0) {
+                    guildConfig.channels[channelIndex] = channelConfig;
+                }
                 
                 // Sauvegarder
                 countingConfig[message.guild.id] = guildConfig;
-                await dataManager.setData('counting', countingConfig);
+                await dataManager.saveData('counting.json', countingConfig);
                 
                 // Réaction de validation
                 try {
@@ -548,14 +569,14 @@ class RenderSolutionBot {
                         .setDescription(`Félicitations ! Vous avez atteint le nombre **${currentCount}** !`)
                         .addFields([
                             { name: '👤 Compteur', value: message.author.displayName, inline: true },
-                            { name: '🎯 Prochain nombre', value: guildConfig.currentNumber.toString(), inline: true }
+                            { name: '🎯 Prochain nombre', value: channelConfig.currentNumber.toString(), inline: true }
                         ])
-                        .setFooter({ text: `Total de comptages: ${guildConfig.totalCounts}` });
+                        .setFooter({ text: `Total de comptages: ${channelConfig.totalCounts}` });
                     
                     await message.channel.send({ embeds: [milestoneEmbed] });
                 }
                 
-                console.log(`🔢 ${message.author.tag} a compté: ${numberValue} (prochain: ${guildConfig.currentNumber})`);
+                console.log(`🔢 ${message.author.tag} a compté: ${numberValue} (prochain: ${channelConfig.currentNumber})`);
             }
             
         } catch (error) {
