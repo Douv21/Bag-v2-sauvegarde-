@@ -475,8 +475,19 @@ class RenderSolutionBot {
 
     async handleCounting(message) {
         try {
-            const dataManager = require('./utils/dataManager');
-            const countingConfig = await dataManager.loadData('counting.json', {});
+            // Charger directement depuis le fichier (sans persistance PostgreSQL)
+            const fs = require('fs').promises;
+            const path = require('path');
+            
+            let countingConfig = {};
+            try {
+                const data = await fs.readFile(path.join(__dirname, 'data', 'counting.json'), 'utf8');
+                countingConfig = JSON.parse(data);
+            } catch (error) {
+                console.log('📄 Création nouveau fichier counting.json');
+                countingConfig = {};
+            }
+            
             const guildConfig = countingConfig[message.guild.id];
             
             // Vérifier si le comptage est activé pour ce serveur
@@ -562,9 +573,12 @@ class RenderSolutionBot {
                     guildConfig.channels[channelIndex] = channelConfig;
                 }
                 
-                // Sauvegarder
+                // Sauvegarder directement dans le fichier (reset)
                 countingConfig[message.guild.id] = guildConfig;
-                await dataManager.saveData('counting.json', countingConfig);
+                await fs.writeFile(
+                    path.join(__dirname, 'data', 'counting.json'), 
+                    JSON.stringify(countingConfig, null, 2)
+                );
                 
                 // Réaction d'erreur AVANT suppression
                 try {
@@ -611,9 +625,12 @@ class RenderSolutionBot {
                     guildConfig.channels[channelIndex] = channelConfig;
                 }
                 
-                // Sauvegarder
+                // Sauvegarder directement dans le fichier (succès)
                 countingConfig[message.guild.id] = guildConfig;
-                await dataManager.saveData('counting.json', countingConfig);
+                await fs.writeFile(
+                    path.join(__dirname, 'data', 'counting.json'), 
+                    JSON.stringify(countingConfig, null, 2)
+                );
                 
                 // Réactions selon le contexte
                 try {
