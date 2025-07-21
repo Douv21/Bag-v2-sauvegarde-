@@ -12,14 +12,18 @@ module.exports = {
             // Utiliser getAllUsers au lieu de getData('users')
             const allUsers = await dataManager.getAllUsers(guildId);
             
-            // Filtrer et calculer karma net pour le classement
+            // Filtrer et calculer karma net pour le classement (support des deux formats)
             const karmaUsers = allUsers
-                .filter(user => ((user.karmaGood || 0) > 0 || (user.karmaBad || 0) > 0))
+                .filter(user => {
+                    const goodKarma = user.karmaGood || user.karma_good || 0;
+                    const badKarma = user.karmaBad || user.karma_bad || 0;
+                    return goodKarma > 0 || badKarma > 0;
+                })
                 .map(user => ({
                     userId: user.userId,
-                    karmaGood: user.karmaGood || 0,
-                    karmaBad: user.karmaBad || 0,
-                    karmaNet: (user.karmaGood || 0) - (user.karmaBad || 0),
+                    karmaGood: user.karmaGood || user.karma_good || 0,
+                    karmaBad: user.karmaBad || user.karma_bad || 0,
+                    karmaNet: (user.karmaGood || user.karma_good || 0) - (user.karmaBad || user.karma_bad || 0),
                     balance: user.balance || 1000
                 }))
                 .sort((a, b) => b.karmaNet - a.karmaNet)
@@ -81,9 +85,12 @@ module.exports = {
 
             // Position de l'utilisateur actuel
             const currentUser = await dataManager.getUser(interaction.user.id, guildId);
-            if (currentUser && ((currentUser.karmaGood || 0) > 0 || (currentUser.karmaBad || 0) > 0)) {
+            const currentKarmaGood = currentUser.karmaGood || currentUser.karma_good || 0;
+            const currentKarmaBad = currentUser.karmaBad || currentUser.karma_bad || 0;
+            
+            if (currentUser && (currentKarmaGood > 0 || currentKarmaBad > 0)) {
                 const userPosition = karmaUsers.findIndex(u => u.userId === interaction.user.id) + 1;
-                const userKarmaNet = (currentUser.karmaGood || 0) - (currentUser.karmaBad || 0);
+                const userKarmaNet = currentKarmaGood - currentKarmaBad;
                 
                 let userStatus = '';
                 if (userKarmaNet > 10) userStatus = '😇 Saint';
@@ -97,7 +104,7 @@ module.exports = {
                 if (userPosition > 0) {
                     embed.addFields([{
                         name: '🎯 Votre Position Morale',
-                        value: `**${userPosition}ème** • ${userStatus}\n😇 ${currentUser.karmaGood || 0} bonnes | 😈 ${currentUser.karmaBad || 0} mauvaises | **Net: ${userKarmaNet > 0 ? '+' : ''}${userKarmaNet}**`,
+                        value: `**${userPosition}ème** • ${userStatus}\n😇 ${currentKarmaGood} bonnes | 😈 ${currentKarmaBad} mauvaises | **Net: ${userKarmaNet > 0 ? '+' : ''}${userKarmaNet}**`,
                         inline: false
                     }]);
                 }
