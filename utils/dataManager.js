@@ -146,16 +146,23 @@ class DataManager {
     async getUser(userId, guildId) {
         const data = this.loadData('users.json');
         const key = `${userId}_${guildId}`;
-        return data[key] || {
-            id: userId,
-            guildId: guildId,
-            balance: 1000,
-            xp: 0,
-            goodKarma: 0,
-            badKarma: 0,
-            dailyStreak: 0,
-            lastDaily: null
-        };
+        const userData = data[key];
+        
+        if (!userData) {
+            return {
+                id: userId,
+                guildId: guildId,
+                balance: 1000,
+                xp: 0,
+                karmaGood: 0,
+                karmaBad: 0,
+                dailyStreak: 0,
+                lastDaily: null,
+                messageCount: 0
+            };
+        }
+        
+        return userData;
     }
 
     async updateUser(userId, guildId, userData) {
