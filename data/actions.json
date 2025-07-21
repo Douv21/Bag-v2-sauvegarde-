@@ -1,0 +1,136 @@
+{
+  "1335563294714495006_work": {
+    "id": "work",
+    "name": "💼 Travailler",
+    "description": "Gagnez de l'argent en travaillant honnêtement",
+    "actionType": "good",
+    "baseReward": 50,
+    "cooldown": 3600,
+    "karmaGoodChange": 1,
+    "karmaBadChange": -1,
+    "guildId": "1335563294714495006",
+    "enabled": true
+  },
+  "1335563294714495006_fish": {
+    "id": "fish",
+    "name": "🎣 Pêcher",
+    "description": "Pêchez du poisson pour gagner de l'argent",
+    "actionType": "good",
+    "baseReward": 30,
+    "cooldown": 1800,
+    "karmaGoodChange": 1,
+    "karmaBadChange": 0,
+    "guildId": "1335563294714495006",
+    "enabled": true
+  },
+  "1335563294714495006_donate": {
+    "id": "donate",
+    "name": "💝 Faire un don",
+    "description": "Donnez de l'argent à la communauté",
+    "actionType": "good",
+    "baseReward": -20,
+    "cooldown": 7200,
+    "karmaGoodChange": 2,
+    "karmaBadChange": -1,
+    "guildId": "1335563294714495006"
+  },
+  "1335563294714495006_steal": {
+    "id": "steal",
+    "name": "💰 Voler",
+    "description": "Volez de l'argent (action risquée)",
+    "actionType": "bad",
+    "baseReward": 80,
+    "cooldown": 5400,
+    "karmaGoodChange": -1,
+    "karmaBadChange": 1,
+    "guildId": "1335563294714495006"
+  },
+  "1335563294714495006_crime": {
+    "id": "crime",
+    "name": "🔫 Crime",
+    "description": "Commettez un crime pour beaucoup d'argent",
+    "actionType": "bad",
+    "baseReward": 120,
+    "cooldown": 7200,
+    "karmaGoodChange": -2,
+    "karmaBadChange": 2,
+    "guildId": "1335563294714495006"
+  },
+  "1335563294714495006_gamble": {
+    "id": "gamble",
+    "name": "🎰 Parier",
+    "description": "Pariez votre argent (très risqué)",
+    "actionType": "bad",
+    "baseReward": 100,
+    "cooldown": 3600,
+    "karmaGoodChange": -1,
+    "karmaBadChange": 1,
+    "guildId": "1335563294714495006"
+  },
+  "1360897918504271882_work": {
+    "id": "work",
+    "name": "💼 Travailler",
+    "description": "Gagnez de l'argent en travaillant honnêtement",
+    "actionType": "good",
+    "baseReward": 50,
+    "cooldown": 3600,
+    "karmaGoodChange": 1,
+    "karmaBadChange": -2,
+    "guildId": "1360897918504271882"
+  },
+  "1360897918504271882_fish": {
+    "id": "fish",
+    "name": "🎣 Pêcher",
+    "description": "Pêchez du poisson pour gagner de l'argent",
+    "actionType": "good",
+    "baseReward": 30,
+    "cooldown": 1800,
+    "karmaGoodChange": 1,
+    "karmaBadChange": 0,
+    "guildId": "1360897918504271882"
+  },
+  "1360897918504271882_donate": {
+    "id": "donate",
+    "name": "💝 Faire un don",
+    "description": "Donnez de l'argent à la communauté",
+    "actionType": "good",
+    "baseReward": -20,
+    "cooldown": 7200,
+    "karmaGoodChange": 2,
+    "karmaBadChange": -1,
+    "guildId": "1360897918504271882"
+  },
+  "1360897918504271882_steal": {
+    "id": "steal",
+    "name": "💰 Voler",
+    "description": "Volez de l'argent (action risquée)",
+    "actionType": "bad",
+    "baseReward": 80,
+    "cooldown": 5400,
+    "karmaGoodChange": -1,
+    "karmaBadChange": 1,
+    "guildId": "1360897918504271882"
+  },
+  "1360897918504271882_crime": {
+    "id": "crime",
+    "name": "🔫 Crime",
+    "description": "Commettez un crime pour beaucoup d'argent",
+    "actionType": "bad",
+    "baseReward": 120,
+    "cooldown": 7200,
+    "karmaGoodChange": -2,
+    "karmaBadChange": 2,
+    "guildId": "1360897918504271882"
+  },
+  "1360897918504271882_gamble": {
+    "id": "gamble",
+    "name": "🎰 Parier",
+    "description": "Pariez votre argent (très risqué)",
+    "actionType": "bad",
+    "baseReward": 100,
+    "cooldown": 3600,
+    "karmaGoodChange": -1,
+    "karmaBadChange": 1,
+    "guildId": "1360897918504271882"
+  }
+}

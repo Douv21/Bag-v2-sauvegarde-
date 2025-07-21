@@ -1,0 +1,20 @@
+{
+  "1360897918504271882": {
+    "channels": [
+      {
+        "channelId": "1394734522020397096",
+        "currentNumber": 1,
+        "lastUserId": null,
+        "active": true,
+        "startNumber": 1,
+        "record": 9,
+        "totalCounts": 0,
+        "lastMessageId": null,
+        "lastResetReason": "Configuration initiale",
+        "lastResetDate": "2025-07-21T09:36:00.000Z"
+      }
+    ],
+    "mathEnabled": true,
+    "reactionsEnabled": true
+  }
+}
