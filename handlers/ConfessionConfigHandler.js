@@ -123,6 +123,38 @@ class ConfessionConfigHandler {
     }
 
     /**
+     * Gestion des options logs (alias pour compatibility)
+     */
+    async handleLogsOptions(interaction) {
+        return await this.showAdminLogsConfig(interaction);
+    }
+
+    /**
+     * Gestion des options auto-thread (alias pour compatibility)
+     */
+    async handleAutoThreadOptions(interaction) {
+        return await this.showAutoThreadConfig(interaction);
+    }
+
+    /**
+     * Gestion des options log spécifiques
+     */
+    async handleLogOption(interaction) {
+        const option = interaction.values[0];
+        // Ici la logique pour chaque option sera implémentée
+        await interaction.reply({ content: `Option logs: ${option} - À implémenter`, flags: 64 });
+    }
+
+    /**
+     * Gestion des options auto-thread spécifiques
+     */
+    async handleAutoThreadOption(interaction) {
+        const option = interaction.values[0];
+        // Ici la logique pour chaque option sera implémentée
+        await interaction.reply({ content: `Option auto-thread: ${option} - À implémenter`, flags: 64 });
+    }
+
+    /**
      * Configuration des logs administrateur
      */
     async showAdminLogsConfig(interaction) {

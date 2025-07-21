@@ -2,7 +2,7 @@
  * Handler dédié au système de dashboard/statistiques
  */
 
-const { EmbedBuilder, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 
 class DashboardHandler {
     constructor(dataManager) {
@@ -41,46 +41,43 @@ class DashboardHandler {
             .setFooter({ text: `Dernière mise à jour: ${new Date().toLocaleString('fr-FR')}` })
             .setTimestamp();
 
-        const row = new ActionRowBuilder()
-            .addComponents([
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('dashboard_sections')
+            .setPlaceholder('Explorer les sections...')
+            .addOptions([
                 {
-                    type: 3,
-                    customId: 'dashboard_sections',
-                    placeholder: 'Explorer les sections...',
-                    options: [
-                        {
-                            label: '💰 Dashboard Économie',
-                            value: 'economy_dashboard',
-                            description: 'Statistiques économiques détaillées'
-                        },
-                        {
-                            label: '💭 Dashboard Confessions',
-                            value: 'confessions_dashboard',
-                            description: 'Analyse des confessions'
-                        },
-                        {
-                            label: '🔢 Dashboard Comptage',
-                            value: 'counting_dashboard',
-                            description: 'Performance du comptage'
-                        },
-                        {
-                            label: '🧵 Dashboard Auto-Thread',
-                            value: 'autothread_dashboard',
-                            description: 'Statistiques des threads'
-                        },
-                        {
-                            label: '🏪 Dashboard Boutique',
-                            value: 'shop_dashboard',
-                            description: 'Analyse des ventes'
-                        },
-                        {
-                            label: '⚙️ Panel d\'Administration',
-                            value: 'admin_panel',
-                            description: 'Outils d\'administration'
-                        }
-                    ]
+                    label: '💰 Dashboard Économie',
+                    value: 'economy_dashboard',
+                    description: 'Statistiques économiques détaillées'
+                },
+                {
+                    label: '💭 Dashboard Confessions',
+                    value: 'confessions_dashboard',
+                    description: 'Analyse des confessions'
+                },
+                {
+                    label: '🔢 Dashboard Comptage',
+                    value: 'counting_dashboard',
+                    description: 'Performance du comptage'
+                },
+                {
+                    label: '🧵 Dashboard Auto-Thread',
+                    value: 'autothread_dashboard',
+                    description: 'Statistiques des threads'
+                },
+                {
+                    label: '🏪 Dashboard Boutique',
+                    value: 'shop_dashboard',
+                    description: 'Analyse des ventes'
+                },
+                {
+                    label: '⚙️ Panel d\'Administration',
+                    value: 'admin_panel',
+                    description: 'Outils d\'administration'
                 }
             ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
 
         await interaction.reply({ embeds: [embed], components: [row], flags: 64 });
     }
@@ -122,70 +119,35 @@ class DashboardHandler {
         const guildId = interaction.guild.id;
         const economy = await this.dataManager.loadData('economy.json', {});
         
-        const guildUsers = Object.entries(economy).filter(([key]) => key.endsWith(`_${guildId}`));
-        
-        const totalBalance = guildUsers.reduce((sum, [, user]) => sum + (user.balance || 0), 0);
-        const totalGoodKarma = guildUsers.reduce((sum, [, user]) => sum + (user.goodKarma || 0), 0);
-        const totalBadKarma = guildUsers.reduce((sum, [, user]) => sum + (user.badKarma || 0), 0);
-        
-        // Top 5 plus riches
-        const richest = guildUsers
-            .sort(([, a], [, b]) => (b.balance || 0) - (a.balance || 0))
-            .slice(0, 5)
-            .map(([key, user], i) => {
-                const userId = key.split('_')[0];
-                const member = interaction.guild.members.cache.get(userId);
-                return `${i + 1}. ${member?.displayName || 'Utilisateur inconnu'}: ${user.balance?.toLocaleString() || 0}€`;
-            });
+        const guildUsers = Object.keys(economy).filter(userId => 
+            interaction.guild.members.cache.has(userId)
+        );
+
+        const stats = this.calculateEconomyStats(guildUsers, economy);
 
         const embed = new EmbedBuilder()
             .setColor('#27ae60')
-            .setTitle('💰 Dashboard Économique')
-            .setDescription('Analyse complète de l\'économie du serveur')
+            .setTitle('💰 Dashboard Économie')
+            .setDescription('Statistiques détaillées du système économique')
             .addFields([
-                { name: '👥 Utilisateurs actifs', value: guildUsers.length.toString(), inline: true },
-                { name: '💰 Argent total', value: `${totalBalance.toLocaleString()}€`, inline: true },
-                { name: '📊 Moyenne par utilisateur', value: `${Math.round(totalBalance / Math.max(guildUsers.length, 1)).toLocaleString()}€`, inline: true },
-                { name: '😇 Karma positif total', value: totalGoodKarma.toString(), inline: true },
-                { name: '😈 Karma négatif total', value: totalBadKarma.toString(), inline: true },
-                { name: '⚖️ Balance karma', value: (totalGoodKarma - totalBadKarma).toString(), inline: true },
-                {
-                    name: '🏆 Top 5 Plus Riches',
-                    value: richest.length > 0 ? richest.join('\n') : 'Aucune donnée',
-                    inline: false
-                }
+                { name: '📊 Statistiques générales', value: `**${stats.totalUsers}** utilisateurs actifs\n**${stats.totalBalance.toLocaleString()}€** en circulation\n**${Math.round(stats.averageBalance)}€** moyenne par utilisateur`, inline: false },
+                { name: '😇 Karma Positif', value: `**${stats.totalGoodKarma}** points\nMoyenne: **${Math.round(stats.avgGoodKarma)}**`, inline: true },
+                { name: '😈 Karma Négatif', value: `**${stats.totalBadKarma}** points\nMoyenne: **${Math.round(stats.avgBadKarma)}**`, inline: true },
+                { name: '🔥 Daily Streaks', value: `Streak max: **${stats.maxStreak}** jours\nStreak moyen: **${Math.round(stats.avgStreak)}** jours`, inline: true }
             ]);
 
-        const row = new ActionRowBuilder()
-            .addComponents([
-                {
-                    type: 3,
-                    customId: 'economy_dashboard_options',
-                    placeholder: 'Options économiques...',
-                    options: [
-                        {
-                            label: '📈 Graphiques Détaillés',
-                            value: 'economy_charts',
-                            description: 'Visualisations avancées'
-                        },
-                        {
-                            label: '💸 Actions Populaires',
-                            value: 'popular_actions',
-                            description: 'Analyse des commandes utilisées'
-                        },
-                        {
-                            label: '⚖️ Distribution Karma',
-                            value: 'karma_distribution',
-                            description: 'Répartition du karma'
-                        },
-                        {
-                            label: '🔙 Retour Dashboard',
-                            value: 'back_main_dashboard',
-                            description: 'Retour au menu principal'
-                        }
-                    ]
-                }
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_dashboard_options')
+            .setPlaceholder('Actions disponibles...')
+            .addOptions([
+                { label: '📈 Top Richesse', value: 'top_balance', description: 'Classement par argent' },
+                { label: '😇 Top Karma Positif', value: 'top_good_karma', description: 'Meilleurs karma positifs' },
+                { label: '😈 Top Karma Négatif', value: 'top_bad_karma', description: 'Pires karma négatifs' },
+                { label: '🔥 Top Streaks', value: 'top_streaks', description: 'Meilleures séries daily' },
+                { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
             ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
 
         await interaction.update({ embeds: [embed], components: [row] });
     }
@@ -194,56 +156,22 @@ class DashboardHandler {
      * Dashboard confessions
      */
     async showConfessionsDashboard(interaction) {
-        const guildId = interaction.guild.id;
-        const confessions = await this.dataManager.loadData('confessions.json', {});
-        const logs = await this.dataManager.loadData('confession_logs.json', {});
-        
-        const guildConfig = confessions[guildId] || {};
-        const guildLogs = logs[guildId] || [];
-
         const embed = new EmbedBuilder()
-            .setColor('#8e44ad')
+            .setColor('#e74c3c')
             .setTitle('💭 Dashboard Confessions')
-            .setDescription('Analyse du système de confessions anonymes')
+            .setDescription('Statistiques système des confessions (À développer)')
             .addFields([
-                { name: '📝 Canaux configurés', value: (guildConfig.channels?.length || 0).toString(), inline: true },
-                { name: '💭 Confessions totales', value: guildLogs.length.toString(), inline: true },
-                { name: '📊 Moyenne par jour', value: Math.round(guildLogs.length / Math.max(1, this.getDaysSinceFirstConfession(guildLogs))).toString(), inline: true },
-                { name: '🖼️ Avec images', value: guildLogs.filter(log => log.hasImage).length.toString(), inline: true },
-                { name: '📝 Texte seulement', value: guildLogs.filter(log => !log.hasImage).length.toString(), inline: true },
-                { name: '📅 Dernière confession', value: guildLogs.length > 0 ? new Date(guildLogs[guildLogs.length - 1].timestamp).toLocaleDateString('fr-FR') : 'Jamais', inline: true }
+                { name: '🚧 En développement', value: 'Cette section sera bientôt disponible', inline: false }
             ]);
 
-        const row = new ActionRowBuilder()
-            .addComponents([
-                {
-                    type: 3,
-                    customId: 'confessions_dashboard_options',
-                    placeholder: 'Options confessions...',
-                    options: [
-                        {
-                            label: '📊 Tendances Temporelles',
-                            value: 'confession_trends',
-                            description: 'Analyse par période'
-                        },
-                        {
-                            label: '📋 Logs Récents',
-                            value: 'recent_logs',
-                            description: '10 dernières confessions'
-                        },
-                        {
-                            label: '🧵 Performance Threads',
-                            value: 'threads_performance',
-                            description: 'Statistiques des threads'
-                        },
-                        {
-                            label: '🔙 Retour Dashboard',
-                            value: 'back_main_dashboard',
-                            description: 'Retour au menu principal'
-                        }
-                    ]
-                }
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('confessions_dashboard_options')
+            .setPlaceholder('Actions disponibles...')
+            .addOptions([
+                { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
             ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
 
         await interaction.update({ embeds: [embed], components: [row] });
     }
@@ -252,144 +180,97 @@ class DashboardHandler {
      * Dashboard comptage
      */
     async showCountingDashboard(interaction) {
-        const guildId = interaction.guild.id;
-        const counting = await this.dataManager.loadData('counting.json', {});
-        const guildConfig = counting[guildId] || { channels: [] };
-
-        const totalChannels = guildConfig.channels.length;
-        const activeChannels = guildConfig.channels.filter(ch => ch.enabled).length;
-        const totalCounts = guildConfig.channels.reduce((sum, ch) => sum + (ch.totalCounts || 0), 0);
-        const maxRecord = Math.max(...guildConfig.channels.map(ch => ch.record || 0), 0);
-
-        // Top 3 canaux par record
-        const topChannels = guildConfig.channels
-            .sort((a, b) => (b.record || 0) - (a.record || 0))
-            .slice(0, 3)
-            .map((ch, i) => {
-                const channel = interaction.guild.channels.cache.get(ch.channelId);
-                const medal = ['🥇', '🥈', '🥉'][i];
-                return `${medal} <#${ch.channelId}>: ${ch.record || 0}`;
-            });
-
         const embed = new EmbedBuilder()
-            .setColor('#f39c12')
+            .setColor('#3498db')
             .setTitle('🔢 Dashboard Comptage')
-            .setDescription('Performance du système de comptage mathématique')
+            .setDescription('Statistiques système de comptage (À développer)')
             .addFields([
-                { name: '📝 Canaux total', value: totalChannels.toString(), inline: true },
-                { name: '✅ Canaux actifs', value: activeChannels.toString(), inline: true },
-                { name: '🔢 Comptes total', value: totalCounts.toString(), inline: true },
-                { name: '🏆 Record maximum', value: maxRecord.toString(), inline: true },
-                { name: '📈 Moyenne par canal', value: Math.round(totalCounts / Math.max(totalChannels, 1)).toString(), inline: true },
-                { name: '🎯 Canaux fonctionnels', value: `${activeChannels}/${totalChannels}`, inline: true },
-                {
-                    name: '🏆 Top 3 Records',
-                    value: topChannels.length > 0 ? topChannels.join('\n') : 'Aucun record',
-                    inline: false
-                }
+                { name: '🚧 En développement', value: 'Cette section sera bientôt disponible', inline: false }
             ]);
 
-        const row = new ActionRowBuilder()
-            .addComponents([
-                {
-                    type: 3,
-                    customId: 'counting_dashboard_options',
-                    placeholder: 'Options comptage...',
-                    options: [
-                        {
-                            label: '📊 Performance Détaillée',
-                            value: 'counting_performance',
-                            description: 'Analyse par canal'
-                        },
-                        {
-                            label: '🧮 Types de Calculs',
-                            value: 'calculation_types',
-                            description: 'Répartition des opérations'
-                        },
-                        {
-                            label: '⏰ Historique Records',
-                            value: 'records_history',
-                            description: 'Évolution des records'
-                        },
-                        {
-                            label: '🔙 Retour Dashboard',
-                            value: 'back_main_dashboard',
-                            description: 'Retour au menu principal'
-                        }
-                    ]
-                }
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('counting_dashboard_options')
+            .setPlaceholder('Actions disponibles...')
+            .addOptions([
+                { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
             ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
 
         await interaction.update({ embeds: [embed], components: [row] });
     }
 
     /**
-     * Panel d'administration
+     * Dashboard auto-thread
+     */
+    async showAutothreadDashboard(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#9b59b6')
+            .setTitle('🧵 Dashboard Auto-Thread')
+            .setDescription('Statistiques auto-thread (À développer)')
+            .addFields([
+                { name: '🚧 En développement', value: 'Cette section sera bientôt disponible', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('autothread_dashboard_options')
+            .setPlaceholder('Actions disponibles...')
+            .addOptions([
+                { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+
+        await interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    /**
+     * Dashboard boutique
+     */
+    async showShopDashboard(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#e67e22')
+            .setTitle('🏪 Dashboard Boutique')
+            .setDescription('Statistiques boutique (À développer)')
+            .addFields([
+                { name: '🚧 En développement', value: 'Cette section sera bientôt disponible', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('shop_dashboard_options')
+            .setPlaceholder('Actions disponibles...')
+            .addOptions([
+                { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+
+        await interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    /**
+     * Panel admin
      */
     async showAdminPanel(interaction) {
-        if (!interaction.member.permissions.has('ADMINISTRATOR') && !interaction.member.permissions.has('MANAGE_GUILD')) {
-            await interaction.update({ 
-                content: '❌ Accès refusé. Permissions administrateur requises.', 
-                embeds: [], 
-                components: [] 
-            });
-            return;
-        }
-
         const embed = new EmbedBuilder()
-            .setColor('#e74c3c')
+            .setColor('#34495e')
             .setTitle('⚙️ Panel d\'Administration')
             .setDescription('Outils d\'administration avancés')
             .addFields([
-                { name: '💾 Sauvegardes', value: 'Gestion des sauvegardes système', inline: true },
-                { name: '🔄 Maintenance', value: 'Outils de maintenance', inline: true },
-                { name: '📊 Monitoring', value: 'Surveillance système', inline: true },
-                { name: '🧹 Nettoyage', value: 'Suppression de données obsolètes', inline: true },
-                { name: '📤 Export/Import', value: 'Gestion des données', inline: true },
-                { name: '🔧 Configuration', value: 'Paramètres système', inline: true }
-            ])
-            .setFooter({ text: '⚠️ Actions réservées aux administrateurs' });
-
-        const row = new ActionRowBuilder()
-            .addComponents([
-                {
-                    type: 3,
-                    customId: 'admin_panel_options',
-                    placeholder: 'Outils d\'administration...',
-                    options: [
-                        {
-                            label: '💾 Créer Sauvegarde',
-                            value: 'create_backup',
-                            description: 'Sauvegarder toutes les données'
-                        },
-                        {
-                            label: '🔄 Maintenance Système',
-                            value: 'system_maintenance',
-                            description: 'Nettoyage et optimisation'
-                        },
-                        {
-                            label: '📊 Monitoring Santé',
-                            value: 'health_monitoring',
-                            description: 'État des systèmes'
-                        },
-                        {
-                            label: '🧹 Nettoyage Données',
-                            value: 'data_cleanup',
-                            description: 'Supprimer données obsolètes'
-                        },
-                        {
-                            label: '📤 Export Complet',
-                            value: 'full_export',
-                            description: 'Exporter toutes les données'
-                        },
-                        {
-                            label: '🔙 Retour Dashboard',
-                            value: 'back_main_dashboard',
-                            description: 'Retour au menu principal'
-                        }
-                    ]
-                }
+                { name: '🔧 Outils disponibles', value: 'Gestion centralisée du bot', inline: false }
             ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('admin_panel_options')
+            .setPlaceholder('Outils admin...')
+            .addOptions([
+                { label: '💾 Sauvegarde Générale', value: 'backup_all', description: 'Sauvegarder toutes les données' },
+                { label: '🔄 Reset Économie', value: 'reset_economy', description: 'DANGER: Tout remettre à zéro' },
+                { label: '📊 Rapport Complet', value: 'full_report', description: 'Générer rapport détaillé' },
+                { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
 
         await interaction.update({ embeds: [embed], components: [row] });
     }
@@ -399,29 +280,29 @@ class DashboardHandler {
      */
     calculateStats(guildId, data) {
         const { economy, confessions, counting, autothread, shop } = data;
-
-        // Utilisateurs actifs (ayant de l'économie)
-        const guildUsers = Object.entries(economy).filter(([key]) => key.endsWith(`_${guildId}`));
-        const activeUsers = guildUsers.length;
-
-        // Balance totale
-        const totalBalance = guildUsers.reduce((sum, [, user]) => sum + (user.balance || 0), 0);
-
-        // Confessions
-        const confessionLogs = confessions[guildId]?.logs || [];
-        const totalConfessions = confessionLogs.length;
-
-        // Comptage
-        const countingChannels = counting[guildId]?.channels?.length || 0;
-
-        // Auto-thread
-        const autothreadEnabled = autothread[guildId]?.enabled || false;
-
-        // Boutique
-        const shopItems = shop[guildId]?.length || 0;
+        
+        // Statistiques économie
+        const economyUsers = Object.keys(economy);
+        const totalBalance = economyUsers.reduce((sum, userId) => sum + (economy[userId]?.balance || 0), 0);
+        
+        // Statistiques confessions
+        const guildConfessions = confessions[guildId] || {};
+        const totalConfessions = guildConfessions.total || 0;
+        
+        // Statistiques comptage
+        const guildCounting = counting[guildId] || {};
+        const countingChannels = (guildCounting.channels || []).length;
+        
+        // Statistiques auto-thread
+        const guildAutothread = autothread[guildId] || {};
+        const autothreadEnabled = guildAutothread.enabled || false;
+        
+        // Statistiques boutique
+        const guildShop = shop[guildId] || [];
+        const shopItems = guildShop.length;
 
         return {
-            activeUsers,
+            activeUsers: economyUsers.length,
             totalBalance,
             totalConfessions,
             countingChannels,
@@ -431,18 +312,35 @@ class DashboardHandler {
     }
 
     /**
-     * Calculer le nombre de jours depuis la première confession
+     * Calculer les statistiques économiques détaillées
      */
-    getDaysSinceFirstConfession(logs) {
-        if (logs.length === 0) return 1;
+    calculateEconomyStats(guildUsers, economy) {
+        const users = guildUsers.map(userId => economy[userId] || {});
         
-        const firstLog = logs[0];
-        const firstDate = new Date(firstLog.timestamp);
-        const now = new Date();
-        const diffTime = Math.abs(now - firstDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const totalUsers = users.length;
+        const totalBalance = users.reduce((sum, user) => sum + (user.balance || 0), 0);
+        const averageBalance = totalBalance / Math.max(totalUsers, 1);
         
-        return Math.max(diffDays, 1);
+        const totalGoodKarma = users.reduce((sum, user) => sum + (user.goodKarma || 0), 0);
+        const totalBadKarma = users.reduce((sum, user) => sum + (user.badKarma || 0), 0);
+        const avgGoodKarma = totalGoodKarma / Math.max(totalUsers, 1);
+        const avgBadKarma = totalBadKarma / Math.max(totalUsers, 1);
+        
+        const streaks = users.map(user => user.dailyStreak || 0);
+        const maxStreak = Math.max(...streaks, 0);
+        const avgStreak = streaks.reduce((sum, streak) => sum + streak, 0) / Math.max(totalUsers, 1);
+
+        return {
+            totalUsers,
+            totalBalance,
+            averageBalance,
+            totalGoodKarma,
+            totalBadKarma,
+            avgGoodKarma,
+            avgBadKarma,
+            maxStreak,
+            avgStreak
+        };
     }
 }
 

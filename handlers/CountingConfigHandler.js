@@ -98,6 +98,45 @@ class CountingConfigHandler {
     }
 
     /**
+     * Gestion des options globales (alias pour compatibility)
+     */
+    async handleGlobalOptions(interaction) {
+        return await this.showGlobalSettings(interaction);
+    }
+
+    /**
+     * Gestion des options records (alias pour compatibility)
+     */
+    async handleRecordsOptions(interaction) {
+        return await this.showRecordsManagement(interaction);
+    }
+
+    /**
+     * Gestion des options counting stats (alias pour compatibility)
+     */
+    async handleCountingStats(interaction) {
+        return await this.showCountingStats(interaction);
+    }
+
+    /**
+     * Gestion des options globales spécifiques
+     */
+    async handleGlobalOption(interaction) {
+        const option = interaction.values[0];
+        // Ici la logique pour chaque option sera implémentée
+        await interaction.reply({ content: `Option globale: ${option} - À implémenter`, flags: 64 });
+    }
+
+    /**
+     * Gestion des options records spécifiques
+     */
+    async handleRecordOption(interaction) {
+        const option = interaction.values[0];
+        // Ici la logique pour chaque option sera implémentée
+        await interaction.reply({ content: `Option record: ${option} - À implémenter`, flags: 64 });
+    }
+
+    /**
      * Gestion des canaux de comptage
      */
     async showChannelsManagement(interaction) {

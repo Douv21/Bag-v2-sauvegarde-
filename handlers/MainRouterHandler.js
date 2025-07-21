@@ -108,10 +108,26 @@ class MainRouterHandler {
                 return await handler.handleChannelRemove(interaction);
             
             case 'confession_logs_options':
-                return await handler.showAdminLogsConfig(interaction);
+                return await handler.handleLogsOptions(interaction);
             
             case 'confession_autothread_options':
-                return await handler.showAutoThreadConfig(interaction);
+                return await handler.handleAutoThreadOptions(interaction);
+
+            // Nouvelles options logs détaillées
+            case 'log_channel':
+            case 'log_level':
+            case 'log_images':
+            case 'ping_roles_logs':
+                console.log(`➡️ Option logs: ${customId}`);
+                return await handler.handleLogOption(interaction);
+
+            // Nouvelles options auto-thread détaillées
+            case 'toggle_autothread':
+            case 'thread_name':
+            case 'archive_duration':
+            case 'slowmode':
+                console.log(`➡️ Option auto-thread: ${customId}`);
+                return await handler.handleAutoThreadOption(interaction);
 
             default:
                 console.log(`CustomId confession non géré: ${customId}`);
@@ -146,6 +162,57 @@ class MainRouterHandler {
             
             case 'economy_stats_options':
                 return await handler.showStatsConfig(interaction);
+
+            // Nouvelle gestion des actions spécifiques et sous-menus
+            case 'travailler':
+            case 'pecher':
+            case 'donner':
+            case 'voler':
+            case 'crime':
+            case 'parier':
+                console.log(`➡️ Action économique: ${customId}`);
+                return await handler.handleActionSelection(interaction);
+
+            // Gestion des options karma détaillées
+            case 'karma_levels':
+            case 'karma_rewards':
+            case 'karma_reset':
+            case 'karma_stats':
+                console.log(`➡️ Option karma: ${customId}`);
+                return await handler.handleKarmaOption(interaction);
+
+            // Gestion des options boutique détaillées
+            case 'add_custom':
+            case 'add_temp_role':
+            case 'add_perm_role':
+            case 'edit_items':
+            case 'delete_items':
+                console.log(`➡️ Option boutique: ${customId}`);
+                return await handler.handleShopOption(interaction);
+
+            // Gestion des options daily détaillées
+            case 'daily_amount':
+            case 'streak_bonus':
+            case 'max_streak':
+            case 'reset_daily':
+                console.log(`➡️ Option daily: ${customId}`);
+                return await handler.handleDailyOption(interaction);
+
+            // Gestion des options messages détaillées
+            case 'toggle_messages':
+            case 'message_amount':
+            case 'message_cooldown':
+            case 'message_stats':
+                console.log(`➡️ Option messages: ${customId}`);
+                return await handler.handleMessagesOption(interaction);
+
+            // Gestion des statistiques détaillées
+            case 'detailed_stats':
+            case 'backup_data':
+            case 'reset_economy':
+            case 'import_export':
+                console.log(`➡️ Option stats: ${customId}`);
+                return await handler.handleStatsOption(interaction);
 
             default:
                 console.log(`CustomId economy non géré: ${customId}`);
@@ -198,13 +265,29 @@ class MainRouterHandler {
                 return await handler.handleChannelConfigure(interaction);
             
             case 'counting_global_options':
-                return await handler.showGlobalSettings(interaction);
+                return await handler.handleGlobalOptions(interaction);
             
             case 'counting_records_options':
-                return await handler.showRecordsManagement(interaction);
+                return await handler.handleRecordsOptions(interaction);
             
             case 'counting_stats_options':
-                return await handler.showCountingStats(interaction);
+                return await handler.handleCountingStats(interaction);
+
+            // Nouvelles options globales
+            case 'toggle_math':
+            case 'toggle_delete':
+            case 'delete_delay':
+            case 'reset_all_channels':
+                console.log(`➡️ Option globale comptage: ${customId}`);
+                return await handler.handleGlobalOption(interaction);
+
+            // Nouvelles options records
+            case 'detailed_records':
+            case 'reset_specific_record':
+            case 'manual_record':
+            case 'advanced_stats':
+                console.log(`➡️ Option records: ${customId}`);
+                return await handler.handleRecordOption(interaction);
 
             default:
                 // Gestion des customIds dynamiques pour configuration de canal spécifique

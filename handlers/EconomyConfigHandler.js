@@ -99,6 +99,60 @@ class EconomyConfigHandler {
     }
 
     /**
+     * Gestion des sélections d'actions
+     */
+    async handleActionSelection(interaction) {
+        const action = interaction.values[0];
+        // Ici la logique pour chaque action sera implémentée
+        await interaction.reply({ content: `Action sélectionnée: ${action} - À implémenter`, flags: 64 });
+    }
+
+    /**
+     * Gestion des options karma spécifiques
+     */
+    async handleKarmaOption(interaction) {
+        const option = interaction.values[0];
+        // Ici la logique pour chaque option sera implémentée
+        await interaction.reply({ content: `Option karma: ${option} - À implémenter`, flags: 64 });
+    }
+
+    /**
+     * Gestion des options boutique spécifiques
+     */
+    async handleShopOption(interaction) {
+        const option = interaction.values[0];
+        // Ici la logique pour chaque option sera implémentée
+        await interaction.reply({ content: `Option boutique: ${option} - À implémenter`, flags: 64 });
+    }
+
+    /**
+     * Gestion des options daily spécifiques
+     */
+    async handleDailyOption(interaction) {
+        const option = interaction.values[0];
+        // Ici la logique pour chaque option sera implémentée
+        await interaction.reply({ content: `Option daily: ${option} - À implémenter`, flags: 64 });
+    }
+
+    /**
+     * Gestion des options messages spécifiques
+     */
+    async handleMessagesOption(interaction) {
+        const option = interaction.values[0];
+        // Ici la logique pour chaque option sera implémentée
+        await interaction.reply({ content: `Option messages: ${option} - À implémenter`, flags: 64 });
+    }
+
+    /**
+     * Gestion des options stats spécifiques
+     */
+    async handleStatsOption(interaction) {
+        const option = interaction.values[0];
+        // Ici la logique pour chaque option sera implémentée
+        await interaction.reply({ content: `Option stats: ${option} - À implémenter`, flags: 64 });
+    }
+
+    /**
      * Configuration des actions économiques
      */
     async showActionsConfig(interaction) {
