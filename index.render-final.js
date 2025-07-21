@@ -313,6 +313,9 @@ class RenderSolutionBot {
                         await handler.handleInteraction(interaction);
                     }
                     
+                    // Fin du traitement - ne pas continuer avec le routing manuel ci-dessous
+                    return;
+                    
                     const customId = interaction.customId;
                     
                     // Router vers les handlers appropriés
