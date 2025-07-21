@@ -294,7 +294,9 @@ class RenderSolutionBot {
                     const customId = interaction.customId;
                     
                     // Router vers les handlers appropriés
-                    if (customId === 'confession_main_config') {
+                    if (customId === 'config_main_menu') {
+                        await handler.handleConfessionMainConfig(interaction);
+                    } else if (customId === 'confession_main_config') {
                         await handler.handleConfessionMainConfig(interaction);
                     } else if (customId === 'confession_channels_config') {
                         await handler.handleConfessionChannelsConfig(interaction);
