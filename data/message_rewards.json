@@ -1,5 +1,7 @@
 {
-  "enabled": false,
-  "amount": 1,
-  "cooldown": 60
+  "1360897918504271882": {
+    "enabled": true,
+    "amount": 20,
+    "cooldown": 60
+  }
 }
