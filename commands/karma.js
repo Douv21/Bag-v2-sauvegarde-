@@ -9,8 +9,10 @@ module.exports = {
         try {
             const guildId = interaction.guild.id;
             
-            // Utiliser getAllUsers au lieu de getData('users')
-            const allUsers = await dataManager.getAllUsers(guildId);
+            // Charger les données économiques pour ce serveur
+            const economyData = await dataManager.loadData('economy.json', {});
+            const guildUsers = economyData[guildId] || {};
+            const allUsers = Object.values(guildUsers);
             
             // Filtrer et calculer karma net pour le classement (support des deux formats)
             const karmaUsers = allUsers
