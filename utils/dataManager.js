@@ -18,69 +18,76 @@ class DataManager {
         }
     }
 
-    // Sauvegarde sécurisée avec backup automatique
-    saveData(filename, data) {
-        const filepath = path.join(this.dataPath, filename);
-        const backupFilepath = path.join(this.backupPath, `${filename}.backup.${Date.now()}`);
-        
+    // Sauvegarde sécurisée avec persistance Render.com
+    async saveData(filename, data) {
         try {
-            // Créer une sauvegarde de l'ancien fichier
-            if (fs.existsSync(filepath)) {
-                fs.copyFileSync(filepath, backupFilepath);
-            }
+            // Utiliser le gestionnaire de persistance
+            const persistenceManager = require('./persistenceManager');
+            await persistenceManager.saveData(filename, data);
             
-            // Sauvegarder atomiquement (écriture en temp puis rename)
-            const tempFilepath = filepath + '.tmp';
-            fs.writeFileSync(tempFilepath, JSON.stringify(data, null, 2), 'utf8');
-            
-            // Renommer atomiquement pour éviter la corruption
-            fs.renameSync(tempFilepath, filepath);
-            
-            console.log(`💾 Données sauvegardées: ${filename}`);
-            
-            // Nettoyer les anciens backups (garder seulement les 10 derniers)
-            this.cleanOldBackups(filename);
+            console.log(`💾 Données sauvegardées avec persistance: ${filename}`);
             
         } catch (error) {
             console.error(`❌ Erreur sauvegarde ${filename}:`, error);
             
-            // Restaurer depuis backup si possible
-            if (fs.existsSync(backupFilepath)) {
-                try {
-                    fs.copyFileSync(backupFilepath, filepath);
-                    console.log(`🔄 Fichier restauré depuis backup: ${filename}`);
-                } catch (restoreError) {
-                    console.error(`❌ Échec restauration backup:`, restoreError);
+            // Fallback sur sauvegarde locale
+            const filepath = path.join(this.dataPath, filename);
+            const backupFilepath = path.join(this.backupPath, `${filename}.backup.${Date.now()}`);
+            
+            try {
+                if (fs.existsSync(filepath)) {
+                    fs.copyFileSync(filepath, backupFilepath);
                 }
+                
+                const tempFilepath = filepath + '.tmp';
+                fs.writeFileSync(tempFilepath, JSON.stringify(data, null, 2), 'utf8');
+                fs.renameSync(tempFilepath, filepath);
+                
+                console.log(`💾 Sauvegarde locale fallback: ${filename}`);
+                this.cleanOldBackups(filename);
+                
+            } catch (fallbackError) {
+                console.error(`❌ Échec sauvegarde fallback:`, fallbackError);
             }
         }
     }
 
-    // Chargement sécurisé avec fallback sur backup
-    loadData(filename, defaultValue = {}) {
-        const filepath = path.join(this.dataPath, filename);
-        
+    // Chargement sécurisé avec persistance
+    async loadData(filename, defaultValue = {}) {
         try {
-            if (!fs.existsSync(filepath)) {
-                console.log(`📁 Création fichier initial: ${filename}`);
-                this.saveData(filename, defaultValue);
-                return defaultValue;
-            }
+            // Utiliser le gestionnaire de persistance
+            const persistenceManager = require('./persistenceManager');
+            const data = await persistenceManager.loadData(filename, defaultValue);
             
-            const content = fs.readFileSync(filepath, 'utf8').trim();
-            if (!content) {
-                console.log(`📄 Fichier vide détecté: ${filename}, utilisation backup...`);
-                return this.restoreFromLatestBackup(filename, defaultValue);
-            }
-            
-            const data = JSON.parse(content);
-            return data || defaultValue;
+            console.log(`📥 Données chargées avec persistance: ${filename}`);
+            return data;
             
         } catch (error) {
-            console.error(`❌ Erreur lecture ${filename}:`, error);
-            console.log(`🔄 Tentative restauration depuis backup...`);
+            console.error(`❌ Erreur chargement persistance ${filename}:`, error);
             
-            return this.restoreFromLatestBackup(filename, defaultValue);
+            // Fallback sur chargement local
+            const filepath = path.join(this.dataPath, filename);
+            
+            try {
+                if (!fs.existsSync(filepath)) {
+                    console.log(`📁 Création fichier initial: ${filename}`);
+                    await this.saveData(filename, defaultValue);
+                    return defaultValue;
+                }
+                
+                const content = fs.readFileSync(filepath, 'utf8').trim();
+                if (!content) {
+                    console.log(`📄 Fichier vide détecté: ${filename}, utilisation backup...`);
+                    return this.restoreFromLatestBackup(filename, defaultValue);
+                }
+                
+                const data = JSON.parse(content);
+                return data || defaultValue;
+                
+            } catch (fallbackError) {
+                console.error(`❌ Erreur lecture fallback ${filename}:`, fallbackError);
+                return this.restoreFromLatestBackup(filename, defaultValue);
+            }
         }
     }
 
