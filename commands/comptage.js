@@ -23,10 +23,12 @@ module.exports = {
         } catch (error) {
             console.error('Erreur comptage:', error);
             
-            await interaction.reply({
-                content: '❌ Erreur lors de l\'affichage de la configuration comptage.',
-                flags: 64
-            });
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Erreur lors de l\'affichage de la configuration comptage.',
+                    flags: 64
+                });
+            }
         }
     }
 };
