@@ -379,11 +379,17 @@ class RenderSolutionBot {
             // Ignorer les DM
             if (!message.guild) return;
             
-            // Gérer le système de comptage d'abord
-            await this.handleCounting(message);
-            
-            // Puis gérer les récompenses de messages
-            await this.handleMessageReward(message);
+            try {
+                // Gérer le système de comptage d'abord
+                const countingHandled = await this.handleCounting(message);
+                
+                // Si le message n'était pas du comptage, gérer les récompenses de messages
+                if (!countingHandled) {
+                    await this.handleMessageReward(message);
+                }
+            } catch (error) {
+                console.error('❌ Erreur messageCreate:', error);
+            }
         });
 
         this.client.on('error', error => {
@@ -436,7 +442,7 @@ class RenderSolutionBot {
             
             // Vérifier si le comptage est activé pour ce serveur
             if (!guildConfig || !guildConfig.channels || !Array.isArray(guildConfig.channels)) {
-                return;
+                return false;
             }
             
             // Trouver le canal de comptage actif
@@ -445,8 +451,11 @@ class RenderSolutionBot {
             );
             
             if (!channelConfig) {
-                return;
+                return false; // Pas un canal de comptage
             }
+            
+            console.log(`🔢 Message comptage détecté: "${message.content}" dans #${message.channel.name}`);
+            console.log(`📊 État actuel: currentNumber=${channelConfig.currentNumber}, lastUserId=${channelConfig.lastUserId}`);
             
             const content = message.content.trim();
             
@@ -475,8 +484,13 @@ class RenderSolutionBot {
                 numberValue = evaluateMath(content);
             }
             
-            // Si ce n'est pas un nombre valide, ignorer
-            if (numberValue === null || numberValue < 0) return;
+            // Si ce n'est pas un nombre valide, ignorer silencieusement
+            if (numberValue === null || numberValue < 0) {
+                console.log(`⚠️ Message ignoré (pas un nombre): "${content}"`);
+                return false;
+            }
+            
+            console.log(`🔢 Nombre détecté: ${numberValue}, attendu: ${channelConfig.currentNumber}`);
             
             const isCorrect = numberValue === channelConfig.currentNumber;
             const isSameUser = message.author.id === channelConfig.lastUserId;
@@ -513,12 +527,21 @@ class RenderSolutionBot {
                 countingConfig[message.guild.id] = guildConfig;
                 await dataManager.saveData('counting.json', countingConfig);
                 
-                // Supprimer le message incorrect
+                // Réaction d'erreur AVANT suppression
                 try {
-                    await message.delete();
+                    await message.react('❌');
                 } catch (error) {
-                    console.error('Impossible de supprimer le message de comptage:', error);
+                    console.error('Impossible d\'ajouter la réaction d\'erreur:', error);
                 }
+                
+                // Attendre un peu puis supprimer le message incorrect
+                setTimeout(async () => {
+                    try {
+                        await message.delete();
+                    } catch (error) {
+                        console.error('Impossible de supprimer le message de comptage:', error);
+                    }
+                }, 2000);
                 
                 // Envoyer message de reset
                 const resetEmbed = new EmbedBuilder()
@@ -537,6 +560,8 @@ class RenderSolutionBot {
                 
             } else {
                 // Nombre correct !
+                const isNewRecord = numberValue > (channelConfig.record || 0);
+                
                 channelConfig.currentNumber++;
                 channelConfig.lastUserId = message.author.id;
                 channelConfig.totalCounts = (channelConfig.totalCounts || 0) + 1;
@@ -551,9 +576,16 @@ class RenderSolutionBot {
                 countingConfig[message.guild.id] = guildConfig;
                 await dataManager.saveData('counting.json', countingConfig);
                 
-                // Réaction de validation
+                // Réactions selon le contexte
                 try {
-                    await message.react('✅');
+                    if (isNewRecord) {
+                        // Nouveau record - réaction spéciale
+                        await message.react('🏆');
+                        await message.react('🎉');
+                    } else {
+                        // Comptage correct normal
+                        await message.react('✅');
+                    }
                 } catch (error) {
                     console.error('Impossible d\'ajouter la réaction:', error);
                 }
@@ -563,6 +595,13 @@ class RenderSolutionBot {
                 const currentCount = numberValue;
                 
                 if (milestones.includes(currentCount)) {
+                    // Réaction palier supplémentaire
+                    try {
+                        await message.react('🎯');
+                    } catch (error) {
+                        console.error('Impossible d\'ajouter la réaction palier:', error);
+                    }
+                    
                     const milestoneEmbed = new EmbedBuilder()
                         .setColor('#00FF00')
                         .setTitle('🎉 Palier Atteint!')
@@ -579,8 +618,11 @@ class RenderSolutionBot {
                 console.log(`🔢 ${message.author.tag} a compté: ${numberValue} (prochain: ${channelConfig.currentNumber})`);
             }
             
+            return true; // Message de comptage traité
+            
         } catch (error) {
             console.error('❌ Erreur système comptage:', error);
+            return false;
         }
     }
 }
