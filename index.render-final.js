@@ -246,39 +246,99 @@ class RenderSolutionBot {
         });
 
         this.client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isChatInputCommand()) return;
+            // Gérer les commandes slash
+            if (interaction.isChatInputCommand()) {
+                const command = this.client.commands.get(interaction.commandName);
+                if (!command) {
+                    console.log(`❓ Commande inconnue: ${interaction.commandName}`);
+                    return;
+                }
 
-            const command = this.client.commands.get(interaction.commandName);
-            if (!command) {
-                console.log(`❓ Commande inconnue: ${interaction.commandName}`);
+                try {
+                    console.log(`🔧 /${interaction.commandName} par ${interaction.user.tag}`);
+                    
+                    // Initialiser DataManager pour toutes les commandes
+                    const dataManager = require('./utils/dataManager');
+                    
+                    // Exécuter la commande avec dataManager
+                    await command.execute(interaction, dataManager);
+                    
+                } catch (error) {
+                    console.error(`❌ Erreur ${interaction.commandName}:`, error);
+                    
+                    const errorMsg = {
+                        content: 'Erreur lors de l\'exécution de la commande.',
+                        flags: 64
+                    };
+
+                    try {
+                        if (interaction.replied || interaction.deferred) {
+                            await interaction.followUp(errorMsg);
+                        } else {
+                            await interaction.reply(errorMsg);
+                        }
+                    } catch (e) {
+                        console.error('❌ Impossible de répondre:', e);
+                    }
+                }
                 return;
             }
 
-            try {
-                console.log(`🔧 /${interaction.commandName} par ${interaction.user.tag}`);
-                
-                // Initialiser DataManager pour toutes les commandes
-                const dataManager = require('./utils/dataManager');
-                
-                // Exécuter la commande avec dataManager
-                await command.execute(interaction, dataManager);
-                
-            } catch (error) {
-                console.error(`❌ Erreur ${interaction.commandName}:`, error);
-                
-                const errorMsg = {
-                    content: 'Erreur lors de l\'exécution de la commande.',
-                    flags: 64
-                };
-
+            // Gérer les interactions de menu
+            if (interaction.isStringSelectMenu() || interaction.isChannelSelectMenu() || interaction.isRoleSelectMenu()) {
                 try {
-                    if (interaction.replied || interaction.deferred) {
-                        await interaction.followUp(errorMsg);
+                    const dataManager = require('./utils/dataManager');
+                    const InteractionHandler = require('./handlers/InteractionHandler');
+                    const ConfessionHandler = require('./handlers/ConfessionHandler');
+                    const EconomyHandler = require('./handlers/EconomyHandler');
+                    
+                    const interactionHandler = new InteractionHandler(dataManager);
+                    const confessionHandler = new ConfessionHandler(dataManager);
+                    const economyHandler = new EconomyHandler(dataManager);
+                    
+                    // Délégation vers les handlers appropriés
+                    const customId = interaction.customId;
+                    
+                    // Handlers de confession
+                    if (customId === 'confession_main_config') {
+                        await interactionHandler.handleConfessionMainConfig(interaction);
+                    } else if (customId === 'confession_channels_config') {
+                        await interactionHandler.handleConfessionChannelsConfig(interaction);
+                    } else if (customId === 'confession_autothread_config') {
+                        await interactionHandler.handleConfessionAutothreadConfig(interaction);
+                    } else if (customId === 'confession_logs_config') {
+                        await confessionHandler.handleConfessionLogsConfig(interaction);
+                    } else if (customId === 'confession_log_level') {
+                        await confessionHandler.handleConfessionLogLevel(interaction);
+                    } else if (customId === 'confession_log_channel') {
+                        await confessionHandler.handleConfessionLogChannel(interaction);
+                    } else if (customId === 'confession_log_ping_roles') {
+                        await confessionHandler.handleConfessionLogPingRoles(interaction);
+                    } else if (customId === 'confession_ping_roles') {
+                        await confessionHandler.handleConfessionPingRoles(interaction);
+                    } else if (customId === 'confession_add_channel') {
+                        await interactionHandler.handleConfessionAddChannel(interaction);
+                    } else if (customId === 'confession_remove_channel') {
+                        await interactionHandler.handleConfessionRemoveChannel(interaction);
+                    } else if (customId === 'confession_archive_time') {
+                        await interactionHandler.handleConfessionArchiveTime(interaction);
                     } else {
-                        await interaction.reply(errorMsg);
+                        console.log(`⚠️ Handler non trouvé pour: ${customId}`);
                     }
-                } catch (e) {
-                    console.error('❌ Impossible de répondre:', e);
+                    
+                } catch (error) {
+                    console.error(`❌ Erreur interaction ${interaction.customId}:`, error);
+                    
+                    try {
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({
+                                content: 'Erreur lors du traitement de l\'interaction.',
+                                flags: 64
+                            });
+                        }
+                    } catch (e) {
+                        console.error('❌ Impossible de répondre interaction:', e);
+                    }
                 }
             }
         });
