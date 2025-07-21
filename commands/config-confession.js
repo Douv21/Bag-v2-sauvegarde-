@@ -25,7 +25,7 @@ module.exports = {
             );
 
         const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('confession_main_config')
+            .setCustomId('config_main_menu')
             .setPlaceholder('🛠️ Choisir une section à configurer')
             .addOptions([
                 {
