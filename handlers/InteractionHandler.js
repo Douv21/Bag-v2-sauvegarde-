@@ -111,7 +111,6 @@ class InteractionHandler {
         
         // Configuration Confession
         this.handlers.selectMenu.set('confession_main_config', this.handleConfessionMainConfig.bind(this));
-        this.handlers.selectMenu.set('config_main_menu', this.handleConfigMainMenu.bind(this));
         this.handlers.selectMenu.set('confession_channels', this.handleConfessionChannels.bind(this));
         // this.handlers.selectMenu.set('confession_autothread', this.handleConfessionAutothread.bind(this)); // Retiré car dupliqué
         this.handlers.selectMenu.set('autothread_config', this.handleAutothreadGlobalConfig.bind(this));
@@ -370,27 +369,37 @@ class InteractionHandler {
     async handleConfessionMainConfig(interaction) {
         const value = interaction.values[0];
         
+        // Créer un objet interaction modifié avec les bonnes valeurs
+        const modifiedInteraction = {
+            ...interaction,
+            values: [value],
+            update: async (options) => await interaction.update(options),
+            reply: async (options) => await interaction.update(options)
+        };
+        
         switch(value) {
             case 'channels':
-                await this.showChannelsConfig(interaction);
+                await this.handleConfigMainMenu(modifiedInteraction);
                 break;
             case 'autothread':
-                await this.showAutothreadConfig(interaction);
+                await this.handleConfigMainMenu(modifiedInteraction);
                 break;
             case 'logs':
-                await this.showLogsConfig(interaction);
+                await this.confessionHandler.handleConfessionLogsConfig(modifiedInteraction);
                 break;
             default:
-                await interaction.reply({
+                await interaction.update({
                     content: `Configuration confession ${value} disponible.`,
-                    flags: 64
+                    components: []
                 });
         }
     }
 
     async handleConfessionChannels(interaction) {
+        const { EmbedBuilder } = require('discord.js');
+        const dataManager = require('../managers/DataManager');
         const guildId = interaction.guild.id;
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         const confessionConfig = config.confessions?.[guildId] || {
             channels: [],
             logChannel: null,
@@ -465,14 +474,14 @@ class InteractionHandler {
 
             const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
-            await interaction.reply({
+            await interaction.update({
                 embeds: [embed],
-                components: components,
-                flags: 64
+                components: components
             });
         } else if (value === 'autothread') {
+            const dataManager = require('../managers/DataManager');
             const guildId = interaction.guild.id;
-            const config = await this.dataManager.getData('config');
+            const config = await dataManager.getData('config');
             
             if (!config.confessions) config.confessions = {};
             if (!config.confessions[guildId]) {
@@ -534,15 +543,15 @@ class InteractionHandler {
 
             const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
-            await interaction.reply({
+            await interaction.update({
                 embeds: [embed],
-                components: components,
-                flags: 64
+                components: components
             });
 
         } else if (value === 'logs') {
+            const dataManager = require('../managers/DataManager');
             const guildId = interaction.guild.id;
-            const config = await this.dataManager.getData('config');
+            const config = await dataManager.getData('config');
             
             if (!config.confessions) config.confessions = {};
             if (!config.confessions[guildId]) {
@@ -758,7 +767,7 @@ class InteractionHandler {
 
     async handleConfessionLogLevel(interaction) {
         const level = interaction.values[0];
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (!config.confessions) config.confessions = {};
@@ -771,7 +780,7 @@ class InteractionHandler {
         }
 
         config.confessions[guildId].logLevel = level;
-        await this.dataManager.saveData('config', config);
+        await dataManager.saveData('config', config);
 
         const levels = {
             'basic': '📄 Basique - Contenu et utilisateur seulement',
@@ -1317,7 +1326,7 @@ class InteractionHandler {
     async showAutothreadConfig(interaction) {
         const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
         const guildId = interaction.guild.id;
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         
         if (!config.confessions) config.confessions = {};
         if (!config.confessions[guildId]) {
@@ -1387,7 +1396,7 @@ class InteractionHandler {
 
     async showLogsConfig(interaction) {
         const guildId = interaction.guild.id;
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         
         if (!config.confessions) config.confessions = {};
         if (!config.confessions[guildId]) {
@@ -1806,7 +1815,7 @@ class InteractionHandler {
             });
         } else if (value === 'list_channels') {
             const guildId = interaction.guild.id;
-            const config = await this.dataManager.getData('config');
+            const config = await dataManager.getData('config');
             const autoThreadConfig = config.autoThread?.[guildId] || {
                 enabled: false,
                 channels: [],
@@ -1854,7 +1863,7 @@ class InteractionHandler {
 
     async handleConfessionLogsConfig(interaction) {
         const value = interaction.values[0];
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (value === 'log_channel') {
@@ -1912,7 +1921,7 @@ class InteractionHandler {
             };
 
             config.confessions[guildId].logImages = !config.confessions[guildId].logImages;
-            await this.dataManager.saveData('config', config);
+            await dataManager.saveData('config', config);
 
             const status = config.confessions[guildId].logImages ? '🟢 Activé' : '🔴 Désactivé';
             await interaction.update({
@@ -1924,7 +1933,7 @@ class InteractionHandler {
 
     async handleConfessionLogLevel(interaction) {
         const value = interaction.values[0];
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (!config.confessions) config.confessions = {};
@@ -1939,7 +1948,7 @@ class InteractionHandler {
         }
 
         config.confessions[guildId].logLevel = value;
-        await this.dataManager.saveData('config', config);
+        await dataManager.saveData('config', config);
 
         const levels = {
             'basic': '📄 Basique - Contenu et utilisateur seulement',
@@ -2203,7 +2212,7 @@ class InteractionHandler {
         const guildId = interaction.guild.id;
         
         // Charger configuration actuelle
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         if (!config.autoThread) config.autoThread = {};
         if (!config.autoThread[guildId]) {
             config.autoThread[guildId] = {
@@ -2218,7 +2227,7 @@ class InteractionHandler {
         // Ajouter canal s'il n'existe pas déjà
         if (!config.autoThread[guildId].channels.includes(channelId)) {
             config.autoThread[guildId].channels.push(channelId);
-            await this.dataManager.saveData('config', config);
+            await dataManager.saveData('config', config);
         }
         
         await interaction.reply({
@@ -2233,7 +2242,7 @@ class InteractionHandler {
         const guildId = interaction.guild.id;
         
         // Charger configuration actuelle
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         if (!config.autoThread) config.autoThread = {};
         if (!config.autoThread[guildId]) {
             config.autoThread[guildId] = {
@@ -2249,7 +2258,7 @@ class InteractionHandler {
         const index = config.autoThread[guildId].channels.indexOf(channelId);
         if (index > -1) {
             config.autoThread[guildId].channels.splice(index, 1);
-            await this.dataManager.saveData('config', config);
+            await dataManager.saveData('config', config);
         }
         
         await interaction.reply({
@@ -2264,7 +2273,7 @@ class InteractionHandler {
         const guildId = interaction.guild.id;
         
         // Charger configuration actuelle
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         if (!config.confessions) config.confessions = {};
         if (!config.confessions[guildId]) {
             config.confessions[guildId] = {
@@ -2278,7 +2287,7 @@ class InteractionHandler {
         // Ajouter canal s'il n'existe pas déjà
         if (!config.confessions[guildId].channels.includes(channelId)) {
             config.confessions[guildId].channels.push(channelId);
-            await this.dataManager.saveData('config', config);
+            await dataManager.saveData('config', config);
         }
         
         await interaction.reply({
@@ -2293,7 +2302,7 @@ class InteractionHandler {
         const guildId = interaction.guild.id;
         
         // Charger configuration actuelle
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         if (!config.confessions) config.confessions = {};
         if (!config.confessions[guildId]) {
             config.confessions[guildId] = {
@@ -2308,7 +2317,7 @@ class InteractionHandler {
         const index = config.confessions[guildId].channels.indexOf(channelId);
         if (index > -1) {
             config.confessions[guildId].channels.splice(index, 1);
-            await this.dataManager.saveData('config', config);
+            await dataManager.saveData('config', config);
         }
         
         await interaction.reply({
@@ -2332,7 +2341,7 @@ class InteractionHandler {
         const guildId = interaction.guild.id;
         
         // Charger configuration actuelle
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         if (!config.autoThread) config.autoThread = {};
         if (!config.autoThread[guildId]) {
             config.autoThread[guildId] = {
@@ -2347,7 +2356,7 @@ class InteractionHandler {
         // Mettre à jour le statut
         const newStatus = value === 'enable';
         config.autoThread[guildId].enabled = newStatus;
-        await this.dataManager.saveData('config', config);
+        await dataManager.saveData('config', config);
         
         const channelCount = config.autoThread[guildId].channels.length;
         
@@ -2454,7 +2463,7 @@ class InteractionHandler {
         const guildId = interaction.guild.id;
         
         // Charger configuration actuelle
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         if (!config.confessions) config.confessions = {};
         if (!config.confessions[guildId]) {
             config.confessions[guildId] = {
@@ -2467,7 +2476,7 @@ class InteractionHandler {
         
         // Sauvegarder canal logs
         config.confessions[guildId].logChannel = channelId;
-        await this.dataManager.saveData('config', config);
+        await dataManager.saveData('config', config);
         
         await interaction.reply({
             content: `✅ Canal logs configuré : **${channel.name}**\n\nLes confessions seront automatiquement loggées ici avec les détails utilisateur.`,
@@ -2477,7 +2486,7 @@ class InteractionHandler {
 
     async handleConfessionArchiveTime(interaction) {
         const archiveTime = parseInt(interaction.values[0]);
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (!config.confessions) config.confessions = {};
@@ -2492,7 +2501,7 @@ class InteractionHandler {
         }
 
         config.confessions[guildId].archiveTime = archiveTime;
-        await this.dataManager.saveData('config', config);
+        await dataManager.saveData('config', config);
 
         const durations = {
             60: '1 heure',
@@ -2508,7 +2517,7 @@ class InteractionHandler {
     }
 
     async handleToggleConfessionAutothread(interaction) {
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (!config.confessions) config.confessions = {};
@@ -2524,7 +2533,7 @@ class InteractionHandler {
 
         // Toggle l'état
         config.confessions[guildId].autoThread = !config.confessions[guildId].autoThread;
-        await this.dataManager.saveData('config', config);
+        await dataManager.saveData('config', config);
 
         const status = config.confessions[guildId].autoThread ? '🟢 Activé' : '🔴 Désactivé';
         const description = config.confessions[guildId].autoThread 
@@ -2539,7 +2548,7 @@ class InteractionHandler {
 
     async handleConfessionThreadFormat(interaction) {
         const format = interaction.values[0];
-        const config = await this.dataManager.getData('config');
+        const config = await dataManager.getData('config');
         const guildId = interaction.guild.id;
 
         if (!config.confessions) config.confessions = {};
@@ -2554,7 +2563,7 @@ class InteractionHandler {
         }
 
         config.confessions[guildId].threadName = format;
-        await this.dataManager.saveData('config', config);
+        await dataManager.saveData('config', config);
 
         const examples = {
             'Confession #{number}': 'Confession #1, Confession #2...',
@@ -2577,7 +2586,7 @@ class InteractionHandler {
             // Bouton toggle pour activer/désactiver
             const { ButtonBuilder, ButtonStyle } = require('discord.js');
             
-            const config = await this.dataManager.getData('config');
+            const config = await dataManager.getData('config');
             const guildId = interaction.guild.id;
             const currentStatus = config.confessions?.[guildId]?.autoThread || false;
             
@@ -2605,7 +2614,7 @@ class InteractionHandler {
 
         } else if (value === 'thread_name') {
             // Sélecteur pour format nom
-            const config = await this.dataManager.getData('config');
+            const config = await dataManager.getData('config');
             const guildId = interaction.guild.id;
             const currentFormat = config.confessions?.[guildId]?.threadName || 'Confession #{number}';
             
@@ -2657,7 +2666,7 @@ class InteractionHandler {
 
         } else if (value === 'archive_time') {
             // Sélecteur pour durée archive
-            const config = await this.dataManager.getData('config');
+            const config = await dataManager.getData('config');
             const guildId = interaction.guild.id;
             const currentTime = config.confessions?.[guildId]?.archiveTime || 1440;
             
