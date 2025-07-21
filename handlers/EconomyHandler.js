@@ -5,6 +5,66 @@ class EconomyHandler {
         this.dataManager = dataManager;
     }
 
+    // Router générique pour tous les handlers économie
+    async handleEconomyInteraction(interaction, customId) {
+        console.log(`🔄 Routing economie: ${customId}`);
+        
+        try {
+            // Router basé sur le customId
+            if (customId === 'economy_actions_config') {
+                await this.handleEconomyActionsConfig(interaction);
+            } else if (customId === 'economy_shop_workflow_select') {
+                await this.handleShopWorkflowSelect(interaction);
+            } else if (customId === 'economy_shop_role_type_select') {
+                await this.handleShopRoleTypeSelect(interaction);
+            } else if (customId === 'economy_shop_remove_role_confirm') {
+                await this.handleShopRemoveRoleConfirm(interaction);
+            } else if (customId === 'economy_shop_edit_price_value') {
+                await this.handleShopEditPriceValue(interaction);
+            } else if (customId === 'economy_shop_items_action') {
+                await this.handleShopItemsAction(interaction);
+            } else if (customId === 'economy_karma_levels_edit') {
+                await this.handleKarmaLevelsEdit(interaction);
+            } else if (customId === 'economy_karma_rewards_edit') {
+                await this.handleKarmaRewardsEdit(interaction);
+            } else if (customId === 'economy_karma_reset_edit') {
+                await this.handleKarmaResetEdit(interaction);
+            } else if (customId === 'economy_action_karma_values') {
+                await this.handleActionKarmaValues(interaction);
+            } else if (customId === 'economy_daily_amounts_edit') {
+                await this.handleDailyAmountsEdit(interaction);
+            } else if (customId === 'economy_daily_streak_edit') {
+                await this.handleDailyStreakEdit(interaction);
+            } else if (customId === 'economy_daily_reset_edit') {
+                await this.handleDailyResetEdit(interaction);
+            } else if (customId === 'economy_messages_toggle_edit') {
+                await this.handleMessagesToggleEdit(interaction);
+            } else if (customId === 'economy_messages_amount_edit') {
+                await this.handleMessagesAmountEdit(interaction);
+            } else if (customId === 'economy_messages_cooldown_edit') {
+                await this.handleMessagesCooldownEdit(interaction);
+            } else if (customId === 'economy_action_reward_amounts') {
+                await this.handleActionRewardAmounts(interaction);
+            } else if (customId === 'economy_stats_action') {
+                await this.handleStatsAction(interaction);
+            } else {
+                console.log(`⚠️ Handler économie non implémenté: ${customId}`);
+                await interaction.reply({
+                    content: `Configuration économique ${customId} en cours d'implémentation.`,
+                    flags: 64
+                });
+            }
+        } catch (error) {
+            console.error(`❌ Erreur handler économie ${customId}:`, error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: 'Erreur lors de la configuration économique.',
+                    flags: 64
+                });
+            }
+        }
+    }
+
     async handleEconomyMainConfig(interaction) {
         const value = interaction.values[0];
         
