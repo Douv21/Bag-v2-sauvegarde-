@@ -4,11 +4,17 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('economie')
-        .setDescription('Voir votre profil économique'),
+        .setDescription('Voir votre profil économique')
+        .addUserOption(option =>
+            option.setName('utilisateur')
+                .setDescription('Utilisateur dont afficher le profil économique (optionnel)')
+                .setRequired(false)
+        ),
 
     async execute(interaction, dataManager) {
         try {
-            const user = await dataManager.getUser(interaction.user.id, interaction.guild.id);
+            const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
+            const user = await dataManager.getUser(targetUser.id, interaction.guild.id);
             
             const level = Math.floor(user.xp / 1000);
             const nextLevelXP = (level + 1) * 1000;
@@ -24,8 +30,8 @@ module.exports = {
 
             const embed = new EmbedBuilder()
                 .setColor('#4CAF50')
-                .setTitle(`💼 Profil Économique - ${interaction.user.displayName}`)
-                .setThumbnail(interaction.user.displayAvatarURL())
+                .setTitle(`💼 Profil Économique - ${targetUser.displayName}`)
+                .setThumbnail(targetUser.displayAvatarURL())
                 .addFields([
                     {
                         name: '💰 Solde',
