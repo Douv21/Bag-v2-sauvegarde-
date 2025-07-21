@@ -142,5 +142,27 @@
     "xp": 3,
     "createdAt": "2025-07-20T21:19:50.309Z",
     "updatedAt": "2025-07-20T21:19:50.309Z"
+  },
+  "943487722738311219_1360897918504271882": {
+    "id": "943487722738311219",
+    "guildId": "1360897918504271882",
+    "balance": 1060,
+    "xp": 0,
+    "karmaGood": 0,
+    "karmaBad": 0,
+    "dailyStreak": 0,
+    "lastDaily": null,
+    "messageCount": 3
+  },
+  "909739750225772544_1360897918504271882": {
+    "id": "909739750225772544",
+    "guildId": "1360897918504271882",
+    "balance": 1040,
+    "xp": 0,
+    "karmaGood": 0,
+    "karmaBad": 0,
+    "dailyStreak": 0,
+    "lastDaily": null,
+    "messageCount": 2
   }
 }

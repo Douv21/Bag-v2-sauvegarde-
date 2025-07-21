@@ -1,0 +1,11 @@
+{
+  "confessions": {
+    "1360897918504271882": {
+      "channels": [],
+      "logChannel": null,
+      "autoThread": false,
+      "threadName": "Confession #{number}",
+      "confessionCounter": 1
+    }
+  }
+}
