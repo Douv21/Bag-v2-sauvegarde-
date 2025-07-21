@@ -288,40 +288,55 @@ class RenderSolutionBot {
             if (interaction.isStringSelectMenu() || interaction.isChannelSelectMenu() || interaction.isRoleSelectMenu()) {
                 try {
                     const dataManager = require('./utils/dataManager');
-                    const InteractionHandler = require('./handlers/InteractionHandler');
-                    const ConfessionHandler = require('./handlers/ConfessionHandler');
-                    const EconomyHandler = require('./handlers/EconomyHandler');
                     
-                    const interactionHandler = new InteractionHandler(dataManager);
-                    const confessionHandler = new ConfessionHandler(dataManager);
-                    const economyHandler = new EconomyHandler(dataManager);
-                    
-                    // Délégation vers les handlers appropriés
+                    // Délégation directe vers les handlers appropriés
                     const customId = interaction.customId;
                     
-                    // Handlers de confession
+                    // Handlers de confession - Instanciation à la demande pour éviter conflits Render
                     if (customId === 'confession_main_config') {
-                        await interactionHandler.handleConfessionMainConfig(interaction);
+                        const InteractionHandler = require('./handlers/InteractionHandler');
+                        const handler = new InteractionHandler(dataManager);
+                        await handler.handleConfessionMainConfig(interaction);
                     } else if (customId === 'confession_channels_config') {
-                        await interactionHandler.handleConfessionChannelsConfig(interaction);
+                        const InteractionHandler = require('./handlers/InteractionHandler');
+                        const handler = new InteractionHandler(dataManager);
+                        await handler.handleConfessionChannelsConfig(interaction);
                     } else if (customId === 'confession_autothread_config') {
-                        await interactionHandler.handleConfessionAutothreadConfig(interaction);
+                        const InteractionHandler = require('./handlers/InteractionHandler');
+                        const handler = new InteractionHandler(dataManager);
+                        await handler.handleConfessionAutothreadConfig(interaction);
                     } else if (customId === 'confession_logs_config') {
-                        await confessionHandler.handleConfessionLogsConfig(interaction);
+                        const ConfessionHandler = require('./handlers/ConfessionHandler');
+                        const handler = new ConfessionHandler(dataManager);
+                        await handler.handleConfessionLogsConfig(interaction);
                     } else if (customId === 'confession_log_level') {
-                        await confessionHandler.handleConfessionLogLevel(interaction);
+                        const ConfessionHandler = require('./handlers/ConfessionHandler');
+                        const handler = new ConfessionHandler(dataManager);
+                        await handler.handleConfessionLogLevel(interaction);
                     } else if (customId === 'confession_log_channel') {
-                        await confessionHandler.handleConfessionLogChannel(interaction);
+                        const ConfessionHandler = require('./handlers/ConfessionHandler');
+                        const handler = new ConfessionHandler(dataManager);
+                        await handler.handleConfessionLogChannel(interaction);
                     } else if (customId === 'confession_log_ping_roles') {
-                        await confessionHandler.handleConfessionLogPingRoles(interaction);
+                        const ConfessionHandler = require('./handlers/ConfessionHandler');
+                        const handler = new ConfessionHandler(dataManager);
+                        await handler.handleConfessionLogPingRoles(interaction);
                     } else if (customId === 'confession_ping_roles') {
-                        await confessionHandler.handleConfessionPingRoles(interaction);
+                        const ConfessionHandler = require('./handlers/ConfessionHandler');
+                        const handler = new ConfessionHandler(dataManager);
+                        await handler.handleConfessionPingRoles(interaction);
                     } else if (customId === 'confession_add_channel') {
-                        await interactionHandler.handleConfessionAddChannel(interaction);
+                        const InteractionHandler = require('./handlers/InteractionHandler');
+                        const handler = new InteractionHandler(dataManager);
+                        await handler.handleConfessionAddChannel(interaction);
                     } else if (customId === 'confession_remove_channel') {
-                        await interactionHandler.handleConfessionRemoveChannel(interaction);
+                        const InteractionHandler = require('./handlers/InteractionHandler');
+                        const handler = new InteractionHandler(dataManager);
+                        await handler.handleConfessionRemoveChannel(interaction);
                     } else if (customId === 'confession_archive_time') {
-                        await interactionHandler.handleConfessionArchiveTime(interaction);
+                        const InteractionHandler = require('./handlers/InteractionHandler');
+                        const handler = new InteractionHandler(dataManager);
+                        await handler.handleConfessionArchiveTime(interaction);
                     } else {
                         console.log(`⚠️ Handler non trouvé pour: ${customId}`);
                     }
