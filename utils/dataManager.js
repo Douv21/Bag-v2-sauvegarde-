@@ -18,14 +18,10 @@ class DataManager {
         }
     }
 
-    // Sauvegarde sécurisée avec persistance Render.com
+    // Sauvegarde directe fichier local (sans persistance PostgreSQL)
     async saveData(filename, data) {
         try {
-            // Utiliser le gestionnaire de persistance
-            const persistenceManager = require('./persistenceManager');
-            await persistenceManager.saveData(filename, data);
-            
-            console.log(`💾 Données sauvegardées avec persistance: ${filename}`);
+            console.log(`💾 Sauvegarde directe: ${filename}`);
             
         } catch (error) {
             console.error(`❌ Erreur sauvegarde ${filename}:`, error);
@@ -52,18 +48,13 @@ class DataManager {
         }
     }
 
-    // Chargement sécurisé avec persistance
+    // Chargement direct fichier local (sans persistance PostgreSQL)
     async loadData(filename, defaultValue = {}) {
         try {
-            // Utiliser le gestionnaire de persistance
-            const persistenceManager = require('./persistenceManager');
-            const data = await persistenceManager.loadData(filename, defaultValue);
-            
-            console.log(`📥 Données chargées avec persistance: ${filename}`);
-            return data;
+            console.log(`📥 Chargement direct: ${filename}`);
             
         } catch (error) {
-            console.error(`❌ Erreur chargement persistance ${filename}:`, error);
+            console.error(`❌ Erreur chargement ${filename}:`, error);
             
             // Fallback sur chargement local
             const filepath = path.join(this.dataPath, filename);
