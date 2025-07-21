@@ -142,6 +142,22 @@ class DataManager {
         }
     }
 
+    // Méthode de backup manuel
+    async createBackup(filename) {
+        try {
+            const filepath = path.join(this.dataPath, filename);
+            if (fs.existsSync(filepath)) {
+                const backupFilepath = path.join(this.backupPath, `${filename}.manual.${Date.now()}`);
+                fs.copyFileSync(filepath, backupFilepath);
+                console.log(`💾 Backup manuel créé: ${backupFilepath}`);
+                return true;
+            }
+        } catch (error) {
+            console.error(`❌ Erreur backup manuel ${filename}:`, error);
+            return false;
+        }
+    }
+
     // Méthodes pour l'économie
     
     // Obtenir tous les utilisateurs d'un serveur
