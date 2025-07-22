@@ -1,0 +1,1193 @@
+const { Client, Collection, GatewayIntentBits, Routes, REST, EmbedBuilder } = require('discord.js');
+const fs = require('fs').promises;
+const path = require('path');
+const express = require('express');
+
+class RenderSolutionBot {
+    constructor() {
+        this.initializeWebServer();
+    }
+
+    async initializeWebServer() {
+        // 1. Serveur web d'abord (port 5000 pour Render.com)
+        const app = express();
+        const PORT = process.env.PORT || 5000;
+
+        app.use(express.json());
+
+        app.get('/', (req, res) => {
+            res.json({
+                status: 'running',
+                version: '3.0',
+                deployment: 'render.com',
+                message: 'BAG v2 Discord Bot - Serveur Web Actif'
+            });
+        });
+
+        app.get('/health', (req, res) => {
+            res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+        });
+
+        app.get('/commands-status', async (req, res) => {
+            try {
+                const commandsDir = path.join(__dirname, 'commands');
+                const commandFiles = await fs.readdir(commandsDir);
+                const commands = commandFiles.filter(file => file.endsWith('.js')).map(file => file.replace('.js', ''));
+                
+                res.json({
+                    status: 'success',
+                    commands: commands,
+                    count: commands.length
+                });
+            } catch (error) {
+                res.json({ status: 'error', message: error.message });
+            }
+        });
+
+        // Démarrer le serveur web AVANT Discord
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log('🌐 Serveur Web actif sur port', PORT);
+            console.log('📊 Status: http://localhost:5000/commands-status');
+            console.log('✅ Port 5000 ouvert pour Render.com');
+            
+            // 2. Ensuite initialiser Discord
+            setTimeout(() => this.initializeDiscord(), 1000);
+        });
+    }
+
+    async initializeDiscord() {
+        this.client = new Client({
+            intents: [
+                GatewayIntentBits.Guilds,
+                GatewayIntentBits.GuildMessages,
+                GatewayIntentBits.MessageContent,
+                GatewayIntentBits.GuildMembers
+            ]
+        });
+
+        this.commands = new Collection();
+        await this.loadCommands();
+        await this.setupEventHandlers();
+
+        try {
+            await this.client.login(process.env.DISCORD_TOKEN);
+        } catch (error) {
+            console.error('❌ Erreur connexion Discord:', error);
+            process.exit(1);
+        }
+    }
+
+    async loadCommands() {
+        try {
+            console.log('📂 Chargement de 25 commandes...');
+            const commandsPath = path.join(__dirname, 'commands');
+            const commandFiles = await fs.readdir(commandsPath);
+
+            for (const file of commandFiles.filter(file => file.endsWith('.js'))) {
+                try {
+                    const filePath = path.join(commandsPath, file);
+                    delete require.cache[require.resolve(filePath)];
+                    const command = require(filePath);
+
+                    if ('data' in command && 'execute' in command) {
+                        this.commands.set(command.data.name, command);
+                        console.log(`✅ ${command.data.name}`);
+                    } else {
+                        console.log(`❌ ${file} manque data ou execute`);
+                    }
+                } catch (error) {
+                    console.error(`❌ Erreur ${file}:`, error.message);
+                }
+            }
+
+            console.log(`✅ ${this.commands.size} commandes chargées`);
+        } catch (error) {
+            console.error('❌ Erreur chargement commandes:', error);
+        }
+    }
+
+    async setupEventHandlers() {
+        this.client.once('ready', async () => {
+            console.log(`✅ ${this.client.user.tag} connecté`);
+            console.log(`🏰 ${this.client.guilds.cache.size} serveur(s)`);
+            console.log(`📋 Commandes disponibles: ${this.commands.size}`);
+            
+            this.commands.forEach(command => {
+                console.log(`  - ${command.data.name}`);
+            });
+
+            await this.deployCommands();
+        });
+
+        this.client.on('interactionCreate', async interaction => {
+            await this.handleInteraction(interaction);
+        });
+
+        this.client.on('messageCreate', async message => {
+            if (message.author.bot) return;
+            
+            try {
+                const countingHandled = await this.handleCounting(message);
+                
+                if (!countingHandled) {
+                    await this.handleMessageReward(message);
+                }
+                
+                await this.handleAutoThread(message);
+                
+            } catch (error) {
+                console.error('❌ Erreur messageCreate:', error);
+            }
+        });
+
+        this.client.on('error', error => {
+            console.error('❌ Erreur Discord:', error);
+        });
+    }
+
+    async deployCommands() {
+        try {
+            for (const guild of this.client.guilds.cache.values()) {
+                console.log(`🎯 Serveur: ${guild.name} (${guild.id})`);
+                console.log(`🔄 Enregistrement serveur spécifique: ${guild.id}...`);
+                
+                const commands = Array.from(this.commands.values()).map(command => command.data.toJSON());
+                console.log(`📝 Préparation de ${commands.length} commandes pour enregistrement`);
+                
+                commands.forEach(cmd => {
+                    console.log(`   • ${cmd.name} (${cmd.description})`);
+                });
+
+                const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+                
+                await rest.put(
+                    Routes.applicationGuildCommands(process.env.CLIENT_ID, guild.id),
+                    { body: commands }
+                );
+                
+                console.log(`✅ ${commands.length} commandes enregistrées sur serveur ${guild.id}`);
+            }
+        } catch (error) {
+            console.error('❌ Erreur déploiement commandes:', error);
+        }
+    }
+
+    async handleInteraction(interaction) {
+        try {
+            const MainRouterHandler = require('./handlers/MainRouterHandler');
+            const dataManager = require('./utils/simpleDataManager');
+            const router = new MainRouterHandler(dataManager);
+
+            if (interaction.isChatInputCommand()) {
+                const command = this.commands.get(interaction.commandName);
+                if (!command) {
+                    console.error(`❌ Commande non trouvée: ${interaction.commandName}`);
+                    return;
+                }
+
+                console.log(`🔧 /${interaction.commandName} par ${interaction.user.tag}`);
+                await command.execute(interaction, dataManager);
+            } 
+            else if (interaction.isStringSelectMenu() || interaction.isUserSelectMenu() || interaction.isChannelSelectMenu() || interaction.isButton() || interaction.isModalSubmit()) {
+                const customId = interaction.customId;
+                console.log(`🔄 MainRouter traite: ${customId}`);
+                
+                // Routage spécial pour les remises karma
+                if (customId === 'karma_discounts_menu' ||
+                    customId === 'karma_discounts_actions' ||
+                    customId.startsWith('create_karma_discount_modal') || 
+                    customId.startsWith('edit_karma_discount_modal') || 
+                    customId.startsWith('modify_karma_discount_') || 
+                    customId.startsWith('delete_karma_discount_')) {
+                    
+                    console.log('🎯 Routage remises karma:', customId);
+                    const economyHandler = router.handlers.economy;
+                    
+                    if (customId === 'karma_discounts_menu') {
+                        console.log('🔍 Appel showKarmaDiscountsConfig...');
+                        try {
+                            await economyHandler.showKarmaDiscountsConfig(interaction);
+                            console.log('✅ showKarmaDiscountsConfig exécuté avec succès');
+                        } catch (error) {
+                            console.error('❌ Erreur showKarmaDiscountsConfig:', error);
+                            await interaction.reply({ content: '❌ Erreur lors de l\'affichage des remises karma', flags: 64 });
+                        }
+                    } else if (customId === 'karma_discounts_actions') {
+                        console.log('🔍 Traitement actions remises karma');
+                        await economyHandler.handleKarmaDiscountsAction(interaction);
+                    } else if (customId.startsWith('create_karma_discount_modal')) {
+                        await economyHandler.handleCreateKarmaDiscountModal(interaction);
+                    } else if (customId.startsWith('edit_karma_discount_modal')) {
+                        await economyHandler.handleEditKarmaDiscountModal(interaction);
+                    } else if (customId.startsWith('modify_karma_discount_')) {
+                        await economyHandler.handleModifyKarmaDiscountSelect(interaction);
+                    } else if (customId.startsWith('delete_karma_discount_')) {
+                        await economyHandler.handleDeleteKarmaDiscountSelect(interaction);
+                    }
+                    return;
+                }
+
+                // Routage pour achats boutique avec remises automatiques
+                if (customId === 'shop_purchase') {
+                    console.log('🎯 Routage achat boutique avec remises karma: shop_purchase');
+                    await handleShopPurchase(interaction, dataManager);
+                    return;
+                }
+
+                // Routage pour la commande /objet
+                if (customId === 'object_selection' || 
+                    customId === 'object_action_menu' ||
+                    customId.startsWith('object_offer_') ||
+                    customId.startsWith('object_delete_') ||
+                    customId.startsWith('object_custom_') ||
+                    customId.startsWith('offer_user_select_') ||
+                    customId.startsWith('custom_user_select_') ||
+                    customId.startsWith('custom_message_modal_') ||
+                    customId.startsWith('confirm_delete_') ||
+                    customId === 'cancel_delete') {
+                    
+                    console.log('🎯 Routage objet:', customId);
+                    await handleObjectInteraction(interaction, dataManager);
+                    return;
+                }
+
+                // Routage spécial pour les sélecteurs de canal comptage
+                if (interaction.isChannelSelectMenu() && customId === 'counting_add_channel') {
+                    console.log('🎯 Routage sélection canal comptage:', customId);
+                    const countingHandler = router.handlers.counting;
+                    await countingHandler.handleAddChannel(interaction);
+                    return;
+                }
+
+                // Routage via MainRouter pour le reste
+                const handled = await router.handleInteraction(interaction);
+                
+                if (!handled && !interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ 
+                        content: '❌ Cette interaction n\'est pas encore implémentée.', 
+                        flags: 64 
+                    });
+                }
+            }
+
+        } catch (error) {
+            console.error('❌ Erreur interaction:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                try {
+                    await interaction.reply({
+                        content: '❌ Erreur lors du traitement de l\'interaction.',
+                        flags: 64
+                    });
+                } catch (replyError) {
+                    console.error('❌ Erreur envoi réponse:', replyError);
+                }
+            }
+        }
+    }
+
+    async handleMessageReward(message) {
+        try {
+            const dataManager = require('./utils/simpleDataManager');
+            const messageRewards = dataManager.getData('message_rewards.json');
+            const cooldowns = dataManager.getData('message_cooldowns.json');
+            
+            const guildConfig = messageRewards[message.guild.id];
+            if (!guildConfig || !guildConfig.enabled) return;
+            
+            const userId = message.author.id;
+            const guildId = message.guild.id;
+            const cooldownKey = `${userId}_${guildId}`;
+            const now = Date.now();
+            
+            if (cooldowns[cooldownKey] && (now - cooldowns[cooldownKey]) < (guildConfig.cooldown * 1000)) {
+                return;
+            }
+            
+            cooldowns[cooldownKey] = now;
+            dataManager.setData('message_cooldowns.json', cooldowns);
+            
+            const user = await dataManager.getUser(userId, guildId);
+            user.balance = (user.balance || 1000) + guildConfig.amount;
+            user.messageCount = (user.messageCount || 0) + 1;
+            
+            await dataManager.updateUser(userId, guildId, user);
+            
+            console.log(`💰 ${message.author.tag} a gagné ${guildConfig.amount}€ en envoyant un message`);
+            
+        } catch (error) {
+            console.error('❌ Erreur récompense message:', error);
+        }
+    }
+
+    async handleAutoThread(message) {
+        try {
+            const dataManager = require('./utils/simpleDataManager');
+            const config = await dataManager.loadData('autothread.json', {});
+            const guildId = message.guild.id;
+            const channelId = message.channel.id;
+            
+            const autoThreadConfig = config[guildId];
+            if (!autoThreadConfig || !autoThreadConfig.enabled) return;
+            
+            const isChannelConfigured = autoThreadConfig.channels?.some(c => 
+                (typeof c === 'string' ? c : c.channelId) === channelId
+            );
+            if (!isChannelConfigured) return;
+            
+            if (message.channel.isThread() || message.channel.type !== 0) return;
+            
+            let threadName = autoThreadConfig.threadName || 'Discussion - {user}';
+            threadName = threadName
+                .replace('{user}', message.author.displayName || message.author.username)
+                .replace('{channel}', message.channel.name)
+                .replace('{date}', new Date().toLocaleDateString('fr-FR'))
+                .replace('{time}', new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+            
+            threadName = threadName.substring(0, 100);
+            
+            const thread = await message.startThread({
+                name: threadName,
+                autoArchiveDuration: parseInt(autoThreadConfig.archiveTime) || 60,
+                reason: `Auto-thread créé par ${message.author.tag}`
+            });
+            
+            if (autoThreadConfig.slowMode && autoThreadConfig.slowMode > 0) {
+                await thread.setRateLimitPerUser(parseInt(autoThreadConfig.slowMode));
+            }
+            
+            if (!config[guildId].stats) {
+                config[guildId].stats = { threadsCreated: 0, lastCreated: null };
+            }
+            config[guildId].stats.threadsCreated += 1;
+            config[guildId].stats.lastCreated = new Date().toISOString();
+            
+            await dataManager.saveData('autothread.json', config);
+            
+            console.log(`🧵 Thread créé: "${threadName}" dans #${message.channel.name} par ${message.author.tag}`);
+            
+        } catch (error) {
+            console.error('❌ Erreur création auto-thread:', error);
+        }
+    }
+
+    async handleCounting(message) {
+        try {
+            const dataManager = require('./utils/simpleDataManager');
+            let countingConfig = {};
+            
+            try {
+                const data = await fs.readFile(path.join(__dirname, 'data', 'counting.json'), 'utf8');
+                countingConfig = JSON.parse(data);
+            } catch (error) {
+                console.log('📄 Création nouveau fichier counting.json');
+                countingConfig = {};
+            }
+            
+            const guildConfig = countingConfig[message.guild.id];
+            if (!guildConfig || !guildConfig.channels || guildConfig.channels.length === 0) {
+                return false;
+            }
+            
+            const channelConfig = guildConfig.channels.find(c => c.channelId === message.channel.id);
+            if (!channelConfig || !channelConfig.enabled) {
+                return false;
+            }
+            
+            const messageContent = message.content.trim();
+            const numberMatch = messageContent.match(/^(-?\d+(?:\.\d+)?)/);
+            if (!numberMatch) {
+                return false;
+            }
+            
+            const numberValue = parseFloat(numberMatch[0]);
+            const expectedNumber = channelConfig.currentNumber || 1;
+            
+            // Vérifier si c'est le même utilisateur qui compte deux fois
+            if (channelConfig.lastUserId === message.author.id) {
+                await message.react('⏳');
+                
+                // Reset automatique en cas de double comptage
+                const previousNumber = expectedNumber - 1;
+                if (previousNumber > (channelConfig.record || 0)) {
+                    channelConfig.record = previousNumber;
+                }
+                
+                channelConfig.currentNumber = 1;
+                channelConfig.lastUserId = null;
+                
+                const channelIndex = guildConfig.channels.findIndex(c => c.channelId === message.channel.id);
+                if (channelIndex >= 0) {
+                    guildConfig.channels[channelIndex] = channelConfig;
+                }
+                
+                countingConfig[message.guild.id] = guildConfig;
+                await fs.writeFile(
+                    path.join(__dirname, 'data', 'counting.json'), 
+                    JSON.stringify(countingConfig, null, 2)
+                );
+                
+                const { EmbedBuilder } = require('discord.js');
+                const doubleCountEmbed = new EmbedBuilder()
+                    .setColor('#FF9500')
+                    .setTitle('⏳ Double Comptage Détecté !')
+                    .setDescription(`**${message.author.displayName}** ne peut pas compter deux fois de suite.\n\n🔄 Le comptage redémarre à **1**`)
+                    .addFields([
+                        { name: '📊 Nombre atteint', value: previousNumber.toString(), inline: true },
+                        { name: '🏆 Record actuel', value: (channelConfig.record || 0).toString(), inline: true }
+                    ])
+                    .setFooter({ text: `Double comptage de ${message.author.displayName}` });
+                
+                await message.channel.send({ embeds: [doubleCountEmbed] });
+                
+                console.log(`⏳ Double comptage détecté: ${message.author.tag} - Reset à 1 (Record: ${channelConfig.record})`);
+                return true;
+            }
+            
+            if (numberValue !== expectedNumber) {
+                await message.react('❌');
+                
+                const previousNumber = expectedNumber - 1;
+                if (previousNumber > (channelConfig.record || 0)) {
+                    channelConfig.record = previousNumber;
+                }
+                
+                channelConfig.currentNumber = 1;
+                channelConfig.lastUserId = null;
+                
+                const channelIndex = guildConfig.channels.findIndex(c => c.channelId === message.channel.id);
+                if (channelIndex >= 0) {
+                    guildConfig.channels[channelIndex] = channelConfig;
+                }
+                
+                countingConfig[message.guild.id] = guildConfig;
+                await fs.writeFile(
+                    path.join(__dirname, 'data', 'counting.json'), 
+                    JSON.stringify(countingConfig, null, 2)
+                );
+                
+                const { EmbedBuilder } = require('discord.js');
+                const resetEmbed = new EmbedBuilder()
+                    .setColor('#FF0000')
+                    .setTitle('❌ Mauvais Nombre !')
+                    .setDescription(`**Erreur :** Vous avez écrit **${numberValue}** mais le nombre attendu était **${expectedNumber}**\n\n🔄 Le comptage redémarre à **1**`)
+                    .addFields([
+                        { name: '📊 Nombre atteint', value: previousNumber.toString(), inline: true },
+                        { name: '🏆 Record actuel', value: (channelConfig.record || 0).toString(), inline: true }
+                    ])
+                    .setFooter({ text: `Erreur de ${message.author.displayName}` });
+                
+                await message.channel.send({ embeds: [resetEmbed] });
+                
+                console.log(`🔄 Comptage reset: Erreur: attendu ${expectedNumber}, reçu ${numberValue} (Record: ${channelConfig.record})`);
+                
+            } else {
+                const isNewRecord = numberValue > (channelConfig.record || 0);
+                
+                channelConfig.currentNumber++;
+                channelConfig.lastUserId = message.author.id;
+                channelConfig.totalCounts = (channelConfig.totalCounts || 0) + 1;
+                
+                const channelIndex = guildConfig.channels.findIndex(c => c.channelId === message.channel.id);
+                if (channelIndex >= 0) {
+                    guildConfig.channels[channelIndex] = channelConfig;
+                }
+                
+                countingConfig[message.guild.id] = guildConfig;
+                await fs.writeFile(
+                    path.join(__dirname, 'data', 'counting.json'), 
+                    JSON.stringify(countingConfig, null, 2)
+                );
+                
+                try {
+                    if (isNewRecord) {
+                        await message.react('🏆');
+                        await message.react('🎉');
+                    } else {
+                        await message.react('✅');
+                    }
+                } catch (error) {
+                    console.error('Impossible d\'ajouter la réaction:', error);
+                }
+                
+                const milestones = [10, 25, 50, 100, 250, 500, 1000];
+                const currentCount = numberValue;
+                
+                if (milestones.includes(currentCount)) {
+                    try {
+                        await message.react('🎯');
+                    } catch (error) {
+                        console.error('Impossible d\'ajouter la réaction palier:', error);
+                    }
+                    
+                    const milestoneEmbed = new EmbedBuilder()
+                        .setColor('#00FF00')
+                        .setTitle('🎉 Palier Atteint!')
+                        .setDescription(`Félicitations ! Vous avez atteint le nombre **${currentCount}** !`)
+                        .addFields([
+                            { name: '👤 Compteur', value: message.author.displayName, inline: true },
+                            { name: '🎯 Prochain nombre', value: channelConfig.currentNumber.toString(), inline: true }
+                        ])
+                        .setFooter({ text: `Total de comptages: ${channelConfig.totalCounts}` });
+                    
+                    await message.channel.send({ embeds: [milestoneEmbed] });
+                }
+                
+                console.log(`🔢 ${message.author.tag} a compté: ${numberValue} (prochain: ${channelConfig.currentNumber})`);
+            }
+            
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Erreur système comptage:', error);
+            return false;
+        }
+    }
+}
+
+// Fonction pour gérer les achats avec remises karma automatiques
+async function handleShopPurchase(interaction, dataManager) {
+    try {
+        const guildId = interaction.guild.id;
+        const userId = interaction.user.id;
+        const itemId = interaction.values[0];
+
+        // Charger les données
+        const userData = await dataManager.getUser(userId, guildId);
+        const shopData = await dataManager.loadData('shop.json', {});
+        const economyConfig = await dataManager.loadData('economy.json', {});
+        const shopItems = shopData[guildId] || [];
+
+        // Trouver l'objet sélectionné
+        const item = shopItems.find(i => (i.id || shopItems.indexOf(i)).toString() === itemId);
+        if (!item) {
+            return await interaction.reply({
+                content: '❌ Objet introuvable dans la boutique.',
+                flags: 64
+            });
+        }
+
+        // Calculer le karma net et la remise (karma net = good + bad, car bad est déjà négatif)
+        const userKarmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
+        let discountPercent = 0;
+        
+        console.log(`🎯 Karma utilisateur ${interaction.user.tag}: Good=${userData.goodKarma}, Bad=${userData.badKarma}, Net=${userKarmaNet}`);
+        
+        if (economyConfig.karmaDiscounts?.enabled && economyConfig.karmaDiscounts?.ranges) {
+            console.log(`📊 Remises karma activées, ${economyConfig.karmaDiscounts.ranges.length} tranches configurées`);
+            
+            const applicableRanges = economyConfig.karmaDiscounts.ranges.filter(range => userKarmaNet >= range.minKarma);
+            console.log(`🔍 Tranches applicables pour karma ${userKarmaNet}:`, applicableRanges.map(r => `${r.name} (≥${r.minKarma}, ${r.discount}%)`));
+            
+            const bestRange = applicableRanges.sort((a, b) => b.minKarma - a.minKarma)[0];
+            discountPercent = bestRange ? bestRange.discount : 0;
+            
+            if (bestRange) {
+                console.log(`✅ Remise appliquée: ${bestRange.name} (${discountPercent}%)`);
+            } else {
+                console.log(`❌ Aucune remise applicable`);
+            }
+        } else {
+            console.log(`⚠️ Remises karma désactivées ou non configurées`);
+        }
+
+        // Calculer le prix final avec remise
+        const originalPrice = item.price;
+        const finalPrice = discountPercent > 0 ? 
+            Math.floor(originalPrice * (100 - discountPercent) / 100) : originalPrice;
+
+        // Vérifier si l'utilisateur a assez d'argent
+        if (userData.balance < finalPrice) {
+            const missingAmount = finalPrice - userData.balance;
+            return await interaction.reply({
+                content: `❌ **Solde insuffisant !**\n\n💰 Prix: ${finalPrice}€ ${discountPercent > 0 ? `(remise ${discountPercent}% appliquée)` : ''}\n💳 Votre solde: ${userData.balance}€\n❌ Manque: ${missingAmount}€`,
+                flags: 64
+            });
+        }
+
+        // Effectuer l'achat
+        userData.balance -= finalPrice;
+        
+        // Ajouter seulement les objets personnalisés à l'inventaire
+        if (item.type === 'custom') {
+            if (!userData.inventory) userData.inventory = [];
+            userData.inventory.push({
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                type: item.type,
+                price: originalPrice,
+                purchasedAt: new Date().toISOString()
+            });
+        }
+        
+        await dataManager.updateUser(userId, guildId, userData);
+
+        // Appliquer l'effet de l'objet selon son type
+        let effectMessage = '';
+        if (item.type === 'temporary_role' && item.roleId) {
+            try {
+                const role = await interaction.guild.roles.fetch(item.roleId);
+                if (role) {
+                    await interaction.member.roles.add(role);
+                    effectMessage = `\n🎭 Rôle **${role.name}** ajouté pour ${item.duration} jour(s) !`;
+                    
+                    // Programmer la suppression du rôle après la durée
+                    setTimeout(async () => {
+                        try {
+                            await interaction.member.roles.remove(role);
+                        } catch (error) {
+                            console.error('❌ Erreur suppression rôle temporaire:', error);
+                        }
+                    }, item.duration * 24 * 60 * 60 * 1000);
+                }
+            } catch (error) {
+                effectMessage = '\n⚠️ Erreur lors de l\'attribution du rôle.';
+            }
+        } else if (item.type === 'permanent_role' && item.roleId) {
+            try {
+                const role = await interaction.guild.roles.fetch(item.roleId);
+                if (role) {
+                    await interaction.member.roles.add(role);
+                    effectMessage = `\n🎭 Rôle permanent **${role.name}** ajouté !`;
+                }
+            } catch (error) {
+                effectMessage = '\n⚠️ Erreur lors de l\'attribution du rôle.';
+            }
+        } else if (item.type === 'custom') {
+            effectMessage = '\n🎁 Objet personnalisé acheté !';
+        } else {
+            effectMessage = '\n📦 Objet ajouté à votre inventaire !';
+        }
+
+        // Message de confirmation avec détails de la remise
+        let confirmMessage = `✅ **Achat réussi !**\n\n🛒 **${item.name}**\n💰 Prix payé: **${finalPrice}€**`;
+        
+        if (discountPercent > 0) {
+            const savedAmount = originalPrice - finalPrice;
+            confirmMessage += `\n💸 Prix original: ~~${originalPrice}€~~\n🎯 Remise karma (${discountPercent}%): **-${savedAmount}€**\n⚖️ Votre karma net: ${userKarmaNet}`;
+        }
+        
+        confirmMessage += `\n💳 Nouveau solde: **${userData.balance}€**${effectMessage}`;
+
+        await interaction.reply({
+            content: confirmMessage,
+            flags: 64
+        });
+
+        // Log de l'achat
+        console.log(`🛒 ${interaction.user.tag} a acheté "${item.name}" pour ${finalPrice}€ ${discountPercent > 0 ? `(remise ${discountPercent}%)` : ''}`);
+
+    } catch (error) {
+        console.error('❌ Erreur achat boutique:', error);
+        await interaction.reply({
+            content: '❌ Une erreur est survenue lors de l\'achat.',
+            flags: 64
+        });
+    }
+}
+
+async function handleObjectInteraction(interaction, dataManager) {
+        const customId = interaction.customId;
+        const userId = interaction.user.id;
+        const guildId = interaction.guild.id;
+        
+        try {
+            const economyData = await dataManager.loadData('economy.json', {});
+            const userKey = `${userId}_${guildId}`;
+            const userData = economyData[userKey] || { inventory: [] };
+            
+            // Filtrer les objets personnalisés uniquement
+            const customObjects = userData.inventory ? userData.inventory.filter(item => item.type === 'custom') : [];
+            
+            if (customId === 'object_selection') {
+                const objectIndex = parseInt(interaction.values[0].replace('object_', ''));
+                const selectedObject = customObjects[objectIndex];
+                
+                if (!selectedObject) {
+                    return await interaction.update({
+                        content: '❌ Objet introuvable dans votre inventaire.',
+                        components: []
+                    });
+                }
+                
+                const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+                
+                const embed = new EmbedBuilder()
+                    .setColor('#9b59b6')
+                    .setTitle(`🎯 ${selectedObject.name}`)
+                    .setDescription(selectedObject.description || 'Objet de boutique')
+                    .addFields([
+                        {
+                            name: '📦 Type',
+                            value: getItemTypeLabel(selectedObject.type),
+                            inline: true
+                        },
+                        {
+                            name: '💰 Prix d\'Achat',
+                            value: `${selectedObject.price || 'N/A'}€`,
+                            inline: true
+                        },
+                        {
+                            name: '⚡ Choisissez une Action',
+                            value: '🎁 **Offrir** - Donner à un membre\n🗑️ **Supprimer** - Retirer de l\'inventaire\n💬 **Interaction** - Message personnalisé',
+                            inline: false
+                        }
+                    ]);
+                
+                const actionMenu = new StringSelectMenuBuilder()
+                    .setCustomId('object_action_menu')
+                    .setPlaceholder('Que voulez-vous faire ?')
+                    .addOptions([
+                        {
+                            label: '🎁 Offrir',
+                            value: `object_offer_${objectIndex}`,
+                            description: 'Donner cet objet à un membre du serveur',
+                            emoji: '🎁'
+                        },
+                        {
+                            label: '🗑️ Supprimer',
+                            value: `object_delete_${objectIndex}`,
+                            description: 'Retirer cet objet de votre inventaire',
+                            emoji: '🗑️'
+                        },
+                        {
+                            label: '💬 Interaction Personnalisée',
+                            value: `object_custom_${objectIndex}`,
+                            description: 'Utiliser avec message personnalisé',
+                            emoji: '💬'
+                        }
+                    ]);
+                
+                const row = new ActionRowBuilder().addComponents(actionMenu);
+                await interaction.update({ embeds: [embed], components: [row] });
+                
+            } else if (customId === 'object_action_menu') {
+                const actionValue = interaction.values[0];
+                
+                if (actionValue.startsWith('object_offer_')) {
+                    await handleObjectOffer(interaction, dataManager, actionValue);
+                } else if (actionValue.startsWith('object_delete_')) {
+                    await handleObjectDelete(interaction, dataManager, actionValue);
+                } else if (actionValue.startsWith('object_custom_')) {
+                    await handleObjectCustom(interaction, dataManager, actionValue);
+                } else if (actionValue === 'received') {
+                    await handleReceivedObjects(interaction, dataManager);
+                }
+            } else if (customId.startsWith('custom_user_select_')) {
+                console.log('🎯 Handler custom_user_select appelé');
+                await handleCustomUserSelect(interaction, dataManager);
+            } else if (customId.startsWith('custom_message_modal_')) {
+                console.log('🎯 Handler custom_message_modal appelé');
+                await handleCustomMessageModal(interaction, dataManager);
+            } else if (customId.startsWith('offer_user_select_')) {
+                await handleOfferUserSelect(interaction, dataManager);
+            } else if (customId.startsWith('confirm_delete_')) {
+                await handleConfirmDelete(interaction, dataManager);
+            } else if (customId === 'cancel_delete') {
+                await interaction.update({
+                    content: '❌ Suppression annulée.',
+                    components: []
+                });
+            }
+            
+        } catch (error) {
+            console.error('❌ Erreur handleObjectInteraction:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la gestion des objets.',
+                flags: 64
+            });
+        }
+    }
+
+// Fonction pour gérer l'affichage des objets reçus
+async function handleReceivedObjects(interaction, dataManager) {
+    try {
+        const userId = interaction.user.id;
+        const guildId = interaction.guild.id;
+        
+        // Charger les objets reçus
+        const giftedData = await dataManager.loadData('gifted_objects.json', {});
+        const userGiftedKey = `${userId}_${guildId}`;
+        const receivedObjects = giftedData[userGiftedKey] || [];
+        
+        const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+        
+        if (receivedObjects.length === 0) {
+            const embed = new EmbedBuilder()
+                .setColor('#e74c3c')
+                .setTitle('🎁 Aucun Objet Reçu')
+                .setDescription('Vous n\'avez reçu aucun objet pour le moment.\n\nDemandez à quelqu\'un de vous offrir un objet avec `/objet` !');
+                
+            return await interaction.update({ embeds: [embed], components: [] });
+        }
+        
+        const embed = new EmbedBuilder()
+            .setColor('#f39c12')
+            .setTitle('🎁 Objets Reçus')
+            .setDescription('Voici les objets que vous avez reçus d\'autres membres')
+            .addFields([
+                {
+                    name: '📦 Vos Objets Reçus',
+                    value: receivedObjects.map((item, index) => {
+                        const giftDate = new Date(item.receivedAt).toLocaleDateString('fr-FR');
+                        return `🎨 **${item.name}** - Offert par <@${item.giftedBy}> le ${giftDate}`;
+                    }).join('\n'),
+                    inline: false
+                },
+                {
+                    name: '⚡ Actions Disponibles',
+                    value: '💬 **Interaction** - Utiliser l\'objet avec message personnalisé\n🗑️ **Supprimer** - Retirer l\'objet de votre inventaire',
+                    inline: false
+                }
+            ]);
+        
+        if (receivedObjects.length <= 25) {
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('received_object_selection')
+                .setPlaceholder('Choisissez un objet reçu...')
+                .addOptions(
+                    receivedObjects.map((item, index) => ({
+                        label: item.name,
+                        value: `received_${index}`,
+                        description: `Offert par ${item.giftedByName || 'un membre'}`,
+                        emoji: '🎁'
+                    }))
+                );
+            
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+        } else {
+            await interaction.update({ embeds: [embed], components: [] });
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur handleReceivedObjects:', error);
+        await interaction.update({
+            content: '❌ Erreur lors de l\'affichage des objets reçus.',
+            components: []
+        });
+    }
+}
+
+async function handleObjectOffer(interaction, dataManager, actionValue) {
+    const { UserSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+    const objectIndex = parseInt(actionValue.replace('object_offer_', ''));
+    
+    const embed = new EmbedBuilder()
+        .setColor('#f39c12')
+        .setTitle('🎁 Offrir un Objet')
+        .setDescription('Sélectionnez le membre à qui offrir cet objet');
+    
+    const userSelect = new UserSelectMenuBuilder()
+        .setCustomId(`offer_user_select_${objectIndex}`)
+        .setPlaceholder('Choisir un membre...')
+        .setMaxValues(1);
+    
+    const row = new ActionRowBuilder().addComponents(userSelect);
+    await interaction.update({ embeds: [embed], components: [row] });
+}
+
+async function handleObjectDelete(interaction, dataManager, actionValue) {
+    const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+    const objectIndex = parseInt(actionValue.replace('object_delete_', ''));
+    
+    const userId = interaction.user.id;
+    const guildId = interaction.guild.id;
+    const economyData = await dataManager.loadData('economy.json', {});
+    const userKey = `${userId}_${guildId}`;
+    const userData = economyData[userKey] || { inventory: [] };
+    const objectToDelete = userData.inventory[objectIndex];
+    
+    if (!objectToDelete) {
+        return await interaction.update({
+            content: '❌ Objet introuvable.',
+            components: []
+        });
+    }
+    
+    const embed = new EmbedBuilder()
+        .setColor('#e74c3c')
+        .setTitle('🗑️ Confirmation de Suppression')
+        .setDescription(`Êtes-vous sûr de vouloir supprimer **${objectToDelete.name}** de votre inventaire ?\n\n⚠️ Cette action est irréversible !`);
+    
+    const confirmButton = new ButtonBuilder()
+        .setCustomId(`confirm_delete_${objectIndex}`)
+        .setLabel('✅ Confirmer')
+        .setStyle(ButtonStyle.Danger);
+    
+    const cancelButton = new ButtonBuilder()
+        .setCustomId('cancel_delete')
+        .setLabel('❌ Annuler')
+        .setStyle(ButtonStyle.Secondary);
+    
+    const row = new ActionRowBuilder().addComponents(confirmButton, cancelButton);
+    await interaction.update({ embeds: [embed], components: [row] });
+}
+
+async function handleObjectCustom(interaction, dataManager, actionValue) {
+    const { UserSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+    const objectIndex = parseInt(actionValue.replace('object_custom_', ''));
+    
+    const userId = interaction.user.id;
+    const guildId = interaction.guild.id;
+    const economyData = await dataManager.loadData('economy.json', {});
+    const userKey = `${userId}_${guildId}`;
+    const userData = economyData[userKey] || { inventory: [] };
+    const customObjects = userData.inventory ? userData.inventory.filter(item => item.type === 'custom') : [];
+    const selectedObject = customObjects[objectIndex];
+    
+    if (!selectedObject) {
+        return await interaction.update({
+            content: '❌ Objet introuvable.',
+            components: []
+        });
+    }
+    
+    const embed = new EmbedBuilder()
+        .setColor('#9b59b6')
+        .setTitle('💬 Interaction Personnalisée')
+        .setDescription(`🎯 **Objet:** ${selectedObject.name}\n\n**Étape 1/2:** Sélectionnez le membre à cibler avec votre objet`);
+    
+    const userSelect = new UserSelectMenuBuilder()
+        .setCustomId(`custom_user_select_${objectIndex}`)
+        .setPlaceholder('Choisir un membre...')
+        .setMaxValues(1);
+    
+    const row = new ActionRowBuilder().addComponents(userSelect);
+    await interaction.update({ embeds: [embed], components: [row] });
+}
+
+async function handleCustomUserSelect(interaction, dataManager) {
+    try {
+        console.log(`🎯 Réception interaction UserSelect: ${interaction.customId}`);
+        console.log(`🎯 Type d'interaction: ${interaction.constructor.name}`);
+        console.log(`🎯 Valeurs sélectionnées: ${interaction.values}`);
+        
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+        const objectIndex = parseInt(interaction.customId.replace('custom_user_select_', ''));
+        const selectedUserId = interaction.values[0];
+        
+        console.log(`🎯 Sélection utilisateur: objectIndex=${objectIndex}, userId=${selectedUserId}`);
+        
+        const modal = new ModalBuilder()
+            .setCustomId(`custom_message_modal_${objectIndex}_${selectedUserId}`)
+            .setTitle('💬 Interaction Personnalisée');
+        
+        const messageInput = new TextInputBuilder()
+            .setCustomId('custom_message')
+            .setLabel('Étape 2/2: Votre message')
+            .setStyle(TextInputStyle.Paragraph)
+            .setMinLength(1)
+            .setMaxLength(500)
+            .setPlaceholder('Tapez votre message personnalisé ici...')
+            .setRequired(true);
+        
+        const messageRow = new ActionRowBuilder().addComponents(messageInput);
+        modal.addComponents(messageRow);
+        
+        await interaction.showModal(modal);
+        console.log('✅ Modal affiché avec succès');
+        
+    } catch (error) {
+        console.error('❌ Erreur handleCustomUserSelect:', error);
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: '❌ Erreur lors de l\'affichage du modal.',
+                flags: 64
+            });
+        }
+    }
+}
+
+async function handleCustomMessageModal(interaction, dataManager) {
+    const { EmbedBuilder } = require('discord.js');
+    const customMessage = interaction.fields.getTextInputValue('custom_message');
+    
+    // Extraire l'index de l'objet et l'ID du membre depuis le customId
+    const parts = interaction.customId.replace('custom_message_modal_', '').split('_');
+    const objectIndex = parseInt(parts[0]);
+    const targetUserId = parts[1];
+    
+    const userId = interaction.user.id;
+    const guildId = interaction.guild.id;
+    
+    try {
+        const economyData = await dataManager.loadData('economy.json', {});
+        const userKey = `${userId}_${guildId}`;
+        const userData = economyData[userKey] || { inventory: [] };
+        const customObjects = userData.inventory ? userData.inventory.filter(item => item.type === 'custom') : [];
+        const selectedObject = customObjects[objectIndex];
+        
+        if (!selectedObject) {
+            return await interaction.reply({
+                content: '❌ Objet introuvable.',
+                flags: 64
+            });
+        }
+        
+        // Récupérer le membre cible
+        const targetUser = await interaction.guild.members.fetch(targetUserId);
+        
+        // Envoyer dans le canal actuel avec le format demandé
+        await interaction.reply({
+            content: `<@${interaction.user.id}> ${customMessage} avec **${selectedObject.name}** <@${targetUserId}>`
+        });
+        
+        console.log(`💬 ${interaction.user.tag} a utilisé "${selectedObject.name}" sur ${targetUser.user.tag}: ${customMessage}`);
+        
+    } catch (error) {
+        console.error('❌ Erreur interaction personnalisée:', error);
+        await interaction.reply({
+            content: '❌ Erreur lors de l\'envoi de l\'interaction personnalisée.',
+            flags: 64
+        });
+    }
+}
+
+async function handleOfferUserSelect(interaction, dataManager) {
+    const objectIndex = parseInt(interaction.customId.replace('offer_user_select_', ''));
+    const targetUserId = interaction.values[0];
+    const userId = interaction.user.id;
+    const guildId = interaction.guild.id;
+    
+    try {
+        // Récupérer l'objet à offrir
+        const economyData = await dataManager.loadData('economy.json', {});
+        const userKey = `${userId}_${guildId}`;
+        const userData = economyData[userKey] || { inventory: [] };
+        const customObjects = userData.inventory ? userData.inventory.filter(item => item.type === 'custom') : [];
+        const objectToGift = customObjects[objectIndex];
+        
+        if (!objectToGift) {
+            return await interaction.update({
+                content: '❌ Objet introuvable dans votre inventaire.',
+                components: []
+            });
+        }
+        
+        // Vérifier que l'utilisateur ne s'offre pas l'objet à lui-même
+        if (targetUserId === userId) {
+            return await interaction.update({
+                content: '❌ Vous ne pouvez pas vous offrir un objet à vous-même !',
+                components: []
+            });
+        }
+        
+        // Récupérer le membre cible
+        const targetMember = await interaction.guild.members.fetch(targetUserId);
+        
+        // Retirer l'objet de l'inventaire du donneur (supprime uniquement l'objet spécifique)
+        const allUserInventory = userData.inventory || [];
+        const objectToRemoveIndex = allUserInventory.findIndex(item => 
+            item.type === 'custom' && 
+            item.name === objectToGift.name && 
+            item.id === objectToGift.id
+        );
+        
+        if (objectToRemoveIndex !== -1) {
+            allUserInventory.splice(objectToRemoveIndex, 1);
+            userData.inventory = allUserInventory;
+            economyData[userKey] = userData;
+            await dataManager.saveData('economy.json', economyData);
+        }
+        
+        // Ajouter l'objet aux objets reçus du destinataire
+        const giftedData = await dataManager.loadData('gifted_objects.json', {});
+        const recipientKey = `${targetUserId}_${guildId}`;
+        
+        if (!giftedData[recipientKey]) {
+            giftedData[recipientKey] = [];
+        }
+        
+        // Créer l'objet offert avec métadonnées
+        const giftedObject = {
+            ...objectToGift,
+            giftedBy: userId,
+            giftedByName: interaction.user.displayName,
+            receivedAt: new Date().toISOString(),
+            originalOwner: objectToGift.createdBy || userId
+        };
+        
+        giftedData[recipientKey].push(giftedObject);
+        await dataManager.saveData('gifted_objects.json', giftedData);
+        
+        // Confirmation du transfert
+        await interaction.update({
+            content: `✅ **${objectToGift.name}** a été offert à ${targetMember.displayName} avec succès !\n\n🎁 L'objet a été retiré de votre inventaire et ajouté aux objets reçus de ${targetMember.displayName}.`,
+            components: []
+        });
+        
+        console.log(`🎁 ${interaction.user.tag} a offert "${objectToGift.name}" à ${targetMember.user.tag}`);
+        
+    } catch (error) {
+        console.error('❌ Erreur handleOfferUserSelect:', error);
+        await interaction.update({
+            content: '❌ Erreur lors de l\'offre de l\'objet.',
+            components: []
+        });
+    }
+}
+
+async function handleConfirmDelete(interaction, dataManager) {
+    const objectIndex = parseInt(interaction.customId.replace('confirm_delete_', ''));
+    const userId = interaction.user.id;
+    const guildId = interaction.guild.id;
+    
+    try {
+        const economyData = await dataManager.loadData('economy.json', {});
+        const userKey = `${userId}_${guildId}`;
+        const userData = economyData[userKey] || { inventory: [] };
+        const customObjects = userData.inventory ? userData.inventory.filter(item => item.type === 'custom') : [];
+        
+        if (!customObjects[objectIndex]) {
+            return await interaction.update({
+                content: '❌ Objet introuvable.',
+                components: []
+            });
+        }
+        
+        const deletedObject = customObjects[objectIndex];
+        
+        // Supprimer l'objet de l'inventaire complet (pas seulement des objets personnalisés)
+        const originalIndex = userData.inventory.findIndex(item => 
+            item.id === deletedObject.id && item.type === 'custom'
+        );
+        
+        if (originalIndex !== -1) {
+            userData.inventory.splice(originalIndex, 1);
+            await dataManager.updateUser(userId, guildId, userData);
+            
+            await interaction.update({
+                content: `✅ **${deletedObject.name}** a été supprimé de votre inventaire.`,
+                components: []
+            });
+            
+            console.log(`🗑️ ${interaction.user.tag} a supprimé "${deletedObject.name}" de son inventaire`);
+        } else {
+            await interaction.update({
+                content: '❌ Erreur lors de la suppression.',
+                components: []
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Erreur suppression objet:', error);
+        await interaction.update({
+            content: '❌ Erreur lors de la suppression.',
+            components: []
+        });
+    }
+}
+
+function getItemTypeLabel(type) {
+    switch(type) {
+        case 'custom': return '🎨 Objet Personnalisé';
+        case 'temp_role': return '⌛ Rôle Temporaire';
+        case 'perm_role': return '⭐ Rôle Permanent';
+        default: return '📦 Objet Standard';
+    }
+}
+
+// Démarrage
+console.log('🚀 BAG BOT V2 - Solution Render.com Finale');
+new RenderSolutionBot();

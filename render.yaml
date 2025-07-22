@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: bag-bot-v2
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.render-final.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /health
+    region: oregon
+    scaling:
+      minInstances: 1
+      maxInstances: 1
