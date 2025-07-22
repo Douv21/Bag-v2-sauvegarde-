@@ -223,25 +223,50 @@ class CountingManager {
             return true;
         }
         
-        // Vérifier si c'est une expression mathématique
-        // Caractères autorisés : chiffres, opérateurs mathématiques, parenthèses, racine carrée
-        const mathPattern = /^[0-9+\-*×÷\/^%()√.,\s]+$/;
+        // Liste des fonctions mathématiques autorisées
+        const allowedFunctions = ['sqrt', 'pow', 'abs', 'round', 'floor', 'ceil', 'max', 'min'];
         
-        if (!mathPattern.test(cleaned)) {
+        // Pattern étendu pour inclure les fonctions mathématiques et constantes
+        // Autorise : chiffres, opérateurs, parenthèses, point décimal, fonctions autorisées, pi, e
+        let mathPattern = /^[0-9+\-*×÷\/^%()√.,\s]+$/;
+        
+        // Vérifier d'abord le pattern de base
+        let tempCleaned = cleaned;
+        
+        // Remplacer temporairement les fonctions autorisées par des placeholders
+        allowedFunctions.forEach((func, index) => {
+            const regex = new RegExp(func, 'gi');
+            tempCleaned = tempCleaned.replace(regex, `F${index}`);
+        });
+        
+        // Remplacer les constantes mathématiques
+        tempCleaned = tempCleaned.replace(/pi/gi, 'P');
+        tempCleaned = tempCleaned.replace(/\be\b/gi, 'E');
+        
+        // Pattern étendu incluant les placeholders
+        const extendedPattern = /^[0-9+\-*×÷\/^%()√.,\sFPE]+$/;
+        
+        if (!extendedPattern.test(tempCleaned)) {
             return false;
         }
         
-        // Vérifier qu'il y a au moins un chiffre
-        if (!/\d/.test(cleaned)) {
+        // Vérifier qu'il y a au moins un chiffre ou une fonction mathématique
+        if (!/\d/.test(cleaned) && !allowedFunctions.some(func => cleaned.toLowerCase().includes(func))) {
             return false;
         }
         
-        // Rejeter les messages qui sont principalement du texte
+        // Calculer le ratio de contenu mathématique (chiffres + fonctions autorisées)
         const digitCount = (cleaned.match(/\d/g) || []).length;
+        const functionCount = allowedFunctions.reduce((count, func) => {
+            const regex = new RegExp(func, 'gi');
+            return count + (cleaned.match(regex) || []).length * func.length;
+        }, 0);
+        
+        const mathContentLength = digitCount + functionCount;
         const totalLength = cleaned.length;
         
-        // Au moins 30% du message doit être des chiffres pour être considéré comme mathématique
-        return digitCount / totalLength >= 0.3;
+        // Au moins 25% du message doit être du contenu mathématique (réduit de 30% à 25%)
+        return mathContentLength / totalLength >= 0.25;
     }
 
     // Parser une expression mathématique
@@ -253,18 +278,36 @@ class CountingManager {
             // Remplacer les symboles Unicode
             cleaned = cleaned.replace(/×/g, '*').replace(/÷/g, '/');
             
-            // Gérer la racine carrée
+            // Gérer la racine carrée (symbole et fonction)
             if (cleaned.includes('√')) {
+                cleaned = cleaned.replace(/√\(([^)]+)\)/g, 'Math.sqrt($1)');
                 cleaned = cleaned.replace(/√(\d+)/g, 'Math.sqrt($1)');
             }
             
-            // Validation de sécurité - ne permettre que les caractères mathématiques
-            if (!/^[0-9+\-*\/^%().\s]+$/.test(cleaned.replace(/Math\.sqrt/g, ''))) {
+            // Remplacer les fonctions mathématiques courantes
+            cleaned = cleaned.replace(/sqrt\(([^)]+)\)/gi, 'Math.sqrt($1)');
+            cleaned = cleaned.replace(/pow\(([^,]+),([^)]+)\)/gi, 'Math.pow($1,$2)');
+            cleaned = cleaned.replace(/abs\(([^)]+)\)/gi, 'Math.abs($1)');
+            cleaned = cleaned.replace(/round\(([^)]+)\)/gi, 'Math.round($1)');
+            cleaned = cleaned.replace(/floor\(([^)]+)\)/gi, 'Math.floor($1)');
+            cleaned = cleaned.replace(/ceil\(([^)]+)\)/gi, 'Math.ceil($1)');
+            cleaned = cleaned.replace(/max\(([^)]+)\)/gi, 'Math.max($1)');
+            cleaned = cleaned.replace(/min\(([^)]+)\)/gi, 'Math.min($1)');
+            
+            // Remplacer les constantes mathématiques
+            cleaned = cleaned.replace(/\bpi\b/gi, 'Math.PI');
+            cleaned = cleaned.replace(/\be\b/gi, 'Math.E');
+            
+            // Remplacer ^ par Math.pow pour les puissances simples
+            cleaned = cleaned.replace(/(\d+(?:\.\d+)?)\^(\d+(?:\.\d+)?)/g, 'Math.pow($1,$2)');
+            cleaned = cleaned.replace(/\(([^)]+)\)\^(\d+(?:\.\d+)?)/g, 'Math.pow(($1),$2)');
+            
+            // Validation de sécurité étendue
+            const safePattern = /^[0-9+\-*\/().,\s]+$/.test(cleaned.replace(/Math\.(sqrt|pow|abs|round|floor|ceil|max|min|PI|E)/g, ''));
+            
+            if (!safePattern) {
                 return { error: 'Caractères non autorisés dans l\'expression' };
             }
-            
-            // Remplacer ^ par Math.pow
-            cleaned = cleaned.replace(/(\d+)\^(\d+)/g, 'Math.pow($1,$2)');
             
             // Évaluer l'expression de manière sécurisée
             const result = this.safeEval(cleaned);
@@ -286,36 +329,49 @@ class CountingManager {
     // Évaluation sécurisée d'expressions mathématiques
     safeEval(expression) {
         try {
-            // Liste blanche des fonctions autorisées
+            // Liste blanche des fonctions et constantes autorisées
             const allowedFunctions = {
                 'Math.sqrt': Math.sqrt,
                 'Math.pow': Math.pow,
                 'Math.abs': Math.abs,
                 'Math.round': Math.round,
                 'Math.floor': Math.floor,
-                'Math.ceil': Math.ceil
+                'Math.ceil': Math.ceil,
+                'Math.max': Math.max,
+                'Math.min': Math.min,
+                'Math.PI': Math.PI,
+                'Math.E': Math.E
             };
             
-            // Remplacer les fonctions par des variables temporaires
-            let safeExpression = expression;
-            const functionMap = {};
-            let counter = 0;
+            // Validation finale avant évaluation
+            const dangerousPatterns = [
+                /eval\(/i,
+                /function\(/i,
+                /=>/,
+                /\.\s*constructor/i,
+                /\.\s*prototype/i,
+                /require\(/i,
+                /import\(/i,
+                /process\./i,
+                /global\./i,
+                /window\./i,
+                /document\./i
+            ];
             
-            for (const [func, implementation] of Object.entries(allowedFunctions)) {
-                const regex = new RegExp(func.replace('.', '\\.'), 'g');
-                const placeholder = `__FUNC${counter}__`;
-                safeExpression = safeExpression.replace(regex, placeholder);
-                functionMap[placeholder] = implementation;
-                counter++;
+            for (const pattern of dangerousPatterns) {
+                if (pattern.test(expression)) {
+                    return null;
+                }
             }
             
-            // Créer une fonction d'évaluation sécurisée
-            const func = new Function(
-                ...Object.keys(functionMap),
-                `return (${safeExpression})`
-            );
+            // Créer un contexte sécurisé pour l'évaluation
+            const context = { ...allowedFunctions };
             
-            return func(...Object.values(functionMap));
+            // Utiliser Function constructor avec contexte limité
+            const func = new Function(...Object.keys(context), `return ${expression}`);
+            const result = func(...Object.values(context));
+            
+            return result;
             
         } catch (error) {
             return null;
