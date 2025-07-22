@@ -1,0 +1,19 @@
+{
+  "confessions": {
+    "1360897918504271882": {
+      "channels": [
+        "1368572151979970630",
+        "1392916303840280597"
+      ],
+      "logChannel": "1360897920466948159",
+      "autoThread": true,
+      "threadName": "Confession Anonyme #{number}",
+      "confessionCounter": 2,
+      "logLevel": "full",
+      "archiveTime": 10080,
+      "confessionPingRoles": [
+        "1360897918558797909"
+      ]
+    }
+  }
+}

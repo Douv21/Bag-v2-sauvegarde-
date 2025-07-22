@@ -1,0 +1,25 @@
+{
+  "1360897918504271882": {
+    "channels": [
+      {
+        "channelId": "1397267526957666428",
+        "enabled": true,
+        "current": 0,
+        "record": 1,
+        "lastUser": null,
+        "lastNumber": 0,
+        "currentNumber": 1,
+        "lastUserId": null,
+        "totalCounts": 3
+      }
+    ],
+    "mathEnabled": true,
+    "reactionsEnabled": true
+  },
+  "global": {
+    "autoReset": true,
+    "allowCalculations": true,
+    "resetOnError": true,
+    "maxNumber": 999999999
+  }
+}

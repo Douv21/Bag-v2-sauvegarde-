@@ -1,0 +1,32 @@
+{
+  "confessionChannels": [],
+  "adminLogChannel": null,
+  "autoThread": {
+    "1360897918504271882": {
+      "enabled": true,
+      "channels": [],
+      "threadName": "Discussion - {user}",
+      "archiveTime": 60,
+      "slowMode": 0
+    }
+  },
+  "confessions": {
+    "1360897918504271882": {
+      "channels": [
+        "1366452734709989457",
+        "1368572151979970630",
+        "1392916303840280597"
+      ],
+      "logChannel": "1360897920466948159",
+      "autoThread": true,
+      "threadName": "Confession Anonyme #{number}",
+      "archiveTime": 10080,
+      "threadCounter": 12,
+      "logLevel": "full",
+      "logImages": true,
+      "confessionPingRoles": [
+        "1360897918558797909"
+      ]
+    }
+  }
+}
