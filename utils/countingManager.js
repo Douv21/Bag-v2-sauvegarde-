@@ -42,16 +42,8 @@ class CountingManager {
                 return { valid: false, reason: 'ignore_message', ignore: true };
             }
 
-            // Vérifier si c'est le même utilisateur que le précédent
-            if (channelConfig.lastUserId === userId) {
-                return { 
-                    valid: false, 
-                    reason: 'same_user',
-                    message: '❌ Tu ne peux pas compter deux fois de suite !',
-                    emoji: '❌',
-                    shouldReset: true
-                };
-            }
+            // Note: Restriction "same_user" appliquée sauf après reset (currentNumber = 0)
+            // Après une remise à zéro, n'importe qui peut recommencer, même le joueur qui a causé l'erreur
 
             let expectedNumber = channelConfig.currentNumber + 1;
             let actualNumber;
@@ -59,16 +51,18 @@ class CountingManager {
             if (config.mathEnabled) {
                 // Mode mathématique activé
                 const calculation = this.parseExpression(content);
+                console.log(`🎲 Calcul reçu:`, calculation);
                 if (calculation.error) {
                     return {
                         valid: false,
                         reason: 'math_error',
-                        message: `❌ Erreur mathématique: ${calculation.error}`,
-                        emoji: '❌',
+                        message: '', // Plus de message automatique - tout dans l'embed
+                        emoji: '💥',
                         shouldReset: true
                     };
                 }
                 actualNumber = calculation.result;
+                console.log(`🔢 Nombre calculé: ${actualNumber}`);
             } else {
                 // Mode simple (nombres uniquement)
                 actualNumber = parseInt(content);
@@ -76,23 +70,44 @@ class CountingManager {
                     return {
                         valid: false,
                         reason: 'not_number',
-                        message: '❌ Ce n\'est pas un nombre valide !',
-                        emoji: '❌',
+                        message: '', // Plus de message automatique - tout dans l'embed
+                        emoji: '💥',
                         shouldReset: true
                     };
                 }
             }
 
+            // DEBUG: Afficher les informations de validation (mode réduit)
+            console.log(`🔍 Validation: lastUser="${channelConfig.lastUserId}" | current=${channelConfig.currentNumber} | attendu=${expectedNumber} | reçu=${actualNumber}`);
+
+            // Vérifier si c'est le même utilisateur (double comptage) - SAUF si le comptage a été resetté
+            // Après un reset, currentNumber = 0 ET lastUserId = null, donc n'importe qui peut recommencer
+            if (channelConfig.lastUserId === message.author.id && channelConfig.currentNumber > 0) {
+                console.log(`🚨 DOUBLE COMPTAGE DÉTECTÉ: même utilisateur ${message.author.id}`);
+                return {
+                    valid: false,
+                    reason: 'same_user_reset',
+                    message: '', // Plus de message automatique - tout dans l'embed
+                    emoji: '💥',
+                    shouldReset: true, // Reset immédiat pour double comptage
+                    expectedNumber: expectedNumber,
+                    receivedNumber: actualNumber,
+                    keepMessage: true
+                };
+            }
+
             // Vérifier si le nombre est correct
             if (actualNumber !== expectedNumber) {
+                console.log(`🚨 MAUVAIS NOMBRE: attendu ${expectedNumber}, reçu ${actualNumber}`);
                 return {
                     valid: false,
                     reason: 'wrong_number',
-                    message: `❌ Mauvais nombre ! Attendu: **${expectedNumber}**, reçu: **${actualNumber}**`,
-                    emoji: '❌',
+                    message: '', // Plus de message automatique - tout dans l'embed
+                    emoji: '💥',
                     shouldReset: true,
                     expectedNumber: expectedNumber,
-                    receivedNumber: actualNumber
+                    receivedNumber: actualNumber,
+                    keepMessage: true // Flag pour conserver le message d'erreur
                 };
             }
 
@@ -109,8 +124,9 @@ class CountingManager {
             return {
                 valid: false,
                 reason: 'error',
-                message: '❌ Une erreur est survenue lors de la validation',
-                emoji: '❌'
+                message: '', // Plus de message d'erreur - tout dans l'embed
+                emoji: '❌',
+                shouldReset: true
             };
         }
     }
@@ -127,6 +143,15 @@ class CountingManager {
 
             if (!channelConfig) return;
 
+            // Vérifier si c'est un nouveau record
+            const isNewRecord = validationResult.number > (channelConfig.record || 0);
+            if (isNewRecord) {
+                channelConfig.record = validationResult.number;
+                channelConfig.recordDate = new Date().toISOString();
+                channelConfig.recordUserId = userId;
+                console.log(`🏆 NOUVEAU RECORD: ${validationResult.number} par ${message.author.tag}`);
+            }
+
             // Mettre à jour la configuration
             channelConfig.currentNumber = validationResult.number;
             channelConfig.lastUserId = userId;
@@ -134,22 +159,28 @@ class CountingManager {
 
             this.saveCountingConfig(guildId, config);
 
-            // Ajouter une réaction si activé
-            if (config.reactionsEnabled) {
-                await message.react(validationResult.emoji);
+            // Ajouter réactions
+            try {
+                if (config.reactionsEnabled) {
+                    await message.react(validationResult.emoji); // ✅ pour message valide
+                    
+                    if (isNewRecord) {
+                        await message.react('🏆'); // 🏆 pour nouveau record
+                        console.log(`🏆 Réaction record ajoutée pour: "${message.content}"`);
+                    }
+                }
+            } catch (reactionError) {
+                console.error('Erreur ajout réaction:', reactionError);
             }
 
-            // Messages spéciaux pour certains nombres
-            if (this.isSpecialNumber(validationResult.number)) {
-                await message.reply(this.getSpecialMessage(validationResult.number));
-            }
+            console.log(`✅ Message valide accepté: "${message.content}" par ${message.author.tag}`);
 
         } catch (error) {
             console.error('Erreur processCountingMessage:', error);
         }
     }
 
-    // Traiter un message de comptage invalide
+    // Traiter un message de comptage invalide - RÉACTION ❌ + EMBED CLASSE
     async processInvalidMessage(message, validationResult) {
         try {
             const guildId = message.guild.id;
@@ -160,56 +191,89 @@ class CountingManager {
 
             if (!channelConfig) return;
 
-            // Ajouter une réaction d'erreur si activé
-            if (config.reactionsEnabled) {
-                await message.react(validationResult.emoji);
+            // Ajouter réaction ❌ pour les erreurs
+            try {
+                await message.react('❌');
+                console.log(`❌ Réaction d'erreur ajoutée pour: "${message.content}" par ${message.author.tag}`);
+            } catch (reactionError) {
+                console.error('Erreur ajout réaction ❌:', reactionError);
             }
 
-            // Envoyer un message d'erreur
-            if (validationResult.message) {
-                const errorMessage = await message.reply(validationResult.message);
-                
-                // Supprimer le message d'erreur après 5 secondes
-                setTimeout(async () => {
-                    try {
-                        await errorMessage.delete();
-                    } catch (error) {
-                        // Ignorer les erreurs de suppression
-                    }
-                }, 5000);
-            }
-
-            // Réinitialiser le canal si nécessaire
+            // Créer embed classe selon le type d'erreur
             if (validationResult.shouldReset) {
-                const oldNumber = channelConfig.currentNumber;
-                channelConfig.currentNumber = 0;
-                channelConfig.lastUserId = null;
-                channelConfig.lastMessageId = null;
-                this.saveCountingConfig(guildId, config);
-
-                // Message de réinitialisation avec détails
-                let resetMessage = `🔄 **Comptage réinitialisé !**\n\n`;
+                console.log(`🔧 Création embed pour erreur: ${validationResult.reason}`);
+                const { EmbedBuilder } = require('discord.js');
                 
-                if (validationResult.reason === 'wrong_number') {
-                    resetMessage += `❌ **Erreur:** Mauvais nombre (attendu: ${validationResult.expectedNumber}, reçu: ${validationResult.receivedNumber})\n`;
-                } else if (validationResult.reason === 'same_user') {
-                    resetMessage += `❌ **Erreur:** <@${message.author.id}> a tenté de compter deux fois de suite\n`;
-                } else if (validationResult.reason === 'math_error') {
-                    resetMessage += `❌ **Erreur:** Expression mathématique invalide\n`;
-                } else if (validationResult.reason === 'not_number') {
-                    resetMessage += `❌ **Erreur:** "${message.content}" n'est pas un nombre valide\n`;
+                let embed;
+                
+                if (validationResult.reason === 'same_user_reset') {
+                    // Embed spécial pour double comptage
+                    embed = new EmbedBuilder()
+                        .setTitle('⚡ Double Comptage Détecté')
+                        .setDescription(`**${message.author.username}** a tenté de compter deux fois consécutivement`)
+                        .addFields(
+                            { name: '🎯 Nombre Tenté', value: `\`${validationResult.receivedNumber}\``, inline: true },
+                            { name: '🔄 Reset Effectué', value: `Retour à \`0\``, inline: true },
+                            { name: '🏆 Record Serveur', value: `\`${channelConfig.record || 0}\``, inline: true }
+                        )
+                        .setColor(0xff4757) // Rouge moderne
+                        .setTimestamp()
+                        .setFooter({ 
+                            text: 'N\'importe qui peut redémarrer à 1', 
+                            iconURL: message.guild.iconURL() 
+                        });
+                } else if (validationResult.reason === 'wrong_number') {
+                    // Embed spécial pour mauvais nombre
+                    embed = new EmbedBuilder()
+                        .setTitle('🎯 Erreur de Séquence')
+                        .setDescription(`**${message.author.username}** a écrit \`${validationResult.receivedNumber}\` au lieu de \`${validationResult.expectedNumber}\``)
+                        .addFields(
+                            { name: '✅ Attendu', value: `\`${validationResult.expectedNumber}\``, inline: true },
+                            { name: '❌ Reçu', value: `\`${validationResult.receivedNumber}\``, inline: true },
+                            { name: '🏆 Record', value: `\`${channelConfig.record || 0}\``, inline: true }
+                        )
+                        .setColor(0xffa726) // Orange moderne
+                        .setTimestamp()
+                        .setFooter({ 
+                            text: 'Comptage remis à zéro - Redémarrer à 1', 
+                            iconURL: message.guild.iconURL() 
+                        });
+                } else {
+                    // Embed générique pour autres erreurs
+                    embed = new EmbedBuilder()
+                        .setTitle('🚫 Erreur de Comptage')
+                        .setDescription(`**${message.author.username}** : ${validationResult.reason}`)
+                        .addFields(
+                            { name: '🔄 Action', value: 'Reset automatique', inline: true },
+                            { name: '🎯 Prochain', value: '`1`', inline: true },
+                            { name: '🏆 Record', value: `\`${channelConfig.record || 0}\``, inline: true }
+                        )
+                        .setColor(0xe74c3c) // Rouge classique
+                        .setTimestamp()
+                        .setFooter({ 
+                            text: 'Système de comptage automatique', 
+                            iconURL: message.guild.iconURL() 
+                        });
                 }
-                
-                resetMessage += `📊 **Progression perdue:** 0 → ${oldNumber} → 0\n`;
-                resetMessage += `🎯 **Recommençons !** Le prochain nombre est **1**`;
 
-                await message.channel.send(resetMessage);
+                // Envoyer l'embed avec debug complet
+                try {
+                    console.log(`🎨 Tentative d'envoi embed pour ${validationResult.reason}...`);
+                    const sentMessage = await message.channel.send({ embeds: [embed] });
+                    console.log(`📨 ✅ Embed classe envoyé avec succès! ID: ${sentMessage.id}`);
+                } catch (embedError) {
+                    console.error(`❌ Erreur envoi embed:`, embedError);
+                }
             }
+
+            console.log(`📝 ✅ EMBED SYSTEM: Message d'erreur traité avec embed: "${message.content}" par ${message.author.tag} - ${validationResult.reason}`);
 
         } catch (error) {
             console.error('Erreur processInvalidMessage:', error);
         }
     }
+
+    // SUPPRIMÉ - Méthode dédiée remplacée par inline dans processInvalidMessage
 
     // Vérifier si un contenu est un nombre ou une expression mathématique valide
     isValidNumberOrMath(content) {
@@ -223,76 +287,77 @@ class CountingManager {
             return true;
         }
         
-        // Liste des fonctions mathématiques autorisées
-        const allowedFunctions = ['sqrt', 'pow', 'abs', 'round', 'floor', 'ceil', 'max', 'min'];
+        // NOUVEAU: Pattern ultra-permissif pour tous les symboles mathématiques
+        // NOUVEAU: Exception spéciale pour les symboles mathématiques () et √
+        // Ces symboles sont TOUJOURS autorisés, même avec du texte
+        const hasMathSymbols = /[()√+\-*×÷\/^%.,\[\]{}|&<>=!~`²³¹⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]/.test(cleaned);
+        const hasNumbers = /\d/.test(cleaned);
         
-        // Pattern étendu pour inclure les fonctions mathématiques et constantes
-        // Autorise : chiffres, opérateurs, parenthèses, point décimal, fonctions autorisées, pi, e
-        let mathPattern = /^[0-9+\-*×÷\/^%()√.,\s]+$/;
-        
-        // Vérifier d'abord le pattern de base
-        let tempCleaned = cleaned;
-        
-        // Remplacer temporairement les fonctions autorisées par des placeholders
-        allowedFunctions.forEach((func, index) => {
-            const regex = new RegExp(func, 'gi');
-            tempCleaned = tempCleaned.replace(regex, `F${index}`);
-        });
-        
-        // Remplacer les constantes mathématiques
-        tempCleaned = tempCleaned.replace(/pi/gi, 'P');
-        tempCleaned = tempCleaned.replace(/\be\b/gi, 'E');
-        
-        // Pattern étendu incluant les placeholders
-        const extendedPattern = /^[0-9+\-*×÷\/^%()√.,\sFPE]+$/;
-        
-        if (!extendedPattern.test(tempCleaned)) {
-            return false;
+        // Si le message contient des symboles mathématiques OU des chiffres, c'est probablement mathématique
+        if (hasMathSymbols || hasNumbers) {
+            console.log(`✅ Expression mathématique détectée (symboles/chiffres): "${content}"`);
+            return true;
         }
         
-        // Vérifier qu'il y a au moins un chiffre ou une fonction mathématique
-        if (!/\d/.test(cleaned) && !allowedFunctions.some(func => cleaned.toLowerCase().includes(func))) {
-            return false;
+        // Sinon, vérifier les lettres de l'alphabet (sauf constantes mathématiques)
+        const hasRegularLetters = /[a-zA-Z]/.test(cleaned);
+        
+        if (hasRegularLetters) {
+            // Exceptions: permettre les mots-clés mathématiques
+            const allowedMathTerms = ['sqrt', 'pow', 'abs', 'round', 'floor', 'ceil', 'max', 'min', 'pi', 'e', 'sin', 'cos', 'tan', 'log', 'ln'];
+            
+            // Créer une version sans les termes mathématiques autorisés
+            let testVersion = cleaned.toLowerCase();
+            allowedMathTerms.forEach(term => {
+                testVersion = testVersion.replace(new RegExp(term, 'g'), '');
+            });
+            
+            // Si après suppression des termes mathématiques, il reste des lettres, ignorer
+            if (/[a-zA-Z]/.test(testVersion)) {
+                console.log(`🚫 Message ignoré (contient du texte): "${content}"`);
+                return false; // Ignore les messages avec du texte normal
+            }
+            
+            console.log(`✅ Expression mathématique détectée (fonction): "${content}"`);
+            return true;
         }
         
-        // Calculer le ratio de contenu mathématique (chiffres + fonctions autorisées)
-        const digitCount = (cleaned.match(/\d/g) || []).length;
-        const functionCount = allowedFunctions.reduce((count, func) => {
-            const regex = new RegExp(func, 'gi');
-            return count + (cleaned.match(regex) || []).length * func.length;
-        }, 0);
-        
-        const mathContentLength = digitCount + functionCount;
-        const totalLength = cleaned.length;
-        
-        // Au moins 25% du message doit être du contenu mathématique (réduit de 30% à 25%)
-        return mathContentLength / totalLength >= 0.25;
+        // Si on arrive ici, c'est que le message ne contient ni symboles ni chiffres ni fonctions
+        console.log(`❌ Expression non-mathématique: "${content}"`);
+        return false;
     }
 
     // Parser une expression mathématique
     parseExpression(expression) {
         try {
+            console.log(`🔍 parseExpression début: "${expression}"`);
+            
             // Nettoyer l'expression
             let cleaned = expression.replace(/\s+/g, '');
+            console.log(`🧹 Après nettoyage: "${cleaned}"`);
             
             // Remplacer les symboles Unicode
             cleaned = cleaned.replace(/×/g, '*').replace(/÷/g, '/');
+            console.log(`🔄 Après Unicode: "${cleaned}"`);
             
-            // Gérer la racine carrée (symbole et fonction)
+            // Gérer la racine carrée (symbole uniquement, éviter le double remplacement)
             if (cleaned.includes('√')) {
                 cleaned = cleaned.replace(/√\(([^)]+)\)/g, 'Math.sqrt($1)');
-                cleaned = cleaned.replace(/√(\d+)/g, 'Math.sqrt($1)');
+                cleaned = cleaned.replace(/√(\d+(?:\.\d+)?)/g, 'Math.sqrt($1)');
+                console.log(`√ Après racine carrée: "${cleaned}"`);
             }
             
-            // Remplacer les fonctions mathématiques courantes
-            cleaned = cleaned.replace(/sqrt\(([^)]+)\)/gi, 'Math.sqrt($1)');
-            cleaned = cleaned.replace(/pow\(([^,]+),([^)]+)\)/gi, 'Math.pow($1,$2)');
-            cleaned = cleaned.replace(/abs\(([^)]+)\)/gi, 'Math.abs($1)');
-            cleaned = cleaned.replace(/round\(([^)]+)\)/gi, 'Math.round($1)');
-            cleaned = cleaned.replace(/floor\(([^)]+)\)/gi, 'Math.floor($1)');
-            cleaned = cleaned.replace(/ceil\(([^)]+)\)/gi, 'Math.ceil($1)');
-            cleaned = cleaned.replace(/max\(([^)]+)\)/gi, 'Math.max($1)');
-            cleaned = cleaned.replace(/min\(([^)]+)\)/gi, 'Math.min($1)');
+            // Remplacer les fonctions mathématiques courantes SEULEMENT si pas déjà préfixées
+            if (!cleaned.includes('Math.sqrt')) {
+                cleaned = cleaned.replace(/\bsqrt\(([^)]+)\)/gi, 'Math.sqrt($1)');
+            }
+            if (!cleaned.includes('Math.pow')) {
+                cleaned = cleaned.replace(/\bpow\(([^,]+),([^)]+)\)/gi, 'Math.pow($1,$2)');
+            }
+            if (!cleaned.includes('Math.abs')) {
+                cleaned = cleaned.replace(/\babs\(([^)]+)\)/gi, 'Math.abs($1)');
+            }
+            console.log(`🔧 Après fonctions: "${cleaned}"`);
             
             // Remplacer les constantes mathématiques
             cleaned = cleaned.replace(/\bpi\b/gi, 'Math.PI');
@@ -302,26 +367,38 @@ class CountingManager {
             cleaned = cleaned.replace(/(\d+(?:\.\d+)?)\^(\d+(?:\.\d+)?)/g, 'Math.pow($1,$2)');
             cleaned = cleaned.replace(/\(([^)]+)\)\^(\d+(?:\.\d+)?)/g, 'Math.pow(($1),$2)');
             
-            // Validation de sécurité étendue
-            const safePattern = /^[0-9+\-*\/().,\s]+$/.test(cleaned.replace(/Math\.(sqrt|pow|abs|round|floor|ceil|max|min|PI|E)/g, ''));
+            console.log(`✨ Expression finale à évaluer: "${cleaned}"`);
             
-            if (!safePattern) {
-                return { error: 'Caractères non autorisés dans l\'expression' };
+            // Évaluation sécurisée
+            let result;
+            
+            // Pour les expressions simples, utiliser eval directement
+            if (/^[0-9+\-*\/().,\s]+$/.test(cleaned)) {
+                console.log('📊 Évaluation simple avec eval');
+                result = eval(cleaned);
+            } else {
+                console.log('🧮 Évaluation avec Function constructor');
+                // Pour les expressions avec Math., utiliser Function constructor
+                const func = new Function('Math', `return ${cleaned}`);
+                result = func(Math);
             }
             
-            // Évaluer l'expression de manière sécurisée
-            const result = this.safeEval(cleaned);
+            console.log(`🎯 Résultat calculé: ${result}`);
             
-            if (result === null || isNaN(result) || !isFinite(result)) {
-                return { error: 'Résultat invalide' };
+            // Vérifier que le résultat est un nombre valide
+            if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
+                console.log('❌ Résultat invalide');
+                return { error: 'Résultat de calcul invalide' };
             }
             
-            // Arrondir à l'entier le plus proche
-            const roundedResult = Math.round(result);
+            // Arrondir si nécessaire
+            result = Math.round(result);
+            console.log(`✅ Résultat final: ${result}`);
             
-            return { result: roundedResult };
+            return { result: result };
             
         } catch (error) {
+            console.log('❌ Erreur parseExpression:', error);
             return { error: 'Expression mathématique invalide' };
         }
     }
@@ -364,14 +441,49 @@ class CountingManager {
                 }
             }
             
-            // Créer un contexte sécurisé pour l'évaluation
-            const context = { ...allowedFunctions };
+            // Pour les expressions simples sans fonctions Math, utiliser eval direct
+            if (!/Math\./.test(expression)) {
+                try {
+                    return eval(expression);
+                } catch (error) {
+                    return null;
+                }
+            }
             
-            // Utiliser Function constructor avec contexte limité
-            const func = new Function(...Object.keys(context), `return ${expression}`);
-            const result = func(...Object.values(context));
-            
-            return result;
+            // Pour les expressions avec fonctions Math, utiliser un contexte simplifié
+            try {
+                // Créer un contexte avec des noms simples pour éviter les problèmes de Function constructor
+                const Math_sqrt = Math.sqrt;
+                const Math_pow = Math.pow;
+                const Math_abs = Math.abs;
+                const Math_round = Math.round;
+                const Math_floor = Math.floor;
+                const Math_ceil = Math.ceil;
+                const Math_max = Math.max;
+                const Math_min = Math.min;
+                const Math_PI = Math.PI;
+                const Math_E = Math.E;
+                
+                // Remplacer les points par des underscores dans l'expression pour l'évaluation
+                let evalExpression = expression
+                    .replace(/Math\.sqrt/g, 'Math_sqrt')
+                    .replace(/Math\.pow/g, 'Math_pow')
+                    .replace(/Math\.abs/g, 'Math_abs')
+                    .replace(/Math\.round/g, 'Math_round')
+                    .replace(/Math\.floor/g, 'Math_floor')
+                    .replace(/Math\.ceil/g, 'Math_ceil')
+                    .replace(/Math\.max/g, 'Math_max')
+                    .replace(/Math\.min/g, 'Math_min')
+                    .replace(/Math\.PI/g, 'Math_PI')
+                    .replace(/Math\.E/g, 'Math_E');
+                
+                const func = new Function('Math_sqrt', 'Math_pow', 'Math_abs', 'Math_round', 'Math_floor', 'Math_ceil', 'Math_max', 'Math_min', 'Math_PI', 'Math_E', `return ${evalExpression}`);
+                const result = func(Math_sqrt, Math_pow, Math_abs, Math_round, Math_floor, Math_ceil, Math_max, Math_min, Math_PI, Math_E);
+                return result;
+            } catch (error) {
+                console.log('Erreur Function constructor:', error.message);
+                return null;
+            }
             
         } catch (error) {
             return null;
