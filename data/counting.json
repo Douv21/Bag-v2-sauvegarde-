@@ -8,9 +8,26 @@
         "record": 1,
         "lastUser": null,
         "lastNumber": 0,
-        "currentNumber": 1,
+        "currentNumber": 0,
         "lastUserId": null,
-        "totalCounts": 3
+        "totalCounts": 3,
+        "lastMessageId": null,
+        "lastTimestamp": "2025-07-23T06:49:36.795Z"
+      },
+      {
+        "channelId": "1366452734709989457",
+        "enabled": true,
+        "current": 0,
+        "record": 1,
+        "lastUser": null,
+        "lastNumber": 0,
+        "currentNumber": 0,
+        "lastUserId": null,
+        "totalCounts": 2,
+        "lastMessageId": null,
+        "recordDate": "2025-07-22T22:16:00.820Z",
+        "recordUserId": "943487722738311219",
+        "lastTimestamp": "2025-07-22T23:04:34.387Z"
       }
     ],
     "mathEnabled": true,
