@@ -22,10 +22,17 @@ module.exports = {
 
             // Récupérer status système
             const systemStatus = await deploymentManager.getSystemStatus();
-            const connected = await mongoBackup.connect();
             
-            // Vérifier intégrité
-            const integrity = await mongoBackup.verifyBackupIntegrity();
+            // Tenter connexion MongoDB seulement si password valide
+            let connected = false;
+            let integrity = false;
+            
+            if (process.env.MONGODB_PASSWORD && process.env.MONGODB_USERNAME && process.env.MONGODB_CLUSTER_URL) {
+                connected = await mongoBackup.connect();
+                if (connected) {
+                    integrity = await mongoBackup.verifyBackupIntegrity();
+                }
+            }
 
             const embed = new EmbedBuilder()
                 .setTitle('🛡️ Système de Sauvegarde MongoDB')
