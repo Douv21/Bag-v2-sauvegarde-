@@ -1,4 +1,5 @@
 const mongoBackup = require('./mongoBackupManager');
+const simpleBackup = require('./simpleBackupManager');
 
 class DataHooks {
     constructor() {
@@ -26,7 +27,13 @@ class DataHooks {
 
         try {
             console.log(`💾 Sauvegarde automatique déclenchée (${operations.length} opérations)`);
-            await mongoBackup.backupToMongo();
+            
+            // Essayer MongoDB d'abord
+            const mongoResult = await mongoBackup.backupToMongo();
+            if (!mongoResult) {
+                // Fallback vers sauvegarde simple
+                await simpleBackup.performBackup();
+            }
         } catch (error) {
             console.error('❌ Erreur sauvegarde automatique:', error);
         } finally {

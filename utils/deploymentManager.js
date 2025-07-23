@@ -1,4 +1,5 @@
 const mongoBackup = require('./mongoBackupManager');
+const simpleBackup = require('./simpleBackupManager');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -59,15 +60,20 @@ class DeploymentManager {
     // RESTAURATION COMPLÈTE DES DONNÉES
     async restoreAllData() {
         try {
-            console.log('📦 Restauration complète depuis MongoDB...');
-            
-            // Restaurer depuis MongoDB
-            const mongoSuccess = await mongoBackup.restoreFromMongo();
-            
-            if (!mongoSuccess) {
-                console.log('⚠️ Échec restauration MongoDB - création fichiers par défaut');
-                await this.createDefaultFiles();
+            // Vérifier si MongoDB est disponible avant d'essayer
+            if (process.env.MONGODB_PASSWORD && process.env.MONGODB_USERNAME && process.env.MONGODB_CLUSTER_URL) {
+                console.log('📦 Tentative restauration depuis MongoDB...');
+                const mongoSuccess = await mongoBackup.restoreFromMongo();
+                
+                if (mongoSuccess) {
+                    console.log('✅ Restauration MongoDB réussie');
+                    await this.verifyDataIntegrity();
+                    return true;
+                }
             }
+            
+            console.log('📁 Utilisation des fichiers locaux existants');
+            await this.createDefaultFiles();
             
             // Vérifier l'intégrité après restauration
             await this.verifyDataIntegrity();
@@ -150,11 +156,20 @@ class DeploymentManager {
     startBackupSystem() {
         console.log('🛡️ Démarrage du système de sauvegarde...');
         
-        // Sauvegarde automatique toutes les 15 minutes
-        mongoBackup.startAutoBackup(15);
-        
-        // Sauvegarde d'urgence en cas d'arrêt
-        mongoBackup.setupEmergencyBackup();
+        // Vérifier disponibilité MongoDB avant d'essayer
+        if (process.env.MONGODB_PASSWORD && process.env.MONGODB_USERNAME && process.env.MONGODB_CLUSTER_URL) {
+            try {
+                mongoBackup.startAutoBackup(15);
+                mongoBackup.setupEmergencyBackup();
+                console.log('✅ Système MongoDB actif');
+            } catch (error) {
+                console.log('⚠️ MongoDB indisponible - utilisation sauvegarde simple');
+                simpleBackup.startAutoBackup(30);
+            }
+        } else {
+            console.log('📁 Mode sauvegarde locale uniquement');
+            simpleBackup.startAutoBackup(30);
+        }
         
         // Nettoyage hebdomadaire des anciennes sauvegardes
         this.scheduleWeeklyCleanup();
@@ -175,7 +190,14 @@ class DeploymentManager {
     // SAUVEGARDE MANUELLE D'URGENCE
     async emergencyBackup() {
         console.log('🚨 Sauvegarde manuelle d\'urgence...');
-        return await mongoBackup.backupToMongo();
+        
+        // Essayer MongoDB d'abord
+        const mongoResult = await mongoBackup.backupToMongo();
+        if (mongoResult) return true;
+        
+        // Fallback vers sauvegarde simple
+        console.log('🔄 Fallback vers sauvegarde simple...');
+        return await simpleBackup.performBackup();
     }
 
     // STATUS DU SYSTÈME

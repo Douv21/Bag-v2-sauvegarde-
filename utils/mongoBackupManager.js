@@ -1,4 +1,11 @@
-const { MongoClient } = require('mongodb');
+// Utilisation optionnelle de MongoDB - fallback si module indisponible
+let MongoClient;
+try {
+    MongoClient = require('mongodb').MongoClient;
+} catch (error) {
+    console.log('📦 Module MongoDB non disponible - mode fichier local uniquement');
+    MongoClient = null;
+}
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -7,9 +14,36 @@ class MongoBackupManager {
         this.client = null;
         this.db = null;
         this.connected = false;
-        this.connectionString = process.env.MONGODB_PASSWORD ? 
-            `mongodb+srv://douvdouv21:${process.env.MONGODB_PASSWORD}@cluster0.5ujrblq.mongodb.net/bagbot?retryWrites=true&w=majority` : 
+        
+        // Construction de la chaîne de connexion avec les nouvelles variables
+        const username = process.env.MONGODB_USERNAME || 'douvdouv21';
+        const password = process.env.MONGODB_PASSWORD;
+        let clusterUrl = process.env.MONGODB_CLUSTER_URL || 'cluster0.5ujrblq.mongodb.net';
+        
+        // Nettoyer l'URL si elle contient déjà le format complet
+        if (clusterUrl.includes('mongodb+srv://')) {
+            // Extraire juste le nom du cluster depuis l'URL complète
+            const match = clusterUrl.match(/@([^\/\?]+)/);
+            if (match) {
+                clusterUrl = match[1];
+            }
+        }
+        
+        this.connectionString = password ? 
+            `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${clusterUrl}/bagbot?retryWrites=true&w=majority` : 
             null;
+        
+        // Debug de connexion
+        if (!password) {
+            console.log('🔑 MONGODB_PASSWORD non configuré - sauvegarde locale uniquement');
+        } else if (!username) {
+            console.log('🔑 MONGODB_USERNAME non configuré - sauvegarde locale uniquement');
+        } else if (!clusterUrl) {
+            console.log('🔑 MONGODB_CLUSTER_URL non configuré - sauvegarde locale uniquement');
+        } else {
+            console.log(`🔑 MongoDB configuré: ${username}@${clusterUrl} - MongoDB disponible`);
+            console.log(`📡 String de connexion: mongodb+srv://${username}:***@${clusterUrl}/bagbot`);
+        }
         
         this.collections = {
             users: 'users',
@@ -34,25 +68,27 @@ class MongoBackupManager {
     }
 
     async connect() {
-        if (this.connected || !this.connectionString) {
+        if (this.connected || !this.connectionString || !MongoClient) {
             return this.connected;
         }
 
         try {
             console.log('🔄 Connexion MongoDB pour sauvegarde...');
             this.client = new MongoClient(this.connectionString, {
-                serverSelectionTimeoutMS: 5000,
-                connectTimeoutMS: 5000,
+                serverSelectionTimeoutMS: 10000,
+                connectTimeoutMS: 10000,
                 maxPoolSize: 5
             });
             
             await this.client.connect();
+            // Test de la connexion
+            await this.client.db('admin').command({ ping: 1 });
             this.db = this.client.db('bagbot');
             this.connected = true;
             console.log('✅ MongoDB connecté pour système de sauvegarde');
             return true;
         } catch (error) {
-            console.log('❌ MongoDB indisponible - mode fichier local uniquement');
+            console.log(`❌ MongoDB indisponible (${error.message}) - mode fichier local uniquement`);
             this.connected = false;
             return false;
         }
@@ -68,6 +104,11 @@ class MongoBackupManager {
 
     // SAUVEGARDE: Fichiers locaux → MongoDB
     async backupToMongo() {
+        if (!MongoClient) {
+            console.log('⚠️ Sauvegarde MongoDB ignorée - module non disponible');
+            return false;
+        }
+        
         if (!await this.connect()) {
             console.log('⚠️ Sauvegarde MongoDB ignorée - pas de connexion');
             return false;
@@ -121,6 +162,11 @@ class MongoBackupManager {
 
     // RESTAURATION: MongoDB → Fichiers locaux
     async restoreFromMongo() {
+        if (!MongoClient) {
+            console.log('⚠️ Restauration MongoDB ignorée - module non disponible');
+            return false;
+        }
+        
         if (!await this.connect()) {
             console.log('⚠️ Restauration MongoDB ignorée - pas de connexion');
             return false;
