@@ -2,6 +2,8 @@ const { Client, Collection, GatewayIntentBits, Routes, REST, EmbedBuilder } = re
 const fs = require('fs').promises;
 const path = require('path');
 const express = require('express');
+const deploymentManager = require('./utils/deploymentManager');
+const mongoBackup = require('./utils/mongoBackupManager');
 
 class RenderSolutionBot {
     constructor() {
@@ -44,15 +46,67 @@ class RenderSolutionBot {
             }
         });
 
+        // Endpoint status système de sauvegarde
+        app.get('/backup-status', async (req, res) => {
+            try {
+                const status = await deploymentManager.getSystemStatus();
+                const integrity = await mongoBackup.verifyBackupIntegrity();
+                
+                res.json({
+                    deployment: status,
+                    backup: {
+                        mongoConnected: status.mongoConnected,
+                        integrityCheck: integrity
+                    },
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                res.json({ status: 'error', message: error.message });
+            }
+        });
+
+        // Endpoint sauvegarde manuelle
+        app.post('/force-backup', async (req, res) => {
+            try {
+                const success = await deploymentManager.emergencyBackup();
+                res.json({
+                    success: success,
+                    message: success ? 'Sauvegarde réussie' : 'Échec de la sauvegarde',
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                res.json({ status: 'error', message: error.message });
+            }
+        });
+
         // Démarrer le serveur web AVANT Discord
         app.listen(PORT, '0.0.0.0', () => {
             console.log('🌐 Serveur Web actif sur port', PORT);
             console.log('📊 Status: http://localhost:5000/commands-status');
             console.log('✅ Port 5000 ouvert pour Render.com');
             
-            // 2. Ensuite initialiser Discord
-            setTimeout(() => this.initializeDiscord(), 1000);
+            // 2. Initialiser le système de sauvegarde et Discord
+            setTimeout(() => this.initializeSystemsAndDiscord(), 1000);
         });
+    }
+
+    async initializeSystemsAndDiscord() {
+        // 1. Initialiser le système de sauvegarde et restauration
+        console.log('🛡️ Initialisation du système de sauvegarde MongoDB...');
+        try {
+            const isNewDeployment = await deploymentManager.initializeDeployment();
+            if (isNewDeployment) {
+                console.log('📥 Premier déploiement - données restaurées depuis MongoDB');
+            } else {
+                console.log('🔄 Redémarrage - données vérifiées');
+            }
+        } catch (error) {
+            console.error('⚠️ Erreur système de sauvegarde:', error.message);
+            console.log('📁 Continuation avec fichiers locaux uniquement');
+        }
+
+        // 2. Initialiser Discord
+        await this.initializeDiscord();
     }
 
     async initializeDiscord() {
