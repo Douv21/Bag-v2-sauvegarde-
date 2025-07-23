@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const dataHooks = require('./dataHooks');
 
 class SimpleDataManager {
     constructor() {
@@ -43,6 +44,11 @@ class SimpleDataManager {
             fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
             console.log(`💾 Fichier sauvegardé: ${filename}`);
             
+            // Déclencher sauvegarde automatique MongoDB
+            if (dataHooks) {
+                dataHooks.triggerBackup(`setData_${filename}`);
+            }
+            
         } catch (error) {
             console.error(`❌ Erreur écriture ${filename}:`, error);
         }
@@ -50,7 +56,14 @@ class SimpleDataManager {
 
     // Compatibilité avec l'ancien dataManager
     async saveData(filename, data) {
-        return this.setData(filename, data);
+        this.setData(filename, data);
+        
+        // Déclencher sauvegarde automatique MongoDB
+        if (dataHooks) {
+            dataHooks.triggerBackup(`saveData_${filename}`);
+        }
+        
+        return true;
     }
 
     async loadData(filename, defaultValue = {}) {
