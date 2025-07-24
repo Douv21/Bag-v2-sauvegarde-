@@ -32,7 +32,6 @@ async execute(interaction) { const user = interaction.user; const member = inter
             else if (karmaNet <= -20) karmaLevel = 'Mauvais 😠';
             
             const level = Math.floor(userData.xp / 1000);
-            const cardRarity = this.getCardRarity(level, karmaNet, userData.balance, userData.dailyStreak);
             
 const inscriptionDate = new Date(user.createdTimestamp).toLocaleDateString('fr-FR');
 const arriveeDate = new Date(member.joinedTimestamp).toLocaleDateString('fr-FR');
