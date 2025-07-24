@@ -44,7 +44,8 @@ const avatarHref = `data:image/png;base64,${avatarBase64}`;
 const bgPath = path.join(__dirname, '1.jpg');
 const bgImage = fs.readFileSync(bgPath).toString('base64');
 const bgHref = `data:image/jpeg;base64,${bgImage}`;
-
+const width = 800;
+const height = 400;
 const svg = `<?xml version="1.0" encoding="UTF-8"?>
 
 <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
