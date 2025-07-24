@@ -3,6 +3,7 @@ const sharp = require('sharp');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const { HolographicCardGenerator } = require('../utils/cardGenerator'); // <--- AJOUT
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -17,30 +18,41 @@ module.exports = {
     async execute(interaction) {
         try {
             await interaction.deferReply({ flags: 64 });
-            
+
             const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
             const member = interaction.guild?.members.cache.get(targetUser.id);
-            
-            console.log(`🎨 Génération carte rapide pour ${targetUser.displayName}`);
-            
-            // Lecture directe des données (plus rapide)
-            let userData = {
-                balance: 0,
-                goodKarma: 0,
-                badKarma: 0,
-                dailyStreak: 0,
-                xp: 0
-            };
-            
-            try {
-                const usersPath = path.join(__dirname, '..', 'data', 'users.json');
-                if (fs.existsSync(usersPath)) {
-                    const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
-                    userData = Object.assign(userData, usersData[targetUser.id] || {});
-                }
-            } catch (error) {
-                console.log('⚠️ Données par défaut utilisées');
-            }
+
+            // ... récupération des userData, karmaNet, karmaLevel, cardRarity, etc ...
+            // ... récupération/convert avatar en base64 ...
+
+            // Instancier le générateur
+            const cardGen = new HolographicCardGenerator();
+
+            // Générer la carte holographique
+            const svgCard = cardGen.generateHolographicCard(
+                targetUser,
+                userData,
+                { karmaNet, karmaLevel, cardRarity, discordDate, serverDate },
+                member,
+                karmaNet,
+                avatarBase64
+            );
+
+            // Convertir en PNG et envoyer
+            const pngBuffer = await sharp(Buffer.from(svgCard)).png().toBuffer();
+            const attachment = new AttachmentBuilder(pngBuffer, {
+                name: `profil-${targetUser.displayName}.png`
+            });
+            await interaction.editReply({ files: [attachment] });
+            console.log(`✅ Carte générée et envoyée`);
+
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            await interaction.editReply({
+                content: '❌ Erreur lors de la génération de la carte.'
+            }).catch(() => {});
+        }
+    },
 
             // Calculs rapides
             const karmaNet = userData.goodKarma + userData.badKarma;
