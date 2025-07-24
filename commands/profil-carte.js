@@ -4,20 +4,6 @@ module.exports = { data: new SlashCommandBuilder() .setName('profil-carte') .set
 
 async execute(interaction) { const user = interaction.user; const member = interaction.member;
 
-// Simule des données (remplace par ton accès à la base)
-const userData = {
-balance: 1500,
-karmaGood: 12,
-karmaBad: 3
-};
-
-const userStats = {
-messageCount: 420
-};
-
-const karmaTotal = userData.karmaGood - userData.karmaBad;
-const width = 800;
-const height = 400;
 
 const inscriptionDate = new Date(user.createdTimestamp).toLocaleDateString('fr-FR');
 const arriveeDate = new Date(member.joinedTimestamp).toLocaleDateString('fr-FR');
