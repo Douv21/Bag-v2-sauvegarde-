@@ -1,6 +1,6 @@
+// utils/cardgenerator.js
 const fs = require('fs');
 const path = require('path');
-const sharp = require('sharp');
 
 class HolographicCardGenerator {
     constructor() {
@@ -8,13 +8,18 @@ class HolographicCardGenerator {
         this.height = 500;
     }
 
-    generateHolographicCard(user, userData, userStats, member, karmaTotal) {
+    generateHolographicCard(user, userData, userStats, member, karmaTotal, avatarURLBase64) {
         const inscriptionDate = new Date(user.createdTimestamp).toLocaleDateString('fr-FR');
         const arriveeDate = new Date(member.joinedTimestamp).toLocaleDateString('fr-FR');
 
-        const bgPath = path.join(__dirname, '2071753-abstrait-technologie-numérique-ui-futuriste-hud-interface-virtuelle-elements-science-fiction-moderne-utilisateur-mouvement-technologie-graphique-concept-innovant-gratuit-vectoriel.jpg');
+        const bgPath = path.join(__dirname, '..', '2071753-abstrait-technologie-numérique-ui-futuriste-hud-interface-virtuelle-elements-science-fiction-moderne-utilisateur-mouvement-technologie-graphique-concept-innovant-gratuit-vectoriel.jpg');
         const backgroundImageBase64 = fs.readFileSync(bgPath).toString('base64');
-        const imageHref = `data:image/jpeg;base64,${backgroundImageBase64}`;
+        const bgHref = `data:image/jpeg;base64,${backgroundImageBase64}`;
+
+        const avatarImage = avatarURLBase64
+            ? `<clipPath id="avatarClip"><circle cx="680" cy="110" r="40"/></clipPath>
+               <image href="data:image/png;base64,${avatarURLBase64}" x="640" y="70" width="80" height="80" clip-path="url(#avatarClip)"/>`
+            : '';
 
         const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${this.width}" height="${this.height}" xmlns="http://www.w3.org/2000/svg">
@@ -28,10 +33,10 @@ class HolographicCardGenerator {
         </filter>
     </defs>
 
-    <!-- Fond avec image -->
-    <image href="${imageHref}" x="0" y="0" width="${this.width}" height="${this.height}" preserveAspectRatio="xMidYMid slice"/>
+    <image href="${bgHref}" x="0" y="0" width="${this.width}" height="${this.height}" preserveAspectRatio="xMidYMid slice"/>
+    
+    ${avatarImage}
 
-    <!-- Texte de test -->
     <text x="400" y="60" text-anchor="middle" fill="#00ffff" font-size="24" font-family="Arial" filter="url(#textGlow)">
         HOLOGRAPHIC CARD
     </text>
@@ -67,39 +72,4 @@ class HolographicCardGenerator {
     }
 }
 
-// ----------------------------
-// TEST - exemple
-// ----------------------------
-const generator = new HolographicCardGenerator();
-
-const fakeUser = {
-    username: 'Neo',
-    id: '12345678901234567890',
-    createdTimestamp: Date.now() - 1000 * 60 * 60 * 24 * 365
-};
-
-const fakeMember = {
-    joinedTimestamp: Date.now() - 1000 * 60 * 60 * 24 * 30
-};
-
-const fakeUserData = {
-    balance: 560,
-    karmaGood: 12,
-    karmaBad: 3
-};
-
-const fakeUserStats = {
-    messageCount: 482
-};
-
-const karmaTotal = fakeUserData.karmaGood - fakeUserData.karmaBad;
-
-const svg = generator.generateHolographicCard(fakeUser, fakeUserData, fakeUserStats, fakeMember, karmaTotal);
-
-// Générer l'image PNG
-sharp(Buffer.from(svg))
-    .png()
-    .toFile('./output/holographic_card.png', (err, info) => {
-        if (err) console.error('Erreur Sharp:', err);
-        else console.log('✅ Image générée :', info);
-    });
+module.exports = HolographicCardGenerator;
