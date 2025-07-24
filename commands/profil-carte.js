@@ -27,7 +27,7 @@ const avatarBuffer = await fetch(avatarUrl).then(res => res.buffer());
 const avatarBase64 = avatarBuffer.toString('base64');
 const avatarHref = `data:image/png;base64,${avatarBase64}`;
 
-const bgPath = path.join(__dirname, './assets/2071753-abstrait-technologie-numérique-ui-futuriste-hud-interface-virtuelle-elements-science-fiction-moderne-utilisateur-mouvement-technologie-graphique-concept-innovant-gratuit-vectoriel.jpg');
+const bgPath = path.join(__dirname, '2071753-abstrait-technologie-numérique-ui-futuriste-hud-interface-virtuelle-elements-science-fiction-moderne-utilisateur-mouvement-technologie-graphique-concept-innovant-gratuit-vectoriel.jpg');
 const bgImage = fs.readFileSync(bgPath).toString('base64');
 const bgHref = `data:image/jpeg;base64,${bgImage}`;
 
