@@ -35,12 +35,7 @@ let userData = {
             }
 
             // Calculs rapides
-            const karmaNet = userData.goodKarma + userData.badKarma;
-            let karmaLevel = 'Neutre';
-            if (karmaNet >= 50) karmaLevel = 'Saint 😇';
-            else if (karmaNet >= 20) karmaLevel = 'Bon 😊';
-            else if (karmaNet <= -50) karmaLevel = 'Diabolique 😈';
-            else if (karmaNet <= -20) karmaLevel = 'Mauvais 😠';
+            const karmaNet = userData.goodKarma + userData.badKarma
             
             const level = Math.floor(userData.xp / 1000);
             const cardRarity = this.getCardRarity(level, karmaNet, userData.balance, userData.dailyStreak);
