@@ -22,18 +22,21 @@ module.exports = {
       const targetMember = interaction.options.getMember('utilisateur') || interaction.member;
       const targetId = targetUser.id;
 
+      // Chemins vers les fichiers
       const usersPath = path.join(__dirname, '..', 'data', 'users.json');
       const statsPath = path.join(__dirname, '..', 'data', 'user_stats.json');
 
+      // Données par défaut
       let userData = {
         balance: 720,
         goodKarma: 50,
         badKarma: 30,
         xp: 35000,
         timeInVocal: 500,
-        messageCount: 3000,
+        messageCount: 3000
       };
 
+      // Fusion avec les fichiers si dispo
       if (fs.existsSync(usersPath)) {
         const usersJson = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
         if (usersJson[targetId]) {
@@ -48,7 +51,7 @@ module.exports = {
         }
       }
 
-      const karmaNet = userData.goodKarma + userData.badKarma;
+      const karmaNet = userData.goodKarma - userData.badKarma;
       let karmaLevel = 'Neutre';
       if (karmaNet >= 50) karmaLevel = 'Saint 😇';
       else if (karmaNet >= 20) karmaLevel = 'Bon 😊';
@@ -86,7 +89,7 @@ module.exports = {
   <image href="${avatarHref}" x="640" y="40" width="120" height="120" clip-path="url(#circleView)"/>
   <text x="400" y="60" text-anchor="middle" fill="#00ffff" font-size="24" font-family="Arial" filter="url(#textGlow)">HOLOGRAPHIC CARD</text>
   <text x="50" y="120" fill="#ffffff" font-size="16" font-family="Arial" filter="url(#textGlow)">Utilisateur : ${targetUser.username}</text>
-  <text x="50" y="150" fill="#00ff88" font-size="14" font-family="Arial" filter="url(#textGlow)">ID : ${targetId.substring(0, 10)}...</text>
+  <text x="50" y="150" fill="#00ff88" font-size="14" font-family="Arial" filter="url(#textGlow)">ID : ${targetId}</text>
   <text x="50" y="180" fill="#ffff00" font-size="14" font-family="Arial" filter="url(#textGlow)">Messages : ${userData.messageCount}</text>
   <text x="50" y="210" fill="#00ff00" font-size="14" font-family="Arial" filter="url(#textGlow)">Solde : ${userData.balance}€</text>
   <text x="50" y="240" fill="#ff6600" font-size="14" font-family="Arial" filter="url(#textGlow)">Karma + : ${userData.goodKarma} | - : ${userData.badKarma}</text>
