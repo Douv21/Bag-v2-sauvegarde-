@@ -16,7 +16,7 @@ module.exports = {
     const member = interaction.member;
 
     // Chargement des données utilisateur depuis users.json
-    const usersPath = path.join(./data/user_stats.json);
+    const usersPath = path.join('./data/user_stats.json');
     let userData = {
   balance: 999,
   goodKarma: 77,
