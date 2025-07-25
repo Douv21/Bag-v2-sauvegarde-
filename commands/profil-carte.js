@@ -15,37 +15,36 @@ await interaction.deferReply(); // Important pour éviter les erreurs d’intera
 const user = interaction.user;  
 const member = interaction.member;  
 
-// Données utilisateur par défaut  
-let userData = {  
-  balance: 0,  
-  goodKarma: 0,  
-  badKarma: 0,  
-  dailyStreak: 0,  
-  xp: 0  
-};  
+  // donnee utilisateur 
+let userData = {
+                balance: 0,
+                goodKarma: 0,
+                badKarma: 0,
+                dailyStreak: 0,
+                xp: 0
+            };
+            
+            try {
+                const usersPath = path.join(__dirname, '..', 'data', 'users.json');
+                if (fs.existsSync(usersPath)) {
+                    const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+                    userData = Object.assign(userData, usersData[targetUser.id] || {});
+                }
+            } catch (error) {
+                console.log('⚠️ Données par défaut utilisées');
+            }
 
-try {  
-  const usersPath = path.join(__dirname, '..', 'data', 'user_stats.json.json');  
-  if (fs.existsSync(usersPath)) {  
-    const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));  
-    userData = Object.assign(userData, usersData[user.id] || {}); // 🔄 user.id ici  
-  }  
-} catch (error) {  
-  console.log('⚠️ Données par défaut utilisées');  
-}  
-
-// Statistiques  
-const karmaNet = userData.goodKarma + userData.badKarma;  
-let karmaLevel = 'Neutre';  
-if (karmaNet >= 50) karmaLevel = 'Saint 😇';  
-else if (karmaNet >= 20) karmaLevel = 'Bon 😊';  
-else if (karmaNet <= -50) karmaLevel = 'Diabolique 😈';  
-else if (karmaNet <= -20) karmaLevel = 'Mauvais 😠';  
-
-const level = Math.floor(userData.xp / 1000);  
-
-const inscriptionDate = new Date(user.createdTimestamp).toLocaleDateString('fr-FR');  
-const arriveeDate = new Date(member.joinedTimestamp).toLocaleDateString('fr-FR');  
+            // Calculs rapides
+            const karmaNet = userData.goodKarma + userData.badKarma;
+            let karmaLevel = 'Neutre';
+            if (karmaNet >= 50) karmaLevel = 'Saint 😇';
+            else if (karmaNet >= 20) karmaLevel = 'Bon 😊';
+            else if (karmaNet <= -50) karmaLevel = 'Diabolique 😈';
+            else if (karmaNet <= -20) karmaLevel = 'Mauvais 😠';
+            
+            const level = Math.floor(userData.xp / 1000);
+            const cardRarity = this.getCardRarity(level, karmaNet, userData.balance, userData.dailyStreak);
+            
 
 // Avatar et fond  
 const avatarUrl = user.displayAvatarURL({ format: 'png', size: 128 });  
