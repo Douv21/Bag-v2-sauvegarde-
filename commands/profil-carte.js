@@ -18,12 +18,13 @@ module.exports = {
     // Chargement des données utilisateur depuis users.json
     const usersPath = path.join(__dirname, '..', 'data', 'users.json');
     let userData = {
-      balance: 0,
-      goodKarma: 0,
-      badKarma: 0,
-      messageCount: 0,
-      timeInVocal: 0, // en secondes
-      xp: 0
+  balance: 999,
+  goodKarma: 77,
+  badKarma: -22,
+  messageCount: 444,
+  timeInVocal: 7320, // 2h02
+  xp: 3000
+};
     };
 
     try {
