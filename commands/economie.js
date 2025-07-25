@@ -14,18 +14,28 @@ module.exports = {
     async execute(interaction, dataManager) {
         try {
             const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
+            
+            // Forcer le rechargement des données pour garantir la cohérence
             const user = dataManager.getUser(targetUser.id, interaction.guild.id);
             
-            const level = Math.floor((user.xp || 0) / 1000);
-            const nextLevelXP = (level + 1) * 1000;
-            const xpProgress = (user.xp || 0) - (level * 1000);
-
-            // Utiliser les propriétés karma unifiées
+            // Utiliser DIRECTEMENT les valeurs de l'objet retourné (toujours à jour)
+            const balance = user.balance || 1000;
+            const xp = user.xp || 0;
+            const level = user.level || 0;
             const goodKarma = user.goodKarma || 0;
             const badKarma = user.badKarma || 0;
-            const karmaNet = goodKarma - badKarma; // karma net réel
+            const karmaNet = user.karmaNet || 0; // Utiliser la valeur calculée
+            const messageCount = user.messageCount || 0;
+            const dailyStreak = user.dailyStreak || 0;
+            const timeInVocal = user.timeInVocal || 0;
             
-            console.log(`🔍 Profil: ${targetUser.username} - Good: ${goodKarma}, Bad: ${badKarma}, Net: ${karmaNet}`);
+            const nextLevelXP = (level + 1) * 1000;
+            const xpProgress = xp - (level * 1000);
+            
+            console.log(`🔍 ECONOMIE - ${targetUser.username}:`);
+            console.log(`   Balance: ${balance}€, XP: ${xp}, Level: ${level}`);
+            console.log(`   Karma: +${goodKarma} / -${badKarma} (Net: ${karmaNet})`);
+            console.log(`   Messages: ${messageCount}, Vocal: ${timeInVocal}s, Streak: ${dailyStreak}`);
             
             // Calculer niveau de karma basé sur le net
             let karmaLevel = 'Neutre';
@@ -41,7 +51,7 @@ module.exports = {
                 .addFields([
                     {
                         name: '💰 Solde',
-                        value: `${user.balance || 1000}€`,
+                        value: `${balance}€`,
                         inline: true
                     },
                     {
@@ -51,7 +61,7 @@ module.exports = {
                     },
                     {
                         name: '⭐ XP',
-                        value: `${xpProgress}/${1000} (${user.xp || 0} total)`,
+                        value: `${xpProgress}/${1000} (${xp} total)`,
                         inline: true
                     },
                     {
@@ -76,12 +86,17 @@ module.exports = {
                     },
                     {
                         name: '💬 Messages',
-                        value: `${user.messageCount || 0}`,
+                        value: `${messageCount}`,
                         inline: true
                     },
                     {
                         name: '🎁 Streak Daily',
-                        value: `${user.dailyStreak || 0} jours`,
+                        value: `${dailyStreak} jours`,
+                        inline: true
+                    },
+                    {
+                        name: '🎤 Temps Vocal',
+                        value: `${(timeInVocal / 3600).toFixed(1)} h`,
                         inline: true
                     }
                 ])

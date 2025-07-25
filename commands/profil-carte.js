@@ -15,49 +15,38 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply(); // Important : tout en haut
+    await interaction.deferReply();
 
     try {
+      const dataManager = require('../utils/dataManager');
       const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
       const targetMember = interaction.options.getMember('utilisateur') || interaction.member;
       const targetId = targetUser.id;
       const guildId = interaction.guildId;
-      const key = `${guildId}_${targetId}`; // ← clé combinée pour le JSON
 
-      const usersPath = path.join(__dirname, '..', 'data', 'users.json');
-      const statsPath = path.join(__dirname, '..', 'data', 'user_stats.json');
+      // Forcer le rechargement des données pour garantir la cohérence
+      const userData = dataManager.getUser(targetId, guildId);
 
-      let userData = {
-        balance: 720,
-        goodKarma: 50,
-        badKarma: 30,
-        xp: 35000,
-        timeInVocal: 500,
-        messageCount: 3000
-      };
-
-      if (fs.existsSync(usersPath)) {
-        const usersJson = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
-        if (usersJson[key]) {
-          userData = { ...userData, ...usersJson[key] };
-        }
-      }
-
-      if (fs.existsSync(statsPath)) {
-        const statsJson = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
-        if (statsJson[key]) {
-          userData = { ...userData, ...statsJson[key] };
-        }
-      }
-
-      const karmaNet = userData.goodKarma - userData.badKarma;
+      // Utiliser DIRECTEMENT les valeurs unifiées de users.json
+      const balance = userData.balance || 1000;
+      const goodKarma = userData.goodKarma || 0;
+      const badKarma = userData.badKarma || 0;
+      const karmaNet = userData.karmaNet || 0;
+      const messageCount = userData.messageCount || 0;
+      const timeInVocal = userData.timeInVocal || 0;
+      const level = userData.level || 0;
+      
+      console.log(`🔍 PROFIL-CARTE - ${targetUser.username}:`);
+      console.log(`   Balance: ${balance}€, Level: ${level}`);
+      console.log(`   Karma: +${goodKarma} / -${badKarma} (Net: ${karmaNet})`);
+      console.log(`   Messages: ${messageCount}, Vocal: ${timeInVocal}s`);
       let karmaLevel = 'Neutre';
       if (karmaNet >= 50) karmaLevel = 'Saint 😇';
       else if (karmaNet >= 20) karmaLevel = 'Bon 😊';
       else if (karmaNet <= -50) karmaLevel = 'Diabolique 😈';
       else if (karmaNet <= -20) karmaLevel = 'Mauvais 😠';
 
-      const level = Math.floor(userData.xp / 1000);
+      const level = userData.level || 0;
       const inscriptionDate = new Date(targetUser.createdTimestamp).toLocaleDateString('fr-FR');
       const arriveeDate = new Date(targetMember.joinedTimestamp).toLocaleDateString('fr-FR');
 
@@ -89,10 +78,10 @@ module.exports = {
   <text x="400" y="60" text-anchor="middle" fill="#00ffff" font-size="24" font-family="Arial" filter="url(#textGlow)">HOLOGRAPHIC CARD</text>
   <text x="50" y="120" fill="#ffffff" font-size="16" font-family="Arial" filter="url(#textGlow)">Utilisateur : ${targetUser.username}</text>
   <text x="50" y="150" fill="#00ff88" font-size="14" font-family="Arial" filter="url(#textGlow)">ID : ${targetId}</text>
-  <text x="50" y="180" fill="#ffff00" font-size="14" font-family="Arial" filter="url(#textGlow)">Messages : ${userData.messageCount}</text>
-  <text x="50" y="210" fill="#00ff00" font-size="14" font-family="Arial" filter="url(#textGlow)">Solde : ${userData.balance}€</text>
-  <text x="50" y="240" fill="#ff6600" font-size="14" font-family="Arial" filter="url(#textGlow)">Karma + : ${userData.goodKarma} | - : ${userData.badKarma}</text>
-  <text x="50" y="270" fill="#cc33ff" font-size="14" font-family="Arial" filter="url(#textGlow)">Vocal : ${(userData.timeInVocal / 3600).toFixed(1)} h</text>
+  <text x="50" y="180" fill="#ffff00" font-size="14" font-family="Arial" filter="url(#textGlow)">Messages : ${messageCount}</text>
+  <text x="50" y="210" fill="#00ff00" font-size="14" font-family="Arial" filter="url(#textGlow)">Solde : ${balance}€</text>
+  <text x="50" y="240" fill="#ff6600" font-size="14" font-family="Arial" filter="url(#textGlow)">Karma + : ${goodKarma} | - : ${badKarma}</text>
+  <text x="50" y="270" fill="#cc33ff" font-size="14" font-family="Arial" filter="url(#textGlow)">Vocal : ${(timeInVocal / 3600).toFixed(1)} h</text>
   <text x="50" y="300" fill="#00ccff" font-size="12" font-family="Arial" filter="url(#textGlow)">Inscription : ${inscriptionDate}</text>
   <text x="50" y="320" fill="#00ccff" font-size="12" font-family="Arial" filter="url(#textGlow)">Serveur : ${arriveeDate}</text>
   <text x="50" y="350" fill="#ffaa00" font-size="14" font-family="Arial" filter="url(#textGlow)">Niveau : ${level}</text>
