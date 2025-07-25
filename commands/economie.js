@@ -14,26 +14,25 @@ module.exports = {
     async execute(interaction, dataManager) {
         try {
             const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
-            const user = await dataManager.getUser(targetUser.id, interaction.guild.id);
+            const user = dataManager.getUser(targetUser.id, interaction.guild.id);
             
             const level = Math.floor((user.xp || 0) / 1000);
             const nextLevelXP = (level + 1) * 1000;
             const xpProgress = (user.xp || 0) - (level * 1000);
 
-            // Utiliser les bonnes propriétés karma (priorité aux nouvelles)
-            const goodKarma = user.goodKarma || user.karma_good || 0;
-            const badKarma = user.badKarma || user.karma_bad || 0;
-            const karmaNet = goodKarma + Math.abs(badKarma);
+            // Utiliser les propriétés karma unifiées
+            const goodKarma = user.goodKarma || 0;
+            const badKarma = user.badKarma || 0;
+            const karmaNet = goodKarma - badKarma; // karma net réel
             
-            console.log(`🔍 Debug karma: ${targetUser.username || 'Utilisateur'} - Good: ${goodKarma}, Bad: ${badKarma}, Net: ${karmaNet}`);
+            console.log(`🔍 Profil: ${targetUser.username} - Good: ${goodKarma}, Bad: ${badKarma}, Net: ${karmaNet}`);
             
-            // Calculer niveau de karma
-            const karmaBalance = goodKarma + badKarma;
+            // Calculer niveau de karma basé sur le net
             let karmaLevel = 'Neutre';
-            if (karmaBalance >= 50) karmaLevel = 'Saint 😇';
-            else if (karmaBalance >= 20) karmaLevel = 'Bon 😊';
-            else if (karmaBalance <= -50) karmaLevel = 'Diabolique 😈';
-            else if (karmaBalance <= -20) karmaLevel = 'Mauvais 😠';
+            if (karmaNet >= 50) karmaLevel = 'Saint 😇';
+            else if (karmaNet >= 20) karmaLevel = 'Bon 😊';
+            else if (karmaNet <= -50) karmaLevel = 'Diabolique 😈';
+            else if (karmaNet <= -20) karmaLevel = 'Mauvais 😠';
 
             const embed = new EmbedBuilder()
                 .setColor('#4CAF50')
