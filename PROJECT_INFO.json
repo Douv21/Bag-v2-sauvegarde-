@@ -1,0 +1,22 @@
+{
+  "name": "BAG Bot Discord v2",
+  "version": "2.0.0",
+  "created": "2025-07-25T17:42:47.199Z",
+  "description": "Bot Discord complet avec économie, karma, confessions, etc.",
+  "features": [
+    "Système économique complet",
+    "Gestion du karma",
+    "Confessions anonymes",
+    "Cartes de profil",
+    "Actions (travail, crime, pêche, etc.)",
+    "Boutique et objets",
+    "Système de backup automatique",
+    "Support MongoDB et fichiers locaux",
+    "Optimisé pour Render.com"
+  ],
+  "deployment": {
+    "platform": "Render.com",
+    "type": "Web Service",
+    "runtime": "Node.js"
+  }
+}

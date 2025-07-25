@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Discord Confession Bot
+# This is a landing page for a Discord bot application
+Sitemap: /sitemap.xml
