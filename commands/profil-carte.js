@@ -24,10 +24,8 @@ module.exports = {
       const targetId = targetUser.id;
       const guildId = interaction.guildId;
 
-      // Forcer le rechargement des données pour garantir la cohérence
+      // Récupération des données utilisateur
       const userData = dataManager.getUser(targetId, guildId);
-
-      // Utiliser DIRECTEMENT les valeurs unifiées de users.json
       const balance = userData.balance || 0;
       const goodKarma = userData.goodKarma || 0;
       const badKarma = userData.badKarma || 0;
@@ -35,18 +33,18 @@ module.exports = {
       const messageCount = userData.messageCount || 0;
       const timeInVocal = userData.timeInVocal || 0;
       const level = userData.level || 0;
-      
+
       console.log(`🔍 PROFIL-CARTE - ${targetUser.username}:`);
       console.log(`   Balance: ${balance}€, Level: ${level}`);
       console.log(`   Karma: +${goodKarma} / -${badKarma} (Net: ${karmaNet})`);
       console.log(`   Messages: ${messageCount}, Vocal: ${timeInVocal}s`);
+
       let karmaLevel = 'Neutre';
       if (karmaNet >= 50) karmaLevel = 'Saint 😇';
       else if (karmaNet >= 20) karmaLevel = 'Bon 😊';
       else if (karmaNet <= -50) karmaLevel = 'Diabolique 😈';
       else if (karmaNet <= -20) karmaLevel = 'Mauvais 😠';
 
-      const level = userData.level || 0;
       const inscriptionDate = new Date(targetUser.createdTimestamp).toLocaleDateString('fr-FR');
       const arriveeDate = new Date(targetMember.joinedTimestamp).toLocaleDateString('fr-FR');
 
@@ -102,8 +100,4 @@ module.exports = {
           await interaction.reply({ content: 'Erreur lors de la génération de la carte.', ephemeral: true });
         }
       } catch (e) {
-        console.error('❌ Impossible d\'envoyer un message d\'erreur :', e);
-      }
-    }
-  }
-};
+        console.error('❌ Impossible d\'envoyer un message d\'erreur :',
