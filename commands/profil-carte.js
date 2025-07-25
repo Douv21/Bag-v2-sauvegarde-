@@ -22,12 +22,12 @@ module.exports = {
 
       // Données par défaut
       let userData = {
-        balance: 0,
-        goodKarma: 0,
-        badKarma: 0,
-        xp: 0,
-        timeInVocal: 0,
-        messageCount: 0,
+        balance: 720,
+        goodKarma: 50,
+        badKarma: 30,
+        xp: 35000,
+        timeInVocal: 500,
+        messageCount: 3000,
       };
 
       // Chargement et fusion des données utilisateur
