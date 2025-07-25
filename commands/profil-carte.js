@@ -28,7 +28,7 @@ module.exports = {
       const userData = dataManager.getUser(targetId, guildId);
 
       // Utiliser DIRECTEMENT les valeurs unifiées de users.json
-      const balance = userData.balance || 1000;
+      const balance = userData.balance || 0;
       const goodKarma = userData.goodKarma || 0;
       const badKarma = userData.badKarma || 0;
       const karmaNet = userData.karmaNet || 0;
