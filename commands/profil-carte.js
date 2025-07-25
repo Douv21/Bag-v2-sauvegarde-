@@ -15,12 +15,14 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply(); // Placé tout en haut
+    await interaction.deferReply(); // Important : tout en haut
 
     try {
       const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
       const targetMember = interaction.options.getMember('utilisateur') || interaction.member;
       const targetId = targetUser.id;
+      const guildId = interaction.guildId;
+      const key = `${guildId}_${targetId}`; // ← clé combinée pour le JSON
 
       const usersPath = path.join(__dirname, '..', 'data', 'users.json');
       const statsPath = path.join(__dirname, '..', 'data', 'user_stats.json');
@@ -36,15 +38,15 @@ module.exports = {
 
       if (fs.existsSync(usersPath)) {
         const usersJson = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
-        if (usersJson[targetId]) {
-          userData = { ...userData, ...usersJson[targetId] };
+        if (usersJson[key]) {
+          userData = { ...userData, ...usersJson[key] };
         }
       }
 
       if (fs.existsSync(statsPath)) {
         const statsJson = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
-        if (statsJson[targetId]) {
-          userData = { ...userData, ...statsJson[targetId] };
+        if (statsJson[key]) {
+          userData = { ...userData, ...statsJson[key] };
         }
       }
 
