@@ -15,18 +15,16 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    try {
-      await interaction.deferReply();
+    await interaction.deferReply(); // Placé tout en haut
 
+    try {
       const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
       const targetMember = interaction.options.getMember('utilisateur') || interaction.member;
       const targetId = targetUser.id;
 
-      // Chemins vers les fichiers
       const usersPath = path.join(__dirname, '..', 'data', 'users.json');
       const statsPath = path.join(__dirname, '..', 'data', 'user_stats.json');
 
-      // Données par défaut
       let userData = {
         balance: 720,
         goodKarma: 50,
@@ -36,7 +34,6 @@ module.exports = {
         messageCount: 3000
       };
 
-      // Fusion avec les fichiers si dispo
       if (fs.existsSync(usersPath)) {
         const usersJson = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
         if (usersJson[targetId]) {
@@ -107,7 +104,15 @@ module.exports = {
 
     } catch (err) {
       console.error('❌ Erreur dans /profil-carte :', err);
-      await interaction.editReply({ content: 'Erreur lors de la génération de la carte.' });
+      try {
+        if (interaction.deferred || interaction.replied) {
+          await interaction.editReply({ content: 'Erreur lors de la génération de la carte.' });
+        } else {
+          await interaction.reply({ content: 'Erreur lors de la génération de la carte.', ephemeral: true });
+        }
+      } catch (e) {
+        console.error('❌ Impossible d\'envoyer un message d\'erreur :', e);
+      }
     }
   }
 };
