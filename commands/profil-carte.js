@@ -24,7 +24,6 @@ module.exports = {
       const targetId = targetUser.id;
       const guildId = interaction.guildId;
 
-      // Récupération des données utilisateur
       const userData = dataManager.getUser(targetId, guildId);
       const balance = userData.balance || 0;
       const goodKarma = userData.goodKarma || 0;
@@ -100,4 +99,8 @@ module.exports = {
           await interaction.reply({ content: 'Erreur lors de la génération de la carte.', ephemeral: true });
         }
       } catch (e) {
-        console.error('❌ Impossible d\'envoyer un message d\'erreur :',
+        console.error('❌ Impossible d\'envoyer un message d\'erreur :', e);
+      }
+    }
+  }
+};
