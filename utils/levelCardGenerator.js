@@ -63,6 +63,34 @@ class LevelCardGenerator {
     }
 
     async createHolographicSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData, userRoles = []) {
+        console.log(`🖼️ Avatar URL reçue pour carte:`, user.avatarURL);
+        
+        // Télécharger et encoder l'avatar en base64 pour l'intégrer directement dans le SVG
+        let avatarBase64 = '';
+        try {
+            if (user.avatarURL && user.avatarURL.startsWith('http')) {
+                const https = require('https');
+                const avatarData = await new Promise((resolve, reject) => {
+                    https.get(user.avatarURL, (response) => {
+                        let data = Buffer.alloc(0);
+                        response.on('data', (chunk) => {
+                            data = Buffer.concat([data, chunk]);
+                        });
+                        response.on('end', () => {
+                            resolve(data);
+                        });
+                    }).on('error', (err) => {
+                        console.log('⚠️ Erreur téléchargement avatar:', err);
+                        reject(err);
+                    });
+                });
+                avatarBase64 = `data:image/png;base64,${avatarData.toString('base64')}`;
+                console.log(`✅ Avatar téléchargé et encodé en base64: ${avatarBase64.length} chars`);
+            }
+        } catch (error) {
+            console.log('⚠️ Impossible de télécharger avatar, utilisation avatar par défaut');
+            avatarBase64 = 'https://cdn.discordapp.com/embed/avatars/0.png';
+        }
         const fs = require('fs');
         const path = require('path');
         
@@ -142,7 +170,7 @@ class LevelCardGenerator {
             </clipPath>
             <circle cx="120" cy="120" r="52" fill="#00ffff" filter="url(#holoGlow)" opacity="0.8"/>
             <circle cx="120" cy="120" r="50" fill="#000000" stroke="#ff00ff" stroke-width="2"/>
-            <image href="${user.displayAvatarURL ? user.displayAvatarURL({ format: 'png', size: 128 }) : user.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png'}" x="72" y="72" width="96" height="96" clip-path="url(#holoAvatarClip)"/>
+            <image href="${avatarBase64 || 'https://cdn.discordapp.com/embed/avatars/0.png'}" x="72" y="72" width="96" height="96" clip-path="url(#holoAvatarClip)"/>
             
             <!-- Level Badge -->
             <circle cx="680" cy="80" r="40" fill="#00ffff" filter="url(#holoGlow)" opacity="0.8"/>
@@ -234,7 +262,7 @@ class LevelCardGenerator {
             </clipPath>
             <polygon points="120,65 140,72 155,90 155,120 155,150 140,168 120,175 100,168 85,150 85,120 85,90 100,72" fill="#00ff88" filter="url(#neonGlow)"/>
             <circle cx="120" cy="120" r="50" fill="#000000"/>
-            <image href="${user.displayAvatarURL({ format: 'png', size: 128 })}" x="72" y="72" width="96" height="96" clip-path="url(#gamerAvatarClip)"/>
+            <image href="${user.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png'}" x="72" y="72" width="96" height="96" clip-path="url(#gamerAvatarClip)"/>
             
             <!-- User Info -->
             <text x="200" y="100" fill="#ffffff" font-family="Arial Black" font-size="28" font-weight="bold">${user.displayName}</text>
@@ -305,7 +333,7 @@ class LevelCardGenerator {
             </clipPath>
             <circle cx="120" cy="120" r="55" fill="#ff1493" filter="url(#softGlow)"/>
             <circle cx="120" cy="120" r="50" fill="#000000"/>
-            <image href="${user.displayAvatarURL({ format: 'png', size: 128 })}" x="72" y="72" width="96" height="96" clip-path="url(#amourAvatarClip)"/>
+            <image href="${user.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png'}" x="72" y="72" width="96" height="96" clip-path="url(#amourAvatarClip)"/>
             
             <!-- Heart Level Badge -->
             <circle cx="680" cy="80" r="55" fill="#ff1493" filter="url(#softGlow)"/>
@@ -394,7 +422,7 @@ class LevelCardGenerator {
             </defs>
             <circle cx="120" cy="120" r="55" fill="url(#goldAccent)" filter="url(#luxuryGlow)"/>
             <circle cx="120" cy="120" r="50" fill="#000000"/>
-            <image href="${user.displayAvatarURL({ format: 'png', size: 128 })}" x="72" y="72" width="96" height="96" clip-path="url(#avatarClip)"/>
+            <image href="${user.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png'}" x="72" y="72" width="96" height="96" clip-path="url(#avatarClip)"/>
             
             <!-- User Info -->
             <text x="200" y="100" fill="#ffffff" font-family="Arial" font-size="32" font-weight="bold">${user.displayName}</text>
@@ -493,7 +521,7 @@ class LevelCardGenerator {
             </clipPath>
             <circle cx="120" cy="120" r="55" fill="${theme.accent}" filter="url(#glow)"/>
             <circle cx="120" cy="120" r="50" fill="#000000"/>
-            <image href="${user.displayAvatarURL({ format: 'png', size: 128 })}" x="72" y="72" width="96" height="96" clip-path="url(#defaultAvatarClip)"/>
+            <image href="${user.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png'}" x="72" y="72" width="96" height="96" clip-path="url(#defaultAvatarClip)"/>
             
             <!-- User Info -->
             <text x="200" y="190" fill="${theme.text}" font-family="Arial" font-size="22" font-weight="bold">${user.displayName}</text>
