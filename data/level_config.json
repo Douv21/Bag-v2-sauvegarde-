@@ -11,8 +11,9 @@
   "xpCooldown": 10000,
   "notifications": {
     "enabled": true,
-    "channelId": "1366452734709989457",
-    "cardStyle": "holographic"
+    "channelId": "1360897919204720722",
+    "cardStyle": "holographic",
+    "channel": "1360897919204720722"
   },
   "roleRewards": {
     "5": "1396547788384374884"

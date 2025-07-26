@@ -1,40 +1,42 @@
 {
   "463272211269156865_1360897918504271882": {
-    "balance": 2527,
-    "goodKarma": 8,
+    "balance": 3110,
+    "goodKarma": 10,
     "badKarma": -3,
     "dailyStreak": 1,
     "lastDaily": 1753521300454,
-    "messageCount": 43,
+    "messageCount": 49,
     "karmaGood": 0,
     "karmaBad": 0,
-    "lastWork": 1753533521957,
+    "lastWork": 1753539307313,
     "lastSteal": 1753203294089,
     "lastFish": 1753521325050,
     "lastCrime": 1753203303956,
     "appliedRewards": [
       1753184033719,
-      1753184120446
+      1753184120446,
+      1753181391406
     ]
   },
   "943487722738311219_1360897918504271882": {
-    "balance": 5274,
-    "goodKarma": 9,
-    "badKarma": -6,
+    "balance": 5952,
+    "goodKarma": 14,
+    "badKarma": -10,
     "dailyStreak": 1,
     "lastDaily": 1753471853826,
-    "messageCount": 88,
+    "messageCount": 92,
     "karmaGood": 0,
     "karmaBad": 0,
-    "lastWork": 1753518925927,
-    "lastFish": 1753525639767,
+    "lastWork": 1753549303712,
+    "lastFish": 1753549312305,
     "lastCrime": 1753209481123,
-    "lastBet": 1753519067905,
-    "lastSteal": 1753518911999,
+    "lastBet": 1753549730479,
+    "lastSteal": 1753549756285,
     "lastDonate": 1753149297896,
     "appliedRewards": [
       1753184033719,
-      1753184120446
+      1753184120446,
+      1753181391406
     ],
     "inventory": [
       {
@@ -60,7 +62,7 @@
       "enabled": true,
       "minReward": 3,
       "maxReward": 100,
-      "cooldown": 300000,
+      "cooldown": 60000,
       "goodKarma": 2,
       "badKarma": 0
     },
@@ -68,7 +70,7 @@
       "enabled": true,
       "minReward": 10,
       "maxReward": 50,
-      "cooldown": 300000,
+      "cooldown": 60000,
       "goodKarma": 1,
       "badKarma": 0
     },
@@ -82,13 +84,20 @@
       "enabled": true
     },
     "crime": {
+      "enabled": true,
+      "minReward": 1,
+      "maxReward": 300,
+      "cooldown": 480000,
       "goodKarma": 0,
       "badKarma": -5
     },
     "parier": {
+      "enabled": true,
+      "minReward": 2,
+      "maxReward": 400,
+      "cooldown": 240000,
       "goodKarma": 0,
-      "badKarma": -1,
-      "enabled": true
+      "badKarma": -1
     }
   },
   "519883409917607937_1360897918504271882": {
@@ -245,12 +254,12 @@
     "messageCount": 15
   },
   "909739750225772544_1360897918504271882": {
-    "balance": 1060,
+    "balance": 1080,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": 0,
-    "messageCount": 8
+    "messageCount": 10
   },
   "723788041382264833_1360897918504271882": {
     "balance": 1020,

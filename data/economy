@@ -1,18 +1,11 @@
 {
-  "1360897918504271882": {
-    "943487722738311219": {
-      "balance": 0,
-      "goodKarma": 0,
-      "badKarma": 0,
-      "dailyStreak": 0,
-      "lastDaily": null
-    },
-    "909739750225772544": {
-      "balance": 0,
-      "goodKarma": 0,
-      "badKarma": 0,
-      "dailyStreak": 0,
-      "lastDaily": null
-    }
+  "actions": {},
+  "daily": {
+    "enabled": false,
+    "amount": 100
+  },
+  "messageRewards": {
+    "enabled": true,
+    "amount": 5
   }
 }

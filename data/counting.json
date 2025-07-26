@@ -21,9 +21,9 @@
         "record": 1,
         "lastUser": null,
         "lastNumber": 0,
-        "currentNumber": 0,
-        "lastUserId": null,
-        "lastMessageId": null,
+        "currentNumber": 1,
+        "lastUserId": "943487722738311219",
+        "lastMessageId": "1398664132391207145",
         "lastTimestamp": "2025-07-26T13:49:10.421Z",
         "recordDate": "2025-07-26T13:48:54.526Z",
         "recordUserId": "943487722738311219"
