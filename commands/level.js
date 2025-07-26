@@ -76,6 +76,18 @@ module.exports = {
                     totalUsers: totalUsers
                 };
                 
+                // Récupérer l'avatar avec priorité serveur > global et forcer le format PNG
+                const serverAvatar = targetMember.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
+                const globalAvatar = targetUser.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
+                
+                // Convertir les URL webp en PNG si nécessaire
+                let finalAvatar = serverAvatar || globalAvatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                if (finalAvatar && finalAvatar.includes('.webp')) {
+                    finalAvatar = finalAvatar.replace('.webp', '.png');
+                }
+                
+                console.log(`🖼️ Avatar final sélectionné:`, finalAvatar);
+                
                 // Préparer l'utilisateur avec ses rôles pour la génération de carte
                 const finalDisplayName = targetMember.displayName || targetUser.displayName || targetUser.username || 'Unknown User';
                 const userWithRoles = {
@@ -84,16 +96,17 @@ module.exports = {
                     discriminator: targetUser.discriminator || '0000',
                     tag: targetUser.tag || `${targetUser.username || 'Unknown'}#${targetUser.discriminator || '0000'}`,
                     displayName: finalDisplayName,
-                    avatarURL: targetUser.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png',
+                    avatarURL: finalAvatar,
                     roles: targetMember.roles.cache.map(role => ({ name: role.name, id: role.id })),
-                    displayAvatarURL: function(options = {}) {
-                        return targetUser.displayAvatarURL?.(options) || targetUser.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                    displayAvatarURL: function(options = { format: 'png', size: 256 }) {
+                        return finalAvatar;
                     }
                 };
                 
                 console.log(`✅ Final user object for card:`, {
                     displayName: userWithRoles.displayName,
                     username: userWithRoles.username,
+                    avatarURL: userWithRoles.avatarURL,
                     rolesCount: userWithRoles.roles.length
                 });
                 
