@@ -1000,7 +1000,7 @@ class RenderSolutionBot {
                 }, 2000);
                 break;
 
-            case 'set_channel':
+            case 'notification_channel':
                 const channelRow = new ActionRowBuilder()
                     .addComponents(
                         new ChannelSelectMenuBuilder()
