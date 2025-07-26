@@ -327,7 +327,44 @@ class LevelConfigHandler {
             ])
             .setColor('#5865F2');
 
-        await interaction.update({ embeds: [embed], components: [] });
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('notifications_config_menu')
+                    .setPlaceholder('Choisissez une option à configurer...')
+                    .addOptions([
+                        {
+                            label: '🔄 Activer/Désactiver',
+                            description: 'Basculer l\'état des notifications',
+                            value: 'toggle_notifications'
+                        },
+                        {
+                            label: '📺 Choisir le canal',
+                            description: 'Définir le canal des notifications',
+                            value: 'set_channel'
+                        },
+                        {
+                            label: '🎨 Style de carte',
+                            description: 'Changer le style des cartes',
+                            value: 'card_style'
+                        },
+                        {
+                            label: '↩️ Retour menu principal',
+                            description: 'Retourner au menu principal',
+                            value: 'back_main'
+                        }
+                    ])
+            );
+
+        try {
+            if (interaction.update) {
+                await interaction.update({ embeds: [embed], components: [row] });
+            } else {
+                await interaction.editReply({ embeds: [embed], components: [row] });
+            }
+        } catch (error) {
+            console.error('Erreur showNotificationsConfig:', error);
+        }
     }
 
     async showRoleRewardsConfig(interaction) {
@@ -347,7 +384,44 @@ class LevelConfigHandler {
             ])
             .setColor('#5865F2');
 
-        await interaction.update({ embeds: [embed], components: [] });
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('role_rewards_config_menu')
+                    .setPlaceholder('Choisissez une action...')
+                    .addOptions([
+                        {
+                            label: '➕ Ajouter récompense',
+                            description: 'Ajouter un rôle pour un niveau',
+                            value: 'add_role_reward'
+                        },
+                        {
+                            label: '📋 Voir récompenses',
+                            description: 'Afficher toutes les récompenses',
+                            value: 'list_rewards'
+                        },
+                        {
+                            label: '🗑️ Supprimer récompense',
+                            description: 'Retirer une récompense existante',
+                            value: 'remove_reward'
+                        },
+                        {
+                            label: '↩️ Retour menu principal',
+                            description: 'Retourner au menu principal',
+                            value: 'back_main'
+                        }
+                    ])
+            );
+
+        try {
+            if (interaction.update) {
+                await interaction.update({ embeds: [embed], components: [row] });
+            } else {
+                await interaction.editReply({ embeds: [embed], components: [row] });
+            }
+        } catch (error) {
+            console.error('Erreur showRoleRewardsConfig:', error);
+        }
     }
 
     async showLevelFormulaConfig(interaction) {
@@ -366,11 +440,60 @@ class LevelConfigHandler {
                     name: 'Multiplicateur',
                     value: config.levelFormula.multiplier.toString(),
                     inline: true
+                },
+                {
+                    name: '📊 Aperçu des 5 premiers niveaux',
+                    value: (() => {
+                        const levelExamples = [];
+                        for (let level = 1; level <= 5; level++) {
+                            const xpRequired = Math.floor(config.levelFormula.baseXP * Math.pow(level, config.levelFormula.multiplier));
+                            levelExamples.push(`**Niveau ${level}**: ${xpRequired.toLocaleString()} XP`);
+                        }
+                        return levelExamples.join('\n');
+                    })(),
+                    inline: false
                 }
             ])
             .setColor('#5865F2');
 
-        await interaction.update({ embeds: [embed], components: [] });
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('level_formula_config_menu')
+                    .setPlaceholder('Choisissez un paramètre à modifier...')
+                    .addOptions([
+                        {
+                            label: '🎯 XP de base',
+                            description: 'Modifier l\'XP requis pour le niveau 1',
+                            value: 'base_xp'
+                        },
+                        {
+                            label: '📈 Multiplicateur',
+                            description: 'Modifier la difficulté croissante',
+                            value: 'multiplier'
+                        },
+                        {
+                            label: '🔄 Réinitialiser',
+                            description: 'Remettre aux valeurs par défaut',
+                            value: 'reset_formula'
+                        },
+                        {
+                            label: '↩️ Retour menu principal',
+                            description: 'Retourner au menu principal',
+                            value: 'back_main'
+                        }
+                    ])
+            );
+
+        try {
+            if (interaction.update) {
+                await interaction.update({ embeds: [embed], components: [row] });
+            } else {
+                await interaction.editReply({ embeds: [embed], components: [row] });
+            }
+        } catch (error) {
+            console.error('Erreur showLevelFormulaConfig:', error);
+        }
     }
 
     async showLeaderboard(interaction) {
