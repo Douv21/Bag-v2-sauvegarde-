@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch');
+const https = require('https');
 const sharp = require('sharp');
 
 module.exports = {
@@ -15,46 +15,119 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply();
+    // Gestion robuste des interactions Discord
+    let isDeferred = false;
+    try {
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferReply();
+        isDeferred = true;
+      }
+    } catch (error) {
+      console.log('⚠️ Interaction déjà traitée, continuation...');
+    }
 
     try {
       const dataManager = require('../utils/dataManager');
+      const levelManager = require('../utils/levelManager');
       const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
       const targetMember = interaction.options.getMember('utilisateur') || interaction.member;
       const targetId = targetUser.id;
       const guildId = interaction.guildId;
 
-      const userData = dataManager.getUser(targetId, guildId);
-      const balance = userData.balance || 0;
-      const goodKarma = userData.goodKarma || 0;
-      const badKarma = userData.badKarma || 0;
-      const karmaNet = userData.karmaNet || 0;
-      const messageCount = userData.messageCount || 0;
-      const timeInVocal = userData.timeInVocal || 0;
-      const level = userData.level || 0;
+      // Charger tous les fichiers de données possibles
+      const economyData = dataManager.getUser(targetId, guildId);
+      const levelData = levelManager.getUserLevel(targetId, guildId);
+      
+      // Chercher aussi dans les autres sources de données économiques avec les bons formats de clés
+      let alternateEconomyData = {};
+      try {
+        const economyFile = require('../data/economy.json');
+        // Format: userID_guildID dans economy.json
+        const economyKey = `${targetId}_${guildId}`;
+        alternateEconomyData = economyFile[economyKey] || {};
+        console.log(`📊 Economy Key: ${economyKey}`, alternateEconomyData);
+      } catch (e) {
+        console.log('📁 economy.json non trouvé');
+      }
+      
+      // Récupérer les vraies valeurs avec priorité aux sources les plus récentes
+      const balance = alternateEconomyData.balance || economyData.balance || 0;
+      const goodKarma = alternateEconomyData.goodKarma || economyData.goodKarma || 0;
+      const badKarma = alternateEconomyData.badKarma || economyData.badKarma || 0;
+      const karmaNet = goodKarma - badKarma;
+      
+      // Priorité aux données alternates (economy.json) qui sont les plus à jour
+      const messageCount = alternateEconomyData.messageCount || levelData.totalMessages || levelData.messageCount || economyData.messageCount || 0;
+      const timeInVocal = alternateEconomyData.timeInVocal || levelData.totalVoiceTime || levelData.voiceTime || economyData.timeInVocal || 0;
+      const level = levelData.level || alternateEconomyData.level || economyData.level || 0;
+      
+      console.log(`🎯 Valeurs finales: Balance=${balance}, Karma=${goodKarma}/${badKarma}, Messages=${messageCount}, Vocal=${timeInVocal}, Level=${level}`);
 
       console.log(`🔍 PROFIL-CARTE - ${targetUser.username}:`);
-      console.log(`   Balance: ${balance}€, Level: ${level}`);
-      console.log(`   Karma: +${goodKarma} / -${badKarma} (Net: ${karmaNet})`);
-      console.log(`   Messages: ${messageCount}, Vocal: ${timeInVocal}s`);
+      console.log(`   DataManager Economy:`, JSON.stringify(economyData, null, 2));
+      console.log(`   Alternate Economy:`, JSON.stringify(alternateEconomyData, null, 2));
+      console.log(`   Level Data:`, JSON.stringify(levelData, null, 2));
+      console.log(`   🎯 Valeurs finales: Balance=${balance}, Karma=${goodKarma}/${badKarma}, Messages=${messageCount}, Vocal=${timeInVocal}, Level=${level}`);
 
-      let karmaLevel = 'Neutre';
-      if (karmaNet >= 50) karmaLevel = 'Saint 😇';
-      else if (karmaNet >= 20) karmaLevel = 'Bon 😊';
-      else if (karmaNet <= -50) karmaLevel = 'Diabolique 😈';
-      else if (karmaNet <= -20) karmaLevel = 'Mauvais 😠';
+      let karmaLevel = `Neutre (${karmaNet})`;
+      if (karmaNet >= 50) karmaLevel = `Saint 😇 (${karmaNet})`;
+      else if (karmaNet >= 20) karmaLevel = `Bon 😊 (${karmaNet})`;
+      else if (karmaNet <= -50) karmaLevel = `Diabolique 😈 (${karmaNet})`;
+      else if (karmaNet <= -20) karmaLevel = `Mauvais 😠 (${karmaNet})`;
 
       const inscriptionDate = new Date(targetUser.createdTimestamp).toLocaleDateString('fr-FR');
       const arriveeDate = new Date(targetMember.joinedTimestamp).toLocaleDateString('fr-FR');
 
       const avatarUrl = targetUser.displayAvatarURL({ format: 'png', size: 128 });
-      const avatarBuffer = await fetch(avatarUrl).then(res => res.buffer());
-      const avatarBase64 = avatarBuffer.toString('base64');
+      
+      // Télécharger l'avatar avec HTTPS natif
+      let avatarBase64 = '';
+      try {
+        const avatarBuffer = await new Promise((resolve, reject) => {
+          https.get(avatarUrl, (response) => {
+            const chunks = [];
+            response.on('data', chunk => chunks.push(chunk));
+            response.on('end', () => resolve(Buffer.concat(chunks)));
+            response.on('error', reject);
+          }).on('error', reject);
+        });
+        avatarBase64 = avatarBuffer.toString('base64');
+      } catch (error) {
+        console.error('❌ Erreur téléchargement avatar:', error);
+        // Utiliser un avatar par défaut en cas d'erreur
+        avatarBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+      }
+      
       const avatarHref = `data:image/png;base64,${avatarBase64}`;
 
+      // Vérifier si l'image de fond existe, sinon utiliser un SVG holographique
       const bgPath = path.join(__dirname, '1.jpg');
-      const bgImage = fs.readFileSync(bgPath).toString('base64');
-      const bgHref = `data:image/jpeg;base64,${bgImage}`;
+      let bgHref = '';
+      
+      if (fs.existsSync(bgPath)) {
+        const bgImage = fs.readFileSync(bgPath).toString('base64');
+        bgHref = `data:image/jpeg;base64,${bgImage}`;
+      } else {
+        // Créer un arrière-plan holographique en SVG
+        const holoBg = `
+          <defs>
+            <linearGradient id="holographicBg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#0a0a2a;stop-opacity:1"/>
+              <stop offset="25%" style="stop-color:#1e1e4a;stop-opacity:1"/>
+              <stop offset="50%" style="stop-color:#2a2a6a;stop-opacity:1"/>
+              <stop offset="75%" style="stop-color:#1a1a3a;stop-opacity:1"/>
+              <stop offset="100%" style="stop-color:#0a0a1a;stop-opacity:1"/>
+            </linearGradient>
+            <pattern id="holoPattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+              <rect width="40" height="40" fill="none"/>
+              <line x1="0" y1="0" x2="40" y2="40" stroke="#00ffff" stroke-width="0.5" opacity="0.3"/>
+              <line x1="40" y1="0" x2="0" y2="40" stroke="#ff00ff" stroke-width="0.5" opacity="0.3"/>
+            </pattern>
+          </defs>
+          <rect width="800" height="400" fill="url(#holographicBg)"/>
+          <rect width="800" height="400" fill="url(#holoPattern)"/>`;
+        bgHref = holoBg;
+      }
 
       const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
@@ -69,8 +142,9 @@ module.exports = {
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    ${bgHref.includes('data:image') ? '' : bgHref}
   </defs>
-  <image href="${bgHref}" x="0" y="0" width="800" height="400" preserveAspectRatio="xMidYMid slice"/>
+  ${bgHref.includes('data:image') ? `<image href="${bgHref}" x="0" y="0" width="800" height="400" preserveAspectRatio="xMidYMid slice"/>` : ''}
   <image href="${avatarHref}" x="640" y="40" width="120" height="120" clip-path="url(#circleView)"/>
   <text x="400" y="60" text-anchor="middle" fill="#00ffff" font-size="24" font-family="Arial" filter="url(#textGlow)">HOLOGRAPHIC CARD</text>
   <text x="50" y="120" fill="#ffffff" font-size="16" font-family="Arial" filter="url(#textGlow)">Utilisateur : ${targetUser.username}</text>
@@ -88,19 +162,24 @@ module.exports = {
       const buffer = await sharp(Buffer.from(svg)).png().toBuffer();
       const attachment = new AttachmentBuilder(buffer, { name: 'carte-profil.png' });
 
-      await interaction.editReply({ files: [attachment] });
+      // Envoi sécurisé de la carte
+      try {
+        if (interaction.deferred || interaction.replied) {
+          await interaction.editReply({ files: [attachment] });
+        } else {
+          await interaction.reply({ files: [attachment] });
+        }
+        console.log('✅ Carte profil envoyée avec succès');
+      } catch (replyError) {
+        console.log('⚠️ Erreur envoi carte, tentative alternative...');
+        // En cas d'erreur, ne pas essayer d'autres méthodes qui pourraient également échouer
+        console.error('❌ Impossible d\'envoyer la carte:', replyError.message);
+      }
 
     } catch (err) {
       console.error('❌ Erreur dans /profil-carte :', err);
-      try {
-        if (interaction.deferred || interaction.replied) {
-          await interaction.editReply({ content: 'Erreur lors de la génération de la carte.' });
-        } else {
-          await interaction.reply({ content: 'Erreur lors de la génération de la carte.', ephemeral: true });
-        }
-      } catch (e) {
-        console.error('❌ Impossible d\'envoyer un message d\'erreur :', e);
-      }
+      // Ne pas essayer d'envoyer de message d'erreur en cas de problème d'interaction
+      console.log('❌ Génération de carte échouée pour', interaction.user?.username || 'utilisateur inconnu');
     }
   }
 };

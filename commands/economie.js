@@ -14,35 +14,26 @@ module.exports = {
     async execute(interaction, dataManager) {
         try {
             const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
+            const user = await dataManager.getUser(targetUser.id, interaction.guild.id);
             
-            // Forcer le rechargement des données pour garantir la cohérence
-            const user = dataManager.getUser(targetUser.id, interaction.guild.id);
-            
-            // Utiliser DIRECTEMENT les valeurs de l'objet retourné (toujours à jour)
-            const balance = user.balance || 1000;
-            const xp = user.xp || 0;
-            const level = user.level || 0;
-            const goodKarma = user.goodKarma || 0;
-            const badKarma = user.badKarma || 0;
-            const karmaNet = user.karmaNet || 0; // Utiliser la valeur calculée
-            const messageCount = user.messageCount || 0;
-            const dailyStreak = user.dailyStreak || 0;
-            const timeInVocal = user.timeInVocal || 0;
-            
+            const level = Math.floor((user.xp || 0) / 1000);
             const nextLevelXP = (level + 1) * 1000;
-            const xpProgress = xp - (level * 1000);
+            const xpProgress = (user.xp || 0) - (level * 1000);
+
+            // Utiliser les bonnes propriétés karma (priorité aux nouvelles)
+            const goodKarma = user.goodKarma || user.karma_good || 0;
+            const badKarma = user.badKarma || user.karma_bad || 0;
+            const karmaNet = goodKarma + Math.abs(badKarma);
             
-            console.log(`🔍 ECONOMIE - ${targetUser.username}:`);
-            console.log(`   Balance: ${balance}€, XP: ${xp}, Level: ${level}`);
-            console.log(`   Karma: +${goodKarma} / -${badKarma} (Net: ${karmaNet})`);
-            console.log(`   Messages: ${messageCount}, Vocal: ${timeInVocal}s, Streak: ${dailyStreak}`);
+            console.log(`🔍 Debug karma: ${targetUser.username || 'Utilisateur'} - Good: ${goodKarma}, Bad: ${badKarma}, Net: ${karmaNet}`);
             
-            // Calculer niveau de karma basé sur le net
+            // Calculer niveau de karma
+            const karmaBalance = goodKarma + badKarma;
             let karmaLevel = 'Neutre';
-            if (karmaNet >= 50) karmaLevel = 'Saint 😇';
-            else if (karmaNet >= 20) karmaLevel = 'Bon 😊';
-            else if (karmaNet <= -50) karmaLevel = 'Diabolique 😈';
-            else if (karmaNet <= -20) karmaLevel = 'Mauvais 😠';
+            if (karmaBalance >= 50) karmaLevel = 'Saint 😇';
+            else if (karmaBalance >= 20) karmaLevel = 'Bon 😊';
+            else if (karmaBalance <= -50) karmaLevel = 'Diabolique 😈';
+            else if (karmaBalance <= -20) karmaLevel = 'Mauvais 😠';
 
             const embed = new EmbedBuilder()
                 .setColor('#4CAF50')
@@ -51,7 +42,7 @@ module.exports = {
                 .addFields([
                     {
                         name: '💰 Solde',
-                        value: `${balance}€`,
+                        value: `${user.balance || 1000}€`,
                         inline: true
                     },
                     {
@@ -61,7 +52,7 @@ module.exports = {
                     },
                     {
                         name: '⭐ XP',
-                        value: `${xpProgress}/${1000} (${xp} total)`,
+                        value: `${xpProgress}/${1000} (${user.xp || 0} total)`,
                         inline: true
                     },
                     {
@@ -86,17 +77,12 @@ module.exports = {
                     },
                     {
                         name: '💬 Messages',
-                        value: `${messageCount}`,
+                        value: `${user.messageCount || 0}`,
                         inline: true
                     },
                     {
                         name: '🎁 Streak Daily',
-                        value: `${dailyStreak} jours`,
-                        inline: true
-                    },
-                    {
-                        name: '🎤 Temps Vocal',
-                        value: `${(timeInVocal / 3600).toFixed(1)} h`,
+                        value: `${user.dailyStreak || 0} jours`,
                         inline: true
                     }
                 ])

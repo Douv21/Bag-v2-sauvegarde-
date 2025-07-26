@@ -10,8 +10,10 @@ module.exports = {
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
             
-            // Charger la configuration économique
+            // Charger la configuration économique avec debug
             const economyConfig = await dataManager.loadData('economy.json', {});
+            console.log('🔍 Travailler - Config économique:', JSON.stringify(economyConfig.actions, null, 2));
+            
             const actionConfig = economyConfig.actions?.travailler || {
                 enabled: true,
                 minReward: 100,
@@ -20,6 +22,8 @@ module.exports = {
                 goodKarma: 1,
                 badKarma: -1
             };
+            
+            console.log('🔍 Travailler - Config action:', JSON.stringify(actionConfig, null, 2));
 
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
