@@ -338,7 +338,8 @@ class LevelManager {
             const channelId = config.notifications.channelId || config.notifications.channel;
             const channel = await guild.channels.fetch(channelId);
             if (!channel || !channel.isTextBased()) {
-                                console.log(`⚠️ Canal de notification non trouvé ou invalide: ${channelId}`);
+                console.log(`⚠️ Canal de notification non trouvé ou invalide: ${channelId}`);
+                return;
             }
             
             const user = await guild.members.fetch(userId);
