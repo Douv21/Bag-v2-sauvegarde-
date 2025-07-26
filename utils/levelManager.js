@@ -125,6 +125,18 @@ class LevelManager {
             this.saveUsers(users);
         }
         
+        // Auto-correction du niveau basé sur l'XP actuel
+        const correctLevel = this.calculateLevelFromXP(users[userKey].xp);
+        if (users[userKey].level !== correctLevel) {
+            const oldLevel = users[userKey].level;
+            console.log(`🔄 Correction niveau: ${userId} ${oldLevel} → ${correctLevel} (XP: ${users[userKey].xp})`);
+            users[userKey].level = correctLevel;
+            this.saveUsers(users);
+            
+            // Si c'est une correction vers un niveau supérieur, on pourrait notifier
+            // Mais pour éviter le spam, on le fait seulement si demandé explicitement
+        }
+        
         return users[userKey];
     }
 
@@ -280,26 +292,39 @@ class LevelManager {
             const config = this.loadConfig();
             
             // Check for role rewards
-            const roleReward = config.roleRewards[newLevel];
             let roleAwarded = null;
             
-            if (roleReward) {
-                try {
-                    const role = await guild.roles.fetch(roleReward);
-                    const member = await guild.members.fetch(userId);
-                    
-                    if (role && member) {
-                        await member.roles.add(role);
-                        roleAwarded = role;
-                        console.log(`🎁 Rôle ${role.name} attribué à ${member.user.username} pour le niveau ${newLevel}`);
+            if (config.roleRewards) {
+                // Gérer le cas où roleRewards peut être un objet ou un tableau
+                let roleReward = null;
+                if (Array.isArray(config.roleRewards)) {
+                    roleReward = config.roleRewards.find(reward => reward.level === newLevel);
+                } else {
+                    // Si c'est un objet, chercher par clé de niveau
+                    roleReward = config.roleRewards[newLevel] ? {
+                        level: newLevel,
+                        roleId: config.roleRewards[newLevel]
+                    } : null;
+                }
+                
+                if (roleReward && roleReward.roleId) {
+                    try {
+                        const role = await guild.roles.fetch(roleReward.roleId);
+                        const member = await guild.members.fetch(userId);
+                        
+                        if (role && member) {
+                            await member.roles.add(role);
+                            roleAwarded = role;
+                            console.log(`🎁 Rôle ${role.name} attribué à ${member.user.username} pour le niveau ${newLevel}`);
+                        }
+                    } catch (error) {
+                        console.error('Erreur attribution rôle:', error);
                     }
-                } catch (error) {
-                    console.error('Erreur attribution rôle:', error);
                 }
             }
             
             // Send level up notification
-            if (config.notifications.enabled && config.notifications.channel) {
+            if (config.notifications.enabled && config.notifications.channelId) {
                 await this.sendLevelUpNotification(userId, userLevel, oldLevel, newLevel, roleAwarded, guild, config);
             }
             
@@ -310,50 +335,86 @@ class LevelManager {
 
     async sendLevelUpNotification(userId, userLevel, oldLevel, newLevel, roleReward, guild, config) {
         try {
-            const channel = await guild.channels.fetch(config.notifications.channel);
-            if (!channel || !channel.isTextBased()) return;
+            const channel = await guild.channels.fetch(config.notifications.channelId);
+            if (!channel || !channel.isTextBased()) {
+                console.log(`⚠️ Canal de notification non trouvé ou invalide: ${config.notifications.channelId}`);
+                return;
+            }
             
             const user = await guild.members.fetch(userId);
             if (!user) return;
             
-            // Préparer l'utilisateur avec ses rôles pour la génération de carte
-            const userWithRoles = {
-                ...user.user,
-                roles: user.roles.cache.map(role => ({ name: role.name, id: role.id })),
-                displayAvatarURL: user.user.displayAvatarURL?.bind(user.user) || (() => user.user.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png')
-            };
+            console.log(`🎉 Envoi notification niveau ${newLevel} pour ${user.user.username} dans ${channel.name}`);
             
-            // Generate level up card with chosen style
-            const cardBuffer = await levelCardGenerator.generateCard(
-                userWithRoles,
-                userLevel,
-                oldLevel,
-                newLevel,
-                roleReward,
-                config.notifications.cardStyle
-            );
-            
-            // Message simple selon demande utilisateur
-            let message = `Félicitations ${user.user.username}, tu as atteint le niveau ${newLevel} !`;
-            
-            // Ajouter message pour récompense de rôle si applicable
-            if (roleReward) {
-                message += `\nFélicitations ${user.user.username}, tu as obtenu le rôle ${roleReward.name} !`;
-            }
+            // Message simple comme demandé
+            let message = `Félicitations tu as atteint le niveau ${newLevel}`;
             
             const messageContent = {
-                content: message
+                content: message,
+                allowedMentions: { users: [userId] } // Permet le ping de l'utilisateur
             };
             
-            // Ajouter la carte si générée avec succès
-            if (cardBuffer && cardBuffer.length > 0) {
-                messageContent.files = [{
-                    attachment: cardBuffer,
-                    name: `level_up_${userId}_${newLevel}.png`
-                }];
+            // Générer et ajouter la carte de niveau
+            try {
+                // Préparer l'utilisateur avec ses rôles pour la génération de carte
+                const serverAvatar = user.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
+                const globalAvatar = user.user.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
+                let finalAvatar = serverAvatar || globalAvatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                
+                if (finalAvatar && finalAvatar.includes('.webp')) {
+                    finalAvatar = finalAvatar.replace('.webp', '.png');
+                }
+                
+                const userWithRoles = {
+                    id: user.user.id,
+                    username: user.user.username || 'Unknown',
+                    displayName: user.displayName || user.user.displayName || user.user.username || 'Unknown User',
+                    avatarURL: finalAvatar,
+                    roles: user.roles.cache.map(role => ({ name: role.name, id: role.id })),
+                    rolesCount: user.roles.cache.size
+                };
+                
+                // Calculs de progression pour la carte
+                const currentLevelXP = this.calculateXPForLevel(newLevel);
+                const nextLevelXP = this.calculateXPForLevel(newLevel + 1);
+                const xpProgress = Math.max(0, userLevel.xp - currentLevelXP);
+                const xpNeeded = nextLevelXP - currentLevelXP;
+                const progressPercent = Math.min(100, Math.max(0, Math.round((xpProgress / xpNeeded) * 100)));
+                
+                const progressData = {
+                    currentXP: xpProgress,
+                    totalNeeded: xpNeeded,
+                    progressPercent: progressPercent,
+                    totalXP: userLevel.xp,
+                    nextLevelXP: nextLevelXP,
+                    totalMessages: userLevel.totalMessages || 0,
+                    totalVoiceTime: Math.floor((userLevel.totalVoiceTime || 0) / 60000),
+                    rank: 1, // Placeholder pour notification
+                    totalUsers: 1
+                };
+                
+                // Utiliser uniquement le style holographique avec choix d'image selon les rôles
+                console.log(`🎨 Génération carte niveau: holographic (image selon rôles)`);
+                
+                const cardBuffer = await levelCardGenerator.generateNotificationCard(
+                    userWithRoles,
+                    newLevel
+                );
+                
+                if (cardBuffer && cardBuffer.length > 0) {
+                    messageContent.files = [{
+                        attachment: cardBuffer,
+                        name: `level_up_${userId}_${newLevel}.png`
+                    }];
+                }
+            } catch (cardError) {
+                console.error('Erreur génération carte pour notification:', cardError);
+                // Continue without card
             }
             
+            messageContent.content = `<@${userId}>`;
             await channel.send(messageContent);
+            console.log(`✅ Notification niveau envoyée pour ${user.user.username}`);
             
         } catch (error) {
             console.error('Erreur envoi notification niveau:', error);
@@ -429,6 +490,60 @@ class LevelManager {
         return this.setUserXP(userId, guildId, xpRequired);
     }
 
+    // Fonction pour forcer la notification d'un niveau et attribution des récompenses
+    async forceLevelNotification(userId, guildId, guild) {
+        try {
+            const userLevel = this.getUserLevel(userId, guildId);
+            const config = this.loadConfig();
+            
+            console.log(`🔔 Force notification niveau ${userLevel.level} pour ${userId}`);
+            
+            // Vérifier et attribuer les récompenses de rôles manquées
+            let roleAwarded = null;
+            if (config.roleRewards) {
+                // Gérer le cas où roleRewards peut être un objet ou un tableau
+                let roleReward = null;
+                if (Array.isArray(config.roleRewards)) {
+                    roleReward = config.roleRewards.find(reward => reward.level === userLevel.level);
+                } else {
+                    // Si c'est un objet, chercher par clé de niveau
+                    roleReward = config.roleRewards[userLevel.level] ? {
+                        level: userLevel.level,
+                        roleId: config.roleRewards[userLevel.level]
+                    } : null;
+                }
+                
+                if (roleReward && roleReward.roleId) {
+                    try {
+                        const role = await guild.roles.fetch(roleReward.roleId);
+                        const member = await guild.members.fetch(userId);
+                        
+                        if (role && member && !member.roles.cache.has(roleReward.roleId)) {
+                            await member.roles.add(role);
+                            roleAwarded = role;
+                            console.log(`🎁 Rôle ${role.name} attribué (rattrapage) à ${member.user.username} pour le niveau ${userLevel.level}`);
+                        }
+                    } catch (error) {
+                        console.error('Erreur attribution rôle rattrapage:', error);
+                    }
+                }
+            }
+            
+            // Envoyer notification de niveau
+            if (config.notifications.enabled && config.notifications.channelId) {
+                await this.sendLevelUpNotification(userId, userLevel, userLevel.level - 1, userLevel.level, null, guild, config);
+            }
+            
+            // Envoyer notification de récompense SEULEMENT si un rôle a été attribué
+            if (roleAwarded && config.notifications.enabled && config.notifications.channelId) {
+                await this.sendRewardNotification(userId, roleAwarded, userLevel.level, guild, config);
+            }
+            
+        } catch (error) {
+            console.error('Erreur force notification niveau:', error);
+        }
+    }
+
     resetUserProgress(userId, guildId) {
         const users = this.loadUsers();
         const userKey = `${guildId}_${userId}`;
@@ -446,6 +561,68 @@ class LevelManager {
         
         this.saveUsers(users);
         return users[userKey];
+    }
+
+    async sendRewardNotification(userId, role, level, guild, config) {
+        try {
+            const channel = await guild.channels.fetch(config.notifications.channelId);
+            if (!channel || !channel.isTextBased()) {
+                console.log(`⚠️ Canal de notification non trouvé ou invalide: ${config.notifications.channelId}`);
+                return;
+            }
+            
+            const user = await guild.members.fetch(userId);
+            if (!user) return;
+            
+            console.log(`🎁 Envoi notification récompense ${role.name} pour ${user.user.username} dans ${channel.name}`);
+            
+            // Préparer l'utilisateur avec ses rôles pour la génération de carte
+            const serverAvatar = user.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
+            const globalAvatar = user.user.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
+            let finalAvatar = serverAvatar || globalAvatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+            
+            if (finalAvatar && finalAvatar.includes('.webp')) {
+                finalAvatar = finalAvatar.replace('.webp', '.png');
+            }
+
+            const userWithRoles = {
+                id: user.user.id,
+                username: user.user.username || 'Unknown',
+                displayName: user.displayName || user.user.displayName || user.user.username || 'Unknown User',
+                avatarURL: finalAvatar,
+                roles: user.roles.cache.map(role => ({ name: role.name, id: role.id }))
+            };
+
+            const messageContent = {
+                content: `<@${userId}> 🏆 **Nouvelle récompense obtenue !**`,
+                allowedMentions: { users: [userId] }
+            };
+            
+            // Générer et ajouter la carte de récompense
+            try {
+                const cardBuffer = await levelCardGenerator.generateRewardCard(
+                    userWithRoles,
+                    `🏆 Rôle obtenu: ${role.name}`,
+                    level
+                );
+                
+                if (cardBuffer && cardBuffer.length > 0) {
+                    messageContent.files = [{
+                        attachment: cardBuffer,
+                        name: `reward_${userId}_${level}.png`
+                    }];
+                }
+            } catch (cardError) {
+                console.error('Erreur génération carte pour récompense:', cardError);
+                // Continue without card
+            }
+            
+            await channel.send(messageContent);
+            console.log(`✅ Notification récompense envoyée pour ${user.user.username}`);
+            
+        } catch (error) {
+            console.error('Erreur envoi notification récompense:', error);
+        }
     }
 
     resetGuildProgress(guildId) {

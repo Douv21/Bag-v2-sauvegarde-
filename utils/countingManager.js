@@ -284,47 +284,37 @@ class CountingManager {
         
         // Vérifier si c'est un nombre simple
         if (/^\d+$/.test(cleaned)) {
+            console.log(`✅ Nombre simple détecté: "${content}"`);
             return true;
         }
         
-        // NOUVEAU: Pattern ultra-permissif pour tous les symboles mathématiques
-        // NOUVEAU: Exception spéciale pour les symboles mathématiques () et √
-        // Ces symboles sont TOUJOURS autorisés, même avec du texte
-        const hasMathSymbols = /[()√+\-*×÷\/^%.,\[\]{}|&<>=!~`²³¹⁰⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]/.test(cleaned);
-        const hasNumbers = /\d/.test(cleaned);
+        // Vérifier si c'est une expression mathématique pure
+        // Caractères autorisés : chiffres, opérateurs mathématiques, parenthèses, racine carrée
+        const mathPattern = /^[0-9+\-*×÷\/^%()√.,\s]+$/;
         
-        // Si le message contient des symboles mathématiques OU des chiffres, c'est probablement mathématique
-        if (hasMathSymbols || hasNumbers) {
-            console.log(`✅ Expression mathématique détectée (symboles/chiffres): "${content}"`);
-            return true;
+        if (!mathPattern.test(cleaned)) {
+            console.log(`🚫 Message ignoré (caractères non-mathématiques): "${content}"`);
+            return false;
         }
         
-        // Sinon, vérifier les lettres de l'alphabet (sauf constantes mathématiques)
-        const hasRegularLetters = /[a-zA-Z]/.test(cleaned);
-        
-        if (hasRegularLetters) {
-            // Exceptions: permettre les mots-clés mathématiques
-            const allowedMathTerms = ['sqrt', 'pow', 'abs', 'round', 'floor', 'ceil', 'max', 'min', 'pi', 'e', 'sin', 'cos', 'tan', 'log', 'ln'];
-            
-            // Créer une version sans les termes mathématiques autorisés
-            let testVersion = cleaned.toLowerCase();
-            allowedMathTerms.forEach(term => {
-                testVersion = testVersion.replace(new RegExp(term, 'g'), '');
-            });
-            
-            // Si après suppression des termes mathématiques, il reste des lettres, ignorer
-            if (/[a-zA-Z]/.test(testVersion)) {
-                console.log(`🚫 Message ignoré (contient du texte): "${content}"`);
-                return false; // Ignore les messages avec du texte normal
-            }
-            
-            console.log(`✅ Expression mathématique détectée (fonction): "${content}"`);
-            return true;
+        // Vérifier qu'il y a au moins un chiffre
+        if (!/\d/.test(cleaned)) {
+            console.log(`🚫 Message ignoré (aucun chiffre): "${content}"`);
+            return false;
         }
         
-        // Si on arrive ici, c'est que le message ne contient ni symboles ni chiffres ni fonctions
-        console.log(`❌ Expression non-mathématique: "${content}"`);
-        return false;
+        // Rejeter les messages qui sont principalement du texte
+        const digitCount = (cleaned.match(/\d/g) || []).length;
+        const totalLength = cleaned.length;
+        
+        // Au moins 30% du message doit être des chiffres pour être considéré comme mathématique
+        if (digitCount / totalLength < 0.3) {
+            console.log(`🚫 Message ignoré (pas assez de chiffres): "${content}" (${digitCount}/${totalLength})`);
+            return false;
+        }
+        
+        console.log(`✅ Expression mathématique détectée: "${content}"`);
+        return true;
     }
 
     // Parser une expression mathématique

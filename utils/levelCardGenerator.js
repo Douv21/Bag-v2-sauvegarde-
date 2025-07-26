@@ -590,6 +590,160 @@ class LevelCardGenerator {
         return Math.floor(100 * Math.pow(level, 1.5));
     }
 
+    async generateNotificationCard(user, level, progressData = null) {
+        try {
+            console.log(`🎉 Génération carte notification niveau ${level} pour ${user.displayName}`);
+            
+            // Télécharger l'avatar
+            let avatarBase64 = '';
+            try {
+                if (user.avatarURL && user.avatarURL.startsWith('http')) {
+                    const https = require('https');
+                    const avatarData = await new Promise((resolve, reject) => {
+                        https.get(user.avatarURL, (response) => {
+                            let data = Buffer.alloc(0);
+                            response.on('data', (chunk) => {
+                                data = Buffer.concat([data, chunk]);
+                            });
+                            response.on('end', () => {
+                                resolve(data);
+                            });
+                        }).on('error', (err) => {
+                            console.log('⚠️ Erreur téléchargement avatar pour notification:', err);
+                            reject(err);
+                        });
+                    });
+                    avatarBase64 = `data:image/png;base64,${avatarData.toString('base64')}`;
+                    console.log(`✅ Avatar téléchargé pour notification: ${avatarBase64.length} chars`);
+                }
+            } catch (error) {
+                console.log('⚠️ Erreur téléchargement avatar pour notification:', error);
+            }
+
+            // Système d'image de fond selon les rôles (même que pour les cartes level)
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Déterminer quelle image utiliser selon les rôles
+            let imagePath = path.join(__dirname, '../../attached_assets/1_1753517381716.jpg'); // Default
+            let imageFormat = 'jpeg';
+            
+            // Vérifier les rôles pour choisir l'image appropriée - priorité "certifié" sur "femme"
+            if (user.roles && Array.isArray(user.roles)) {
+                const roleNames = user.roles.map(role => role.name.toLowerCase());
+                
+                if (roleNames.includes('certifié')) {
+                    imagePath = path.join(__dirname, '../../attached_assets/3_1753520815029.png');
+                    imageFormat = 'png';
+                    console.log('🎨 Notification: Utilisation image certifié (3.png)');
+                } else if (roleNames.includes('femme')) {
+                    imagePath = path.join(__dirname, '../../attached_assets/2_1753520814954.png');
+                    imageFormat = 'png';
+                    console.log('🎨 Notification: Utilisation image femme (2.png)');
+                } else {
+                    console.log('🎨 Notification: Utilisation image par défaut (1.jpg)');
+                }
+            }
+            
+            // Charger l'image de fond
+            let bgImage = '';
+            try {
+                if (fs.existsSync(imagePath)) {
+                    const imageBuffer = fs.readFileSync(imagePath);
+                    bgImage = `data:image/${imageFormat};base64,${imageBuffer.toString('base64')}`;
+                    console.log('✅ Image de fond chargée pour notification');
+                }
+            } catch (error) {
+                console.log('⚠️ Image de fond non trouvée pour notification, utilisation fond holographique par défaut');
+            }
+
+            const svgContent = `
+            <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="holoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#0a0a2a;stop-opacity:1"/>
+                        <stop offset="25%" style="stop-color:#1e1e4a;stop-opacity:1"/>
+                        <stop offset="50%" style="stop-color:#2a2a6a;stop-opacity:1"/>
+                        <stop offset="75%" style="stop-color:#1a1a3a;stop-opacity:1"/>
+                        <stop offset="100%" style="stop-color:#0a0a1a;stop-opacity:1"/>
+                    </linearGradient>
+                    <filter id="holoGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                    <pattern id="holoPattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <rect width="40" height="40" fill="none"/>
+                        <line x1="0" y1="0" x2="40" y2="40" stroke="#00ffff" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="40" y1="0" x2="0" y2="40" stroke="#ff00ff" stroke-width="0.5" opacity="0.3"/>
+                    </pattern>
+                </defs>
+                
+                <!-- Background Image ou Holographique -->
+                ${bgImage ? `
+                    <defs>
+                        <clipPath id="notifCardClip">
+                            <rect x="0" y="0" width="800" height="400" rx="20"/>
+                        </clipPath>
+                    </defs>
+                    <image href="${bgImage}" x="0" y="0" width="800" height="400" clip-path="url(#notifCardClip)" preserveAspectRatio="xMidYMid slice"/>
+                    <rect width="800" height="400" fill="url(#holoPattern)" opacity="0.2"/>
+                ` : `
+                    <rect width="800" height="400" fill="url(#holoBg)"/>
+                    <rect width="800" height="400" fill="url(#holoPattern)"/>
+                `}
+                
+                <!-- Overlay pour la lisibilité du texte -->
+                <rect width="800" height="400" fill="rgba(0,0,0,0.4)" rx="20"/>
+                
+                <!-- Bordures néon blanches -->
+                <rect x="10" y="10" width="780" height="380" fill="none" stroke="#ffffff" stroke-width="3" rx="20" filter="url(#holoGlow)"/>
+                <rect x="15" y="15" width="770" height="370" fill="none" stroke="#cccccc" stroke-width="1" rx="15" opacity="0.8"/>
+                
+                <!-- Avatar Circle -->
+                <clipPath id="notifAvatarClip">
+                    <circle cx="120" cy="200" r="48"/>
+                </clipPath>
+                <circle cx="120" cy="200" r="52" fill="#ffffff" opacity="0.8"/>
+                <circle cx="120" cy="200" r="50" fill="#000000" stroke="#ffffff" stroke-width="2"/>
+                <image href="${avatarBase64 || 'https://cdn.discordapp.com/embed/avatars/0.png'}" x="72" y="152" width="96" height="96" clip-path="url(#notifAvatarClip)"/>
+                
+                <!-- Level Badge -->
+                <circle cx="680" cy="100" r="50" fill="#ffffff" opacity="0.8"/>
+                <circle cx="680" cy="100" r="45" fill="rgba(0,0,0,0.8)" stroke="#ffffff" stroke-width="2"/>
+                <text x="680" y="115" text-anchor="middle" fill="#ffffff" font-family="Arial Black" font-size="36" font-weight="bold">${level}</text>
+                
+                <!-- Congratulations Text with background for readability -->
+                <rect x="200" y="120" width="400" height="160" fill="rgba(0,0,0,0.6)" rx="15"/>
+                <text x="400" y="150" text-anchor="middle" fill="#ffffff" font-family="Arial Black" font-size="32" font-weight="bold">Félicitations !</text>
+                <text x="400" y="190" text-anchor="middle" fill="#ffffff" font-family="Arial Black" font-size="24" font-weight="bold">${user.displayName}</text>
+                <text x="400" y="230" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="20">Tu as atteint le niveau ${level}</text>
+                
+                <!-- Decoration en bas -->
+                <text x="400" y="340" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="18" font-style="italic">🎉 Montée de niveau ! 🎉</text>
+                
+                <!-- Effets holographiques -->
+                <line x1="0" y1="100" x2="800" y2="100" stroke="#00ffff" stroke-width="1" opacity="0.3"/>
+                <line x1="0" y1="300" x2="800" y2="300" stroke="#ff00ff" stroke-width="1" opacity="0.3"/>
+            </svg>`;
+            
+            // Convertir en PNG avec Sharp
+            return await sharp(Buffer.from(svgContent))
+                .png()
+                .resize(800, 400, { 
+                    fit: 'contain',
+                    background: { r: 0, g: 0, b: 0, alpha: 0 }
+                })
+                .toBuffer();
+                
+        } catch (error) {
+            console.error('❌ Erreur génération carte notification:', error);
+            return await this.generateFallbackCard(user, level);
+        }
+    }
+
     async generateFallbackCard(user, newLevel) {
         try {
             const fallbackSVG = `
@@ -611,6 +765,161 @@ class LevelCardGenerator {
         } catch (error) {
             console.error('Erreur génération carte fallback:', error);
             return Buffer.from('Level Up!');
+        }
+    }
+
+    async generateRewardCard(user, rewardText, level, progressData = null) {
+        try {
+            console.log(`🎁 Génération carte récompense pour ${user.displayName}: ${rewardText}`);
+            
+            // Télécharger l'avatar
+            let avatarBase64 = '';
+            try {
+                if (user.avatarURL && user.avatarURL.startsWith('http')) {
+                    const https = require('https');
+                    const avatarData = await new Promise((resolve, reject) => {
+                        https.get(user.avatarURL, (response) => {
+                            let data = Buffer.alloc(0);
+                            response.on('data', (chunk) => {
+                                data = Buffer.concat([data, chunk]);
+                            });
+                            response.on('end', () => {
+                                resolve(data);
+                            });
+                        }).on('error', (err) => {
+                            console.log('⚠️ Erreur téléchargement avatar pour récompense:', err);
+                            reject(err);
+                        });
+                    });
+                    avatarBase64 = `data:image/png;base64,${avatarData.toString('base64')}`;
+                    console.log(`✅ Avatar téléchargé pour récompense: ${avatarBase64.length} chars`);
+                }
+            } catch (error) {
+                console.log('⚠️ Erreur téléchargement avatar pour récompense:', error);
+            }
+
+            // Système d'image de fond selon les rôles (même que pour les cartes level)
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Déterminer quelle image utiliser selon les rôles
+            let imagePath = path.join(__dirname, '../../attached_assets/1_1753517381716.jpg'); // Default
+            let imageFormat = 'jpeg';
+            
+            // Vérifier les rôles pour choisir l'image appropriée - priorité "certifié" sur "femme"
+            if (user.roles && Array.isArray(user.roles)) {
+                const roleNames = user.roles.map(role => role.name.toLowerCase());
+                
+                if (roleNames.includes('certifié')) {
+                    imagePath = path.join(__dirname, '../../attached_assets/3_1753520815029.png');
+                    imageFormat = 'png';
+                    console.log('🎨 Récompense: Utilisation image certifié (3.png)');
+                } else if (roleNames.includes('femme')) {
+                    imagePath = path.join(__dirname, '../../attached_assets/2_1753520814954.png');
+                    imageFormat = 'png';
+                    console.log('🎨 Récompense: Utilisation image femme (2.png)');
+                } else {
+                    console.log('🎨 Récompense: Utilisation image par défaut (1.jpg)');
+                }
+            }
+            
+            // Charger l'image de fond
+            let bgImage = '';
+            try {
+                if (fs.existsSync(imagePath)) {
+                    const imageBuffer = fs.readFileSync(imagePath);
+                    bgImage = `data:image/${imageFormat};base64,${imageBuffer.toString('base64')}`;
+                    console.log('✅ Image de fond chargée pour récompense');
+                }
+            } catch (error) {
+                console.log('⚠️ Image de fond non trouvée pour récompense, utilisation fond holographique par défaut');
+            }
+
+            const svgContent = `
+            <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="rewardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#2a0a2a;stop-opacity:1"/>
+                        <stop offset="25%" style="stop-color:#4a1e4a;stop-opacity:1"/>
+                        <stop offset="50%" style="stop-color:#6a2a6a;stop-opacity:1"/>
+                        <stop offset="75%" style="stop-color:#3a1a3a;stop-opacity:1"/>
+                        <stop offset="100%" style="stop-color:#1a0a1a;stop-opacity:1"/>
+                    </linearGradient>
+                    <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="4" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                    <pattern id="starPattern" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+                        <circle cx="30" cy="30" r="2" fill="#ffd700" opacity="0.6"/>
+                        <circle cx="15" cy="15" r="1" fill="#ffff00" opacity="0.4"/>
+                        <circle cx="45" cy="45" r="1" fill="#ffff00" opacity="0.4"/>
+                    </pattern>
+                </defs>
+                
+                <!-- Background Image ou Holographique -->
+                ${bgImage ? `
+                    <defs>
+                        <clipPath id="rewardCardClip">
+                            <rect x="0" y="0" width="800" height="400" rx="20"/>
+                        </clipPath>
+                    </defs>
+                    <image href="${bgImage}" x="0" y="0" width="800" height="400" clip-path="url(#rewardCardClip)" preserveAspectRatio="xMidYMid slice"/>
+                    <rect width="800" height="400" fill="url(#starPattern)" opacity="0.3"/>
+                ` : `
+                    <rect width="800" height="400" fill="url(#rewardBg)"/>
+                    <rect width="800" height="400" fill="url(#starPattern)"/>
+                `}
+                
+                <!-- Overlay pour la lisibilité du texte -->
+                <rect width="800" height="400" fill="rgba(0,0,0,0.5)" rx="20"/>
+                
+                <!-- Bordures néon dorées -->
+                <rect x="10" y="10" width="780" height="380" fill="none" stroke="#ffd700" stroke-width="4" rx="20" filter="url(#goldGlow)"/>
+                <rect x="15" y="15" width="770" height="370" fill="none" stroke="#ffff00" stroke-width="2" rx="15" opacity="0.8"/>
+                
+                <!-- Avatar Circle -->
+                <clipPath id="rewardAvatarClip">
+                    <circle cx="120" cy="200" r="48"/>
+                </clipPath>
+                <circle cx="120" cy="200" r="52" fill="#ffd700" opacity="0.9"/>
+                <circle cx="120" cy="200" r="50" fill="#000000" stroke="#ffff00" stroke-width="3"/>
+                <image href="${avatarBase64 || 'https://cdn.discordapp.com/embed/avatars/0.png'}" x="72" y="152" width="96" height="96" clip-path="url(#rewardAvatarClip)"/>
+                
+                <!-- Level Badge -->
+                <circle cx="680" cy="100" r="50" fill="#ffd700" opacity="0.9"/>
+                <circle cx="680" cy="100" r="45" fill="rgba(0,0,0,0.8)" stroke="#ffff00" stroke-width="2"/>
+                <text x="680" y="115" text-anchor="middle" fill="#ffd700" font-family="Arial Black" font-size="36" font-weight="bold">${level}</text>
+                
+                <!-- Reward Text with background for readability -->
+                <rect x="200" y="120" width="400" height="160" fill="rgba(0,0,0,0.7)" rx="15"/>
+                <text x="400" y="150" text-anchor="middle" fill="#ffd700" font-family="Arial Black" font-size="28" font-weight="bold">🎁 Récompense !</text>
+                <text x="400" y="185" text-anchor="middle" fill="#ffff00" font-family="Arial Black" font-size="22" font-weight="bold">${user.displayName}</text>
+                <text x="400" y="220" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="18">Niveau ${level} atteint !</text>
+                <text x="400" y="250" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="16">${rewardText}</text>
+                
+                <!-- Decoration en bas -->
+                <text x="400" y="340" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="18" font-style="italic">✨ Nouvelle récompense obtenue ! ✨</text>
+                
+                <!-- Effets dorés -->
+                <line x1="0" y1="100" x2="800" y2="100" stroke="#ffd700" stroke-width="1" opacity="0.5"/>
+                <line x1="0" y1="300" x2="800" y2="300" stroke="#ffff00" stroke-width="1" opacity="0.5"/>
+            </svg>`;
+            
+            // Convertir en PNG avec Sharp
+            return await sharp(Buffer.from(svgContent))
+                .png()
+                .resize(800, 400, { 
+                    fit: 'contain',
+                    background: { r: 0, g: 0, b: 0, alpha: 0 }
+                })
+                .toBuffer();
+                
+        } catch (error) {
+            console.error('❌ Erreur génération carte récompense:', error);
+            return await this.generateFallbackCard(user, level);
         }
     }
 }
