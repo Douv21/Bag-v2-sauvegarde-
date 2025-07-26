@@ -1,3 +1,4 @@
+const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const ConfessionHandler = require('./ConfessionHandler');
 const EconomyConfigHandler = require('./EconomyConfigHandler');
 
@@ -8,99 +9,216 @@ class InteractionHandler {
         this.economyHandler = new EconomyConfigHandler(dataManager);
     }
 
-    /**
-     * Méthode sécurisée pour répondre à une interaction
-     * @param {Interaction} interaction - Interaction Discord
-     * @param {Object} options - Options pour la réponse
-     * @param {boolean} followUp - Si true, utilise followUp
-     */
-    async safeReply(interaction, options, followUp = false) {
-        try {
-            if (followUp) {
-                return await interaction.followUp(options);
-            }
+    // === DELEGATIONS VERS HANDLERS SPECIALISES ===
 
-            if (interaction.replied) {
-                return await interaction.editReply(options);
-            } else if (interaction.deferred) {
-                return await interaction.editReply(options);
-            } else {
-                return await interaction.reply(options);
-            }
-        } catch (error) {
-            console.error('[safeReply ERROR]', error);
-        }
+    // Délégations ConfessionHandler
+    async handleConfessionMainConfig(interaction) {
+        return await this.confessionHandler.handleConfessionMainConfig(interaction);
     }
 
-    /**
-     * Déférer automatiquement l'interaction si nécessaire
-     * @param {Interaction} interaction 
-     * @param {boolean} ephemeral 
-     */
-    async deferIfNeeded(interaction, ephemeral = true) {
-        if (!interaction.deferred && !interaction.replied) {
-            try {
-                if (interaction.isButton() || interaction.isStringSelectMenu()) {
-                    await interaction.deferUpdate();
-                } else {
-                    await interaction.deferReply({ ephemeral });
-                }
-            } catch (error) {
-                console.error('[deferIfNeeded ERROR]', error);
-            }
-        }
+    async handleConfessionChannelsConfig(interaction) {
+        return await this.confessionHandler.handleConfessionChannelsConfig(interaction);
     }
 
-    /**
-     * Gestion dynamique : map des handlers
-     */
-    get handlers() {
-        return {
-            // Confession Handlers
-            confession_main: this.confessionHandler.handleConfessionMainConfig.bind(this.confessionHandler),
-            confession_channels: this.confessionHandler.handleConfessionChannelsConfig.bind(this.confessionHandler),
-            confession_autothread: this.confessionHandler.handleConfessionAutothreadConfig.bind(this.confessionHandler),
-            confession_logs: this.confessionHandler.handleConfessionLogsConfig.bind(this.confessionHandler),
-            confession_log_level: this.confessionHandler.handleConfessionLogLevel.bind(this.confessionHandler),
-            confession_log_channel: this.confessionHandler.handleConfessionLogChannel.bind(this.confessionHandler),
-
-            // Economy Handlers
-            economy_main: this.economyHandler.handleEconomyMainConfig.bind(this.economyHandler),
-            economy_actions: this.economyHandler.handleEconomyActionsConfig.bind(this.economyHandler),
-            economy_shop: this.economyHandler.handleEconomyShopConfig.bind(this.economyHandler),
-            economy_karma: this.economyHandler.handleEconomyKarmaConfig.bind(this.economyHandler),
-            economy_daily: this.economyHandler.handleEconomyDailyConfig.bind(this.economyHandler),
-        };
+    async handleConfessionAutothreadConfig(interaction) {
+        return await this.confessionHandler.handleConfessionAutothreadConfig(interaction);
     }
 
-    /**
-     * Route l'interaction vers le bon handler
-     * @param {Interaction} interaction
-     */
-    async handle(interaction) {
-        const customId = interaction.customId;
-        const handler = this.handlers[customId];
+    async handleConfessionLogsConfig(interaction) {
+        return await this.confessionHandler.handleConfessionLogsConfig(interaction);
+    }
 
-        if (!handler) {
-            return this.safeReply(interaction, {
-                content: '❌ Aucune action correspondante.',
-                ephemeral: true
-            });
-        }
+    async handleConfessionLogLevel(interaction) {
+        return await this.confessionHandler.handleConfessionLogLevel(interaction);
+    }
 
-        // Déférer si nécessaire
-        await this.deferIfNeeded(interaction);
+    async handleConfessionLogChannel(interaction) {
+        return await this.confessionHandler.handleConfessionLogChannel(interaction);
+    }
 
-        // Exécuter le handler
-        try {
-            await handler(interaction, this);
-        } catch (error) {
-            console.error(`[Handler ERROR: ${customId}]`, error);
-            await this.safeReply(interaction, {
-                content: '❌ Une erreur est survenue lors du traitement.',
-                ephemeral: true
-            });
-        }
+    async handleConfessionLogPingRoles(interaction) {
+        return await this.confessionHandler.handleConfessionLogPingRoles(interaction);
+    }
+
+    async handleConfessionPingRoles(interaction) {
+        return await this.confessionHandler.handleConfessionPingRoles(interaction);
+    }
+
+    async handleConfessionAddChannel(interaction) {
+        return await this.confessionHandler.handleConfessionAddChannel(interaction);
+    }
+
+    async handleConfessionRemoveChannel(interaction) {
+        return await this.confessionHandler.handleConfessionRemoveChannel(interaction);
+    }
+
+    async handleConfessionArchiveTime(interaction) {
+        return await this.confessionHandler.handleConfessionArchiveTime(interaction);
+    }
+
+    // Délégations EconomyHandler
+    async handleEconomyMainConfig(interaction) {
+        return await this.economyHandler.handleEconomyMainConfig(interaction);
+    }
+
+    async handleEconomyActionsConfig(interaction) {
+        return await this.economyHandler.handleEconomyActionsConfig(interaction);
+    }
+
+    async handleEconomyShopConfig(interaction) {
+        return await this.economyHandler.handleEconomyShopConfig(interaction);
+    }
+
+    async handleEconomyKarmaConfig(interaction) {
+        return await this.economyHandler.handleEconomyKarmaConfig(interaction);
+    }
+
+    async handleEconomyDailyConfig(interaction) {
+        return await this.economyHandler.handleEconomyDailyConfig(interaction);
+    }
+
+    async handleEconomyMessagesConfig(interaction) {
+        return await this.economyHandler.handleEconomyMessagesConfig(interaction);
+    }
+
+    // Autres délégations économie
+    async handleActionSubConfig(interaction) {
+        return await this.economyHandler.handleActionSubConfig(interaction);
+    }
+
+    async handleActionRewardAmounts(interaction) {
+        return await this.economyHandler.handleActionRewardAmounts(interaction);
+    }
+
+    async handleActionKarmaAmounts(interaction) {
+        return await this.economyHandler.handleActionKarmaAmounts(interaction);
+    }
+
+    async handleActionCooldownAmounts(interaction) {
+        return await this.economyHandler.handleActionCooldownAmounts(interaction);
+    }
+
+    async handleActionToggleStatus(interaction) {
+        return await this.economyHandler.handleActionToggleStatus(interaction);
+    }
+
+    async handleRewardsEditConfig(interaction) {
+        return await this.economyHandler.handleRewardsEditConfig(interaction);
+    }
+
+    async handleKarmaEditConfig(interaction) {
+        return await this.economyHandler.handleKarmaEditConfig(interaction);
+    }
+
+    async handleCooldownEditConfig(interaction) {
+        return await this.economyHandler.handleCooldownEditConfig(interaction);
+    }
+
+    async handleToggleEditConfig(interaction) {
+        return await this.economyHandler.handleToggleEditConfig(interaction);
+    }
+
+    // Boutique handlers
+    async handleShopAddRolePrice(interaction) {
+        return await this.economyHandler.handleShopAddRolePrice(interaction);
+    }
+
+    async handleShopRemoveRoleConfirm(interaction) {
+        return await this.economyHandler.handleShopRemoveRoleConfirm(interaction);
+    }
+
+    async handleShopEditPriceValue(interaction) {
+        return await this.economyHandler.handleShopEditPriceValue(interaction);
+    }
+
+    async handleShopItemsAction(interaction) {
+        return await this.economyHandler.handleShopItemsAction(interaction);
+    }
+
+    async handleManageExistingItems(interaction) {
+        return await this.economyHandler.handleManageExistingItems(interaction);
+    }
+
+    async handleShopStatsOptions(interaction) {
+        return await this.economyHandler.handleShopStatsOptions(interaction);
+    }
+
+    // Karma handlers
+    async handleKarmaLevelsEdit(interaction) {
+        return await this.economyHandler.handleKarmaLevelsEdit(interaction);
+    }
+
+    async handleKarmaRewardConfig(interaction) {
+        return await this.economyHandler.handleKarmaRewardConfig(interaction);
+    }
+
+    async handleKarmaResetEdit(interaction) {
+        return await this.economyHandler.handleKarmaResetEdit(interaction);
+    }
+
+    async handleActionKarmaValues(interaction) {
+        return await this.economyHandler.handleActionKarmaValues(interaction);
+    }
+
+    // Daily handlers
+    async handleDailyAmountsEdit(interaction) {
+        return await this.economyHandler.handleDailyAmountsEdit(interaction);
+    }
+
+    async handleDailyStreakEdit(interaction) {
+        return await this.economyHandler.handleDailyStreakEdit(interaction);
+    }
+
+    async handleDailyResetEdit(interaction) {
+        return await this.economyHandler.handleDailyResetEdit(interaction);
+    }
+
+    // Messages handlers
+    async handleMessagesToggleEdit(interaction) {
+        return await this.economyHandler.handleMessagesToggleEdit(interaction);
+    }
+
+    async handleMessagesAmountEdit(interaction) {
+        return await this.economyHandler.handleMessagesAmountEdit(interaction);
+    }
+
+    async handleMessagesCooldownEdit(interaction) {
+        return await this.economyHandler.handleMessagesCooldownEdit(interaction);
+    }
+
+    // Stats handlers
+    async handleStatsAction(interaction) {
+        return await this.economyHandler.handleStatsAction(interaction);
+    }
+
+    // Role select handlers
+    async handleShopRoleTypeSelect(interaction) {
+        return await this.economyHandler.handleShopRoleTypeSelect(interaction);
+    }
+
+    async handleShopPermanentPriceSelect(interaction) {
+        return await this.economyHandler.handleShopPermanentPriceSelect(interaction);
+    }
+
+    async handleShopTemporaryDurationSelect(interaction) {
+        return await this.economyHandler.handleShopTemporaryDurationSelect(interaction);
+    }
+
+    // Boutons handlers
+    async handleBackToMain(interaction) {
+        return await this.economyHandler.handleBackToMain(interaction);
+    }
+
+    async handleBackToActions(interaction) {
+        return await this.economyHandler.handleBackToActions(interaction);
+    }
+
+    async handleKarmaForceReset(interaction) {
+        return await this.economyHandler.handleKarmaForceReset(interaction);
+    }
+
+    async handleToggleMessageRewards(interaction) {
+        return await this.economyHandler.handleToggleMessageRewards(interaction);
     }
 }
 
