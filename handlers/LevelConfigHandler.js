@@ -341,7 +341,7 @@ class LevelConfigHandler {
                         {
                             label: '📺 Choisir le canal',
                             description: 'Définir le canal des notifications',
-                            value: 'set_channel'
+                            value: 'notification_channel'
                         },
                         {
                             label: '🎨 Style de carte',
