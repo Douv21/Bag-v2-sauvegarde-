@@ -5,19 +5,20 @@
     "cooldown": 10000
   },
   "voiceXP": {
-    "amount": 30,
-    "interval": 15000
+    "amount": 150,
+    "interval": 60000
   },
   "xpCooldown": 10000,
   "notifications": {
     "enabled": true,
-    "channel": null,
-    "cardStyle": "holographic",
-    "channelId": "1360897919204720722"
+    "channelId": "1366452734709989457",
+    "cardStyle": "holographic"
   },
-  "roleRewards": {},
+  "roleRewards": {
+    "5": "1396547788384374884"
+  },
   "levelFormula": {
-    "baseXP": 1000,
+    "baseXP": 100,
     "multiplier": 1.5
   }
 }

@@ -1,7 +1,9 @@
 {
   "1360897918504271882": {
     "enabled": true,
-    "channels": [],
+    "channels": [
+      "1360897919548522606"
+    ],
     "threadName": "{user} | {date}",
     "archiveTime": 10080,
     "stats": {

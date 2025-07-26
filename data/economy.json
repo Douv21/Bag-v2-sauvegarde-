@@ -1,14 +1,14 @@
 {
   "463272211269156865_1360897918504271882": {
-    "balance": 2391,
-    "goodKarma": 6,
+    "balance": 2527,
+    "goodKarma": 8,
     "badKarma": -3,
     "dailyStreak": 1,
     "lastDaily": 1753521300454,
-    "messageCount": 23,
+    "messageCount": 43,
     "karmaGood": 0,
     "karmaBad": 0,
-    "lastWork": 1753521313743,
+    "lastWork": 1753533521957,
     "lastSteal": 1753203294089,
     "lastFish": 1753521325050,
     "lastCrime": 1753203303956,
@@ -18,16 +18,16 @@
     ]
   },
   "943487722738311219_1360897918504271882": {
-    "balance": 4784,
-    "goodKarma": 8,
+    "balance": 5274,
+    "goodKarma": 9,
     "badKarma": -6,
     "dailyStreak": 1,
     "lastDaily": 1753471853826,
-    "messageCount": 50,
+    "messageCount": 88,
     "karmaGood": 0,
     "karmaBad": 0,
     "lastWork": 1753518925927,
-    "lastFish": 1753519316881,
+    "lastFish": 1753525639767,
     "lastCrime": 1753209481123,
     "lastBet": 1753519067905,
     "lastSteal": 1753518911999,
@@ -128,12 +128,12 @@
     "messageCount": 1
   },
   "739103557600673792_1360897918504271882": {
-    "balance": 1640,
+    "balance": 1700,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 39
+    "messageCount": 45
   },
   "daily": {
     "amount": 50,
@@ -181,12 +181,12 @@
     }
   ],
   "528391525651185667_1360897918504271882": {
-    "balance": 1080,
+    "balance": 1100,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 4
+    "messageCount": 6
   },
   "messages": {
     "enabled": false,
@@ -229,19 +229,43 @@
     "messageCount": 16
   },
   "1173342775396286521_1360897918504271882": {
-    "balance": 1053,
+    "balance": 1113,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 9
+    "messageCount": 15
   },
   "266247151355559937_1360897918504271882": {
-    "balance": 1140,
+    "balance": 1200,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 7
+    "messageCount": 15
+  },
+  "909739750225772544_1360897918504271882": {
+    "balance": 1060,
+    "goodKarma": 0,
+    "badKarma": 0,
+    "dailyStreak": 0,
+    "lastDaily": 0,
+    "messageCount": 8
+  },
+  "723788041382264833_1360897918504271882": {
+    "balance": 1020,
+    "goodKarma": 0,
+    "badKarma": 0,
+    "dailyStreak": 0,
+    "lastDaily": 0,
+    "messageCount": 2
+  },
+  "749851490486714378_1360897918504271882": {
+    "balance": 1020,
+    "goodKarma": 0,
+    "badKarma": 0,
+    "dailyStreak": 0,
+    "lastDaily": 0,
+    "messageCount": 2
   }
 }

@@ -23,11 +23,10 @@
         "lastNumber": 0,
         "currentNumber": 0,
         "lastUserId": null,
-        "totalCounts": 2,
         "lastMessageId": null,
-        "recordDate": "2025-07-22T22:16:00.820Z",
-        "recordUserId": "943487722738311219",
-        "lastTimestamp": "2025-07-26T08:40:24.348Z"
+        "lastTimestamp": "2025-07-26T13:49:10.421Z",
+        "recordDate": "2025-07-26T13:48:54.526Z",
+        "recordUserId": "943487722738311219"
       }
     ],
     "mathEnabled": true,
