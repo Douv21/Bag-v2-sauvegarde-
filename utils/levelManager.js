@@ -335,10 +335,10 @@ class LevelManager {
 
     async sendLevelUpNotification(userId, userLevel, oldLevel, newLevel, roleReward, guild, config) {
         try {
-            const channel = await guild.channels.fetch(config.notifications.channelId);
+            const channelId = config.notifications.channelId || config.notifications.channel;
+            const channel = await guild.channels.fetch(channelId);
             if (!channel || !channel.isTextBased()) {
-                console.log(`⚠️ Canal de notification non trouvé ou invalide: ${config.notifications.channelId}`);
-                return;
+                                console.log(`⚠️ Canal de notification non trouvé ou invalide: ${channelId}`);
             }
             
             const user = await guild.members.fetch(userId);
