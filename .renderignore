@@ -1,0 +1,10 @@
+# Fichiers à ignorer lors du déploiement Render
+node_modules/
+.git/
+.env
+*.log
+temp_cards/
+logs/
+data/backups/
+.replit
+.gitignore

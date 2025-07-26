@@ -239,9 +239,11 @@ class RenderSolutionBot {
     }
 
     async handleInteraction(interaction) {
+        // Initialiser dataManager au début pour toutes les sections
+        const dataManager = require('./utils/simpleDataManager');
+        
         try {
             const MainRouterHandler = require('./handlers/MainRouterHandler');
-            const dataManager = require('./utils/simpleDataManager');
             const router = new MainRouterHandler(dataManager);
 
             if (interaction.isChatInputCommand()) {
@@ -371,8 +373,98 @@ class RenderSolutionBot {
                         return;
                     }
                     
+                    // Handler pour les modals d'actions économiques
+                    if (interaction.customId.startsWith('action_config_modal_')) {
+                        console.log('🎯 Modal action config submission détecté:', interaction.customId);
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const handler = new EconomyConfigHandler(dataManager);
+                        await handler.handleActionModal(interaction);
+                        return;
+                    }
+                    
+                    // Gestion des autres modals d'économie
+                    if (interaction.customId === 'economy_daily_amount_modal') {
+                        const amount = parseInt(interaction.fields.getTextInputValue('daily_amount'));
+                        if (amount >= 1 && amount <= 1000) {
+                            const economyData = dataManager.loadData('economy') || {};
+                            if (!economyData.daily) economyData.daily = {};
+                            economyData.daily.amount = amount;
+                            dataManager.saveData('economy', economyData);
+                            await interaction.reply({ content: `✅ Montant daily configuré à ${amount}€`, flags: 64 });
+                        } else {
+                            await interaction.reply({ content: '❌ Montant invalide (1-1000€)', flags: 64 });
+                        }
+                        return;
+                    }
+                    
+                    if (interaction.customId === 'economy_messages_amount_modal') {
+                        const amount = parseInt(interaction.fields.getTextInputValue('messages_amount'));
+                        if (amount >= 1 && amount <= 50) {
+                            const economyData = dataManager.loadData('economy') || {};
+                            if (!economyData.messageRewards) economyData.messageRewards = {};
+                            economyData.messageRewards.amount = amount;
+                            dataManager.saveData('economy', economyData);
+                            await interaction.reply({ content: `✅ Montant par message configuré à ${amount}€`, flags: 64 });
+                        } else {
+                            await interaction.reply({ content: '❌ Montant invalide (1-50€)', flags: 64 });
+                        }
+                        return;
+                    }
+                    
+                    if (interaction.customId === 'economy_messages_cooldown_modal') {
+                        const cooldown = parseInt(interaction.fields.getTextInputValue('messages_cooldown'));
+                        if (cooldown >= 30 && cooldown <= 300) {
+                            const economyData = dataManager.loadData('economy') || {};
+                            if (!economyData.messageRewards) economyData.messageRewards = {};
+                            economyData.messageRewards.cooldown = cooldown;
+                            dataManager.saveData('economy', economyData);
+                            await interaction.reply({ content: `✅ Cooldown messages configuré à ${cooldown}s`, flags: 64 });
+                        } else {
+                            await interaction.reply({ content: '❌ Cooldown invalide (30-300s)', flags: 64 });
+                        }
+                        return;
+                    }
+                    
+                    // Modal pour créer un objet personnalisé
+                    if (interaction.customId === 'shop_custom_object_modal') {
+                        const name = interaction.fields.getTextInputValue('object_name');
+                        const price = parseInt(interaction.fields.getTextInputValue('object_price'));
+                        const description = interaction.fields.getTextInputValue('object_description') || 'Objet unique';
+                        
+                        if (price >= 1 && price <= 999999) {
+                            const fs = require('fs');
+                            let shopData = {};
+                            try {
+                                shopData = JSON.parse(fs.readFileSync('./render/data/shop.json', 'utf8'));
+                            } catch (error) {}
+                            
+                            const guildId = interaction.guild.id;
+                            if (!shopData[guildId]) shopData[guildId] = [];
+                            
+                            const newItem = {
+                                id: Date.now().toString(),
+                                name: name,
+                                price: price,
+                                description: description,
+                                type: 'custom',
+                                createdAt: new Date().toISOString(),
+                                createdBy: interaction.user.id
+                            };
+                            
+                            shopData[guildId].push(newItem);
+                            fs.writeFileSync('./render/data/shop.json', JSON.stringify(shopData, null, 2));
+                            
+                            await interaction.reply({ 
+                                content: `✅ **Objet créé avec succès !**\n\n🎨 **${name}** - ${price}€\n📝 ${description}`, 
+                                flags: 64 
+                            });
+                        } else {
+                            await interaction.reply({ content: '❌ Prix invalide (1-999,999€)', flags: 64 });
+                        }
+                        return;
+                    }
+                    
                     // Autres modals...
-                    const dataManager = require('./utils/simpleDataManager');
                     const MainRouterHandler = require('./handlers/MainRouterHandler');
                     const router = new MainRouterHandler(dataManager);
                     
@@ -465,15 +557,30 @@ class RenderSolutionBot {
                             const channelId = interaction.values[0];
                             const levelManager = require('./utils/levelManager');
                             const config = levelManager.loadConfig();
+                            
+                            // Mettre à jour les deux propriétés pour assurer la compatibilité
                             config.notifications.channel = channelId;
+                            config.notifications.channelId = channelId;
                             levelManager.saveConfig(config);
                             
+                            const channel = await interaction.guild.channels.fetch(channelId);
+                            
                             await interaction.update({
-                                content: `✅ Canal de notification défini sur <#${channelId}>.`,
+                                content: `✅ Canal de notification défini sur ${channel.name}`,
                                 embeds: [],
                                 components: []
                             });
-                            // Pas de setTimeout - retour au menu sera fait manuellement
+                            
+                            // Retour automatique au menu après 2 secondes
+                            setTimeout(async () => {
+                                try {
+                                    const LevelConfigHandler = require('./handlers/LevelConfigHandler');
+                                    const levelHandler = new LevelConfigHandler();
+                                    await levelHandler.showNotificationsConfig(interaction);
+                                } catch (error) {
+                                    console.error('Erreur retour menu notifications:', error);
+                                }
+                            }, 2000);
                             
                         } else if (customId === 'level_card_style') {
                             const style = interaction.values[0];
@@ -560,6 +667,58 @@ class RenderSolutionBot {
                     return;
                 }
                 
+                // Gestion spéciale pour economy_config_main
+                if (customId === 'economy_config_main') {
+                    console.log('🎯 Routage menu économie principal:', customId);
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleMainMenu(interaction);
+                    return;
+                }
+                
+                // Gestion des sous-menus économiques
+                if (customId === 'economy_action_select') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleActionSelection(interaction);
+                    return;
+                }
+                
+                if (customId === 'economy_shop_options') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleShopOption(interaction);
+                    return;
+                }
+                
+                if (customId === 'economy_karma_options') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleKarmaOption(interaction);
+                    return;
+                }
+                
+                if (customId === 'economy_daily_options') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleDailyOption(interaction);
+                    return;
+                }
+                
+                if (customId === 'economy_messages_options') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleMessagesOption(interaction);
+                    return;
+                }
+                
+                if (customId === 'economy_stats_options') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleStatsOption(interaction);
+                    return;
+                }
+
                 // Routage spécial pour les remises karma
                 if (customId === 'karma_discounts_menu' ||
                     customId === 'karma_discounts_actions' ||
@@ -628,26 +787,64 @@ class RenderSolutionBot {
                 }
 
                 // Gestion des modals d'actions économiques
-                if (customId.startsWith('action_karma_modal_') || 
-                    customId.startsWith('action_cooldown_modal_') || 
-                    customId.startsWith('action_rewards_modal_')) {
+                if (customId.startsWith('action_config_modal_')) {
+                    console.log('🎯 Modal action config détecté:', customId);
+                    console.log('🔍 Type interaction:', interaction.type, interaction.isModalSubmit());
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const handler = new EconomyConfigHandler(dataManager);
+                    await handler.handleActionModal(interaction);
+                    return;
+                }
+
+                // Gestion des sélecteurs d'actions économiques (nouvelle méthode)
+                if (interaction.isStringSelectMenu() && customId.includes('action_config_')) {
                     try {
-                        const actionName = customId.split('_').pop();
-                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
-                        const handler = new EconomyConfigHandler(dataManager);
+                        console.log('🎯 Sélecteur action économique détecté:', customId);
+                        const actionName = customId.replace('action_config_', '');
+                        const selectedValue = interaction.values[0];
                         
-                        if (customId.startsWith('action_karma_modal_')) {
-                            await handler.handleActionKarmaModal(interaction, actionName);
-                        } else if (customId.startsWith('action_cooldown_modal_')) {
-                            await handler.handleActionCooldownModal(interaction, actionName);
-                        } else if (customId.startsWith('action_rewards_modal_')) {
-                            await handler.handleActionRewardsModal(interaction, actionName);
+                        if (selectedValue.endsWith('_modal_config')) {
+                            const action = selectedValue.replace('_modal_config', '');
+                            const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                            const handler = new EconomyConfigHandler(dataManager);
+                            await handler.showActionModal(interaction, action);
+                            return;
+                        } else if (selectedValue === 'back_to_actions') {
+                            const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                            const handler = new EconomyConfigHandler(dataManager);
+                            await handler.showActionsMainMenu(interaction);
+                            return;
                         }
                     } catch (error) {
-                        console.error('❌ Erreur modal action:', error);
+                        console.error('❌ Erreur sélecteur action:', error);
                         if (!interaction.replied) {
                             await interaction.reply({
-                                content: '❌ Erreur lors du traitement de la configuration.',
+                                content: '❌ Erreur lors du traitement de la sélection.',
+                                flags: 64
+                            });
+                        }
+                    }
+                    return;
+                }
+
+                // Gestion de la navigation spécifique d'actions
+                if (interaction.isStringSelectMenu() && customId === 'action_select') {
+                    try {
+                        console.log('🎯 Sélection d\'action détectée:', interaction.values[0]);
+                        const actionName = interaction.values[0];
+                        
+                        if (actionName.startsWith('action_config_')) {
+                            const action = actionName.replace('action_config_', '');
+                            const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                            const handler = new EconomyConfigHandler(dataManager);
+                            await handler.showActionSpecificConfig(interaction, action);
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('❌ Erreur sélection action:', error);
+                        if (!interaction.replied) {
+                            await interaction.reply({
+                                content: '❌ Erreur lors du traitement de la sélection d\'action.',
                                 flags: 64
                             });
                         }
@@ -658,13 +855,15 @@ class RenderSolutionBot {
                 // Ce routage est géré plus haut dans le code - supprimé pour éviter la duplication
 
                 // Routage via MainRouter pour le reste
-                const handled = await router.handleInteraction(interaction);
-                
-                if (!handled && !interaction.replied && !interaction.deferred) {
-                    await interaction.reply({ 
-                        content: '❌ Cette interaction n\'est pas encore implémentée.', 
-                        flags: 64 
-                    });
+                if (!interaction.replied && !interaction.deferred) {
+                    const handled = await router.handleInteraction(interaction);
+                    
+                    if (!handled && !interaction.replied && !interaction.deferred) {
+                        await interaction.reply({ 
+                            content: '❌ Cette interaction n\'est pas encore implémentée.', 
+                            flags: 64 
+                        });
+                    }
                 }
             }
 
@@ -978,7 +1177,7 @@ class RenderSolutionBot {
                 }, 2000);
                 break;
 
-            case 'set_channel':
+            case 'notification_channel':
                 const channelRow = new ActionRowBuilder()
                     .addComponents(
                         new ChannelSelectMenuBuilder()
