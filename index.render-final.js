@@ -273,6 +273,104 @@ class RenderSolutionBot {
                         return;
                     }
                     
+                    // Gestion des nouveaux modals de configuration niveau
+                    if (interaction.customId === 'add_role_reward_modal' ||
+                        interaction.customId === 'base_xp_modal' ||
+                        interaction.customId === 'multiplier_modal' ||
+                        interaction.customId.startsWith('level_for_role_')) {
+                        
+                        console.log('🎯 Modal niveau:', interaction.customId);
+                        const levelManager = require('./utils/levelManager');
+                        
+                        if (interaction.customId === 'add_role_reward_modal') {
+                            const level = parseInt(interaction.fields.getTextInputValue('level'));
+                            const roleId = interaction.fields.getTextInputValue('role_id');
+                            
+                            if (isNaN(level) || level < 1) {
+                                await interaction.reply({
+                                    content: '❌ Le niveau doit être un nombre entier positif.',
+                                    flags: 64
+                                });
+                                return;
+                            }
+                            
+                            const config = levelManager.loadConfig();
+                            if (!config.roleRewards) config.roleRewards = {};
+                            config.roleRewards[level] = roleId;
+                            levelManager.saveConfig(config);
+                            
+                            await interaction.reply({
+                                content: `✅ Récompense ajoutée: Niveau ${level} → <@&${roleId}>`,
+                                flags: 64
+                            });
+                            
+                        } else if (interaction.customId === 'base_xp_modal') {
+                            const baseXP = parseInt(interaction.fields.getTextInputValue('base_xp'));
+                            
+                            if (isNaN(baseXP) || baseXP < 1) {
+                                await interaction.reply({
+                                    content: '❌ L\'XP de base doit être un nombre entier positif.',
+                                    flags: 64
+                                });
+                                return;
+                            }
+                            
+                            const config = levelManager.loadConfig();
+                            config.levelFormula.baseXP = baseXP;
+                            levelManager.saveConfig(config);
+                            
+                            await interaction.reply({
+                                content: `✅ XP de base défini à ${baseXP} XP.`,
+                                flags: 64
+                            });
+                            
+                        } else if (interaction.customId === 'multiplier_modal') {
+                            const multiplier = parseFloat(interaction.fields.getTextInputValue('multiplier'));
+                            
+                            if (isNaN(multiplier) || multiplier <= 1) {
+                                await interaction.reply({
+                                    content: '❌ Le multiplicateur doit être un nombre supérieur à 1.',
+                                    flags: 64
+                                });
+                                return;
+                            }
+                            
+                            const config = levelManager.loadConfig();
+                            config.levelFormula.multiplier = multiplier;
+                            levelManager.saveConfig(config);
+                            
+                            await interaction.reply({
+                                content: `✅ Multiplicateur défini à ${multiplier}.`,
+                                flags: 64
+                            });
+                            
+                        } else if (interaction.customId.startsWith('level_for_role_')) {
+                            // Modal pour définir le niveau requis pour un rôle
+                            const roleId = interaction.customId.replace('level_for_role_', '');
+                            const level = parseInt(interaction.fields.getTextInputValue('level_required'));
+                            
+                            if (isNaN(level) || level < 1 || level > 999) {
+                                await interaction.reply({
+                                    content: '❌ Le niveau doit être un nombre entre 1 et 999.',
+                                    flags: 64
+                                });
+                                return;
+                            }
+                            
+                            const config = levelManager.loadConfig();
+                            if (!config.roleRewards) config.roleRewards = {};
+                            config.roleRewards[level] = roleId;
+                            levelManager.saveConfig(config);
+                            
+                            await interaction.reply({
+                                content: `✅ Récompense configurée: Niveau **${level}** → <@&${roleId}>`,
+                                flags: 64
+                            });
+                        }
+                        
+                        return;
+                    }
+                    
                     // Autres modals...
                     const dataManager = require('./utils/simpleDataManager');
                     const MainRouterHandler = require('./handlers/MainRouterHandler');
@@ -298,7 +396,7 @@ class RenderSolutionBot {
                 }
             }
             
-            else if (interaction.isStringSelectMenu() || interaction.isUserSelectMenu() || interaction.isChannelSelectMenu() || interaction.isButton()) {
+            else if (interaction.isStringSelectMenu() || interaction.isUserSelectMenu() || interaction.isChannelSelectMenu() || interaction.isRoleSelectMenu() || interaction.isButton()) {
                 const customId = interaction.customId;
                 console.log(`🔄 MainRouter traite: ${customId}`);
                 
@@ -339,6 +437,119 @@ class RenderSolutionBot {
                         }
                     } catch (error) {
                         console.error('❌ Erreur level config menu:', error);
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({
+                                content: '❌ Erreur lors du traitement de la configuration.',
+                                flags: 64
+                            });
+                        }
+                    }
+                    return;
+                }
+
+                // Routage pour les sous-menus de configuration des niveaux
+                if (customId === 'notifications_config_menu' || 
+                    customId === 'role_rewards_config_menu' || 
+                    customId === 'level_formula_config_menu' ||
+                    customId === 'level_notification_channel' ||
+                    customId === 'level_card_style' ||
+                    customId === 'remove_role_reward' ||
+                    customId === 'add_role_reward_select') {
+                    
+                    console.log('🎯 Routage sous-menu niveau:', customId);
+                    const LevelConfigHandler = require('./handlers/LevelConfigHandler');
+                    const levelHandler = new LevelConfigHandler();
+                    
+                    try {
+                        if (customId === 'level_notification_channel') {
+                            const channelId = interaction.values[0];
+                            const levelManager = require('./utils/levelManager');
+                            const config = levelManager.loadConfig();
+                            config.notifications.channel = channelId;
+                            levelManager.saveConfig(config);
+                            
+                            await interaction.update({
+                                content: `✅ Canal de notification défini sur <#${channelId}>.`,
+                                embeds: [],
+                                components: []
+                            });
+                            // Pas de setTimeout - retour au menu sera fait manuellement
+                            
+                        } else if (customId === 'level_card_style') {
+                            const style = interaction.values[0];
+                            const levelManager = require('./utils/levelManager');
+                            const config = levelManager.loadConfig();
+                            config.notifications.cardStyle = style;
+                            levelManager.saveConfig(config);
+                            
+                            await interaction.update({
+                                content: `✅ Style de carte changé en **${style}**.`,
+                                embeds: [],
+                                components: []
+                            });
+                            // Pas de setTimeout - retour au menu sera fait manuellement
+                            
+                        } else if (customId === 'remove_role_reward') {
+                            const level = interaction.values[0];
+                            const levelManager = require('./utils/levelManager');
+                            const config = levelManager.loadConfig();
+                            
+                            if (config.roleRewards && config.roleRewards[level]) {
+                                delete config.roleRewards[level];
+                                levelManager.saveConfig(config);
+                                
+                                await interaction.update({
+                                    content: `✅ Récompense du niveau ${level} supprimée.`,
+                                    embeds: [],
+                                    components: []
+                                });
+                                // Pas de setTimeout - retour au menu sera fait manuellement
+                            } else {
+                                await interaction.update({
+                                    content: '❌ Récompense introuvable.',
+                                    embeds: [],
+                                    components: []
+                                });
+                            }
+                            
+                        } else if (customId === 'add_role_reward_select') {
+                            // Sélection de rôle pour récompense
+                            const roleId = interaction.values[0];
+                            console.log('🎯 Rôle sélectionné pour récompense:', roleId);
+                            
+                            // Créer modal pour saisir le niveau
+                            const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+                            const modal = new ModalBuilder()
+                                .setCustomId(`level_for_role_${roleId}`)
+                                .setTitle('Niveau requis pour ce rôle');
+
+                            const levelInput = new TextInputBuilder()
+                                .setCustomId('level_required')
+                                .setLabel('Niveau requis')
+                                .setStyle(TextInputStyle.Short)
+                                .setPlaceholder('Ex: 5, 10, 20...')
+                                .setMinLength(1)
+                                .setMaxLength(3)
+                                .setRequired(true);
+
+                            modal.addComponents(new ActionRowBuilder().addComponents(levelInput));
+                            await interaction.showModal(modal);
+                            
+                        } else {
+                            const selectedValue = interaction.values[0];
+                            
+                            if (selectedValue === 'back_main') {
+                                await levelHandler.handleLevelConfigMenu(interaction);
+                            } else if (customId === 'notifications_config_menu') {
+                                await this.handleNotificationConfigAction(interaction, selectedValue, levelHandler);
+                            } else if (customId === 'role_rewards_config_menu') {
+                                await this.handleRoleRewardsConfigAction(interaction, selectedValue, levelHandler);
+                            } else if (customId === 'level_formula_config_menu') {
+                                await this.handleLevelFormulaConfigAction(interaction, selectedValue, levelHandler);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('❌ Erreur sous-menu niveau:', error);
                         if (!interaction.replied && !interaction.deferred) {
                             await interaction.reply({
                                 content: '❌ Erreur lors du traitement de la configuration.',
@@ -444,124 +655,7 @@ class RenderSolutionBot {
                     return;
                 }
 
-                // Routage pour le système de niveaux
-                if (customId === 'level_config_menu' ||
-                    customId === 'text_xp_config' ||
-                    customId === 'voice_xp_config' ||
-                    customId === 'notifications_config' ||
-                    customId === 'role_rewards_config' ||
-                    customId === 'level_formula_config' ||
-                    customId === 'leaderboard_actions' ||
-                    customId === 'level_card_style_select' ||
-                    customId === 'level_notification_channel_select' ||
-                    customId === 'level_remove_role_reward' ||
-                    customId.startsWith('level_modal_') ||
-                    interaction.values?.[0] === 'card_style' ||
-                    interaction.values?.[0] === 'notification_channel' ||
-                    interaction.values?.[0] === 'back_main') {
-                    
-                    console.log('🎯 Routage système de niveaux:', customId);
-                    const LevelConfigHandler = require('./handlers/LevelConfigHandler');
-                    const levelHandler = new LevelConfigHandler();
-                    
-                    // Gestion centralisée des interactions de niveau
-                    try {
-                        if (customId === 'level_config_menu') {
-                            const selectedValue = interaction.values?.[0];
-                            
-                            // Navigation depuis le menu principal
-                            switch (selectedValue) {
-                                case 'text_xp_config':
-                                    await levelHandler.handleTextXPConfig(interaction);
-                                    break;
-                                case 'voice_xp_config':
-                                    await levelHandler.handleVoiceXPConfig(interaction);
-                                    break;
-                                case 'notifications_config':
-                                    await levelHandler.handleNotificationsConfig(interaction);
-                                    break;
-                                case 'role_rewards_config':
-                                    await levelHandler.handleRoleRewardsConfig(interaction);
-                                    break;
-                                case 'level_formula_config':
-                                    await levelHandler.handleLevelFormulaConfig(interaction);
-                                    break;
-                                case 'leaderboard_actions':
-                                    await levelHandler.handleLeaderboardActions(interaction);
-                                    break;
-                                default:
-                                    await levelHandler.handleLevelConfigMenu(interaction);
-                                    break;
-                            }
-                        } else if (customId === 'text_xp_config' || 
-                                   customId === 'voice_xp_config' || 
-                                   customId === 'notifications_config' ||
-                                   customId === 'role_rewards_config' ||
-                                   customId === 'level_formula_config' ||
-                                   customId === 'leaderboard_actions') {
-                            
-                            const selectedValue = interaction.values?.[0];
-                            
-                            // Gestion des valeurs spéciales communes
-                            if (selectedValue === 'back_main') {
-                                await levelHandler.handleLevelConfigMenu(interaction);
-                            } else if (selectedValue === 'card_style') {
-                                await levelHandler.showCardStyleSelect(interaction);
-                            } else if (selectedValue === 'notification_channel') {
-                                await levelHandler.showNotificationChannelSelect(interaction);
-                            } else {
-                                // Déléguer au handler approprié
-                                switch (customId) {
-                                    case 'text_xp_config':
-                                        await levelHandler.handleTextXPConfig(interaction);
-                                        break;
-                                    case 'voice_xp_config':
-                                        await levelHandler.handleVoiceXPConfig(interaction);
-                                        break;
-                                    case 'notifications_config':
-                                        await levelHandler.handleNotificationsConfig(interaction);
-                                        break;
-                                    case 'role_rewards_config':
-                                        await levelHandler.handleRoleRewardsConfig(interaction);
-                                        break;
-                                    case 'level_formula_config':
-                                        await levelHandler.handleLevelFormulaConfig(interaction);
-                                        break;
-                                    case 'leaderboard_actions':
-                                        await levelHandler.handleLeaderboardActions(interaction);
-                                        break;
-                                }
-                            }
-                        } else if (customId === 'level_card_style_select') {
-                            if (!interaction.replied && !interaction.deferred) {
-                                await interaction.deferUpdate();
-                                await levelHandler.handleCardStyleSelect(interaction);
-                            }
-                        } else if (customId === 'level_notification_channel_select') {
-                            if (!interaction.replied && !interaction.deferred) {
-                                await interaction.deferUpdate();
-                                await levelHandler.handleNotificationChannelSelect(interaction);
-                            }
-                        } else if (customId === 'level_remove_role_reward') {
-                            if (!interaction.replied && !interaction.deferred) {
-                                await interaction.deferUpdate();
-                                await levelHandler.handleRemoveRoleReward(interaction);
-                            }
-                        } else if (customId.startsWith('level_modal_')) {
-                            await levelHandler.handleModalSubmit(interaction);
-                        }
-                    } catch (error) {
-                        console.error('Erreur handler niveau:', error);
-                        // Éviter les doubles réponses
-                        if (!interaction.replied && !interaction.deferred) {
-                            await interaction.reply({
-                                content: '❌ Erreur lors du traitement de la configuration.',
-                                flags: 64
-                            });
-                        }
-                    }
-                    return;
-                }
+                // Ce routage est géré plus haut dans le code - supprimé pour éviter la duplication
 
                 // Routage via MainRouter pour le reste
                 const handled = await router.handleInteraction(interaction);
@@ -854,6 +948,240 @@ class RenderSolutionBot {
             clearInterval(this.voiceIntervals.get(userId));
             this.voiceIntervals.delete(userId);
             console.log(`🎤 Suivi XP vocal arrêté pour ${userId}`);
+        }
+    }
+
+    async handleNotificationConfigAction(interaction, selectedValue, levelHandler) {
+        const { ActionRowBuilder, ChannelSelectMenuBuilder, StringSelectMenuBuilder } = require('discord.js');
+        const levelManager = require('./utils/levelManager');
+        const config = levelManager.loadConfig();
+
+        switch (selectedValue) {
+            case 'toggle_notifications':
+                config.notifications.enabled = !config.notifications.enabled;
+                levelManager.saveConfig(config);
+                await interaction.update({
+                    content: `✅ Notifications ${config.notifications.enabled ? 'activées' : 'désactivées'}.`,
+                    embeds: [],
+                    components: []
+                });
+                // Retour automatique au menu après 2 secondes
+                setTimeout(async () => {
+                    try {
+                        await levelHandler.showNotificationsConfig({ 
+                            ...interaction, 
+                            update: (options) => interaction.editReply(options) 
+                        });
+                    } catch (error) {
+                        console.log('Timeout notification config - interaction expirée');
+                    }
+                }, 2000);
+                break;
+
+            case 'set_channel':
+                const channelRow = new ActionRowBuilder()
+                    .addComponents(
+                        new ChannelSelectMenuBuilder()
+                            .setCustomId('level_notification_channel')
+                            .setPlaceholder('Sélectionnez un canal pour les notifications')
+                            .addChannelTypes([0]) // Text channels only
+                    );
+                
+                await interaction.update({
+                    content: 'Sélectionnez le canal pour les notifications de niveau:',
+                    embeds: [],
+                    components: [channelRow]
+                });
+                break;
+
+            case 'card_style':
+                const styleRow = new ActionRowBuilder()
+                    .addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId('level_card_style')
+                            .setPlaceholder('Choisissez un style de carte...')
+                            .addOptions([
+                                { label: '🚀 Futuristic', value: 'futuristic' },
+                                { label: '✨ Elegant', value: 'elegant' },
+                                { label: '🎮 Gaming', value: 'gaming' },
+                                { label: '🎯 Minimal', value: 'minimal' },
+                                { label: '🌈 Holographic', value: 'holographic' },
+                                { label: '🎮 Gamer Néon', value: 'gamer' },
+                                { label: '💖 Amour', value: 'amour' },
+                                { label: '✨ Sensuel', value: 'sensuel' }
+                            ])
+                    );
+                
+                await interaction.update({
+                    content: 'Choisissez le style des cartes de niveau:',
+                    embeds: [],
+                    components: [styleRow]
+                });
+                break;
+
+            default:
+                await interaction.reply({
+                    content: '❌ Action non reconnue.',
+                    flags: 64
+                });
+        }
+    }
+
+    async handleRoleRewardsConfigAction(interaction, selectedValue, levelHandler) {
+        const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, StringSelectMenuBuilder, RoleSelectMenuBuilder } = require('discord.js');
+        const levelManager = require('./utils/levelManager');
+        const config = levelManager.loadConfig();
+
+        switch (selectedValue) {
+            case 'add_role_reward':
+                // Nouveau système: sélecteur de rôle d'abord
+                const roleRow = new ActionRowBuilder()
+                    .addComponents(
+                        new RoleSelectMenuBuilder()
+                            .setCustomId('add_role_reward_select')
+                            .setPlaceholder('Choisissez le rôle à attribuer comme récompense...')
+                            .setMaxValues(1)
+                    );
+                
+                await interaction.update({
+                    content: '🎁 **Étape 1/2**: Sélectionnez le rôle que vous voulez attribuer en récompense:',
+                    embeds: [],
+                    components: [roleRow]
+                });
+                break;
+
+            case 'list_rewards':
+                const rewards = config.roleRewards || {};
+                const rewardsList = Object.keys(rewards).length > 0 
+                    ? Object.entries(rewards).map(([level, roleId]) => 
+                        `Niveau ${level}: <@&${roleId}>`).join('\n')
+                    : 'Aucune récompense configurée';
+
+                await interaction.update({
+                    content: `📋 **Récompenses configurées:**\n\n${rewardsList}`,
+                    embeds: [],
+                    components: []
+                });
+                // Retour automatique au menu après 5 secondes
+                setTimeout(async () => {
+                    try {
+                        await levelHandler.showRoleRewardsConfig({ 
+                            ...interaction, 
+                            update: (options) => interaction.editReply(options) 
+                        });
+                    } catch (error) {
+                        console.log('Timeout role rewards config - interaction expirée');
+                    }
+                }, 5000);
+                break;
+
+            case 'remove_reward':
+                const rewardsToRemove = config.roleRewards || {};
+                if (Object.keys(rewardsToRemove).length === 0) {
+                    await interaction.update({
+                        content: '❌ Aucune récompense à supprimer.',
+                        embeds: [],
+                        components: []
+                    });
+                    setTimeout(() => levelHandler.showRoleRewardsConfig(interaction), 3000);
+                    return;
+                }
+
+                const removeRow = new ActionRowBuilder()
+                    .addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId('remove_role_reward')
+                            .setPlaceholder('Choisissez une récompense à supprimer...')
+                            .addOptions(
+                                Object.entries(rewardsToRemove).map(([level, roleId]) => ({
+                                    label: `Niveau ${level}`,
+                                    description: `Supprime la récompense du niveau ${level}`,
+                                    value: level
+                                }))
+                            )
+                    );
+
+                await interaction.update({
+                    content: 'Sélectionnez la récompense à supprimer:',
+                    embeds: [],
+                    components: [removeRow]
+                });
+                break;
+
+            default:
+                await interaction.reply({
+                    content: '❌ Action non reconnue.',
+                    flags: 64
+                });
+        }
+    }
+
+    async handleLevelFormulaConfigAction(interaction, selectedValue, levelHandler) {
+        const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+        const levelManager = require('./utils/levelManager');
+        const config = levelManager.loadConfig();
+
+        switch (selectedValue) {
+            case 'base_xp':
+                const baseXPModal = new ModalBuilder()
+                    .setCustomId('base_xp_modal')
+                    .setTitle('Modifier l\'XP de base');
+
+                const baseXPInput = new TextInputBuilder()
+                    .setCustomId('base_xp')
+                    .setLabel('XP requis pour le niveau 1')
+                    .setStyle(TextInputStyle.Short)
+                    .setValue(config.levelFormula.baseXP.toString())
+                    .setPlaceholder('Ex: 100')
+                    .setRequired(true);
+
+                baseXPModal.addComponents(new ActionRowBuilder().addComponents(baseXPInput));
+                await interaction.showModal(baseXPModal);
+                break;
+
+            case 'multiplier':
+                const multiplierModal = new ModalBuilder()
+                    .setCustomId('multiplier_modal')
+                    .setTitle('Modifier le multiplicateur');
+
+                const multiplierInput = new TextInputBuilder()
+                    .setCustomId('multiplier')
+                    .setLabel('Multiplicateur de difficulté')
+                    .setStyle(TextInputStyle.Short)
+                    .setValue(config.levelFormula.multiplier.toString())
+                    .setPlaceholder('Ex: 1.5')
+                    .setRequired(true);
+
+                multiplierModal.addComponents(new ActionRowBuilder().addComponents(multiplierInput));
+                await interaction.showModal(multiplierModal);
+                break;
+
+            case 'reset_formula':
+                config.levelFormula = { baseXP: 100, multiplier: 1.5 };
+                levelManager.saveConfig(config);
+                await interaction.update({
+                    content: '✅ Formule réinitialisée aux valeurs par défaut (Base: 100 XP, Multiplicateur: 1.5).',
+                    embeds: [],
+                    components: []
+                });
+                // Retour automatique au menu après 3 secondes
+                setTimeout(async () => {
+                    try {
+                        await levelHandler.showLevelFormulaConfig({ 
+                            ...interaction, 
+                            update: (options) => interaction.editReply(options) 
+                        });
+                    } catch (error) {
+                        console.log('Timeout level formula config - interaction expirée');
+                    }
+                }, 3000);
+                break;
+
+            default:
+                await interaction.reply({
+                    content: '❌ Action non reconnue.',
+                    flags: 64
+                });
         }
     }
 }
