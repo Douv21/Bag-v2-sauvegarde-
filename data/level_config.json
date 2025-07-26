@@ -1,0 +1,23 @@
+{
+  "textXP": {
+    "min": 15,
+    "max": 25,
+    "cooldown": 10000
+  },
+  "voiceXP": {
+    "amount": 30,
+    "interval": 15000
+  },
+  "xpCooldown": 10000,
+  "notifications": {
+    "enabled": true,
+    "channel": null,
+    "cardStyle": "holographic",
+    "channelId": "1360897919204720722"
+  },
+  "roleRewards": {},
+  "levelFormula": {
+    "baseXP": 1000,
+    "multiplier": 1.5
+  }
+}

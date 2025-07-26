@@ -1,16 +1,16 @@
 {
   "463272211269156865_1360897918504271882": {
-    "balance": 1753,
-    "goodKarma": 0,
-    "badKarma": 0,
+    "balance": 2391,
+    "goodKarma": 6,
+    "badKarma": -3,
     "dailyStreak": 1,
-    "lastDaily": 1753135840658,
-    "messageCount": 6,
+    "lastDaily": 1753521300454,
+    "messageCount": 23,
     "karmaGood": 0,
     "karmaBad": 0,
-    "lastWork": 1753203246380,
+    "lastWork": 1753521313743,
     "lastSteal": 1753203294089,
-    "lastFish": 1753203252388,
+    "lastFish": 1753521325050,
     "lastCrime": 1753203303956,
     "appliedRewards": [
       1753184033719,
@@ -18,19 +18,19 @@
     ]
   },
   "943487722738311219_1360897918504271882": {
-    "balance": 4255,
-    "goodKarma": 0,
-    "badKarma": 0,
-    "dailyStreak": 0,
-    "lastDaily": null,
-    "messageCount": 31,
+    "balance": 4784,
+    "goodKarma": 8,
+    "badKarma": -6,
+    "dailyStreak": 1,
+    "lastDaily": 1753471853826,
+    "messageCount": 50,
     "karmaGood": 0,
     "karmaBad": 0,
-    "lastWork": 1753206672014,
-    "lastFish": 1753190347973,
+    "lastWork": 1753518925927,
+    "lastFish": 1753519316881,
     "lastCrime": 1753209481123,
-    "lastBet": 1753193590947,
-    "lastSteal": 1753193738307,
+    "lastBet": 1753519067905,
+    "lastSteal": 1753518911999,
     "lastDonate": 1753149297896,
     "appliedRewards": [
       1753184033719,
@@ -62,7 +62,7 @@
       "maxReward": 100,
       "cooldown": 300000,
       "goodKarma": 2,
-      "badKarma": -1
+      "badKarma": 0
     },
     "pecher": {
       "enabled": true,
@@ -70,7 +70,25 @@
       "maxReward": 50,
       "cooldown": 300000,
       "goodKarma": 1,
-      "badKarma": -2
+      "badKarma": 0
+    },
+    "donner": {
+      "goodKarma": 3,
+      "badKarma": 0
+    },
+    "voler": {
+      "goodKarma": 0,
+      "badKarma": -3,
+      "enabled": true
+    },
+    "crime": {
+      "goodKarma": 0,
+      "badKarma": -5
+    },
+    "parier": {
+      "goodKarma": 0,
+      "badKarma": -1,
+      "enabled": true
     }
   },
   "519883409917607937_1360897918504271882": {
@@ -110,12 +128,12 @@
     "messageCount": 1
   },
   "739103557600673792_1360897918504271882": {
-    "balance": 1520,
+    "balance": 1640,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 26
+    "messageCount": 39
   },
   "daily": {
     "amount": 50,
@@ -163,12 +181,12 @@
     }
   ],
   "528391525651185667_1360897918504271882": {
-    "balance": 1020,
+    "balance": 1080,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 1
+    "messageCount": 4
   },
   "messages": {
     "enabled": false,
@@ -176,12 +194,12 @@
     "cooldown": 60000
   },
   "1108053454519271535_1360897918504271882": {
-    "balance": 1040,
+    "balance": 1080,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 2
+    "messageCount": 4
   },
   "karmaDiscounts": {
     "enabled": true,
@@ -211,12 +229,12 @@
     "messageCount": 16
   },
   "1173342775396286521_1360897918504271882": {
-    "balance": 953,
+    "balance": 1053,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 0
+    "messageCount": 9
   },
   "266247151355559937_1360897918504271882": {
     "balance": 1140,

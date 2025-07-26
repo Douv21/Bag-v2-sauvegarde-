@@ -1,0 +1,72 @@
+{
+  "1360897918504271882_943487722738311219": {
+    "userId": "943487722738311219",
+    "guildId": "1360897918504271882",
+    "xp": 5247,
+    "level": 4,
+    "totalMessages": 26,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 1753523004636,
+    "lastVoiceTime": 0
+  },
+  "1360897918504271882_1108053454519271535": {
+    "userId": "1108053454519271535",
+    "guildId": "1360897918504271882",
+    "xp": 17,
+    "level": 1,
+    "totalMessages": 2,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 1753354199602,
+    "lastVoiceTime": 0
+  },
+  "1360897918504271882_463272211269156865": {
+    "userId": "463272211269156865",
+    "guildId": "1360897918504271882",
+    "xp": 84,
+    "level": 1,
+    "totalMessages": 19,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 1753522498671,
+    "lastVoiceTime": 0
+  },
+  "1360897918504271882_739103557600673792": {
+    "userId": "739103557600673792",
+    "guildId": "1360897918504271882",
+    "xp": 56,
+    "level": 1,
+    "totalMessages": 13,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 1753522745704,
+    "lastVoiceTime": 0
+  },
+  "1360897918504271882_528391525651185667": {
+    "userId": "528391525651185667",
+    "guildId": "1360897918504271882",
+    "xp": 25,
+    "level": 1,
+    "totalMessages": 3,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 1753372465198,
+    "lastVoiceTime": 0
+  },
+  "1360897918504271882_1173342775396286521": {
+    "userId": "1173342775396286521",
+    "guildId": "1360897918504271882",
+    "xp": 60,
+    "level": 1,
+    "totalMessages": 9,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 1753523032300,
+    "lastVoiceTime": 0
+  },
+  "1360897918504271882_909739750225772544": {
+    "userId": "909739750225772544",
+    "guildId": "1360897918504271882",
+    "xp": 0,
+    "level": 1,
+    "totalMessages": 0,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 0,
+    "lastVoiceTime": 0
+  }
+}
