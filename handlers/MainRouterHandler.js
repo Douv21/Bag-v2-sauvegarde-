@@ -51,7 +51,11 @@ class MainRouterHandler {
                 return await this.routeToConfessionHandler(interaction, customId);
             }
             
-            if (customId.startsWith('economy_config') || customId.startsWith('economy_') || customId === 'temp_role_select' || customId === 'perm_role_select' || customId === 'karma_temp_role_select' || customId.startsWith('karma_temp_type_select_') || customId === 'karma_reset_day_select' || customId === 'karma_reset_confirm' || customId.startsWith('action_config_') || customId.startsWith('action_')) {
+            if (customId.startsWith('economy_config') || customId.startsWith('economy_') || customId === 'temp_role_select' || customId === 'perm_role_select' || customId === 'karma_temp_role_select' || customId.startsWith('karma_temp_type_select_') || customId === 'karma_reset_day_select' || customId === 'karma_reset_confirm' || customId.startsWith('action_config_') || customId.startsWith('action_') || 
+                // Nouveaux IDs des menus redesignés
+                customId.includes('actions_main') || customId.includes('shop_main') || customId.includes('karma_main') || customId.includes('daily_main') || customId.includes('messages_main') || customId.includes('stats_main') ||
+                customId.includes('actions_toggle') || customId.includes('shop_') || customId.includes('karma_') || customId.includes('daily_') || customId.includes('messages_') || customId.includes('stats_') ||
+                customId === 'back_to_main') {
                 console.log(`➡️ Routage vers EconomyHandler: ${customId}`);
                 return await this.routeToEconomyHandler(interaction, customId);
             }
@@ -293,7 +297,9 @@ class MainRouterHandler {
                 
             case 'economy_config_select':
                 console.log('Routage economy_config_select vers handleInteraction...');
-                await handler.handleInteraction(interaction);
+                if (!interaction.replied && !interaction.deferred) {
+                    await handler.handleInteraction(interaction);
+                }
                 return true;
                 
             case 'economy_actions_back':
