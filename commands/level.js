@@ -20,27 +20,36 @@ module.exports = {
             const targetMember = await interaction.guild.members.fetch(targetUser.id);
             const userLevel = levelManager.getUserLevel(targetUser.id, interaction.guild.id);
             
-            // Calculs de progression
-            const nextLevelXP = levelManager.calculateXPForLevel(userLevel.level + 1);
+            // Calculs de progression corrigés
             const currentLevelXP = levelManager.calculateXPForLevel(userLevel.level);
-            const xpProgress = userLevel.xp - currentLevelXP;
+            const nextLevelXP = levelManager.calculateXPForLevel(userLevel.level + 1);
+            const xpProgress = Math.max(0, userLevel.xp - currentLevelXP);
             const xpNeeded = nextLevelXP - currentLevelXP;
-            const progressPercent = Math.round((xpProgress / xpNeeded) * 100);
+            const progressPercent = Math.min(100, Math.max(0, Math.round((xpProgress / xpNeeded) * 100)));
             
-            // Créer la barre de progression
+            console.log(`🔍 Debug progression:`, {
+                userXP: userLevel.xp,
+                level: userLevel.level,
+                currentLevelXP,
+                nextLevelXP,
+                xpProgress,
+                xpNeeded,
+                progressPercent
+            });
+            
+            // Créer la barre de progression avec validation
             const barLength = 20;
-            const filledBars = Math.round((progressPercent / 100) * barLength);
-            const emptyBars = barLength - filledBars;
+            const filledBars = Math.max(0, Math.min(barLength, Math.round((progressPercent / 100) * barLength)));
+            const emptyBars = Math.max(0, barLength - filledBars);
             const progressBar = '█'.repeat(filledBars) + '░'.repeat(emptyBars);
             
             // Pas d'embed texte, seulement la carte
             
-            // Générer la carte de niveau
+            // Générer la carte de niveau (uniquement style holographique)
             const config = levelManager.loadConfig();
-            const cardStyle = config.notifications?.cardStyle || 'futuristic';
             
             try {
-                console.log(`🎨 /level: Génération carte style ${cardStyle} pour ${targetUser.username}`);
+                console.log(`🎨 /level: Génération carte holographic pour ${targetUser.username}`);
                 console.log(`🔍 Debug user data:`, {
                     id: targetUser.id,
                     username: targetUser.username,
@@ -110,15 +119,30 @@ module.exports = {
                     rolesCount: userWithRoles.roles.length
                 });
                 
-                const cardBuffer = await levelCardGenerator.generateCard(
+                // Générer le SVG complet avec toutes les informations
+                const svgContent = await levelCardGenerator.createHolographicSVG(
                     userWithRoles, 
                     userLevel, 
                     userLevel.level - 1, 
                     userLevel.level, 
-                    null, 
-                    cardStyle,
-                    progressData
+                    null,
+                    progressData,
+                    userWithRoles.roles,
+                    true  // Carte complète pour /level
                 );
+                
+                // Convertir SVG en PNG
+                const sharp = require('sharp');
+                const cardBuffer = await sharp(Buffer.from(svgContent))
+                    .png({ 
+                        quality: 90,
+                        compressionLevel: 6
+                    })
+                    .resize(800, 400, { 
+                        fit: 'contain',
+                        background: { r: 0, g: 0, b: 0, alpha: 0 }
+                    })
+                    .toBuffer();
                 
                 console.log(`📊 /level: Carte générée - ${cardBuffer ? cardBuffer.length : 0} bytes`);
                 
@@ -156,9 +180,20 @@ module.exports = {
             
         } catch (error) {
             console.error('Erreur commande level:', error);
-            await interaction.editReply({
-                content: '❌ Une erreur est survenue lors de l\'affichage du niveau.'
-            });
+            try {
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({
+                        content: '❌ Une erreur est survenue lors de l\'affichage du niveau.',
+                        flags: 64
+                    });
+                } else {
+                    await interaction.editReply({
+                        content: '❌ Une erreur est survenue lors de l\'affichage du niveau.'
+                    });
+                }
+            } catch (replyError) {
+                console.error('Erreur envoi réponse erreur:', replyError);
+            }
         }
     }
 };
