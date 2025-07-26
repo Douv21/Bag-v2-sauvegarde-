@@ -44,32 +44,27 @@ module.exports = {
                 });
             }
             
-            // Types de poissons avec probabilités
-            const catches = [
-                { name: 'des sardines', value: 30, chance: 0.4, emoji: '🐟' },
-                { name: 'une truite', value: 60, chance: 0.25, emoji: '🐠' },
-                { name: 'un saumon', value: 100, chance: 0.15, emoji: '🍣' },
-                { name: 'un thon', value: 150, chance: 0.1, emoji: '🐟' },
-                { name: 'un poisson rare', value: 250, chance: 0.05, emoji: '🐠' },
-                { name: 'un trésor sous-marin', value: 500, chance: 0.03, emoji: '💎' },
-                { name: 'rien du tout', value: 0, chance: 0.02, emoji: '🕳️' }
+            // Calculer le gain aléatoire selon la configuration
+            const minReward = actionConfig.minReward;
+            const maxReward = actionConfig.maxReward;
+            const gainAmount = Math.floor(Math.random() * (maxReward - minReward + 1)) + minReward;
+            
+            // Types de poissons avec valeurs basées sur le gain calculé
+            const fishTypes = [
+                { name: 'des sardines', emoji: '🐟', multiplier: 0.6 },
+                { name: 'une truite', emoji: '🐠', multiplier: 0.8 },
+                { name: 'un saumon', emoji: '🍣', multiplier: 1.0 },
+                { name: 'un thon', emoji: '🐟', multiplier: 1.2 },
+                { name: 'un poisson rare', emoji: '🐠', multiplier: 1.5 },
+                { name: 'un trésor sous-marin', emoji: '💎', multiplier: 2.0 }
             ];
             
-            // Sélectionner une prise selon les probabilités
-            const random = Math.random();
-            let cumulative = 0;
-            let selectedCatch = catches[0];
-            
-            for (const catchItem of catches) {
-                cumulative += catchItem.chance;
-                if (random <= cumulative) {
-                    selectedCatch = catchItem;
-                    break;
-                }
-            }
+            // Sélectionner un type de poisson aléatoire
+            const selectedFish = fishTypes[Math.floor(Math.random() * fishTypes.length)];
+            const actualGain = Math.floor(gainAmount * selectedFish.multiplier);
             
             // Mettre à jour utilisateur avec dataManager selon configuration
-            userData.balance = (userData.balance || 1000) + selectedCatch.value;
+            userData.balance = (userData.balance || 1000) + actualGain;
             userData.goodKarma = (userData.goodKarma || 0) + actionConfig.goodKarma;
             userData.badKarma = (userData.badKarma || 0) + actionConfig.badKarma;
             userData.lastFish = now;
@@ -79,85 +74,59 @@ module.exports = {
             // Calculer karma net après mise à jour
             const karmaNet = userData.goodKarma + Math.abs(userData.badKarma);
             
-            let embed;
+            const embed = new EmbedBuilder()
+                .setColor('#00ff7f')
+                .setTitle('🎣 Belle Pêche !')
+                .setDescription(`Vous avez attrapé ${selectedFish.name} ! ${selectedFish.emoji}`)
+                .addFields([
+                    {
+                        name: '💰 Gain',
+                        value: `${actualGain}€`,
+                        inline: true
+                    },
+                    {
+                        name: '😇 Karma Positif',
+                        value: `+${actionConfig.goodKarma} (${userData.goodKarma})`,
+                        inline: true
+                    },
+                    {
+                        name: '😈 Karma Négatif',
+                        value: `${actionConfig.badKarma} (${userData.badKarma})`,
+                        inline: true
+                    },
+                    {
+                        name: '⚖️ Karma Net',
+                        value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
+                        inline: true
+                    },
+                    {
+                        name: '⏰ Cooldown',
+                        value: `${Math.floor(cooldownTime / 60000)} minutes`,
+                        inline: true
+                    },
+                    {
+                        name: '💰 Solde Total',
+                        value: `${userData.balance}€`,
+                        inline: true
+                    },
+                    {
+                        name: '🎯 Configuration',
+                        value: `Gains: ${minReward}€-${maxReward}€`,
+                        inline: false
+                    }
+                ])
+                .setFooter({ text: 'Prochaine pêche dans 1h30' });
             
-            if (selectedCatch.value === 0) {
-                embed = new EmbedBuilder()
-                    .setColor('#87ceeb')
-                    .setTitle('🎣 Pêche Infructueuse')
-                    .setDescription(`Vous n'avez attrapé ${selectedCatch.name} ! ${selectedCatch.emoji}`)
-                    .addFields([
-                        {
-                            name: '💰 Gain',
-                            value: `${selectedCatch.value}€`,
-                            inline: true
-                        },
-                        {
-                            name: '😇 Karma Positif',
-                            value: `+1 (${userData.goodKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '😈 Karma Négatif',
-                            value: `-1 (${userData.badKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '⚖️ Karma Net',
-                            value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
-                            inline: true
-                        },
-                        {
-                            name: '🌊 Sagesse',
-                            value: 'La patience est la clé de la pêche',
-                            inline: false
-                        }
-                    ]);
-            } else {
-                embed = new EmbedBuilder()
-                    .setColor('#00ff7f')
-                    .setTitle('🎣 Belle Pêche !')
-                    .setDescription(`Vous avez attrapé ${selectedCatch.name} ! ${selectedCatch.emoji}`)
-                    .addFields([
-                        {
-                            name: '💰 Gain',
-                            value: `${selectedCatch.value}€`,
-                            inline: true
-                        },
-                        {
-                            name: '💳 Nouveau Solde',
-                            value: `${userData.balance}€`,
-                            inline: true
-                        },
-                        {
-                            name: '😇 Karma Positif',
-                            value: `+1 (${userData.goodKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '😈 Karma Négatif',
-                            value: `-1 (${userData.badKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '⚖️ Karma Net',
-                            value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
-                            inline: true
-                        }
-                    ]);
-            }
-            
-            embed.setFooter({ text: 'Prochaine pêche dans 1h30' });
             await interaction.reply({ embeds: [embed] });
 
-        // Vérifier et appliquer les récompenses karma automatiques
-        try {
-            const KarmaRewardManager = require('../utils/karmaRewardManager');
-            const karmaManager = new KarmaRewardManager(dataManager);
-            await karmaManager.checkAndApplyKarmaRewards(interaction.user, interaction.guild, interaction.channel);
-        } catch (error) {
-            console.error('Erreur vérification récompenses karma:', error);
-        }
+            // Vérifier et appliquer les récompenses karma automatiques
+            try {
+                const KarmaRewardManager = require('../utils/karmaRewardManager');
+                const karmaManager = new KarmaRewardManager(dataManager);
+                await karmaManager.checkAndApplyKarmaRewards(interaction.user, interaction.guild, interaction.channel);
+            } catch (error) {
+                console.error('Erreur vérification récompenses karma:', error);
+            }
             
         } catch (error) {
             console.error('❌ Erreur pecher:', error);
