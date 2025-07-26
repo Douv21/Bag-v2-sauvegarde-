@@ -14,7 +14,7 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            await interaction.deferReply({ flags: 64 });
+            await interaction.deferReply();
             
             const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
             const targetMember = await interaction.guild.members.fetch(targetUser.id);
