@@ -465,36 +465,14 @@ class RenderSolutionBot {
                             const channelId = interaction.values[0];
                             const levelManager = require('./utils/levelManager');
                             const config = levelManager.loadConfig();
-                                                        
-                            // Mettre à jour les deux propriétés pour assurer la compatibilité
                             config.notifications.channel = channelId;
-                                                        config.notifications.channelId = channelId;
                             levelManager.saveConfig(config);
-                                                        
-                            const channel = await interaction.guild.channels.fetch(channelId);
                             
                             await interaction.update({
-                              content: `✅ Canal de notification défini sur   ${channel.name}`,
-                                embeds: [],
-                                components: []
-                            });
-                            
-                      
                                 content: `✅ Canal de notification défini sur <#${channelId}>.`,
                                 embeds: [],
                                 components: []
                             });
-                              // Retour automatique au menu après 2 secondes
-                                    setTimeout(async () => {
-                                try {
-                                const LevelConfigHandler = require('./handlers/LevelConfigHandler');
-                                    const levelHandler = new LevelConfigHandler();
-                                            await levelHandler.showNotificationsConfig(interaction);
-                                } catch (error) {
-                               console.error('Erreur retour menu notifications:', error);
-                                }
-                            }, 2000);
-                                 
                             // Pas de setTimeout - retour au menu sera fait manuellement
                             
                         } else if (customId === 'level_card_style') {
@@ -1000,7 +978,7 @@ class RenderSolutionBot {
                 }, 2000);
                 break;
 
-            case 'notification_channel':
+            case 'set_channel':
                 const channelRow = new ActionRowBuilder()
                     .addComponents(
                         new ChannelSelectMenuBuilder()
