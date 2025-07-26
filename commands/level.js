@@ -41,6 +41,13 @@ module.exports = {
             
             try {
                 console.log(`🎨 /level: Génération carte style ${cardStyle} pour ${targetUser.username}`);
+                console.log(`🔍 Debug user data:`, {
+                    id: targetUser.id,
+                    username: targetUser.username,
+                    displayName: targetUser.displayName,
+                    tag: targetUser.tag,
+                    memberDisplayName: targetMember.displayName
+                });
                 
                 // Calculer les données de progression pour la carte
                 // Obtenir le nombre de messages depuis economy.json pour cohérence
@@ -70,11 +77,25 @@ module.exports = {
                 };
                 
                 // Préparer l'utilisateur avec ses rôles pour la génération de carte
+                const finalDisplayName = targetMember.displayName || targetUser.displayName || targetUser.username || 'Unknown User';
                 const userWithRoles = {
-                    ...targetUser,
+                    id: targetUser.id,
+                    username: targetUser.username || 'Unknown',
+                    discriminator: targetUser.discriminator || '0000',
+                    tag: targetUser.tag || `${targetUser.username || 'Unknown'}#${targetUser.discriminator || '0000'}`,
+                    displayName: finalDisplayName,
+                    avatarURL: targetUser.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png',
                     roles: targetMember.roles.cache.map(role => ({ name: role.name, id: role.id })),
-                    displayAvatarURL: targetUser.displayAvatarURL?.bind(targetUser) || (() => targetUser.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png')
+                    displayAvatarURL: function(options = {}) {
+                        return targetUser.displayAvatarURL?.(options) || targetUser.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                    }
                 };
+                
+                console.log(`✅ Final user object for card:`, {
+                    displayName: userWithRoles.displayName,
+                    username: userWithRoles.username,
+                    rolesCount: userWithRoles.roles.length
+                });
                 
                 const cardBuffer = await levelCardGenerator.generateCard(
                     userWithRoles, 
