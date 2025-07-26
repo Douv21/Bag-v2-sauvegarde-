@@ -3263,7 +3263,16 @@ class EconomyConfigHandler {
         const maxRow = new ActionRowBuilder().addComponents(maxInput);
         
         modal.addComponents(minRow, maxRow);
-        await interaction.showModal(modal);
+        
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.showModal(modal);
+            } else {
+                console.log('❌ Interaction déjà traitée, impossible d\'afficher modal récompenses');
+            }
+        } catch (error) {
+            console.error('❌ Erreur affichage modal récompenses:', error);
+        }
     }
 
     async showActionKarmaModal(interaction, actionName) {
@@ -3296,7 +3305,16 @@ class EconomyConfigHandler {
         const badRow = new ActionRowBuilder().addComponents(badInput);
         
         modal.addComponents(goodRow, badRow);
-        await interaction.showModal(modal);
+        
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.showModal(modal);
+            } else {
+                console.log('❌ Interaction déjà traitée, impossible d\'afficher modal karma');
+            }
+        } catch (error) {
+            console.error('❌ Erreur affichage modal karma:', error);
+        }
     }
 
     async showActionCooldownModal(interaction, actionName) {
@@ -3319,7 +3337,16 @@ class EconomyConfigHandler {
         const cooldownRow = new ActionRowBuilder().addComponents(cooldownInput);
         
         modal.addComponents(cooldownRow);
-        await interaction.showModal(modal);
+        
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.showModal(modal);
+            } else {
+                console.log('❌ Interaction déjà traitée, impossible d\'afficher modal cooldown');
+            }
+        } catch (error) {
+            console.error('❌ Erreur affichage modal cooldown:', error);
+        }
     }
 
     async toggleAction(interaction, actionName) {
@@ -3376,34 +3403,46 @@ class EconomyConfigHandler {
     }
 
     async handleActionKarmaModal(interaction, actionName) {
-        console.log(`⚖️ Modal karma pour: ${actionName}`);
-        
-        const goodKarma = parseInt(interaction.fields.getTextInputValue('good_karma'));
-        const badKarma = parseInt(interaction.fields.getTextInputValue('bad_karma'));
-        
-        if (isNaN(goodKarma) || goodKarma < 0 || goodKarma > 10) {
-            await interaction.reply({ content: '❌ Karma bon invalide (0-10)', flags: 64 });
-            return;
+        try {
+            console.log(`⚖️ Modal karma pour: ${actionName}`);
+            
+            const goodKarma = parseInt(interaction.fields.getTextInputValue('good_karma'));
+            const badKarma = parseInt(interaction.fields.getTextInputValue('bad_karma'));
+            
+            if (isNaN(goodKarma) || goodKarma < 0 || goodKarma > 10) {
+                await interaction.reply({ content: '❌ Karma bon invalide (0-10)', flags: 64 });
+                return;
+            }
+            
+            if (isNaN(badKarma) || badKarma < 0 || badKarma > 10) {
+                await interaction.reply({ content: '❌ Karma mauvais invalide (0-10)', flags: 64 });
+                return;
+            }
+            
+            const economyConfig = await this.dataManager.loadData('economy.json', {});
+            if (!economyConfig.actions) economyConfig.actions = {};
+            if (!economyConfig.actions[actionName]) economyConfig.actions[actionName] = {};
+            
+            economyConfig.actions[actionName].goodKarma = goodKarma;
+            economyConfig.actions[actionName].badKarma = -badKarma; // Négatif pour bad karma
+            
+            await this.dataManager.saveData('economy.json', economyConfig);
+            
+            console.log(`✅ Config karma sauvée pour ${actionName}:`, economyConfig.actions[actionName]);
+            
+            await interaction.reply({
+                content: `✅ Karma **${actionName}** configuré :\n😇 Bon: **+${goodKarma}** | 😈 Mauvais: **${badKarma}**`,
+                flags: 64
+            });
+        } catch (error) {
+            console.error('❌ Erreur handleActionKarmaModal:', error);
+            if (!interaction.replied) {
+                await interaction.reply({
+                    content: '❌ Erreur lors de la configuration du karma.',
+                    flags: 64
+                });
+            }
         }
-        
-        if (isNaN(badKarma) || badKarma < 0 || badKarma > 10) {
-            await interaction.reply({ content: '❌ Karma mauvais invalide (0-10)', flags: 64 });
-            return;
-        }
-        
-        const economyConfig = await this.dataManager.loadData('economy.json', {});
-        if (!economyConfig.actions) economyConfig.actions = {};
-        if (!economyConfig.actions[actionName]) economyConfig.actions[actionName] = {};
-        
-        economyConfig.actions[actionName].goodKarma = goodKarma;
-        economyConfig.actions[actionName].badKarma = -badKarma; // Négatif pour bad karma
-        
-        await this.dataManager.saveData('economy.json', economyConfig);
-        
-        await interaction.reply({
-            content: `✅ Karma **${actionName}** configuré :\n😇 Bon: **+${goodKarma}** | 😈 Mauvais: **${badKarma}**`,
-            flags: 64
-        });
     }
 
     async handleActionCooldownModal(interaction, actionName) {

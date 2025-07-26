@@ -1,0 +1,410 @@
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const levelManager = require('../utils/levelManager');
+
+class LevelConfigHandler {
+    async handleLevelConfigMenu(interaction) {
+        const config = levelManager.loadConfig();
+        
+        // Créer la configuration sécurisée avec des valeurs par défaut
+        const safeConfig = {
+            textXP: config.textXP || { min: 5, max: 15, cooldown: 60000 },
+            voiceXP: config.voiceXP || { amount: 10, interval: 60000, perMinute: 10 },
+            notifications: config.notifications || { enabled: true, channelId: null, cardStyle: 'futuristic' },
+            roleRewards: config.roleRewards || [],
+            levelFormula: config.levelFormula || { baseXP: 100, multiplier: 1.5 },
+            leaderboard: config.leaderboard || { limit: 10 }
+        };
+        
+        const embed = new EmbedBuilder()
+            .setTitle('⚙️ Configuration Système de Niveaux')
+            .setDescription('Gérez tous les aspects du système de niveaux')
+            .addFields([
+                {
+                    name: '💬 XP Messages',
+                    value: `Min: ${safeConfig.textXP.min} XP | Max: ${safeConfig.textXP.max} XP\nCooldown: ${safeConfig.textXP.cooldown / 1000}s`,
+                    inline: true
+                },
+                {
+                    name: '🎤 XP Vocal',
+                    value: `${safeConfig.voiceXP.perMinute || safeConfig.voiceXP.amount || 10} XP/min\nInterval: ${safeConfig.voiceXP.interval / 1000}s`,
+                    inline: true
+                },
+                {
+                    name: '📢 Notifications',
+                    value: safeConfig.notifications.enabled ? 
+                        `✅ Actives\nCanal: ${safeConfig.notifications.channelId ? `<#${safeConfig.notifications.channelId}>` : 'Non défini'}\nStyle: ${safeConfig.notifications.cardStyle}` : 
+                        '❌ Désactivées',
+                    inline: true
+                },
+                {
+                    name: '🏆 Récompenses Rôles',
+                    value: `${safeConfig.roleRewards.length} rôle(s) configuré(s)`,
+                    inline: true
+                },
+                {
+                    name: '📊 Formule XP',
+                    value: `Base: ${safeConfig.levelFormula.baseXP} XP\nMultiplicateur: ${safeConfig.levelFormula.multiplier}`,
+                    inline: true
+                },
+                {
+                    name: '🏅 Classements',
+                    value: `Limite affichage: ${safeConfig.leaderboard.limit} utilisateurs`,
+                    inline: true
+                }
+            ])
+            .setColor('#5865F2');
+
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('level_config_menu')
+                    .setPlaceholder('Choisissez une section à configurer...')
+                    .addOptions([
+                        {
+                            label: '💬 Configuration XP Messages',
+                            description: 'Modifier les gains XP par message',
+                            value: 'text_xp'
+                        },
+                        {
+                            label: '🎤 Configuration XP Vocal',
+                            description: 'Modifier les gains XP vocal',
+                            value: 'voice_xp'
+                        },
+                        {
+                            label: '📢 Configuration Notifications',
+                            description: 'Gérer les notifications de niveau',
+                            value: 'notifications'
+                        },
+                        {
+                            label: '🏆 Récompenses de Rôles',
+                            description: 'Configurer les rôles automatiques',
+                            value: 'role_rewards'
+                        },
+                        {
+                            label: '📊 Formule de Niveau',
+                            description: 'Ajuster la progression XP',
+                            value: 'level_formula'
+                        },
+                        {
+                            label: '🏅 Configuration Classements',
+                            description: 'Paramètres des leaderboards',
+                            value: 'leaderboard'
+                        }
+                    ])
+            );
+
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.update({ embeds: [embed], components: [row] });
+            }
+        } catch (error) {
+            console.error('Erreur update interaction handleLevelConfigMenu:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ embeds: [embed], components: [row], flags: 64 });
+            }
+        }
+    }
+
+    getStyleDescription(style) {
+        const descriptions = {
+            'futuristic': '🚀 Style futuriste avec effets bleus et technologiques',
+            'elegant': '✨ Style élégant avec couleurs violettes et douces',
+            'gaming': '🎮 Style gaming avec couleurs orange et énergiques',
+            'minimal': '🎯 Style minimal avec design épuré et moderne',
+            'holographic': '🌈 Style holographique avec effets glass morphism',
+            'gamer': '🎮 Style gamer néon avec circuits et effets lumineux',
+            'amour': '💖 Style romantique avec roses et dorés',
+            'sensuel': '✨ Style sensuel avec luxe doré et rouge'
+        };
+        return descriptions[style] || 'Style personnalisé';
+    }
+
+    async generatePreviewCard(interaction, style) {
+        try {
+            const levelCardGenerator = require('../utils/levelCardGenerator');
+            
+            // Créer des données factices pour l'aperçu
+            const fakeUser = {
+                displayName: interaction.user.displayName || interaction.user.username,
+                displayAvatarURL: () => interaction.user.displayAvatarURL({ format: 'png', size: 128 })
+            };
+            
+            const fakeUserLevel = {
+                xp: 1250,
+                totalMessages: 45,
+                totalVoiceTime: 120000
+            };
+            
+            // Générer la carte avec le nouveau style
+            const cardBuffer = await levelCardGenerator.generateCard(
+                fakeUser,
+                fakeUserLevel,
+                4, // oldLevel
+                5, // newLevel  
+                { name: 'Membre Actif' }, // roleReward
+                style
+            );
+            
+            return cardBuffer;
+            
+        } catch (error) {
+            console.error('Erreur génération aperçu carte:', error);
+            return null;
+        }
+    }
+
+    async handleTextXPConfig(interaction) {
+        await this.showTextXPConfig(interaction);
+    }
+
+    async handleVoiceXPConfig(interaction) {
+        await this.showVoiceXPConfig(interaction);
+    }
+
+    async showTextXPConfig(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('text_xp_modal')
+            .setTitle('Configuration XP Messages');
+
+        const config = levelManager.loadConfig();
+
+        const minXPInput = new TextInputBuilder()
+            .setCustomId('min_xp')
+            .setLabel('XP Minimum par message')
+            .setStyle(TextInputStyle.Short)
+            .setValue(config.textXP.min.toString())
+            .setRequired(true)
+            .setMinLength(1)
+            .setMaxLength(3);
+
+        const maxXPInput = new TextInputBuilder()
+            .setCustomId('max_xp')
+            .setLabel('XP Maximum par message')
+            .setStyle(TextInputStyle.Short)
+            .setValue(config.textXP.max.toString())
+            .setRequired(true)
+            .setMinLength(1)
+            .setMaxLength(3);
+
+        const cooldownInput = new TextInputBuilder()
+            .setCustomId('cooldown')
+            .setLabel('Cooldown (en secondes)')
+            .setStyle(TextInputStyle.Short)
+            .setValue(((config.textXP.cooldown || config.xpCooldown || 60000) / 1000).toString())
+            .setRequired(true)
+            .setMinLength(1)
+            .setMaxLength(4);
+
+        const firstActionRow = new ActionRowBuilder().addComponents(minXPInput);
+        const secondActionRow = new ActionRowBuilder().addComponents(maxXPInput);
+        const thirdActionRow = new ActionRowBuilder().addComponents(cooldownInput);
+
+        modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
+
+        await interaction.showModal(modal);
+    }
+
+    async showVoiceXPConfig(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('voice_xp_modal')
+            .setTitle('Configuration XP Vocal');
+
+        const config = levelManager.loadConfig();
+
+        const xpAmountInput = new TextInputBuilder()
+            .setCustomId('xp_amount')
+            .setLabel('XP par minute de vocal')
+            .setStyle(TextInputStyle.Short)
+            .setValue(config.voiceXP.amount.toString())
+            .setRequired(true)
+            .setMinLength(1)
+            .setMaxLength(3);
+
+        const intervalInput = new TextInputBuilder()
+            .setCustomId('interval')
+            .setLabel('Intervalle de vérification (secondes)')
+            .setStyle(TextInputStyle.Short)
+            .setValue((config.voiceXP.interval / 1000).toString())
+            .setRequired(true)
+            .setMinLength(1)
+            .setMaxLength(4);
+
+        const firstActionRow = new ActionRowBuilder().addComponents(xpAmountInput);
+        const secondActionRow = new ActionRowBuilder().addComponents(intervalInput);
+
+        modal.addComponents(firstActionRow, secondActionRow);
+
+        await interaction.showModal(modal);
+    }
+
+    async handleTextXPModal(interaction) {
+        const minXP = parseInt(interaction.fields.getTextInputValue('min_xp'));
+        const maxXP = parseInt(interaction.fields.getTextInputValue('max_xp'));
+        const cooldown = parseInt(interaction.fields.getTextInputValue('cooldown')) * 1000;
+
+        if (minXP < 1 || maxXP < 1 || minXP > maxXP || cooldown < 1000) {
+            return await interaction.reply({
+                content: '❌ Valeurs invalides. Vérifiez que min ≤ max et cooldown ≥ 1 seconde.',
+                flags: 64
+            });
+        }
+
+        const config = levelManager.loadConfig();
+        config.textXP.min = minXP;
+        config.textXP.max = maxXP;
+        config.textXP.cooldown = cooldown;
+        config.xpCooldown = cooldown; // Pour compatibilité
+
+        levelManager.saveConfig(config);
+
+        await interaction.reply({
+            content: `✅ Configuration XP messages mise à jour:\n• Min: ${minXP} XP\n• Max: ${maxXP} XP\n• Cooldown: ${cooldown/1000}s`,
+            flags: 64
+        });
+    }
+
+    async handleVoiceXPModal(interaction) {
+        const xpAmount = parseInt(interaction.fields.getTextInputValue('xp_amount'));
+        const interval = parseInt(interaction.fields.getTextInputValue('interval')) * 1000;
+
+        if (xpAmount < 1 || interval < 10000) {
+            return await interaction.reply({
+                content: '❌ Valeurs invalides. XP ≥ 1 et intervalle ≥ 10 secondes.',
+                flags: 64
+            });
+        }
+
+        const config = levelManager.loadConfig();
+        config.voiceXP.amount = xpAmount;
+        config.voiceXP.interval = interval;
+
+        levelManager.saveConfig(config);
+
+        await interaction.reply({
+            content: `✅ Configuration XP vocal mise à jour:\n• XP: ${xpAmount} par minute\n• Intervalle: ${interval/1000}s`,
+            flags: 64
+        });
+    }
+
+    async handleNotificationsConfig(interaction) {
+        await this.showNotificationsConfig(interaction);
+    }
+
+    async handleRoleRewardsConfig(interaction) {
+        await this.showRoleRewardsConfig(interaction);
+    }
+
+    async handleLevelFormulaConfig(interaction) {
+        await this.showLevelFormulaConfig(interaction);
+    }
+
+    async handleLeaderboardActions(interaction) {
+        await this.showLeaderboard(interaction);
+    }
+
+    async showNotificationsConfig(interaction) {
+        const config = levelManager.loadConfig();
+        
+        const embed = new EmbedBuilder()
+            .setTitle('📢 Configuration Notifications')
+            .setDescription('Configurez les notifications de montée de niveau')
+            .addFields([
+                {
+                    name: 'État',
+                    value: config.notifications.enabled ? '✅ Activées' : '❌ Désactivées',
+                    inline: true
+                },
+                {
+                    name: 'Canal',
+                    value: config.notifications.channel ? `<#${config.notifications.channel}>` : '❌ Non défini',
+                    inline: true
+                },
+                {
+                    name: 'Style de carte',
+                    value: config.notifications.cardStyle || 'futuristic',
+                    inline: true
+                }
+            ])
+            .setColor('#5865F2');
+
+        await interaction.update({ embeds: [embed], components: [] });
+    }
+
+    async showRoleRewardsConfig(interaction) {
+        const config = levelManager.loadConfig();
+        
+        const embed = new EmbedBuilder()
+            .setTitle('🏆 Récompenses de Rôles')
+            .setDescription('Configurez les rôles automatiques par niveau')
+            .addFields([
+                {
+                    name: 'Récompenses configurées',
+                    value: Object.keys(config.roleRewards || {}).length > 0 
+                        ? `${Object.keys(config.roleRewards).length} niveau(x) configuré(s)`
+                        : 'Aucune récompense configurée',
+                    inline: false
+                }
+            ])
+            .setColor('#5865F2');
+
+        await interaction.update({ embeds: [embed], components: [] });
+    }
+
+    async showLevelFormulaConfig(interaction) {
+        const config = levelManager.loadConfig();
+        
+        const embed = new EmbedBuilder()
+            .setTitle('📐 Formule de Niveau')
+            .setDescription('Configurez la difficulté de progression')
+            .addFields([
+                {
+                    name: 'XP de base',
+                    value: `${config.levelFormula.baseXP} XP`,
+                    inline: true
+                },
+                {
+                    name: 'Multiplicateur',
+                    value: config.levelFormula.multiplier.toString(),
+                    inline: true
+                }
+            ])
+            .setColor('#5865F2');
+
+        await interaction.update({ embeds: [embed], components: [] });
+    }
+
+    async showLeaderboard(interaction) {
+        const stats = levelManager.getGuildStats(interaction.guild.id);
+        const topUsers = levelManager.getTopUsers(interaction.guild.id, 10);
+        
+        const embed = new EmbedBuilder()
+            .setTitle('🏆 Classement des Niveaux')
+            .setDescription('Top 10 des membres les plus actifs')
+            .addFields([
+                {
+                    name: 'Statistiques générales',
+                    value: `👥 **${stats.totalUsers}** membres actifs\n📈 **${Math.round(stats.avgLevel)}** niveau moyen\n⚡ **${stats.totalXP.toLocaleString()}** XP total`,
+                    inline: false
+                }
+            ])
+            .setColor('#5865F2');
+
+        if (topUsers.length > 0) {
+            const leaderboard = topUsers.map((user, index) => {
+                return `${index + 1}. <@${user.userId}> - Niveau ${user.level} (${user.xp.toLocaleString()} XP)`;
+            }).join('\n');
+            
+            embed.addFields([
+                {
+                    name: '🏅 Top 10',
+                    value: leaderboard,
+                    inline: false
+                }
+            ]);
+        }
+
+        await interaction.update({ embeds: [embed], components: [] });
+    }
+}
+
+module.exports = LevelConfigHandler;
