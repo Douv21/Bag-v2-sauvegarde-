@@ -151,7 +151,7 @@ module.exports = {
 <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <clipPath id="circleView">
-      <circle cx="700" cy="100" r="60"/>
+      <circle cx="150" cy="200" r="60"/>
     </clipPath>
     <filter id="textGlow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="2" result="blur"/>
@@ -163,18 +163,39 @@ module.exports = {
     ${bgHref.includes('data:image') ? '' : bgHref}
   </defs>
   ${bgHref.includes('data:image') ? `<image href="${bgHref}" x="0" y="0" width="800" height="400" preserveAspectRatio="xMidYMid slice"/>` : ''}
-  <image href="${avatarHref}" x="640" y="40" width="120" height="120" clip-path="url(#circleView)"/>
-  <text x="400" y="60" text-anchor="middle" fill="#00ffff" font-size="24" font-family="Arial" filter="url(#textGlow)">HOLOGRAPHIC CARD</text>
-  <text x="50" y="120" fill="#ffffff" font-size="16" font-family="Arial" filter="url(#textGlow)">Utilisateur : ${targetUser.username}</text>
-  <text x="50" y="150" fill="#00ff88" font-size="14" font-family="Arial" filter="url(#textGlow)">ID : ${targetId}</text>
-  <text x="50" y="180" fill="#ffff00" font-size="14" font-family="Arial" filter="url(#textGlow)">Messages : ${messageCount}</text>
-  <text x="50" y="210" fill="#00ff00" font-size="14" font-family="Arial" filter="url(#textGlow)">Solde : ${balance}€</text>
-  <text x="50" y="240" fill="#ff6600" font-size="14" font-family="Arial" filter="url(#textGlow)">Karma + : ${goodKarma} | - : ${badKarma}</text>
-  <text x="50" y="270" fill="#cc33ff" font-size="14" font-family="Arial" filter="url(#textGlow)">Vocal : ${(timeInVocal / 3600).toFixed(1)} h</text>
-  <text x="50" y="300" fill="#00ccff" font-size="12" font-family="Arial" filter="url(#textGlow)">Inscription : ${inscriptionDate}</text>
-  <text x="50" y="320" fill="#00ccff" font-size="12" font-family="Arial" filter="url(#textGlow)">Serveur : ${arriveeDate}</text>
-  <text x="50" y="350" fill="#ffaa00" font-size="14" font-family="Arial" filter="url(#textGlow)">Niveau : ${level}</text>
-  <text x="50" y="370" fill="#ff00aa" font-size="14" font-family="Arial" filter="url(#textGlow)">État karmique : ${karmaLevel}</text>
+  
+  <!-- Avatar déplacé plus à gauche -->
+  <circle cx="150" cy="200" r="85" fill="#00ffff" opacity="0.8" filter="url(#textGlow)"/>
+  <circle cx="150" cy="200" r="80" fill="#000000" stroke="#00ffff" stroke-width="3"/>
+  <image href="${avatarHref}" x="90" y="140" width="120" height="120" clip-path="url(#circleView)"/>
+  
+  <!-- Titre centré en haut -->
+  <text x="400" y="40" text-anchor="middle" fill="#00ffff" font-size="24" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">PROFIL UTILISATEUR</text>
+  <text x="400" y="65" text-anchor="middle" fill="#ffffff" font-size="18" font-family="Arial" filter="url(#textGlow)">${targetUser.username}</text>
+  
+  <!-- Informations décalées plus à droite avec couleurs améliorées -->
+  <!-- Colonne gauche -->
+  <text x="360" y="130" text-anchor="middle" fill="#ffff00" font-size="16" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">💰 Solde: ${balance}€</text>
+  <text x="360" y="155" text-anchor="middle" fill="#00ffaa" font-size="16" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">📊 Niveau: ${level}</text>
+  <text x="360" y="180" text-anchor="middle" fill="#ffaa00" font-size="16" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">💬 Messages: ${messageCount}</text>
+  
+  <!-- Colonne droite -->
+  <text x="540" y="130" text-anchor="middle" fill="#ff88ff" font-size="16" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">🎤 Vocal: ${(timeInVocal / 3600).toFixed(1)}h</text>
+  <text x="540" y="155" text-anchor="middle" fill="#ffaa00" font-size="16" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">⚖️ Karma</text>
+  <text x="540" y="180" text-anchor="middle" fill="#88ff88" font-size="15" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">😇 Bon: ${goodKarma}</text>
+  <text x="540" y="200" text-anchor="middle" fill="#ff6666" font-size="15" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">😈 Mauvais: ${badKarma}</text>
+  
+  <!-- Section centrale en bas -->
+  <text x="450" y="250" text-anchor="middle" fill="#ffffff" font-size="15" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">${karmaLevel}</text>
+  <text x="450" y="280" text-anchor="middle" fill="#ffee88" font-size="13" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">📅 Discord: ${inscriptionDate}</text>
+  <text x="450" y="300" text-anchor="middle" fill="#ffee88" font-size="13" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">🏠 Serveur: ${arriveeDate}</text>
+  
+  <!-- ID en bas centré -->
+  <text x="400" y="350" text-anchor="middle" fill="#888888" font-size="12" font-family="Arial" filter="url(#textGlow)">ID: ${targetId}</text>
+  
+  <!-- Décoration holographique -->
+  <line x1="50" y1="370" x2="750" y2="370" stroke="#00ffff" stroke-width="2" opacity="0.6" filter="url(#textGlow)"/>
+  <text x="400" y="390" text-anchor="middle" fill="#00ffff" font-size="14" font-family="Arial" font-style="italic" filter="url(#textGlow)">✨ Holographic Profile System ✨</text>
 </svg>`;
 
       const buffer = await sharp(Buffer.from(svg)).png().toBuffer();
