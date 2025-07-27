@@ -16,7 +16,7 @@ class MainRouterHandler {
      */
     initializeHandlers() {
         const ConfessionConfigHandler = require('./ConfessionConfigHandler');
-        const EconomyConfigHandler = require('./EconomyConfigHandler');
+
         const AutoThreadConfigHandler = require('./AutoThreadConfigHandler');
         const CountingConfigHandler = require('./CountingConfigHandler');
         const DashboardHandler = require('./DashboardHandler');
@@ -26,7 +26,7 @@ class MainRouterHandler {
         
         this.handlers = {
             confession: new ConfessionHandler(this.dataManager),
-            economy: new EconomyConfigHandler(this.dataManager),
+
             autothread: new AutoThreadConfigHandler(this.dataManager),
             counting: new CountingConfigHandler(this.dataManager),
             dashboard: new DashboardHandler(this.dataManager)
@@ -51,8 +51,25 @@ class MainRouterHandler {
                 return await this.routeToConfessionHandler(interaction, customId);
             }
             
-            if (customId.startsWith('economy_config') || customId.startsWith('economy_') || customId === 'temp_role_select' || customId === 'perm_role_select' || customId === 'karma_temp_role_select' || customId.startsWith('karma_temp_type_select_') || customId === 'karma_reset_day_select' || customId === 'karma_reset_confirm' || customId.startsWith('action_config_') || customId.startsWith('action_') || 
-                // Nouveaux IDs des menus redesignés
+            // Gestion des sélecteurs de rôles pour la boutique
+            if (customId === 'temp_role_select') {
+                console.log(`➡️ Routage sélection rôle temporaire: ${customId}`);
+                const handler = this.handlers.economy;
+                await handler.handleTempRoleSelect(interaction);
+                return true;
+            }
+            
+            if (customId === 'perm_role_select') {
+                console.log(`➡️ Routage sélection rôle permanent: ${customId}`);
+                const handler = this.handlers.economy;
+                await handler.handlePermRoleSelect(interaction);
+                return true;
+            }
+
+            // Gestion héritée pour certains IDs économiques spécifiques uniquement
+            if (customId === 'economy_shop_config' ||
+                customId === 'karma_temp_role_select' || customId.startsWith('karma_temp_type_select_') || customId === 'karma_reset_day_select' || customId === 'karma_reset_confirm' || 
+                // Nouveaux IDs des menus redesignés (sauf economy_config qui est géré directement)
                 customId.includes('actions_main') || customId.includes('shop_main') || customId.includes('karma_main') || customId.includes('daily_main') || customId.includes('messages_main') || customId.includes('stats_main') ||
                 customId.includes('actions_toggle') || customId.includes('shop_') || customId.includes('karma_') || customId.includes('daily_') || customId.includes('messages_') || customId.includes('stats_') ||
                 customId === 'back_to_main') {
@@ -100,7 +117,35 @@ class MainRouterHandler {
                 return true;
             }
 
-            // Routes pour les remises karma
+            // Routes pour les remises karma et gestion articles
+            if (customId === 'karma_discounts_actions' || 
+                customId === 'edit_item_select' || 
+                customId === 'delete_item_select' ||
+                customId === 'edit_karma_discount_select' ||
+                customId === 'delete_karma_discount_select' ||
+                customId === 'back_to_karma_discounts' ||
+                customId === 'back_to_shop') {
+                console.log(`➡️ Routage gestion boutique: ${customId}`);
+                const handler = this.handlers.economy;
+                
+                if (customId === 'karma_discounts_actions') {
+                    await handler.handleKarmaDiscountsActions(interaction);
+                } else if (customId === 'edit_item_select') {
+                    await handler.handleEditItemSelect(interaction);
+                } else if (customId === 'delete_item_select') {
+                    await handler.handleDeleteItemSelect(interaction);
+                } else if (customId === 'edit_karma_discount_select') {
+                    await handler.handleEditKarmaDiscountSelect(interaction);
+                } else if (customId === 'delete_karma_discount_select') {
+                    await handler.handleDeleteKarmaDiscountSelect(interaction);
+                } else if (customId === 'back_to_karma_discounts') {
+                    await handler.showKarmaDiscountsMenu(interaction);
+                } else if (customId === 'back_to_shop') {
+                    await handler.showShopConfig(interaction);
+                }
+                return true;
+            }
+
             if (customId === 'karma_discounts_config' || customId === 'back_karma_discounts') {
                 console.log(`➡️ Routage remises karma: ${customId}`);
                 const handler = this.handlers.economy;
@@ -290,17 +335,7 @@ class MainRouterHandler {
         const handler = this.handlers.economy;
 
         switch (customId) {
-            case 'economy_config_main':
-                console.log('Routage economy_config_main vers handleMainMenu...');
-                await handler.handleMainMenu(interaction);
-                return true;
-                
-            case 'economy_config_select':
-                console.log('Routage economy_config_select vers handleInteraction...');
-                if (!interaction.replied && !interaction.deferred) {
-                    await handler.handleInteraction(interaction);
-                }
-                return true;
+            // Suppression des routes economy_config_* qui sont gérées directement dans index.render-final.js
                 
             case 'economy_actions_back':
                 console.log('Retour menu principal économie...');
@@ -363,8 +398,8 @@ class MainRouterHandler {
                 return true;
                 
             case 'economy_shop_config':
-                console.log('Routage vers handleShopConfig...');
-                await handler.handleShopConfig(interaction);
+                console.log('Routage vers showShopConfig...');
+                await handler.showShopConfig(interaction);
                 return true;
                 
             case 'economy_daily_config':
