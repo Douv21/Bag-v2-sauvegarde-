@@ -9,6 +9,7 @@ class LevelCardGenerator {
     async generateNotificationCard(user, newLevel) {
         try {
             console.log(`🔔 Génération carte notification niveau: ${newLevel} pour ${user.username}`);
+            console.log(`🎭 Rôles utilisateur pour notification:`, user.roles?.map(r => r.name) || []);
             
             // Utiliser le style holographique avec image selon les rôles
             const svgContent = await this.createHolographicSVG(user, user, 0, newLevel, null, null, user.roles || []);
@@ -843,15 +844,15 @@ class LevelCardGenerator {
                 const roleNames = user.roles.map(role => role.name.toLowerCase());
                 
                 if (roleNames.includes('certifié')) {
-                    imagePath = path.join(__dirname, '../../attached_assets/3_1753520815029.png');
+                    imagePath = path.join(__dirname, '../../attached_assets/3_1753521071380.png');
                     imageFormat = 'png';
-                    console.log('🎨 Récompense: Utilisation image certifié (3.png)');
+                    console.log('🎨 Récompense: Utilisation image certifié (3_1753521071380.png)');
                 } else if (roleNames.includes('femme')) {
-                    imagePath = path.join(__dirname, '../../attached_assets/2_1753520814954.png');
+                    imagePath = path.join(__dirname, '../../attached_assets/2_1753521071482.png');
                     imageFormat = 'png';
-                    console.log('🎨 Récompense: Utilisation image femme (2.png)');
+                    console.log('🎨 Récompense: Utilisation image femme (2_1753521071482.png)');
                 } else {
-                    console.log('🎨 Récompense: Utilisation image par défaut (1.jpg)');
+                    console.log('🎨 Récompense: Utilisation image par défaut (1_1753517381716.jpg)');
                 }
             }
             
