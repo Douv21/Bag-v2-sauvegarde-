@@ -14,12 +14,17 @@ class SimpleBackupManager {
         
         this.localFiles = [
             'economy.json',
+            'level_users.json',      // Données niveaux des membres
+            'level_config.json',     // Configuration du système de niveaux
             'confessions.json', 
             'counting.json',
             'autothread.json',
             'shop.json',
             'karma_config.json',
-            'message_rewards.json'
+            'message_rewards.json',
+            'daily.json',
+            'actions.json',
+            'config.json'
         ];
     }
 
@@ -225,6 +230,11 @@ class SimpleBackupManager {
 
         // Sauvegarde immédiate après 10 secondes
         setTimeout(() => this.performBackup(), 10000);
+    }
+
+    // ALIAS POUR COMPATIBILITÉ
+    async createBackup() {
+        return await this.performBackup();
     }
 
     // STATUS SYSTÈME

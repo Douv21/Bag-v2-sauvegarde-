@@ -187,17 +187,47 @@ class DeploymentManager {
         }, weeklyInterval);
     }
 
-    // SAUVEGARDE MANUELLE D'URGENCE
+    // SAUVEGARDE MANUELLE D'URGENCE - INCLUT LES DONNÉES DE NIVEAUX
     async emergencyBackup() {
         console.log('🚨 Sauvegarde manuelle d\'urgence...');
         
+        // Priorité aux fichiers de niveaux dans la sauvegarde d'urgence
+        const criticalFiles = [
+            'economy.json',
+            'level_users.json', // Données niveaux des membres
+            'level_config.json', // Configuration du système de niveaux
+            'confessions.json',
+            'counting.json',
+            'autothread.json',
+            'shop.json',
+            'karma_config.json',
+            'message_rewards.json',
+            'daily.json',
+            'actions.json',
+            'config.json'
+        ];
+        
+        console.log('📋 Fichiers prioritaires pour sauvegarde d\'urgence:');
+        criticalFiles.forEach(file => console.log(`   • ${file}`));
+        
         // Essayer MongoDB d'abord
         const mongoResult = await mongoBackup.backupToMongo();
-        if (mongoResult) return true;
+        if (mongoResult) {
+            console.log('✅ Sauvegarde d\'urgence MongoDB réussie (inclut données de niveaux)');
+            return true;
+        }
         
-        // Fallback vers sauvegarde simple
+        // Fallback vers sauvegarde simple avec focus sur les niveaux
         console.log('🔄 Fallback vers sauvegarde simple...');
-        return await simpleBackup.performBackup();
+        const simpleResult = await simpleBackup.performBackup();
+        
+        if (simpleResult) {
+            console.log('✅ Sauvegarde d\'urgence simple réussie (inclut données de niveaux)');
+            return true;
+        }
+        
+        console.log('❌ Échec de toutes les sauvegardes d\'urgence');
+        return false;
     }
 
     // STATUS DU SYSTÈME
