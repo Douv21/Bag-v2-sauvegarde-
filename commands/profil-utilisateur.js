@@ -78,6 +78,26 @@ module.exports = {
       const inscriptionDate = new Date(targetUser.createdTimestamp).toLocaleDateString('fr-FR');
       const arriveeDate = new Date(targetMember.joinedTimestamp).toLocaleDateString('fr-FR');
 
+      // Récupérer le rôle configuré pour le niveau de l'utilisateur
+      let levelRole = null;
+      let levelRoleColor = '#ff88ff'; // Couleur par défaut
+      try {
+        const levelRoleInfo = levelManager.getRoleForLevel(level, interaction.guild);
+        if (levelRoleInfo && levelRoleInfo.roleName) {
+          levelRole = levelRoleInfo.roleName;
+          
+          // Récupérer la couleur du rôle depuis Discord
+          const discordRole = interaction.guild.roles.cache.get(levelRoleInfo.roleId);
+          if (discordRole && discordRole.hexColor && discordRole.hexColor !== '#000000') {
+            levelRoleColor = discordRole.hexColor;
+          }
+          
+          console.log(`🎭 Rôle de niveau trouvé: ${levelRole} (niveau ${levelRoleInfo.level}) couleur: ${levelRoleColor}`);
+        }
+      } catch (error) {
+        console.log('⚠️ Erreur récupération rôle de niveau:', error);
+      }
+
       // Récupérer l'avatar avec priorité serveur > global et forcer le format PNG
       const serverAvatar = targetMember.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
       const globalAvatar = targetUser.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
@@ -193,9 +213,9 @@ module.exports = {
   <!-- ID en bas centré -->
   <text x="400" y="350" text-anchor="middle" fill="#888888" font-size="12" font-family="Arial" filter="url(#textGlow)">ID: ${targetId}</text>
   
-  <!-- Décoration holographique -->
+  <!-- Rôle de niveau en bas -->
   <line x1="50" y1="370" x2="750" y2="370" stroke="#00ffff" stroke-width="2" opacity="0.6" filter="url(#textGlow)"/>
-  <text x="400" y="390" text-anchor="middle" fill="#00ffff" font-size="14" font-family="Arial" font-style="italic" filter="url(#textGlow)">✨ Holographic Profile System ✨</text>
+  ${levelRole ? `<text x="400" y="390" text-anchor="middle" fill="${levelRoleColor}" font-size="20" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">🎭 ${levelRole} 🎭</text>` : ''}
 </svg>`;
 
       const buffer = await sharp(Buffer.from(svg)).png().toBuffer();
