@@ -6,6 +6,35 @@ class LevelCardGenerator {
         console.log('🎨 LevelCardGenerator initialisé');
     }
 
+    async generateNotificationCard(user, newLevel) {
+        try {
+            console.log(`🔔 Génération carte notification niveau: ${newLevel} pour ${user.username}`);
+            
+            // Utiliser le style holographique avec image selon les rôles
+            const svgContent = await this.createHolographicSVG(user, user, 0, newLevel, null, null, user.roles || []);
+            
+            // Convertir SVG en PNG avec Sharp
+            const pngBuffer = await sharp(Buffer.from(svgContent))
+                .png({ 
+                    quality: 90,
+                    compressionLevel: 6,
+                    progressive: true
+                })
+                .resize(800, 400, { 
+                    fit: 'contain',
+                    background: { r: 0, g: 0, b: 0, alpha: 0 }
+                })
+                .toBuffer();
+            
+            console.log(`✅ Carte notification générée: ${pngBuffer.length} bytes`);
+            return pngBuffer;
+            
+        } catch (error) {
+            console.error('❌ Erreur génération carte notification:', error);
+            return null;
+        }
+    }
+
     async generateCard(user, userLevel, oldLevel, newLevel, roleReward, style = 'futuristic', progressData = null) {
         try {
             console.log(`🎨 Génération carte niveau: ${newLevel} (style: ${style})`);
@@ -100,14 +129,16 @@ class LevelCardGenerator {
         
         // Vérifier les rôles pour choisir l'image appropriée - priorité "certifié" sur "femme"
         if (userRoles.some(role => role.name.toLowerCase().includes('certifié'))) {
-            imagePath = path.join(__dirname, '../commands/3.png');
-            imageFormat = 'png';
-            console.log('🎨 Utilisation image certifié (3.png) pour la carte');
+            imagePath = path.join(__dirname, '../commands/3.jpg');
+            imageFormat = 'jpeg';
+            console.log('🎨 Utilisation image certifié (3.jpg) pour la carte');
         } else if (userRoles.some(role => role.name.toLowerCase().includes('femme'))) {
-            imagePath = path.join(__dirname, '../commands/2.png');
-            imageFormat = 'png';
-            console.log('🎨 Utilisation image femme (2.png) pour la carte');
+            imagePath = path.join(__dirname, '../commands/2.jpg');
+            imageFormat = 'jpeg';
+            console.log('🎨 Utilisation image femme (2.jpg) pour la carte');
         } else {
+            imagePath = path.join(__dirname, '../commands/1.jpg');
+            imageFormat = 'jpeg';
             console.log('🎨 Utilisation image par défaut (1.jpg) pour la carte');
         }
         
@@ -181,7 +212,7 @@ class LevelCardGenerator {
             <rect x="180" y="80" width="400" height="80" fill="rgba(0,0,0,0.6)" rx="10"/>
             
             <!-- User Info -->
-            <text x="200" y="105" fill="#ffffff" font-family="Arial Black" font-size="24" font-weight="bold" filter="url(#holoGlow)">${user.displayName}</text>
+            <text x="200" y="105" fill="#ffffff" font-family="Arial Black" font-size="24" font-weight="bold" filter="url(#holoGlow)">${user.displayName || user.username || 'Unknown User'}</text>
             <text x="200" y="130" fill="#00ffff" font-family="Arial" font-size="18" filter="url(#holoGlow)">✨ Niveau ${newLevel}</text>
             <text x="200" y="150" fill="#ff00ff" font-family="Arial" font-size="16">Mode Holographique</text>
             
@@ -265,7 +296,7 @@ class LevelCardGenerator {
             <image href="${user.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png'}" x="72" y="72" width="96" height="96" clip-path="url(#gamerAvatarClip)"/>
             
             <!-- User Info -->
-            <text x="200" y="100" fill="#ffffff" font-family="Arial Black" font-size="28" font-weight="bold">${user.displayName}</text>
+            <text x="200" y="100" fill="#ffffff" font-family="Arial Black" font-size="28" font-weight="bold">${user.displayName || user.username || 'Unknown User'}</text>
             <text x="200" y="130" fill="#00ff88" font-family="Arial" font-size="22" filter="url(#neonGlow)">🎮 Niveau ${newLevel}</text>
             <text x="200" y="155" fill="#0088ff" font-family="Arial" font-size="18">Cyber Gamer Mode</text>
             
