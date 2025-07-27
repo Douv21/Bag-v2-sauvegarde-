@@ -128,19 +128,27 @@ class LevelCardGenerator {
         let imagePath;
         let imageFormat = 'jpeg';
         
+        // Debug: afficher tous les rôles de l'utilisateur
+        console.log(`🎭 NOTIFICATION - Rôles reçus pour ${user.displayName}:`, userRoles);
+        console.log(`🎭 NOTIFICATION - Noms des rôles:`, userRoles.map(role => role.name));
+        
+        // Extraire les noms des rôles utilisateur en minuscules
+        const roleNames = userRoles.map(role => role.name.toLowerCase());
+        console.log(`🎭 NOTIFICATION - Noms des rôles (minuscules):`, roleNames);
+        
         // Vérifier les rôles pour choisir l'image appropriée - priorité "certifié" sur "femme"
-        if (userRoles.some(role => role.name.toLowerCase().includes('certifié'))) {
+        if (roleNames.includes('certifié')) {
             imagePath = path.join(__dirname, '../../attached_assets/3_1753521071380.png');
             imageFormat = 'png';
-            console.log('🎨 Utilisation image certifié (3_1753521071380.png) pour la carte');
-        } else if (userRoles.some(role => role.name.toLowerCase().includes('femme'))) {
+            console.log('🎨 NOTIFICATION: Utilisation image certifié (3_1753521071380.png) pour la carte');
+        } else if (roleNames.includes('femme')) {
             imagePath = path.join(__dirname, '../../attached_assets/2_1753521071482.png');
             imageFormat = 'png';
-            console.log('🎨 Utilisation image femme (2_1753521071482.png) pour la carte');
+            console.log('🎨 NOTIFICATION: Utilisation image femme (2_1753521071482.png) pour la carte');
         } else {
             imagePath = path.join(__dirname, '../../attached_assets/1_1753517381716.jpg');
             imageFormat = 'jpeg';
-            console.log('🎨 Utilisation image par défaut (1_1753517381716.jpg) pour la carte');
+            console.log('🎨 NOTIFICATION: Utilisation image par défaut (1_1753517381716.jpg) pour la carte');
         }
         
         // Essayer de charger l'image appropriée
