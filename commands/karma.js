@@ -31,7 +31,7 @@ module.exports = {
                         
                         // Utiliser uniquement goodKarma/badKarma (valeurs réelles des actions)
                         const goodKarma = userData.goodKarma || 0;
-                        const badKarma = Math.abs(userData.badKarma || 0);
+                        const badKarma = userData.badKarma || 0;
                         
                         console.log(`📊 REAL DATA - ${member.displayName}: Good=${goodKarma}, Bad=${badKarma}`);
                         
@@ -66,7 +66,7 @@ module.exports = {
                         if (!member || member.user.bot) continue;
                         
                         const goodKarma = userData.goodKarma || 0;
-                        const badKarma = Math.abs(userData.badKarma || 0);
+                        const badKarma = userData.badKarma || 0;
                         
                         // Ne pas ajouter si karma = 0 (évite les affichages après reset)
                         if (goodKarma === 0 && badKarma === 0) continue;
@@ -122,7 +122,7 @@ module.exports = {
                     else if (position === 3) medal = '🥉';
                     else medal = `**${position}.**`;
                     
-                    const karmaNet = user.goodKarma + Math.abs(user.badKarma);
+                    const karmaNet = user.goodKarma - user.badKarma;
                     goodLeaderboard += `${medal} **${user.displayName}**\n`;
                     goodLeaderboard += `   └ **${user.goodKarma}** karma bon 😇 (Net: ${karmaNet})\n\n`;
                 });
@@ -142,7 +142,7 @@ module.exports = {
                     else if (position === 3) medal = '🥉';
                     else medal = `**${position}.**`;
                     
-                    const karmaNet = user.goodKarma + Math.abs(user.badKarma);
+                    const karmaNet = user.goodKarma - user.badKarma;
                     badLeaderboard += `${medal} **${user.displayName}**\n`;
                     badLeaderboard += `   └ **${user.badKarma}** karma mauvais 😈 (Net: ${karmaNet})\n\n`;
                 });

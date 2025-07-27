@@ -14,11 +14,11 @@ module.exports = {
             const shopData = await dataManager.loadData('shop.json', {});
             const economyConfig = await dataManager.loadData('economy.json', {});
             const allShopItems = shopData[guildId] || [];
-            // Filtrer pour ne montrer que les objets personnalisés
-            const shopItems = allShopItems.filter(item => item.type === 'custom');
+            // Afficher tous les types d'objets (custom, temp_role, perm_role)
+            const shopItems = allShopItems;
 
-            // Calculer le karma net de l'utilisateur
-            const userKarmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
+            // Calculer le karma net de l'utilisateur (goodKarma - badKarma, badKarma est déjà négatif)
+            const userKarmaNet = (userData.goodKarma || 0) - (userData.badKarma || 0);
             
             // Fonction pour calculer la remise basée sur le karma net
             const calculateKarmaDiscount = (userKarmaNet, economyConfig) => {
@@ -38,7 +38,7 @@ module.exports = {
 
             if (shopItems.length === 0) {
                 return await interaction.reply({
-                    content: '🛒 Aucun objet personnalisé disponible. Les administrateurs n\'ont pas encore configuré d\'objets personnalisés.\n\n💡 Seuls les objets personnalisés sont affichés dans cette boutique.',
+                    content: '🛒 La boutique est vide. Les administrateurs n\'ont pas encore configuré d\'articles.\n\n💡 Utilisez `/configeconomie` → 🏪 Boutique pour ajouter des articles.',
                     flags: 64
                 });
             }
@@ -47,7 +47,7 @@ module.exports = {
             if (karmaDiscountPercent > 0) {
                 descriptionText += `\n💸 **Remise karma:** -${karmaDiscountPercent}% sur tous les achats !`;
             }
-            descriptionText += '\n\n🎨 Objets personnalisés disponibles :';
+            descriptionText += '\n\n🛒 Articles disponibles :';
 
             const embed = new EmbedBuilder()
                 .setColor('#00AAFF')

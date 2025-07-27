@@ -23,7 +23,18 @@ module.exports = {
             // Utiliser les bonnes propriétés karma (priorité aux nouvelles)
             const goodKarma = user.goodKarma || user.karma_good || 0;
             const badKarma = user.badKarma || user.karma_bad || 0;
-            const karmaNet = goodKarma + Math.abs(badKarma);
+            
+            // Debug détaillé pour comprendre le calcul
+            console.log(`🔍 KARMA DEBUG:`, {
+                goodKarma, 
+                badKarma, 
+                'Math.abs(badKarma)': Math.abs(badKarma),
+                'goodKarma - badKarma': goodKarma - badKarma,
+                'goodKarma - badKarma': goodKarma - badKarma
+            });
+            
+            // Si badKarma est négatif, on fait goodKarma - badKarma = goodKarma - (-10) = goodKarma + 10
+            const karmaNet = goodKarma - badKarma; // Changement: pas de Math.abs()
             
             console.log(`🔍 Debug karma: ${targetUser.username || 'Utilisateur'} - Good: ${goodKarma}, Bad: ${badKarma}, Net: ${karmaNet}`);
             

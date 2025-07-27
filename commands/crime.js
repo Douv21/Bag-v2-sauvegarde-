@@ -69,7 +69,7 @@ module.exports = {
                 await dataManager.updateUser(userId, guildId, userData);
                 
                 // Calculer karma net après mise à jour
-                const karmaNet = userData.goodKarma + Math.abs(userData.badKarma);
+                const karmaNet = userData.goodKarma - userData.badKarma;
                 
                 const embed = new EmbedBuilder()
                     .setColor('#8b0000')
@@ -117,7 +117,7 @@ module.exports = {
                 await dataManager.updateUser(userId, guildId, userData);
                 
                 // Calculer karma net après mise à jour
-                const karmaNet = userData.goodKarma + Math.abs(userData.badKarma);
+                const karmaNet = userData.goodKarma - userData.badKarma;
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')

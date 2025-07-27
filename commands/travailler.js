@@ -69,8 +69,8 @@ module.exports = {
             
             const action = workActions[Math.floor(Math.random() * workActions.length)];
             
-            // Recalculer le karma net APRÈS la mise à jour (addition avec Math.abs pour badKarma)
-            const karmaNet = userData.goodKarma + Math.abs(userData.badKarma);
+            // Recalculer le karma net APRÈS la mise à jour
+            const karmaNet = userData.goodKarma - userData.badKarma;
             
             const embed = new EmbedBuilder()
                 .setColor('#00ff00')
