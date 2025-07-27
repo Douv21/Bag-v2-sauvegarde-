@@ -11,8 +11,8 @@ class LevelCardGenerator {
             console.log(`🔔 Génération carte notification niveau: ${newLevel} pour ${user.username}`);
             console.log(`🎭 Rôles utilisateur pour notification:`, user.roles?.map(r => r.name) || []);
             
-            // Utiliser le style holographique avec image selon les rôles
-            const svgContent = await this.createHolographicSVG(user, user, 0, newLevel, null, null, user.roles || []);
+            // Utiliser le style holographique avec image selon les rôles ET le bon texte centré
+            const svgContent = await this.createHolographicSVG(user, { level: newLevel, xp: 0 }, 0, newLevel, null, null, user.roles || []);
             
             // Convertir SVG en PNG avec Sharp
             const pngBuffer = await sharp(Buffer.from(svgContent))
@@ -221,10 +221,10 @@ class LevelCardGenerator {
             <!-- Semi-transparent background for text readability -->
             <rect x="180" y="80" width="400" height="80" fill="rgba(0,0,0,0.8)" rx="10"/>
             
-            <!-- User Info -->
-            <text x="200" y="105" fill="#ffffff" font-family="Arial Black" font-size="24" font-weight="bold" filter="url(#holoGlow)">${user.displayName || user.username || 'Unknown User'}</text>
-            <text x="200" y="130" fill="#00ffff" font-family="Arial" font-size="18" filter="url(#holoGlow)">✨ Niveau ${newLevel}</text>
-            <text x="200" y="150" fill="#ff00ff" font-family="Arial" font-size="16">Mode Holographique</text>
+            <!-- User Info - Message personnalisé centré -->
+            <text x="400" y="105" text-anchor="middle" fill="#ffffff" font-family="Arial Black" font-size="24" font-weight="bold" filter="url(#holoGlow)">Félicitations &#127881;, ${user.displayName || user.username || 'Unknown User'}</text>
+            <text x="400" y="130" text-anchor="middle" fill="#00ffff" font-family="Arial Black" font-size="20" filter="url(#holoGlow)">Tu as atteint le niveau ${newLevel}</text>
+            <text x="400" y="150" text-anchor="middle" fill="#ff00ff" font-family="Arial" font-size="16">Montée de niveau !</text>
             
             <!-- XP Progress Bar -->
             ${progressData ? `
@@ -237,9 +237,9 @@ class LevelCardGenerator {
             <text x="350" y="210" text-anchor="middle" fill="#ffffff" font-family="Arial Black" font-size="14" font-weight="bold">${progressData.currentXP.toLocaleString()} / ${progressData.totalNeeded.toLocaleString()} XP (${progressData.progressPercent}%)</text>
             
             <!-- Stats -->
-            <text x="50" y="245" fill="#ffffff" font-family="Arial Black" font-size="18" font-weight="bold">💬 Messages: ${progressData.totalMessages}</text>
-            <text x="280" y="245" fill="#ffffff" font-family="Arial Black" font-size="18" font-weight="bold">🎤 Vocal: ${progressData.totalVoiceTime} min</text>
-            <text x="50" y="275" fill="#00ffff" font-family="Arial Black" font-size="18" font-weight="bold" filter="url(#holoGlow)">⚡ XP Total: ${progressData.totalXP.toLocaleString()}</text>
+            <text x="50" y="245" fill="#ffffff" font-family="Arial Black" font-size="18" font-weight="bold">&#128172; Messages: ${progressData.totalMessages}</text>
+            <text x="280" y="245" fill="#ffffff" font-family="Arial Black" font-size="18" font-weight="bold">&#127908; Vocal: ${progressData.totalVoiceTime} min</text>
+            <text x="50" y="275" fill="#00ffff" font-family="Arial Black" font-size="18" font-weight="bold" filter="url(#holoGlow)">&#9889; XP Total: ${progressData.totalXP.toLocaleString()}</text>
             ` : `
             <rect x="40" y="170" width="150" height="25" fill="rgba(0,0,0,0.5)" rx="5"/>
             <text x="115" y="187" text-anchor="middle" fill="#00ffff" font-family="Arial Black" font-size="16" filter="url(#holoGlow)">NIVEAU ATTEINT</text>
@@ -248,7 +248,7 @@ class LevelCardGenerator {
             <!-- Classement XP en bas à droite -->
             ${progressData && progressData.rank ? `
             <rect x="560" y="300" width="220" height="80" fill="rgba(0,255,255,0.15)" rx="15" stroke="#00ffff" stroke-width="3" filter="url(#holoGlow)"/>
-            <text x="670" y="325" text-anchor="middle" fill="#00ffff" font-family="Arial Black" font-size="20" font-weight="bold" filter="url(#holoGlow)">🏆 CLASSEMENT</text>
+            <text x="670" y="325" text-anchor="middle" fill="#00ffff" font-family="Arial Black" font-size="20" font-weight="bold" filter="url(#holoGlow)">&#127942; CLASSEMENT</text>
             <text x="670" y="350" text-anchor="middle" fill="#ffffff" font-family="Arial Black" font-size="28" font-weight="bold">#${progressData.rank}</text>
             <text x="670" y="370" text-anchor="middle" fill="#ff00ff" font-family="Arial Black" font-size="16" font-weight="bold">sur ${progressData.totalUsers} membres</text>
             ` : ''}
@@ -318,9 +318,9 @@ class LevelCardGenerator {
             <text x="300" y="222" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="12" font-weight="bold">${progressData.currentXP.toLocaleString()} / ${progressData.totalNeeded.toLocaleString()} XP (${progressData.progressPercent}%)</text>
             
             <!-- Stats -->
-            <text x="50" y="250" fill="#ffffff" font-family="Arial" font-size="16">💬 Messages: ${progressData.totalMessages}</text>
-            <text x="250" y="250" fill="#ffffff" font-family="Arial" font-size="16">🎤 Vocal: ${progressData.totalVoiceTime} min</text>
-            <text x="450" y="250" fill="#00ff88" font-family="Arial" font-size="16" filter="url(#neonGlow)">⚡ XP Total: ${progressData.totalXP.toLocaleString()}</text>
+            <text x="50" y="250" fill="#ffffff" font-family="Arial" font-size="16">&#128172; Messages: ${progressData.totalMessages}</text>
+            <text x="250" y="250" fill="#ffffff" font-family="Arial" font-size="16">&#127908; Vocal: ${progressData.totalVoiceTime} min</text>
+            <text x="450" y="250" fill="#00ff88" font-family="Arial" font-size="16" filter="url(#neonGlow)">&#9889; XP Total: ${progressData.totalXP.toLocaleString()}</text>
             ` : `
             <rect x="40" y="170" width="150" height="30" fill="#00ff88" opacity="0.2" rx="5"/>
             <text x="50" y="190" fill="#ffffff" font-family="Arial" font-size="18" font-weight="bold">Ancien: ${oldLevel}</text>
@@ -329,7 +329,7 @@ class LevelCardGenerator {
             <text x="50" y="230" fill="#ffffff" font-family="Arial" font-size="18" font-weight="bold">Nouveau: ${newLevel}</text>
             `}
             
-            ${roleReward ? `<text x="50" y="280" fill="#ff0088" font-family="Arial" font-size="20" font-weight="bold">🏆 Rôle débloqué: ${roleReward.name}</text>` : ''}
+            ${roleReward ? `<text x="50" y="280" fill="#ff0088" font-family="Arial" font-size="20" font-weight="bold">&#127942; Rôle débloqué: ${roleReward.name}</text>` : ''}
             
             <!-- Gaming footer -->
             <rect x="0" y="340" width="800" height="60" fill="#00ff88" opacity="0.1"/>
@@ -395,9 +395,9 @@ class LevelCardGenerator {
             <text x="300" y="225" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="14" font-weight="bold">${progressData.currentXP.toLocaleString()} / ${progressData.totalNeeded.toLocaleString()} XP (${progressData.progressPercent}%)</text>
             
             <!-- Stats -->
-            <text x="50" y="255" fill="#ffffff" font-family="Arial" font-size="16">💬 Messages: ${progressData.totalMessages}</text>
-            <text x="250" y="255" fill="#ffffff" font-family="Arial" font-size="16">🎤 Vocal: ${progressData.totalVoiceTime} min</text>
-            <text x="450" y="255" fill="#ff69b4" font-family="Arial" font-size="16" filter="url(#softGlow)">⚡ XP Total: ${progressData.totalXP.toLocaleString()}</text>
+            <text x="50" y="255" fill="#ffffff" font-family="Arial" font-size="16">&#128172; Messages: ${progressData.totalMessages}</text>
+            <text x="250" y="255" fill="#ffffff" font-family="Arial" font-size="16">&#127908; Vocal: ${progressData.totalVoiceTime} min</text>
+            <text x="450" y="255" fill="#ff69b4" font-family="Arial" font-size="16" filter="url(#softGlow)">&#9889; XP Total: ${progressData.totalXP.toLocaleString()}</text>
             ` : `
             <text x="50" y="200" fill="#ffffff" font-family="Arial" font-size="18">Niveau d'amour précédent:</text>
             <text x="250" y="200" fill="#ff69b4" font-family="Arial" font-size="22" font-weight="bold">${oldLevel}</text>
@@ -478,9 +478,9 @@ class LevelCardGenerator {
             <text x="300" y="235" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="14" font-weight="bold">${progressData.currentXP.toLocaleString()} / ${progressData.totalNeeded.toLocaleString()} XP (${progressData.progressPercent}%)</text>
             
             <!-- Stats -->
-            <text x="50" y="270" fill="#ffffff" font-family="Arial" font-size="16">💬 Messages: ${progressData.totalMessages}</text>
-            <text x="250" y="270" fill="#ffffff" font-family="Arial" font-size="16">🎤 Vocal: ${progressData.totalVoiceTime} min</text>
-            <text x="450" y="270" fill="url(#goldAccent)" font-family="Arial" font-size="16" filter="url(#luxuryGlow)">⚡ XP Total: ${progressData.totalXP.toLocaleString()}</text>
+            <text x="50" y="270" fill="#ffffff" font-family="Arial" font-size="16">&#128172; Messages: ${progressData.totalMessages}</text>
+            <text x="250" y="270" fill="#ffffff" font-family="Arial" font-size="16">&#127908; Vocal: ${progressData.totalVoiceTime} min</text>
+            <text x="450" y="270" fill="url(#goldAccent)" font-family="Arial" font-size="16" filter="url(#luxuryGlow)">&#9889; XP Total: ${progressData.totalXP.toLocaleString()}</text>
             ` : `
             <text x="50" y="210" fill="#ffffff" font-family="Arial" font-size="18">Niveau précédent:</text>
             <text x="200" y="210" fill="#dc143c" font-family="Arial" font-size="22" font-weight="bold">${oldLevel}</text>
@@ -576,9 +576,9 @@ class LevelCardGenerator {
             <text x="300" y="275" text-anchor="middle" fill="${theme.text}" font-family="Arial" font-size="14" font-weight="bold">${progressData.currentXP.toLocaleString()} / ${progressData.totalNeeded.toLocaleString()} XP (${progressData.progressPercent}%)</text>
             
             <!-- Stats -->
-            <text x="50" y="305" fill="${theme.text}" font-family="Arial" font-size="16">💬 Messages: ${progressData.totalMessages}</text>
-            <text x="250" y="305" fill="${theme.text}" font-family="Arial" font-size="16">🎤 Vocal: ${progressData.totalVoiceTime} min</text>
-            <text x="450" y="305" fill="${theme.accent}" font-family="Arial" font-size="16">⚡ XP Total: ${progressData.totalXP.toLocaleString()}</text>
+            <text x="50" y="305" fill="${theme.text}" font-family="Arial" font-size="16">&#128172; Messages: ${progressData.totalMessages}</text>
+            <text x="250" y="305" fill="${theme.text}" font-family="Arial" font-size="16">&#127908; Vocal: ${progressData.totalVoiceTime} min</text>
+            <text x="450" y="305" fill="${theme.accent}" font-family="Arial" font-size="16">&#9889; XP Total: ${progressData.totalXP.toLocaleString()}</text>
             ` : `
             <text x="200" y="250" fill="${theme.accent}" font-family="Arial" font-size="18">Niveau ${oldLevel} → ${newLevel}</text>
             `}
