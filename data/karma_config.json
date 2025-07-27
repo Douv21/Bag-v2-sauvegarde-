@@ -1,5 +1,7 @@
 {
-  "customRewards": [],
-  "distributionDay": 1,
-  "enabled": true
+  "weeklyReset": {
+    "enabled": true,
+    "dayOfWeek": 0,
+    "lastReset": null
+  }
 }
