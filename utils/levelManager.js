@@ -386,6 +386,11 @@ class LevelManager {
                 await this.sendLevelUpNotification(userId, userLevel, oldLevel, newLevel, roleAwarded, guild, config);
             }
             
+            // Send separate reward notification if a role was awarded
+            if (roleAwarded && config.notifications.enabled && config.notifications.channelId) {
+                await this.sendRewardNotification(userId, roleAwarded, newLevel, guild, config);
+            }
+            
         } catch (error) {
             console.error('Erreur gestion level up:', error);
         }
