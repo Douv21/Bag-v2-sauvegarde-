@@ -1032,7 +1032,10 @@ class EconomyConfigHandler {
                 .addOptions([
                     { label: '🎁 Configurer Récompenses', value: 'karma_rewards', description: 'Récompenses automatiques par niveau karma' },
                     { label: '⚙️ Niveaux Karma', value: 'karma_levels', description: 'Configurer les seuils de niveaux' },
-                    { label: '🔄 Reset Karma', value: 'karma_reset', description: 'Remettre à zéro tout le karma' },
+                    { label: '🔄 Reset Karma Complet', value: 'karma_reset', description: 'Remettre à zéro tout le karma' },
+                    { label: '😇 Reset Karma Bon', value: 'karma_reset_good', description: 'Remettre à zéro karma positif uniquement' },
+                    { label: '😈 Reset Karma Mauvais', value: 'karma_reset_bad', description: 'Remettre à zéro karma négatif uniquement' },
+                    { label: '📅 Jour Reset Hebdo', value: 'karma_weekly_day', description: 'Configurer jour de reset hebdomadaire' },
                     { label: '📊 Voir Statistiques', value: 'karma_stats', description: 'Statistiques karma du serveur' },
                     { label: '🔛 Activer/Désactiver', value: 'karma_toggle', description: 'Enable/disable système karma' },
                     { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
@@ -1065,6 +1068,12 @@ class EconomyConfigHandler {
                 await this.showKarmaLevelsModal(interaction);
             } else if (value === 'karma_reset') {
                 await this.showKarmaResetConfirm(interaction);
+            } else if (value === 'karma_reset_good') {
+                await this.showKarmaResetGoodConfirm(interaction);
+            } else if (value === 'karma_reset_bad') {
+                await this.showKarmaResetBadConfirm(interaction);
+            } else if (value === 'karma_weekly_day') {
+                await this.showKarmaWeeklyDayMenu(interaction);
             } else if (value === 'karma_stats') {
                 await this.showKarmaStats(interaction);
             } else if (value === 'karma_toggle') {
@@ -1172,6 +1181,83 @@ class EconomyConfigHandler {
             .addOptions([
                 { label: '✅ Confirmer Reset', value: 'confirm_reset', description: 'RESET DEFINITIF du karma' },
                 { label: '❌ Annuler', value: 'cancel_reset', description: 'Annuler l\'opération' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        await interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    async showKarmaResetGoodConfirm(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#27ae60')
+            .setTitle('😇 Reset Karma Bon - Confirmation')
+            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement le karma positif de tous les membres.')
+            .addFields([
+                { name: '🗑️ Action', value: 'Reset karma positif uniquement', inline: false },
+                { name: '👥 Membres affectés', value: 'Tous les membres avec karma positif', inline: false },
+                { name: '✅ Préservé', value: 'Le karma négatif reste intact', inline: false },
+                { name: '❗ Irréversible', value: 'Cette action ne peut pas être annulée', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('karma_reset_good_confirm')
+            .setPlaceholder('Confirmer le reset karma positif...')
+            .addOptions([
+                { label: '✅ Confirmer Reset Positif', value: 'confirm_reset_good', description: 'RESET karma positif uniquement' },
+                { label: '❌ Annuler', value: 'cancel_reset', description: 'Annuler l\'opération' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        await interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    async showKarmaResetBadConfirm(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#e74c3c')
+            .setTitle('😈 Reset Karma Mauvais - Confirmation')
+            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement le karma négatif de tous les membres.')
+            .addFields([
+                { name: '🗑️ Action', value: 'Reset karma négatif uniquement', inline: false },
+                { name: '👥 Membres affectés', value: 'Tous les membres avec karma négatif', inline: false },
+                { name: '✅ Préservé', value: 'Le karma positif reste intact', inline: false },
+                { name: '❗ Irréversible', value: 'Cette action ne peut pas être annulée', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('karma_reset_bad_confirm')
+            .setPlaceholder('Confirmer le reset karma négatif...')
+            .addOptions([
+                { label: '✅ Confirmer Reset Négatif', value: 'confirm_reset_bad', description: 'RESET karma négatif uniquement' },
+                { label: '❌ Annuler', value: 'cancel_reset', description: 'Annuler l\'opération' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        await interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    async showKarmaWeeklyDayMenu(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#f39c12')
+            .setTitle('📅 Configuration Jour Reset Hebdomadaire')
+            .setDescription('Choisissez le jour de la semaine pour le reset automatique du karma :')
+            .addFields([
+                { name: '🔄 Reset Automatique', value: 'Le karma sera remis à zéro chaque semaine', inline: false },
+                { name: '🎁 Récompenses', value: 'Les récompenses seront distribuées avant le reset', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('karma_weekly_day_select')
+            .setPlaceholder('Choisissez le jour de reset...')
+            .addOptions([
+                { label: '📅 Lundi', value: '1', description: 'Reset chaque lundi à minuit' },
+                { label: '📅 Mardi', value: '2', description: 'Reset chaque mardi à minuit' },
+                { label: '📅 Mercredi', value: '3', description: 'Reset chaque mercredi à minuit' },
+                { label: '📅 Jeudi', value: '4', description: 'Reset chaque jeudi à minuit' },
+                { label: '📅 Vendredi', value: '5', description: 'Reset chaque vendredi à minuit' },
+                { label: '📅 Samedi', value: '6', description: 'Reset chaque samedi à minuit' },
+                { label: '📅 Dimanche', value: '0', description: 'Reset chaque dimanche à minuit' },
+                { label: '❌ Désactiver', value: 'disable', description: 'Désactiver le reset automatique' },
+                { label: '🔙 Retour', value: 'back_karma', description: 'Retour au menu karma' }
             ]);
 
         const row = new ActionRowBuilder().addComponents(selectMenu);
