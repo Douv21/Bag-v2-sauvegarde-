@@ -1,55 +1,47 @@
 {
-  "1335563294714495006": [
+  "1360897918504271882": [
     {
-      "id": "item_1752531820928_a2gu0z2op",
+      "id": "1753566068434",
       "name": "Fouet",
-      "type": "item",
-      "price": 200,
-      "description": "Fouette la personne que tu veux",
-      "emoji": "🏆",
-      "createdAt": "2025-07-14T22:23:40.928Z",
+      "price": 50,
+      "description": "Amuse toi  bien",
+      "type": "custom",
+      "createdAt": "2025-07-26T21:41:08.434Z",
       "createdBy": "943487722738311219"
     },
     {
-      "id": "role_temp_role_1752532780955_o4oook4f3",
-      "name": "nouveau rôlebot serveur",
+      "id": "1753566340743",
+      "name": "Rôle: nouveau rôletest",
+      "price": 50000,
+      "duration": 6,
+      "roleId": "1396547788384374884",
       "type": "temp_role",
-      "price": 55,
-      "description": "Fff",
-      "roleId": "1394079802847137843",
-      "createdAt": "2025-07-14T22:39:40.955Z",
-      "createdBy": "943487722738311219",
-      "duration": 86400
-    }
-  ],
-  "1360897918504271882": [
+      "createdAt": "2025-07-26T21:45:40.743Z",
+      "createdBy": "943487722738311219"
+    },
     {
-      "id": 1753136861543,
+      "id": 1753602834934,
+      "name": "Test",
+      "price": 594939,
+      "description": "Objet personnalisé",
+      "type": "custom",
+      "createdAt": "2025-07-27T07:53:54.934Z"
+    },
+    {
+      "id": "1753606461399",
       "type": "custom",
       "name": "Fouet",
       "price": 50,
       "description": "Objet personnalisé",
-      "createdAt": "2025-07-21T22:27:41.543Z",
-      "createdBy": "943487722738311219"
+      "created": "2025-07-27T08:54:21.399Z"
     },
     {
-      "id": 1753137435170,
-      "type": "temp_role",
-      "roleId": "1396547788384374884",
-      "name": "Rôle nouveau rôletest",
-      "price": 5000,
-      "duration": 2,
-      "createdAt": "2025-07-21T22:37:15.170Z",
-      "createdBy": "943487722738311219"
-    },
-    {
-      "id": 1753137474423,
-      "type": "perm_role",
-      "roleId": "1396547788384374884",
-      "name": "Rôle nouveau rôletest",
-      "price": 10000,
-      "createdAt": "2025-07-21T22:37:54.423Z",
-      "createdBy": "943487722738311219"
+      "id": "1753607865512",
+      "type": "custom",
+      "name": "Fouet",
+      "price": 500,
+      "description": "Objet personnalisé",
+      "created": "2025-07-27T09:17:45.512Z"
     }
   ]
 }

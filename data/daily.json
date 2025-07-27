@@ -2,5 +2,11 @@
   "1335563294714495006": {
     "amount": 400,
     "enabled": true
+  },
+  "1360897918504271882": {
+    "minAmount": 50,
+    "maxAmount": 100,
+    "streakMultiplier": 1.1,
+    "maxStreakDays": 30
   }
 }

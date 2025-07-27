@@ -2,6 +2,8 @@
   "1360897918504271882": {
     "enabled": true,
     "amount": 20,
-    "cooldown": 60
+    "cooldown": 60,
+    "minGain": 2,
+    "maxGain": 10
   }
 }

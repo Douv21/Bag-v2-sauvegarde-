@@ -1,11 +1,5 @@
 {
-  "actions": {},
-  "daily": {
-    "enabled": false,
-    "amount": 100
-  },
   "messageRewards": {
-    "enabled": true,
-    "amount": 5
+    "cooldown": 30
   }
 }

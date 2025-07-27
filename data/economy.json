@@ -1,11 +1,11 @@
 {
   "463272211269156865_1360897918504271882": {
-    "balance": 3110,
+    "balance": 3150,
     "goodKarma": 10,
     "badKarma": -3,
     "dailyStreak": 1,
     "lastDaily": 1753521300454,
-    "messageCount": 49,
+    "messageCount": 57,
     "karmaGood": 0,
     "karmaBad": 0,
     "lastWork": 1753539307313,
@@ -19,17 +19,17 @@
     ]
   },
   "943487722738311219_1360897918504271882": {
-    "balance": 5952,
-    "goodKarma": 14,
-    "badKarma": -10,
+    "balance": 6120,
+    "goodKarma": 19,
+    "badKarma": -13,
     "dailyStreak": 1,
     "lastDaily": 1753471853826,
-    "messageCount": 92,
+    "messageCount": 95,
     "karmaGood": 0,
     "karmaBad": 0,
-    "lastWork": 1753549303712,
-    "lastFish": 1753549312305,
-    "lastCrime": 1753209481123,
+    "lastWork": 1753564675530,
+    "lastFish": 1753565014472,
+    "lastCrime": 1753565193909,
     "lastBet": 1753549730479,
     "lastSteal": 1753549756285,
     "lastDonate": 1753149297896,
@@ -46,16 +46,25 @@
         "type": "custom",
         "price": 50,
         "purchasedAt": "2025-07-22T16:26:37.860Z"
+      },
+      {
+        "id": 1753136861543,
+        "name": "Fouet",
+        "description": "Objet personnalisé",
+        "type": "custom",
+        "price": 50,
+        "purchaseDate": "2025-07-26T20:57:24.399Z",
+        "from": "shop"
       }
     ]
   },
   "1150782046181015582_1360897918504271882": {
-    "balance": 977,
+    "balance": 997,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 2
+    "messageCount": 4
   },
   "actions": {
     "travailler": {
@@ -64,7 +73,15 @@
       "maxReward": 100,
       "cooldown": 60000,
       "goodKarma": 2,
-      "badKarma": 0
+      "badKarma": 0,
+      "montant": {
+        "minAmount": 3,
+        "maxAmount": 100
+      },
+      "karma": {
+        "goodKarma": 3,
+        "badKarma": 0
+      }
     },
     "pecher": {
       "enabled": true,
@@ -137,12 +154,12 @@
     "messageCount": 1
   },
   "739103557600673792_1360897918504271882": {
-    "balance": 1700,
+    "balance": 1840,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 45
+    "messageCount": 62
   },
   "daily": {
     "amount": 50,
@@ -238,12 +255,12 @@
     "messageCount": 16
   },
   "1173342775396286521_1360897918504271882": {
-    "balance": 1113,
+    "balance": 1293,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": null,
-    "messageCount": 15
+    "messageCount": 40
   },
   "266247151355559937_1360897918504271882": {
     "balance": 1200,
@@ -254,12 +271,12 @@
     "messageCount": 15
   },
   "909739750225772544_1360897918504271882": {
-    "balance": 1080,
+    "balance": 1100,
     "goodKarma": 0,
     "badKarma": 0,
     "dailyStreak": 0,
     "lastDaily": 0,
-    "messageCount": 10
+    "messageCount": 13
   },
   "723788041382264833_1360897918504271882": {
     "balance": 1020,
@@ -276,5 +293,13 @@
     "dailyStreak": 0,
     "lastDaily": 0,
     "messageCount": 2
+  },
+  "1296142706149691487_1360897918504271882": {
+    "balance": 1140,
+    "goodKarma": 0,
+    "badKarma": 0,
+    "dailyStreak": 0,
+    "lastDaily": 0,
+    "messageCount": 17
   }
 }
