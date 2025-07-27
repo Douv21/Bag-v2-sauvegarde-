@@ -119,30 +119,16 @@ module.exports = {
                     rolesCount: userWithRoles.roles.length
                 });
                 
-                // Générer le SVG complet avec toutes les informations
-                const svgContent = await levelCardGenerator.createHolographicSVG(
+                // Utiliser la méthode unifiée qui gère automatiquement les images selon les rôles
+                const cardBuffer = await levelCardGenerator.generateCard(
                     userWithRoles, 
-                    userLevel, 
-                    userLevel.level - 1, 
-                    userLevel.level, 
+                    userLevel,
+                    userLevel.level - 1,
+                    userLevel.level,
                     null,
-                    progressData,
-                    userWithRoles.roles,
-                    true  // Carte complète pour /level
+                    'holographic',
+                    progressData
                 );
-                
-                // Convertir SVG en PNG
-                const sharp = require('sharp');
-                const cardBuffer = await sharp(Buffer.from(svgContent))
-                    .png({ 
-                        quality: 90,
-                        compressionLevel: 6
-                    })
-                    .resize(800, 400, { 
-                        fit: 'contain',
-                        background: { r: 0, g: 0, b: 0, alpha: 0 }
-                    })
-                    .toBuffer();
                 
                 console.log(`📊 /level: Carte générée - ${cardBuffer ? cardBuffer.length : 0} bytes`);
                 

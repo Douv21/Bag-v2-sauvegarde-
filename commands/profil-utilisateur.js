@@ -99,23 +99,23 @@ module.exports = {
       }
 
       // Détection des rôles pour image de fond
-      let backgroundImageName = '1_1753517381716.jpg'; // Image par défaut
+      let backgroundImageName = 'background_1.jpg'; // Image par défaut
       const userRoles = targetMember.roles.cache.map(role => role.name.toLowerCase());
       
       if (userRoles.includes('certifié')) {
-        backgroundImageName = '3_1753521071380.png';
-        console.log('🎨 Utilisation image certifié (3_1753521071380.png) pour la carte');
+        backgroundImageName = 'background_3.png';
+        console.log('🎨 Utilisation image certifié (background_3.png) pour la carte');
       } else if (userRoles.includes('femme')) {
-        backgroundImageName = '2_1753521071482.png';
-        console.log('🎨 Utilisation image femme (2_1753521071482.png) pour la carte');
+        backgroundImageName = 'background_2.png';
+        console.log('🎨 Utilisation image femme (background_2.png) pour la carte');
       } else {
-        console.log('🎨 Utilisation image par défaut (1_1753517381716.jpg) pour la carte');
+        console.log('🎨 Utilisation image par défaut (background_1.jpg) pour la carte');
       }
 
-      // Charger l'image de fond depuis attached_assets
+      // Charger l'image de fond depuis render/assets
       let backgroundImageBase64 = '';
       try {
-        const imagePath = path.join(__dirname, '../../attached_assets', backgroundImageName);
+        const imagePath = path.join(__dirname, '../assets', backgroundImageName);
         if (fs.existsSync(imagePath)) {
           const imageBuffer = fs.readFileSync(imagePath);
           backgroundImageBase64 = imageBuffer.toString('base64');
