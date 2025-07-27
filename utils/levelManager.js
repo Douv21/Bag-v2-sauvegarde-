@@ -108,6 +108,47 @@ class LevelManager {
     }
 
     getUserLevel(userId, guildId) {
+        // D'abord essayer de récupérer depuis economy.json (données plus récentes)
+        try {
+            const path = require('path');
+            const economyPath = path.join(__dirname, '../data/economy.json');
+            
+            if (require('fs').existsSync(economyPath)) {
+                const economyData = JSON.parse(require('fs').readFileSync(economyPath, 'utf8'));
+                const economyKey = `${guildId}_${userId}`;
+                
+                if (economyData[economyKey] && economyData[economyKey].xp !== undefined) {
+                    const economyUser = economyData[economyKey];
+                    const calculatedLevel = this.calculateLevelFromXP(economyUser.xp || 0);
+                    
+                    // Synchroniser avec level_users.json
+                    const users = this.loadUsers();
+                    const userKey = `${guildId}_${userId}`;
+                    
+                    const syncedUser = {
+                        userId,
+                        guildId,
+                        xp: economyUser.xp || 0,
+                        level: calculatedLevel,
+                        totalMessages: economyUser.totalMessages || 0,
+                        totalVoiceTime: economyUser.totalVoiceTime || 0,
+                        lastMessageTime: economyUser.lastMessageTime || 0,
+                        lastVoiceTime: economyUser.lastVoiceTime || 0
+                    };
+                    
+                    // Sauvegarder la version synchronisée
+                    users[userKey] = syncedUser;
+                    this.saveUsers(users);
+                    
+                    console.log(`🔄 Données synchronisées depuis economy.json: ${userId} - Niveau ${calculatedLevel}, XP ${economyUser.xp}`);
+                    return syncedUser;
+                }
+            }
+        } catch (error) {
+            console.log(`⚠️ Erreur sync economy.json: ${error.message}`);
+        }
+        
+        // Fallback vers level_users.json
         const users = this.loadUsers();
         const userKey = `${guildId}_${userId}`;
         
@@ -132,9 +173,6 @@ class LevelManager {
             console.log(`🔄 Correction niveau: ${userId} ${oldLevel} → ${correctLevel} (XP: ${users[userKey].xp})`);
             users[userKey].level = correctLevel;
             this.saveUsers(users);
-            
-            // Si c'est une correction vers un niveau supérieur, on pourrait notifier
-            // Mais pour éviter le spam, on le fait seulement si demandé explicitement
         }
         
         return users[userKey];
@@ -292,6 +330,40 @@ class LevelManager {
         
         users[userKey].xp = Math.max(0, newXP);
         users[userKey].level = this.calculateLevelFromXP(users[userKey].xp);
+        
+        // Également synchroniser avec economy.json
+        try {
+            const path = require('path');
+            const economyPath = path.join(__dirname, '../data/economy.json');
+            
+            if (require('fs').existsSync(economyPath)) {
+                const economyData = JSON.parse(require('fs').readFileSync(economyPath, 'utf8'));
+                const economyKey = `${guildId}_${userId}`;
+                
+                if (!economyData[economyKey]) {
+                    economyData[economyKey] = {
+                        id: userId,
+                        guildId: guildId,
+                        balance: 0,
+                        karma_good: 0,
+                        karma_bad: 0,
+                        karmaGood: 0,
+                        karmaBad: 0,
+                        xp: 0,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                }
+                
+                economyData[economyKey].xp = Math.max(0, newXP);
+                economyData[economyKey].updatedAt = new Date().toISOString();
+                
+                require('fs').writeFileSync(economyPath, JSON.stringify(economyData, null, 2));
+                console.log(`💾 XP synchronisé avec economy.json: ${userId} = ${newXP} XP`);
+            }
+        } catch (error) {
+            console.log(`⚠️ Erreur sync economy.json lors de setUserXP: ${error.message}`);
+        }
         
         this.saveUsers(users);
         return users[userKey];
