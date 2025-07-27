@@ -6,6 +6,167 @@ const deploymentManager = require('./utils/deploymentManager');
 const mongoBackup = require('./utils/mongoBackupManager');
 const levelManager = require('./utils/levelManager');
 
+// Handlers pour les nouvelles fonctionnalités karma
+async function handleKarmaResetComplete(interaction) {
+    try {
+        const guildId = interaction.guild.id;
+        const dataManager = require('./utils/simpleDataManager');
+        
+        // Reset karma complet (bon et mauvais)
+        const economyData = dataManager.loadData('economy.json', {});
+        let resetCount = 0;
+        
+        Object.keys(economyData).forEach(key => {
+            if (key.includes('_') && key.includes(guildId)) {
+                if (economyData[key].goodKarma !== undefined || economyData[key].badKarma !== undefined) {
+                    economyData[key].goodKarma = 0;
+                    economyData[key].badKarma = 0;
+                    resetCount++;
+                }
+            }
+        });
+        
+        dataManager.saveData('economy.json', economyData);
+        
+        await interaction.update({
+            content: `✅ **Reset karma complet terminé !**\n\n🧹 ${resetCount} membre(s) affecté(s)\n⚖️ Karma bon et mauvais remis à zéro`,
+            embeds: [],
+            components: []
+        });
+    } catch (error) {
+        console.error('Erreur reset karma complet:', error);
+        await interaction.update({
+            content: '❌ Erreur lors du reset karma complet.',
+            embeds: [],
+            components: []
+        });
+    }
+}
+
+async function handleKarmaResetGood(interaction) {
+    try {
+        const guildId = interaction.guild.id;
+        const dataManager = require('./utils/simpleDataManager');
+        
+        // Reset karma positif uniquement
+        const economyData = dataManager.loadData('economy.json', {});
+        let resetCount = 0;
+        
+        Object.keys(economyData).forEach(key => {
+            if (key.includes('_') && key.includes(guildId)) {
+                if (economyData[key].goodKarma !== undefined && economyData[key].goodKarma > 0) {
+                    economyData[key].goodKarma = 0;
+                    resetCount++;
+                }
+            }
+        });
+        
+        dataManager.saveData('economy.json', economyData);
+        
+        await interaction.update({
+            content: `✅ **Reset karma positif terminé !**\n\n😇 ${resetCount} membre(s) affecté(s)\n⚖️ Karma positif remis à zéro\n🔒 Karma négatif préservé`,
+            embeds: [],
+            components: []
+        });
+    } catch (error) {
+        console.error('Erreur reset karma bon:', error);
+        await interaction.update({
+            content: '❌ Erreur lors du reset karma positif.',
+            embeds: [],
+            components: []
+        });
+    }
+}
+
+async function handleKarmaResetBad(interaction) {
+    try {
+        const guildId = interaction.guild.id;
+        const dataManager = require('./utils/simpleDataManager');
+        
+        // Reset karma négatif uniquement
+        const economyData = dataManager.loadData('economy.json', {});
+        let resetCount = 0;
+        
+        Object.keys(economyData).forEach(key => {
+            if (key.includes('_') && key.includes(guildId)) {
+                if (economyData[key].badKarma !== undefined && economyData[key].badKarma < 0) {
+                    economyData[key].badKarma = 0;
+                    resetCount++;
+                }
+            }
+        });
+        
+        dataManager.saveData('economy.json', economyData);
+        
+        await interaction.update({
+            content: `✅ **Reset karma négatif terminé !**\n\n😈 ${resetCount} membre(s) affecté(s)\n⚖️ Karma négatif remis à zéro\n🔒 Karma positif préservé`,
+            embeds: [],
+            components: []
+        });
+    } catch (error) {
+        console.error('Erreur reset karma mauvais:', error);
+        await interaction.update({
+            content: '❌ Erreur lors du reset karma négatif.',
+            embeds: [],
+            components: []
+        });
+    }
+}
+
+async function handleKarmaWeeklyDaySelection(interaction, dayValue) {
+    try {
+        const dataManager = require('./utils/simpleDataManager');
+        const guildId = interaction.guild.id;
+        
+        const dayNames = {
+            '0': 'Dimanche',
+            '1': 'Lundi', 
+            '2': 'Mardi',
+            '3': 'Mercredi',
+            '4': 'Jeudi',
+            '5': 'Vendredi',
+            '6': 'Samedi',
+            'disable': 'Désactivé'
+        };
+        
+        if (dayValue === 'disable') {
+            // Désactiver le reset automatique
+            const karmaConfig = dataManager.loadData('karma_config.json', {});
+            karmaConfig.weeklyReset = { enabled: false };
+            dataManager.saveData('karma_config.json', karmaConfig);
+            
+            await interaction.update({
+                content: `✅ **Reset hebdomadaire désactivé**\n\n❌ Aucun reset automatique\n⚙️ Le karma ne sera plus remis à zéro automatiquement`,
+                embeds: [],
+                components: []
+            });
+        } else {
+            // Configurer jour de reset
+            const dayNum = parseInt(dayValue);
+            const karmaConfig = dataManager.loadData('karma_config.json', {});
+            karmaConfig.weeklyReset = {
+                enabled: true,
+                dayOfWeek: dayNum,
+                lastReset: null
+            };
+            dataManager.saveData('karma_config.json', karmaConfig);
+            
+            await interaction.update({
+                content: `✅ **Jour de reset configuré !**\n\n📅 Jour: **${dayNames[dayValue]}**\n⏰ Heure: **00:00 (minuit)**\n🎁 Les récompenses seront distribuées avant le reset\n🔄 Reset automatique du karma chaque semaine`,
+                embeds: [],
+                components: []
+            });
+        }
+    } catch (error) {
+        console.error('Erreur sélection jour reset:', error);
+        await interaction.update({
+            content: '❌ Erreur lors de la configuration du jour de reset.',
+            embeds: [],
+            components: []
+        });
+    }
+}
+
 class RenderSolutionBot {
     constructor() {
         this.initializeWebServer();
@@ -1481,6 +1642,44 @@ class RenderSolutionBot {
                     const economyHandler = new EconomyConfigHandler(dataManager);
                     await economyHandler.handleKarmaSelect(interaction);
                     return;
+                }
+
+                // Handlers pour les confirmations de reset karma
+                if (customId === 'karma_reset_confirm' || customId === 'karma_reset_good_confirm' || customId === 'karma_reset_bad_confirm') {
+                    console.log('🎯 Confirmation reset karma:', customId);
+                    const value = interaction.values[0];
+                    
+                    if (value === 'cancel_reset') {
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.showKarmaMenu(interaction);
+                        return;
+                    } else if (value === 'confirm_reset') {
+                        await handleKarmaResetComplete(interaction);
+                        return;
+                    } else if (value === 'confirm_reset_good') {
+                        await handleKarmaResetGood(interaction);
+                        return;
+                    } else if (value === 'confirm_reset_bad') {
+                        await handleKarmaResetBad(interaction);
+                        return;
+                    }
+                }
+
+                // Handler pour sélection jour reset hebdomadaire
+                if (customId === 'karma_weekly_day_select') {
+                    console.log('🎯 Sélection jour reset hebdomadaire');
+                    const value = interaction.values[0];
+                    
+                    if (value === 'back_karma') {
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.showKarmaMenu(interaction);
+                        return;
+                    } else {
+                        await handleKarmaWeeklyDaySelection(interaction, value);
+                        return;
+                    }
                 }
 
                 if (customId === 'karma_rewards_select') {
