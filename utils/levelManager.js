@@ -157,6 +157,64 @@ class LevelManager {
         return level;
     }
 
+    // Nouvelle fonction pour récupérer le rôle configuré pour un niveau spécifique
+    getRoleForLevel(level, guild = null) {
+        try {
+            const config = this.loadConfig();
+            
+            if (!config.roleRewards) {
+                return null;
+            }
+            
+            let roleReward = null;
+            
+            // Gérer le cas où roleRewards peut être un objet ou un tableau
+            if (Array.isArray(config.roleRewards)) {
+                // Trouver le rôle pour le niveau exact ou le niveau le plus proche en dessous
+                const sortedRewards = config.roleRewards
+                    .filter(reward => reward.level <= level)
+                    .sort((a, b) => b.level - a.level);
+                roleReward = sortedRewards[0] || null;
+            } else {
+                // Si c'est un objet, chercher par clé de niveau
+                const availableLevels = Object.keys(config.roleRewards)
+                    .map(key => parseInt(key))
+                    .filter(lvl => lvl <= level)
+                    .sort((a, b) => b - a);
+                
+                if (availableLevels.length > 0) {
+                    const bestLevel = availableLevels[0];
+                    roleReward = {
+                        level: bestLevel,
+                        roleId: config.roleRewards[bestLevel]
+                    };
+                }
+            }
+            
+            if (roleReward && roleReward.roleId && guild) {
+                // Récupérer le nom du rôle depuis Discord
+                const role = guild.roles.cache.get(roleReward.roleId);
+                return {
+                    level: roleReward.level,
+                    roleId: roleReward.roleId,
+                    roleName: role ? role.name : 'Rôle inconnu'
+                };
+            } else if (roleReward && roleReward.roleId) {
+                // Retourner sans nom si pas de guild
+                return {
+                    level: roleReward.level,
+                    roleId: roleReward.roleId,
+                    roleName: null
+                };
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Erreur récupération rôle pour niveau:', error);
+            return null;
+        }
+    }
+
     async addTextXP(userId, guildId, context = {}) {
         try {
             // Check cooldown

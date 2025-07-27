@@ -138,17 +138,17 @@ class LevelCardGenerator {
         
         // Vérifier les rôles pour choisir l'image appropriée - priorité "certifié" sur "femme"
         if (roleNames.includes('certifié')) {
-            imagePath = path.join(__dirname, '../../attached_assets/3_1753521071380.png');
+            imagePath = path.join(__dirname, '../assets/background_3.png');
             imageFormat = 'png';
-            console.log('🎨 NOTIFICATION: Utilisation image certifié (3_1753521071380.png) pour la carte');
+            console.log('🎨 NOTIFICATION: Utilisation image certifié (background_3.png) pour la carte');
         } else if (roleNames.includes('femme')) {
-            imagePath = path.join(__dirname, '../../attached_assets/2_1753521071482.png');
+            imagePath = path.join(__dirname, '../assets/background_2.png');
             imageFormat = 'png';
-            console.log('🎨 NOTIFICATION: Utilisation image femme (2_1753521071482.png) pour la carte');
+            console.log('🎨 NOTIFICATION: Utilisation image femme (background_2.png) pour la carte');
         } else {
-            imagePath = path.join(__dirname, '../../attached_assets/1_1753517381716.jpg');
+            imagePath = path.join(__dirname, '../assets/background_1.jpg');
             imageFormat = 'jpeg';
-            console.log('🎨 NOTIFICATION: Utilisation image par défaut (1_1753517381716.jpg) pour la carte');
+            console.log('🎨 NOTIFICATION: Utilisation image par défaut (background_1.jpg) pour la carte');
         }
         
         // Essayer de charger l'image appropriée
@@ -844,7 +844,7 @@ class LevelCardGenerator {
             const path = require('path');
             
             // Déterminer quelle image utiliser selon les rôles
-            let imagePath = path.join(__dirname, '../../attached_assets/1_1753517381716.jpg'); // Default
+            let imagePath = path.join(__dirname, '../assets/background_1.jpg'); // Default
             let imageFormat = 'jpeg';
             
             // Vérifier les rôles pour choisir l'image appropriée - priorité "certifié" sur "femme"
@@ -852,15 +852,15 @@ class LevelCardGenerator {
                 const roleNames = user.roles.map(role => role.name.toLowerCase());
                 
                 if (roleNames.includes('certifié')) {
-                    imagePath = path.join(__dirname, '../../attached_assets/3_1753521071380.png');
+                    imagePath = path.join(__dirname, '../assets/background_3.png');
                     imageFormat = 'png';
-                    console.log('🎨 Récompense: Utilisation image certifié (3_1753521071380.png)');
+                    console.log('🎨 Récompense: Utilisation image certifié (background_3.png)');
                 } else if (roleNames.includes('femme')) {
-                    imagePath = path.join(__dirname, '../../attached_assets/2_1753521071482.png');
+                    imagePath = path.join(__dirname, '../assets/background_2.png');
                     imageFormat = 'png';
-                    console.log('🎨 Récompense: Utilisation image femme (2_1753521071482.png)');
+                    console.log('🎨 Récompense: Utilisation image femme (background_2.png)');
                 } else {
-                    console.log('🎨 Récompense: Utilisation image par défaut (1_1753517381716.jpg)');
+                    console.log('🎨 Récompense: Utilisation image par défaut (background_1.jpg)');
                 }
             }
             
