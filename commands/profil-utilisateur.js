@@ -98,6 +98,37 @@ module.exports = {
         console.log('⚠️ Erreur récupération rôle de niveau:', error);
       }
 
+      // Détection des rôles pour image de fond
+      let backgroundImageName = '1_1753517381716.jpg'; // Image par défaut
+      const userRoles = targetMember.roles.cache.map(role => role.name.toLowerCase());
+      
+      if (userRoles.includes('certifié')) {
+        backgroundImageName = '3_1753521071380.png';
+        console.log('🎨 Utilisation image certifié (3_1753521071380.png) pour la carte');
+      } else if (userRoles.includes('femme')) {
+        backgroundImageName = '2_1753521071482.png';
+        console.log('🎨 Utilisation image femme (2_1753521071482.png) pour la carte');
+      } else {
+        console.log('🎨 Utilisation image par défaut (1_1753517381716.jpg) pour la carte');
+      }
+
+      // Charger l'image de fond depuis attached_assets
+      let backgroundImageBase64 = '';
+      try {
+        const imagePath = path.join(__dirname, '../../attached_assets', backgroundImageName);
+        if (fs.existsSync(imagePath)) {
+          const imageBuffer = fs.readFileSync(imagePath);
+          backgroundImageBase64 = imageBuffer.toString('base64');
+          const imageFormat = backgroundImageName.includes('.png') ? 'png' : 'jpg';
+          backgroundImageBase64 = `data:image/${imageFormat};base64,${backgroundImageBase64}`;
+          console.log(`✅ Image de fond chargée: ${backgroundImageBase64.length} chars (${backgroundImageName})`);
+        } else {
+          console.log(`⚠️ Image de fond non trouvée: ${imagePath}`);
+        }
+      } catch (error) {
+        console.log('⚠️ Erreur chargement image de fond:', error.message);
+      }
+
       // Récupérer l'avatar avec priorité serveur > global et forcer le format PNG
       const serverAvatar = targetMember.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
       const globalAvatar = targetUser.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
@@ -138,15 +169,11 @@ module.exports = {
       
       const avatarHref = avatarBase64 || 'https://cdn.discordapp.com/embed/avatars/0.png';
 
-      // Vérifier si l'image de fond existe, sinon utiliser un SVG holographique
-      const bgPath = path.join(__dirname, '1.jpg');
-      let bgHref = '';
+      // Utiliser l'image de fond chargée basée sur les rôles ou créer un arrière-plan holographique
+      let bgHref = backgroundImageBase64;
       
-      if (fs.existsSync(bgPath)) {
-        const bgImage = fs.readFileSync(bgPath).toString('base64');
-        bgHref = `data:image/jpeg;base64,${bgImage}`;
-      } else {
-        // Créer un arrière-plan holographique en SVG
+      if (!backgroundImageBase64) {
+        // Créer un arrière-plan holographique en SVG si aucune image n'est chargée
         const holoBg = `
           <defs>
             <linearGradient id="holographicBg" x1="0%" y1="0%" x2="100%" y2="100%">
