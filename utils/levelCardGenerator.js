@@ -124,22 +124,22 @@ class LevelCardGenerator {
         const path = require('path');
         
         // Déterminer quelle image utiliser selon les rôles
-        let imagePath = path.join(__dirname, '../../attached_assets/1_1753517381716.jpg'); // Default
+        let imagePath;
         let imageFormat = 'jpeg';
         
         // Vérifier les rôles pour choisir l'image appropriée - priorité "certifié" sur "femme"
         if (userRoles.some(role => role.name.toLowerCase().includes('certifié'))) {
-            imagePath = path.join(__dirname, '../commands/3.jpg');
-            imageFormat = 'jpeg';
-            console.log('🎨 Utilisation image certifié (3.jpg) pour la carte');
+            imagePath = path.join(__dirname, '../../attached_assets/3_1753521071380.png');
+            imageFormat = 'png';
+            console.log('🎨 Utilisation image certifié (3_1753521071380.png) pour la carte');
         } else if (userRoles.some(role => role.name.toLowerCase().includes('femme'))) {
-            imagePath = path.join(__dirname, '../commands/2.jpg');
-            imageFormat = 'jpeg';
-            console.log('🎨 Utilisation image femme (2.jpg) pour la carte');
+            imagePath = path.join(__dirname, '../../attached_assets/2_1753521071482.png');
+            imageFormat = 'png';
+            console.log('🎨 Utilisation image femme (2_1753521071482.png) pour la carte');
         } else {
-            imagePath = path.join(__dirname, '../commands/1.jpg');
+            imagePath = path.join(__dirname, '../../attached_assets/1_1753517381716.jpg');
             imageFormat = 'jpeg';
-            console.log('🎨 Utilisation image par défaut (1.jpg) pour la carte');
+            console.log('🎨 Utilisation image par défaut (1_1753517381716.jpg) pour la carte');
         }
         
         // Essayer de charger l'image appropriée
@@ -148,9 +148,12 @@ class LevelCardGenerator {
             if (fs.existsSync(imagePath)) {
                 const imageBuffer = fs.readFileSync(imagePath);
                 bgImage = `data:image/${imageFormat};base64,${imageBuffer.toString('base64')}`;
+                console.log(`✅ Image de fond chargée: ${bgImage.length} chars (${imageFormat})`);
+            } else {
+                console.log(`❌ Image non trouvée: ${imagePath}`);
             }
         } catch (error) {
-            console.log('⚠️ Image de fond non trouvée, utilisation fond holographique par défaut');
+            console.log('⚠️ Erreur chargement image de fond:', error.message);
         }
 
         return `
@@ -175,16 +178,14 @@ class LevelCardGenerator {
                     <line x1="0" y1="0" x2="40" y2="40" stroke="#00ffff" stroke-width="0.5" opacity="0.3"/>
                     <line x1="40" y1="0" x2="0" y2="40" stroke="#ff00ff" stroke-width="0.5" opacity="0.3"/>
                 </pattern>
+                <clipPath id="cardClip">
+                    <rect x="0" y="0" width="800" height="400" rx="20"/>
+                </clipPath>
             </defs>
             
             <!-- Background Image ou Holographique -->
             ${bgImage ? `
-                <defs>
-                    <clipPath id="cardClip">
-                        <rect x="0" y="0" width="800" height="400" rx="20"/>
-                    </clipPath>
-                </defs>
-                <image href="${bgImage}" x="0" y="0" width="800" height="400" clip-path="url(#cardClip)" preserveAspectRatio="xMidYMid slice"/>
+                <image href="${bgImage}" x="0" y="0" width="800" height="400" preserveAspectRatio="xMidYMid slice" opacity="1"/>
                 <rect width="800" height="400" fill="url(#holoPattern)" opacity="0.2"/>
             ` : `
                 <rect width="800" height="400" fill="url(#holoBg)"/>
@@ -209,7 +210,7 @@ class LevelCardGenerator {
             <text x="680" y="90" text-anchor="middle" fill="#00ffff" font-family="Arial Black" font-size="28" font-weight="bold" filter="url(#holoGlow)">${newLevel}</text>
             
             <!-- Semi-transparent background for text readability -->
-            <rect x="180" y="80" width="400" height="80" fill="rgba(0,0,0,0.6)" rx="10"/>
+            <rect x="180" y="80" width="400" height="80" fill="rgba(0,0,0,0.8)" rx="10"/>
             
             <!-- User Info -->
             <text x="200" y="105" fill="#ffffff" font-family="Arial Black" font-size="24" font-weight="bold" filter="url(#holoGlow)">${user.displayName || user.username || 'Unknown User'}</text>
@@ -219,7 +220,7 @@ class LevelCardGenerator {
             <!-- XP Progress Bar -->
             ${progressData ? `
             <!-- Background semi-transparent pour la lisibilité -->
-            <rect x="30" y="165" width="640" height="120" fill="rgba(0,0,0,0.5)" rx="10"/>
+            <rect x="30" y="165" width="640" height="120" fill="rgba(0,0,0,0.7)" rx="10"/>
             
             <text x="50" y="185" fill="#ffffff" font-family="Arial Black" font-size="18" font-weight="bold">Progression XP:</text>
             <rect x="50" y="195" width="600" height="20" fill="rgba(0,0,0,0.7)" rx="10" stroke="#00ffff" stroke-width="2"/>
