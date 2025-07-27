@@ -176,7 +176,26 @@ class RenderSolutionBot {
         });
 
         this.client.on('interactionCreate', async interaction => {
-            await this.handleInteraction(interaction);
+            try {
+                // Traitement spécial pour les modals d'actions économiques AVANT handleInteraction
+                if (interaction.isModalSubmit()) {
+                    const customId = interaction.customId;
+                    console.log(`🎯 Modal submit détecté: ${customId}`);
+                    
+                    if (customId.includes('_amounts_modal_') || customId.includes('_cooldown_modal_') || customId.includes('_karma_modal_')) {
+                        console.log('🎯 Modal action économique → handleActionModal');
+                        const dataManager = require('./utils/simpleDataManager'); // AJOUT: dataManager requis ici
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const handler = new EconomyConfigHandler(dataManager);
+                        await handler.handleActionModal(interaction);
+                        return; // IMPORTANT: arrêter ici pour éviter le double traitement
+                    }
+                }
+                
+                await this.handleInteraction(interaction);
+            } catch (error) {
+                console.error('❌ Erreur interactionCreate:', error);
+            }
         });
 
         this.client.on('messageCreate', async message => {
@@ -260,6 +279,82 @@ class RenderSolutionBot {
                 console.log(`📝 Modal: ${interaction.customId}`);
                 
                 try {
+                    // === MODALS ÉCONOMIQUES NOUVEAUX ===
+                    if (interaction.customId.startsWith('action_config_modal_')) {
+                        console.log('🎯 Modal configuration action:', interaction.customId);
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleActionConfigModal(interaction);
+                        return;
+                    }
+                    
+                    if (interaction.customId === 'objet_perso_modal') {
+                        console.log('🎯 Modal objet personnalisé');
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleObjetPersoModal(interaction);
+                        return;
+                    }
+
+                    // Modals Daily
+                    if (interaction.customId === 'daily_amount_modal') {
+                        console.log('🎯 Modal daily amount');
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleDailyAmountModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'daily_streak_modal') {
+                        console.log('🎯 Modal daily streak');
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleDailyStreakModal(interaction);
+                        return;
+                    }
+
+                    // Modals Messages
+                    if (interaction.customId === 'message_amount_modal') {
+                        console.log('🎯 Modal message amount');
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleMessageAmountModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'message_cooldown_modal') {
+                        console.log('🎯 Modal message cooldown');
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleMessageCooldownModal(interaction);
+                        return;
+                    }
+
+                    // Modals Karma
+                    if (interaction.customId === 'karma_levels_modal') {
+                        console.log('🎯 Modal karma levels');
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleKarmaLevelsModal(interaction);
+                        return;
+                    }
+                    
+                    if (interaction.customId === 'remise_karma_modal') {
+                        console.log('🎯 Modal remise karma');
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleRemiseModal(interaction);
+                        return;
+                    }
+                    
+                    if (interaction.customId.startsWith('role_config_modal_')) {
+                        console.log('🎯 Modal config rôle:', interaction.customId);
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleRoleConfigModal(interaction);
+                        return;
+                    }
+
                     // Gestion des modals de configuration level
                     if (interaction.customId === 'text_xp_modal') {
                         const LevelConfigHandler = require('./handlers/LevelConfigHandler');
@@ -425,6 +520,533 @@ class RenderSolutionBot {
                         return;
                     }
                     
+                    if (interaction.customId === 'economy_daily_amount_modal') {
+                        const amount = parseInt(interaction.fields.getTextInputValue('daily_amount'));
+                        if (amount >= 1 && amount <= 1000) {
+                            const economyData = dataManager.loadData('economy') || {};
+                            if (!economyData.daily) economyData.daily = {};
+                            economyData.daily.baseAmount = amount;
+                            dataManager.saveData('economy', economyData);
+                            await interaction.reply({ content: `✅ Montant daily configuré à ${amount}€`, flags: 64 });
+                        } else {
+                            await interaction.reply({ content: '❌ Montant invalide (1-1000€)', flags: 64 });
+                        }
+                        return;
+                    }
+                    
+                    if (interaction.customId === 'shop_karma_discount_modal') {
+                        const name = interaction.fields.getTextInputValue('discount_name');
+                        const karma = parseInt(interaction.fields.getTextInputValue('karma_required'));
+                        const percent = parseInt(interaction.fields.getTextInputValue('percentage'));
+                        
+                        // Validation
+                        if (isNaN(karma) || karma < -999 || karma > 999) {
+                            await interaction.reply({
+                                content: '❌ Le karma requis doit être un nombre entre -999 et 999.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        if (isNaN(percent) || percent < 1 || percent > 99) {
+                            await interaction.reply({
+                                content: '❌ Le pourcentage doit être un nombre entre 1 et 99.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        // Sauvegarder dans karma_discounts.json
+                        const guildId = interaction.guild.id;
+                        const fs = require('fs');
+                        const path = require('path');
+                        
+                        const discountsPath = path.join(__dirname, 'data', 'karma_discounts.json');
+                        let allDiscounts = {};
+                        
+                        if (fs.existsSync(discountsPath)) {
+                            allDiscounts = JSON.parse(fs.readFileSync(discountsPath, 'utf8'));
+                        }
+                        
+                        if (!allDiscounts[guildId]) allDiscounts[guildId] = [];
+                        
+                        allDiscounts[guildId].push({
+                            id: Date.now(),
+                            name: name,
+                            karmaRequired: karma,
+                            percentage: percent,
+                            createdAt: new Date().toISOString()
+                        });
+                        
+                        fs.writeFileSync(discountsPath, JSON.stringify(allDiscounts, null, 2));
+                        
+                        await interaction.reply({
+                            content: `✅ Remise **${name}** créée avec succès (${karma} karma → ${percent}% de remise).`,
+                            flags: 64
+                        });
+                        return;
+                    }
+                    
+                    // Handler pour modal d'édition remise karma
+                    if (interaction.customId.startsWith('edit_karma_discount_modal_')) {
+                        const discountId = interaction.customId.replace('edit_karma_discount_modal_', '');
+                        const name = interaction.fields.getTextInputValue('discount_name');
+                        const karma = parseInt(interaction.fields.getTextInputValue('karma_required'));
+                        const percent = parseInt(interaction.fields.getTextInputValue('percentage'));
+                        
+                        // Validation
+                        if (isNaN(karma) || karma < -999 || karma > 999) {
+                            await interaction.reply({
+                                content: '❌ Le karma requis doit être un nombre entre -999 et 999.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        if (isNaN(percent) || percent < 1 || percent > 99) {
+                            await interaction.reply({
+                                content: '❌ Le pourcentage doit être un nombre entre 1 et 99.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        // Modifier dans karma_discounts.json
+                        const guildId = interaction.guild.id;
+                        const fs = require('fs');
+                        const path = require('path');
+                        
+                        const discountsPath = path.join(__dirname, 'data', 'karma_discounts.json');
+                        let allDiscounts = {};
+                        
+                        if (fs.existsSync(discountsPath)) {
+                            allDiscounts = JSON.parse(fs.readFileSync(discountsPath, 'utf8'));
+                        }
+                        
+                        if (allDiscounts[guildId]) {
+                            const discountIndex = allDiscounts[guildId].findIndex(d => d.id.toString() === discountId);
+                            if (discountIndex !== -1) {
+                                allDiscounts[guildId][discountIndex] = {
+                                    ...allDiscounts[guildId][discountIndex],
+                                    name: name,
+                                    karmaRequired: karma,
+                                    percentage: percent,
+                                    updatedAt: new Date().toISOString()
+                                };
+                                
+                                fs.writeFileSync(discountsPath, JSON.stringify(allDiscounts, null, 2));
+                                
+                                await interaction.reply({
+                                    content: `✅ Remise **${name}** modifiée avec succès (${karma} karma → ${percent}% de remise).`,
+                                    flags: 64
+                                });
+                            } else {
+                                await interaction.reply({
+                                    content: '❌ Remise introuvable.',
+                                    flags: 64
+                                });
+                            }
+                        } else {
+                            await interaction.reply({
+                                content: '❌ Aucune remise configurée.',
+                                flags: 64
+                            });
+                        }
+                        return;
+                    }
+                    
+                    // Handlers pour modals boutique
+                    if (interaction.customId === 'create_custom_object_modal') {
+                        const name = interaction.fields.getTextInputValue('object_name');
+                        const price = parseInt(interaction.fields.getTextInputValue('object_price'));
+                        const description = interaction.fields.getTextInputValue('object_description') || 'Objet personnalisé';
+                        
+                        if (isNaN(price) || price < 1 || price > 999999) {
+                            await interaction.reply({
+                                content: '❌ Le prix doit être un nombre entre 1 et 999999.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        // Sauvegarder dans shop.json
+                        const guildId = interaction.guild.id;
+                        const fs = require('fs');
+                        const path = require('path');
+                        const shopPath = path.join(__dirname, 'data', 'shop.json');
+                        
+                        let shopData = {};
+                        try {
+                            if (fs.existsSync(shopPath)) {
+                                shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
+                            }
+                        } catch (error) {
+                            shopData = {};
+                        }
+                        
+                        if (!shopData[guildId]) shopData[guildId] = [];
+                        
+                        shopData[guildId].push({
+                            id: Date.now(),
+                            name: name,
+                            price: price,
+                            description: description,
+                            type: 'custom',
+                            createdAt: new Date().toISOString()
+                        });
+                        
+                        const dataDir = path.dirname(shopPath);
+                        if (!fs.existsSync(dataDir)) {
+                            fs.mkdirSync(dataDir, { recursive: true });
+                        }
+                        
+                        fs.writeFileSync(shopPath, JSON.stringify(shopData, null, 2));
+                        
+                        await interaction.reply({
+                            content: `✅ Objet **${name}** créé avec succès (${price}€).`,
+                            flags: 64
+                        });
+                        return;
+                    }
+                    
+                    if (interaction.customId === 'create_temp_role_modal') {
+                        const roleId = interaction.fields.getTextInputValue('role_id');
+                        const price = parseInt(interaction.fields.getTextInputValue('role_price'));
+                        const duration = parseInt(interaction.fields.getTextInputValue('role_duration'));
+                        
+                        if (isNaN(price) || price < 1 || price > 999999) {
+                            await interaction.reply({
+                                content: '❌ Le prix doit être un nombre entre 1 et 999999.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        if (isNaN(duration) || duration < 1 || duration > 365) {
+                            await interaction.reply({
+                                content: '❌ La durée doit être un nombre entre 1 et 365 jours.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        // Vérifier que le rôle existe
+                        const role = interaction.guild.roles.cache.get(roleId);
+                        if (!role) {
+                            await interaction.reply({
+                                content: '❌ Rôle introuvable. Vérifiez l\'ID du rôle.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        // Sauvegarder dans shop.json
+                        const guildId = interaction.guild.id;
+                        const fs = require('fs');
+                        const path = require('path');
+                        const shopPath = path.join(__dirname, 'data', 'shop.json');
+                        
+                        let shopData = {};
+                        try {
+                            if (fs.existsSync(shopPath)) {
+                                shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
+                            }
+                        } catch (error) {
+                            shopData = {};
+                        }
+                        
+                        if (!shopData[guildId]) shopData[guildId] = [];
+                        
+                        shopData[guildId].push({
+                            id: Date.now(),
+                            name: role.name,
+                            price: price,
+                            description: `Rôle temporaire ${role.name} pour ${duration} jours`,
+                            type: 'temp_role',
+                            roleId: roleId,
+                            duration: duration,
+                            createdAt: new Date().toISOString()
+                        });
+                        
+                        const dataDir = path.dirname(shopPath);
+                        if (!fs.existsSync(dataDir)) {
+                            fs.mkdirSync(dataDir, { recursive: true });
+                        }
+                        
+                        fs.writeFileSync(shopPath, JSON.stringify(shopData, null, 2));
+                        
+                        await interaction.reply({
+                            content: `✅ Rôle temporaire **${role.name}** ajouté (${price}€, ${duration} jours).`,
+                            flags: 64
+                        });
+                        return;
+                    }
+                    
+                    if (interaction.customId === 'create_perm_role_modal') {
+                        const roleId = interaction.fields.getTextInputValue('role_id');
+                        const price = parseInt(interaction.fields.getTextInputValue('role_price'));
+                        
+                        if (isNaN(price) || price < 1 || price > 999999) {
+                            await interaction.reply({
+                                content: '❌ Le prix doit être un nombre entre 1 et 999999.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        // Vérifier que le rôle existe
+                        const role = interaction.guild.roles.cache.get(roleId);
+                        if (!role) {
+                            await interaction.reply({
+                                content: '❌ Rôle introuvable. Vérifiez l\'ID du rôle.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        // Sauvegarder dans shop.json
+                        const guildId = interaction.guild.id;
+                        const fs = require('fs');
+                        const path = require('path');
+                        const shopPath = path.join(__dirname, 'data', 'shop.json');
+                        
+                        let shopData = {};
+                        try {
+                            if (fs.existsSync(shopPath)) {
+                                shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
+                            }
+                        } catch (error) {
+                            shopData = {};
+                        }
+                        
+                        if (!shopData[guildId]) shopData[guildId] = [];
+                        
+                        shopData[guildId].push({
+                            id: Date.now(),
+                            name: role.name,
+                            price: price,
+                            description: `Rôle permanent ${role.name}`,
+                            type: 'perm_role',
+                            roleId: roleId,
+                            createdAt: new Date().toISOString()
+                        });
+                        
+                        const dataDir = path.dirname(shopPath);
+                        if (!fs.existsSync(dataDir)) {
+                            fs.mkdirSync(dataDir, { recursive: true });
+                        }
+                        
+                        fs.writeFileSync(shopPath, JSON.stringify(shopData, null, 2));
+                        
+                        await interaction.reply({
+                            content: `✅ Rôle permanent **${role.name}** ajouté (${price}€).`,
+                            flags: 64
+                        });
+                        return;
+                    }
+                    
+                    // Handler pour modal création niveau karma
+                    if (interaction.customId === 'create_karma_level_modal') {
+                        const name = interaction.fields.getTextInputValue('level_name');
+                        const karmaNet = parseInt(interaction.fields.getTextInputValue('karma_net'));
+                        const reward = parseInt(interaction.fields.getTextInputValue('reward_amount'));
+                        
+                        // Validation
+                        if (isNaN(karmaNet) || karmaNet < -999 || karmaNet > 999) {
+                            await interaction.reply({
+                                content: '❌ Le karma net doit être un nombre entre -999 et 999.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        if (isNaN(reward) || reward < -999999 || reward > 999999) {
+                            await interaction.reply({
+                                content: '❌ La récompense doit être un nombre entre -999999 et 999999.',
+                                flags: 64
+                            });
+                            return;
+                        }
+                        
+                        // Sauvegarder dans economy.json
+                        const economyData = dataManager.loadData('economy') || {};
+                        if (!economyData.karmaLevels) economyData.karmaLevels = [];
+                        
+                        economyData.karmaLevels.push({
+                            id: Date.now(),
+                            name: name,
+                            karmaNet: karmaNet,
+                            reward: reward,
+                            createdAt: new Date().toISOString()
+                        });
+                        
+                        dataManager.saveData('economy', economyData);
+                        
+                        await interaction.reply({
+                            content: `✅ Niveau karma **${name}** créé avec succès (${karmaNet} karma net → ${reward}€).`,
+                            flags: 64
+                        });
+                        return;
+                    }
+                    
+                    if (interaction.customId.startsWith('edit_item_modal_')) {
+                        const itemId = interaction.customId.replace('edit_item_modal_', '');
+                        const fs = require('fs');
+                        const path = require('path');
+                        
+                        try {
+                            const shopPath = path.join(__dirname, 'data', 'shop.json');
+                            let shop = {};
+                            if (fs.existsSync(shopPath)) {
+                                shop = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
+                            }
+                            
+                            const guildId = interaction.guild.id;
+                            const items = shop[guildId] || [];
+                            const itemIndex = items.findIndex(i => i.id === itemId);
+                            const item = items[itemIndex];
+                            
+                            if (item) {
+                                const price = parseInt(interaction.fields.getTextInputValue('item_price'));
+                                
+                                if (price >= 1 && price <= 999999) {
+                                    item.price = price;
+                                    
+                                    if (item.type === 'custom') {
+                                        item.name = interaction.fields.getTextInputValue('item_name');
+                                        item.description = interaction.fields.getTextInputValue('item_description') || '';
+                                    } else if (item.type === 'temp_role') {
+                                        const duration = parseInt(interaction.fields.getTextInputValue('item_duration'));
+                                        if (duration >= 1 && duration <= 365) {
+                                            item.duration = duration;
+                                        }
+                                    }
+                                    
+                                    items[itemIndex] = item;
+                                    shop[guildId] = items;
+                                    fs.writeFileSync(shopPath, JSON.stringify(shop, null, 2));
+                                    
+                                    await interaction.reply({
+                                        content: `✅ **Article modifié !**\n\n✏️ **${item.name}**\n💰 Nouveau prix: ${price}€`,
+                                        flags: 64
+                                    });
+                                } else {
+                                    await interaction.reply({ content: '❌ Prix invalide (1-999,999€)', flags: 64 });
+                                }
+                            } else {
+                                await interaction.reply({ content: '❌ Article non trouvé', flags: 64 });
+                            }
+                        } catch (error) {
+                            console.error('Erreur modification article:', error);
+                            await interaction.reply({ content: '❌ Erreur lors de la modification', flags: 64 });
+                        }
+                        return;
+                    }
+                    
+
+                    
+                    if (interaction.customId === 'temp_role_price_modal') {
+                        const price = parseInt(interaction.fields.getTextInputValue('role_price'));
+                        const duration = parseInt(interaction.fields.getTextInputValue('role_duration'));
+                        const roleId = interaction.fields.getTextInputValue('role_id');
+                        
+                        if (price >= 1 && price <= 999999 && duration >= 1 && duration <= 365) {
+                            const fs = require('fs');
+                            const path = require('path');
+                            
+                            const dataDir = path.join(__dirname, 'data');
+                            if (!fs.existsSync(dataDir)) {
+                                fs.mkdirSync(dataDir, { recursive: true });
+                            }
+                            
+                            const shopPath = path.join(dataDir, 'shop.json');
+                            let shopData = {};
+                            try {
+                                if (fs.existsSync(shopPath)) {
+                                    shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
+                                }
+                            } catch (error) {
+                                shopData = {};
+                            }
+                            
+                            const guildId = interaction.guild.id;
+                            if (!shopData[guildId]) shopData[guildId] = [];
+                            
+                            const role = interaction.guild.roles.cache.get(roleId);
+                            const newItem = {
+                                id: Date.now().toString(),
+                                name: `Rôle: ${role?.name || 'Rôle'}`,
+                                price: price,
+                                duration: duration,
+                                roleId: roleId,
+                                type: 'temp_role',
+                                createdAt: new Date().toISOString(),
+                                createdBy: interaction.user.id
+                            };
+                            
+                            shopData[guildId].push(newItem);
+                            fs.writeFileSync(shopPath, JSON.stringify(shopData, null, 2));
+                            
+                            await interaction.reply({ 
+                                content: `✅ **Rôle temporaire ajouté !**\n\n⏰ **${role?.name}**\n💰 Prix: ${price}€\n📅 Durée: ${duration} jour(s)`, 
+                                flags: 64 
+                            });
+                        } else {
+                            await interaction.reply({ content: '❌ Valeurs invalides (prix: 1-999,999€, durée: 1-365 jours)', flags: 64 });
+                        }
+                        return;
+                    }
+                    
+                    if (interaction.customId === 'perm_role_price_modal') {
+                        const price = parseInt(interaction.fields.getTextInputValue('role_price'));
+                        const roleId = interaction.fields.getTextInputValue('role_id');
+                        
+                        if (price >= 1 && price <= 999999) {
+                            const fs = require('fs');
+                            const path = require('path');
+                            
+                            const dataDir = path.join(__dirname, 'data');
+                            if (!fs.existsSync(dataDir)) {
+                                fs.mkdirSync(dataDir, { recursive: true });
+                            }
+                            
+                            const shopPath = path.join(dataDir, 'shop.json');
+                            let shopData = {};
+                            try {
+                                if (fs.existsSync(shopPath)) {
+                                    shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
+                                }
+                            } catch (error) {
+                                shopData = {};
+                            }
+                            
+                            const guildId = interaction.guild.id;
+                            if (!shopData[guildId]) shopData[guildId] = [];
+                            
+                            const role = interaction.guild.roles.cache.get(roleId);
+                            const newItem = {
+                                id: Date.now().toString(),
+                                name: `Rôle: ${role?.name || 'Rôle'}`,
+                                price: price,
+                                roleId: roleId,
+                                type: 'perm_role',
+                                createdAt: new Date().toISOString(),
+                                createdBy: interaction.user.id
+                            };
+                            
+                            shopData[guildId].push(newItem);
+                            fs.writeFileSync(shopPath, JSON.stringify(shopData, null, 2));
+                            
+                            await interaction.reply({ 
+                                content: `✅ **Rôle permanent ajouté !**\n\n⭐ **${role?.name}**\n💰 Prix: ${price}€\n🔒 Permanent`, 
+                                flags: 64 
+                            });
+                        } else {
+                            await interaction.reply({ content: '❌ Prix invalide (1-999,999€)', flags: 64 });
+                        }
+                        return;
+                    }
+                    
                     // Modal pour créer un objet personnalisé
                     if (interaction.customId === 'shop_custom_object_modal') {
                         const name = interaction.fields.getTextInputValue('object_name');
@@ -433,10 +1055,24 @@ class RenderSolutionBot {
                         
                         if (price >= 1 && price <= 999999) {
                             const fs = require('fs');
+                            const path = require('path');
+                            
+                            // Assurer que le dossier data existe
+                            const dataDir = path.join(__dirname, 'data');
+                            if (!fs.existsSync(dataDir)) {
+                                fs.mkdirSync(dataDir, { recursive: true });
+                            }
+                            
+                            const shopPath = path.join(dataDir, 'shop.json');
                             let shopData = {};
                             try {
-                                shopData = JSON.parse(fs.readFileSync('./render/data/shop.json', 'utf8'));
-                            } catch (error) {}
+                                if (fs.existsSync(shopPath)) {
+                                    shopData = JSON.parse(fs.readFileSync(shopPath, 'utf8'));
+                                }
+                            } catch (error) {
+                                console.log('Erreur lecture shop.json:', error);
+                                shopData = {};
+                            }
                             
                             const guildId = interaction.guild.id;
                             if (!shopData[guildId]) shopData[guildId] = [];
@@ -452,7 +1088,7 @@ class RenderSolutionBot {
                             };
                             
                             shopData[guildId].push(newItem);
-                            fs.writeFileSync('./render/data/shop.json', JSON.stringify(shopData, null, 2));
+                            fs.writeFileSync(shopPath, JSON.stringify(shopData, null, 2));
                             
                             await interaction.reply({ 
                                 content: `✅ **Objet créé avec succès !**\n\n🎨 **${name}** - ${price}€\n📝 ${description}`, 
@@ -667,90 +1303,36 @@ class RenderSolutionBot {
                     return;
                 }
                 
-                // Gestion spéciale pour economy_config_main
-                if (customId === 'economy_config_main') {
-                    console.log('🎯 Routage menu économie principal:', customId);
+                // === NOUVELLE CONFIGURATION ÉCONOMIQUE ===
+                if (customId === 'economy_main_config') {
+                    console.log('🎯 Menu économie principal');
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
                     const economyHandler = new EconomyConfigHandler(dataManager);
-                    await economyHandler.handleMainMenu(interaction);
+                    await economyHandler.handleMainSelect(interaction);
                     return;
                 }
                 
-                // Gestion des sous-menus économiques
-                if (customId === 'economy_action_select') {
+                if (customId === 'economy_actions_select') {
+                    console.log('🎯 Sélection action économique');
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
                     const economyHandler = new EconomyConfigHandler(dataManager);
-                    await economyHandler.handleActionSelection(interaction);
+                    await economyHandler.handleActionSelect(interaction);
                     return;
                 }
                 
-                if (customId === 'economy_shop_options') {
+                if (customId.startsWith('economy_action_config_')) {
+                    console.log('🎯 Config paramètre action');
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
                     const economyHandler = new EconomyConfigHandler(dataManager);
-                    await economyHandler.handleShopOption(interaction);
+                    await economyHandler.handleActionConfigSelect(interaction);
                     return;
                 }
                 
-                if (customId === 'economy_karma_options') {
+                if (customId === 'economy_boutique_select') {
+                    console.log('🎯 Sélection boutique');
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
                     const economyHandler = new EconomyConfigHandler(dataManager);
-                    await economyHandler.handleKarmaOption(interaction);
-                    return;
-                }
-                
-                if (customId === 'economy_daily_options') {
-                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
-                    const economyHandler = new EconomyConfigHandler(dataManager);
-                    await economyHandler.handleDailyOption(interaction);
-                    return;
-                }
-                
-                if (customId === 'economy_messages_options') {
-                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
-                    const economyHandler = new EconomyConfigHandler(dataManager);
-                    await economyHandler.handleMessagesOption(interaction);
-                    return;
-                }
-                
-                if (customId === 'economy_stats_options') {
-                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
-                    const economyHandler = new EconomyConfigHandler(dataManager);
-                    await economyHandler.handleStatsOption(interaction);
-                    return;
-                }
-
-                // Routage spécial pour les remises karma
-                if (customId === 'karma_discounts_menu' ||
-                    customId === 'karma_discounts_actions' ||
-                    customId.startsWith('create_karma_discount_modal') || 
-                    customId.startsWith('edit_karma_discount_modal') || 
-                    customId.startsWith('modify_karma_discount_') || 
-                    customId.startsWith('delete_karma_discount_')) {
-                    
-                    console.log('🎯 Routage remises karma:', customId);
-                    const economyHandler = router.handlers.economy;
-                    
-                    if (customId === 'karma_discounts_menu') {
-                        console.log('🔍 Appel showKarmaDiscountsConfig...');
-                        try {
-                            await economyHandler.showKarmaDiscountsConfig(interaction);
-                            console.log('✅ showKarmaDiscountsConfig exécuté avec succès');
-                        } catch (error) {
-                            console.error('❌ Erreur showKarmaDiscountsConfig:', error);
-                            await interaction.reply({ content: '❌ Erreur lors de l\'affichage des remises karma', flags: 64 });
-                        }
-                    } else if (customId === 'karma_discounts_actions') {
-                        console.log('🔍 Traitement actions remises karma');
-                        await economyHandler.handleKarmaDiscountsAction(interaction);
-                    } else if (customId.startsWith('create_karma_discount_modal')) {
-                        await economyHandler.handleCreateKarmaDiscountModal(interaction);
-                    } else if (customId.startsWith('edit_karma_discount_modal')) {
-                        await economyHandler.handleEditKarmaDiscountModal(interaction);
-                    } else if (customId.startsWith('modify_karma_discount_')) {
-                        await economyHandler.handleModifyKarmaDiscountSelect(interaction);
-                    } else if (customId.startsWith('delete_karma_discount_')) {
-                        await economyHandler.handleDeleteKarmaDiscountSelect(interaction);
-                    }
+                    await economyHandler.handleBoutiqueSelect(interaction);
                     return;
                 }
 
@@ -786,13 +1368,18 @@ class RenderSolutionBot {
                     return;
                 }
 
-                // Gestion des modals d'actions économiques
-                if (customId.startsWith('action_config_modal_')) {
+                // Gestion des modals d'actions économiques (nouvelles versions séparées)
+                if (customId.includes('_amounts_modal_') || customId.includes('_cooldown_modal_') || customId.includes('_karma_modal_')) {
                     console.log('🎯 Modal action config détecté:', customId);
                     console.log('🔍 Type interaction:', interaction.type, interaction.isModalSubmit());
-                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
-                    const handler = new EconomyConfigHandler(dataManager);
-                    await handler.handleActionModal(interaction);
+                    
+                    if (interaction.isModalSubmit()) {
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const handler = new EconomyConfigHandler(dataManager);
+                        await handler.handleActionModal(interaction);
+                    } else {
+                        console.log('⚠️ Modal détecté mais pas de soumission');
+                    }
                     return;
                 }
 
@@ -854,15 +1441,96 @@ class RenderSolutionBot {
 
                 // Ce routage est géré plus haut dans le code - supprimé pour éviter la duplication
 
-                // Routage via MainRouter pour le reste
-                if (!interaction.replied && !interaction.deferred) {
-                    const handled = await router.handleInteraction(interaction);
+                // Ajouter handlers pour nouvelles fonctionnalités boutique
+                if (customId === 'objets_existants_select') {
+                    console.log('🎯 Sélection objet à modifier');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleObjetModification(interaction);
+                    return;
+                }
+
+                if (customId === 'delete_articles_select') {
+                    console.log('🎯 Sélection article à supprimer');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleArticleDelete(interaction);
+                    return;
+                }
+
+                // Handlers pour nouvelles sections Daily et Messages
+                if (customId === 'economy_daily_select') {
+                    console.log('🎯 Sélection daily config');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleDailySelect(interaction);
+                    return;
+                }
+
+                if (customId === 'economy_messages_select') {
+                    console.log('🎯 Sélection messages config');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleMessagesSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'economy_karma_select') {
+                    console.log('🎯 Sélection karma config');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleKarmaSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'karma_rewards_select') {
+                    console.log('🎯 Sélection karma rewards');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleKarmaRewardsSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'manage_objects_select' || customId === 'delete_objects_select' || customId === 'modify_rewards_select') {
+                    console.log('🎯 Sélection boutique/karma navigation');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
                     
-                    if (!handled && !interaction.replied && !interaction.deferred) {
-                        await interaction.reply({ 
-                            content: '❌ Cette interaction n\'est pas encore implémentée.', 
-                            flags: 64 
-                        });
+                    if (interaction.values[0] === 'back_boutique') {
+                        await economyHandler.showBoutiqueMenu(interaction);
+                    } else if (interaction.values[0] === 'back_karma') {
+                        await economyHandler.showKarmaMenu(interaction);
+                    }
+                    return;
+                }
+
+                // Routage via MainRouter pour le reste - UNIQUEMENT si pas déjà traité
+                if (!interaction.replied && !interaction.deferred) {
+                    // Vérifier si l'interaction a été traitée par le nouveau handler économique
+                    const economyHandled = customId === 'economy_main_config' ||
+                                         customId === 'economy_actions_select' ||
+                                         customId.startsWith('economy_action_config_') ||
+                                         customId === 'economy_boutique_select' ||
+                                         customId === 'economy_daily_select' ||
+                                         customId === 'economy_messages_select' ||
+                                         customId === 'remises_karma_select' ||
+                                         customId === 'role_temp_select' ||
+                                         customId === 'role_perm_select' ||
+                                         customId === 'objets_existants_select' ||
+                                         customId === 'delete_articles_select';
+                    
+                    if (!economyHandled) {
+                        console.log('🔄 Routage vers MainRouter pour:', customId);
+                        const handled = await router.handleInteraction(interaction);
+                        
+                        if (!handled && !interaction.replied && !interaction.deferred) {
+                            await interaction.reply({ 
+                                content: '❌ Cette interaction n\'est pas encore implémentée.', 
+                                flags: 64 
+                            });
+                        }
+                    } else {
+                        console.log('✅ Interaction économique déjà traitée, ignorée par MainRouter');
                     }
                 }
             }
@@ -1410,8 +2078,8 @@ async function handleShopPurchase(interaction, dataManager) {
             });
         }
 
-        // Calculer le karma net et la remise
-        const userKarmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
+        // Calculer le karma net et la remise (karma bon - karma mauvais)
+        const userKarmaNet = (userData.goodKarma || 0) - Math.abs(userData.badKarma || 0);
         let discountPercent = 0;
         
         if (economyConfig.karmaDiscounts?.enabled && economyConfig.karmaDiscounts?.ranges) {
