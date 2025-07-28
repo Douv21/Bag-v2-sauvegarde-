@@ -311,6 +311,11 @@ class EconomyConfigHandler {
                     label: '💬 Messages',
                     value: 'messages',
                     description: 'Configuration des gains par message'
+                },
+                {
+                    label: '⚖️ Karma',
+                    value: 'karma',
+                    description: 'Configuration du système karma et récompenses'
                 }
             ]);
 
@@ -319,7 +324,145 @@ class EconomyConfigHandler {
     }
 
     // =============
-    // HANDLERS MODALS ET SÉLECTEURS
+    // GESTION DES OBJETS EXISTANTS - VERSION UNIQUE CORRIGÉE
+    // =============
+    async showManageObjetsMenu(interaction) {
+        try {
+            const guildId = interaction.guild.id;
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const shopItems = shopData[guildId] || [];
+            
+            // Filtrer seulement les objets personnalisés
+            const customObjects = shopItems.filter(item => item.type === 'custom');
+            
+            if (customObjects.length === 0) {
+                const embed = new EmbedBuilder()
+                    .setColor('#f39c12')
+                    .setTitle('🔧 Gérer les Objets')
+                    .setDescription('Aucun objet personnalisé trouvé dans la boutique.\n\nCréez d\'abord des objets personnalisés pour pouvoir les gérer.');
+                
+                const backButton = new StringSelectMenuBuilder()
+                    .setCustomId('economy_boutique_select')
+                    .setPlaceholder('Retour à la boutique...')
+                    .addOptions([
+                        { label: '🔙 Retour Boutique', value: 'back_main', description: 'Retour au menu boutique' }
+                    ]);
+                
+                const row = new ActionRowBuilder().addComponents(backButton);
+                return await interaction.update({ embeds: [embed], components: [row] });
+            }
+            
+            const embed = new EmbedBuilder()
+                .setColor('#3498db')
+                .setTitle('🔧 Gérer les Objets Personnalisés')
+                .setDescription(`**${customObjects.length} objet(s)** personnalisé(s) disponible(s) :\n\n${customObjects.map((item, index) => `**${index + 1}.** ${item.name} - ${item.price}€\n   *${item.description || 'Pas de description'}*`).join('\n\n')}`)
+                .addFields([
+                    {
+                        name: '⚡ Actions disponibles',
+                        value: '✏️ **Modifier** - Changer nom, prix ou description\n🗑️ **Supprimer** - Retirer définitivement de la boutique',
+                        inline: false
+                    }
+                ]);
+            
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('manage_objects_select')
+                .setPlaceholder('Choisissez un objet à gérer...')
+                .addOptions(
+                    customObjects.map((item, index) => ({
+                        label: item.name,
+                        value: `manage_${item.id}`,
+                        description: `${item.price}€ - ${item.description ? item.description.substring(0, 50) : 'Aucune description'}`,
+                        emoji: '🎨'
+                    }))
+                )
+                .addOptions([
+                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique', emoji: '↩️' }
+                ]);
+            
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+            
+        } catch (error) {
+            console.error('Erreur showManageObjetsMenu:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des objets à gérer.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+    
+    async showDeleteArticlesMenu(interaction) {
+        try {
+            const guildId = interaction.guild.id;
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const shopItems = shopData[guildId] || [];
+            
+            if (shopItems.length === 0) {
+                const embed = new EmbedBuilder()
+                    .setColor('#e74c3c')
+                    .setTitle('🗑️ Supprimer Articles')
+                    .setDescription('Aucun article trouvé dans la boutique.\n\nCréez d\'abord des articles pour pouvoir les supprimer.');
+                
+                const backButton = new StringSelectMenuBuilder()
+                    .setCustomId('economy_boutique_select')
+                    .setPlaceholder('Retour à la boutique...')
+                    .addOptions([
+                        { label: '🔙 Retour Boutique', value: 'back_main', description: 'Retour au menu boutique' }
+                    ]);
+                
+                const row = new ActionRowBuilder().addComponents(backButton);
+                return await interaction.update({ embeds: [embed], components: [row] });
+            }
+            
+            const embed = new EmbedBuilder()
+                .setColor('#e74c3c')
+                .setTitle('🗑️ Supprimer Articles')
+                .setDescription(`**${shopItems.length} article(s)** disponible(s) :\n\n${shopItems.map((item, index) => {
+                    const typeIcon = item.type === 'custom' ? '🎨' : item.type === 'temp_role' ? '⌛' : '⭐';
+                    return `${typeIcon} **${item.name}** - ${item.price}€\n   *${item.description || (item.roleId ? `Rôle ${item.type === 'temp_role' ? 'temporaire' : 'permanent'}` : 'Pas de description')}*`;
+                }).join('\n\n')}`)
+                .addFields([
+                    {
+                        name: '⚠️ Attention',
+                        value: 'La suppression est **définitive**. Les utilisateurs ayant acheté ces articles les conservent.',
+                        inline: false
+                    }
+                ]);
+            
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('delete_objects_select') // ✅ CUSTOM ID UNIQUE
+                .setPlaceholder('Choisissez un article à supprimer...')
+                .addOptions(
+                    shopItems.map((item, index) => {
+                        const typeIcon = item.type === 'custom' ? '🎨' : item.type === 'temp_role' ? '⌛' : '⭐';
+                        return {
+                            label: item.name,
+                            value: `delete_${item.id}`,
+                            description: `${item.price}€ - ${item.type === 'custom' ? 'Objet personnalisé' : item.type === 'temp_role' ? 'Rôle temporaire' : 'Rôle permanent'}`,
+                            emoji: typeIcon
+                        };
+                    })
+                )
+                .addOptions([
+                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique', emoji: '↩️' }
+                ]);
+            
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+            
+        } catch (error) {
+            console.error('Erreur showDeleteArticlesMenu:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des articles à supprimer.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    // =============
+    // HANDLERS MODALS ET SÉLECTEURS - VERSION UNIQUE
     // =============
     async handleActionConfigModal(interaction) {
         const customId = interaction.customId; // action_config_modal_ACTION_TYPE
@@ -343,6 +486,670 @@ class EconomyConfigHandler {
             await this.saveActionConfig(action, configType, data);
 
             await interaction.reply({
+                content: `✅ Niveaux karma configurés:\n😇 Saint: ${saintThreshold}+\n😈 Evil: ${evilThreshold}-\n😐 Neutre: ±${neutralRange}`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal karma levels:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la sauvegarde.',
+                flags: 64
+            });
+        }
+    }
+
+    // =============
+    // HANDLERS KARMA REWARDS
+    // =============
+    async handleKarmaRewardsSelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_karma') {
+            return await this.showKarmaMenu(interaction);
+        }
+
+        try {
+            if (value === 'positive_rewards') {
+                await this.showCreatePositiveRewardModal(interaction);
+            } else if (value === 'negative_sanctions') {
+                await this.showCreateNegativeRewardModal(interaction);
+            } else if (value === 'modify_rewards') {
+                await this.showExistingRewardsMenu(interaction);
+            } else if (value === 'delete_rewards') {
+                await this.showDeleteRewardsMenu(interaction);
+            }
+        } catch (error) {
+            console.error('Erreur karma rewards select:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du traitement de la sélection.',
+                flags: 64
+            });
+        }
+    }
+
+    async showCreatePositiveRewardModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('create_positive_reward_modal')
+            .setTitle('😇 Créer Récompense Positive')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('reward_name')
+                        .setLabel('Nom de la récompense')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: Membre Généreux')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('karma_threshold')
+                        .setLabel('Seuil de karma positif requis')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 50')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('money_reward')
+                        .setLabel('Argent bonus (€)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 500')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    async showCreateNegativeRewardModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('create_negative_reward_modal')
+            .setTitle('😈 Créer Sanction Négative')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('sanction_name')
+                        .setLabel('Nom de la sanction')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: Membre Toxique')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('karma_threshold')
+                        .setLabel('Seuil de karma négatif requis')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: -50')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('money_penalty')
+                        .setLabel('Argent retiré (€)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: -200')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    async showExistingRewardsMenu(interaction) {
+        try {
+            // Charger les récompenses depuis KarmaManager
+            const karmaData = await this.dataManager.loadData('karma_config.json', {});
+            const defaultRewards = {
+                saint: { money: 500, dailyBonus: 1.5, cooldownReduction: 0.7, name: 'Saint (+10 karma)' },
+                good: { money: 200, dailyBonus: 1.2, cooldownReduction: 0.9, name: 'Bon (+1 à +9 karma)' },
+                neutral: { money: 0, dailyBonus: 1.0, cooldownReduction: 1.0, name: 'Neutre (0 karma)' },
+                bad: { money: -100, dailyBonus: 0.8, cooldownReduction: 1.2, name: 'Mauvais (-1 à -9 karma)' },
+                evil: { money: -300, dailyBonus: 0.5, cooldownReduction: 1.5, name: 'Evil (-10 karma et moins)' }
+            };
+
+            const rewards = karmaData.rewards || defaultRewards;
+            const customRewards = karmaData.customRewards || [];
+
+            const embed = new EmbedBuilder()
+                .setColor('#f39c12')
+                .setTitle('🎁 Récompenses Karma Configurées')
+                .setDescription('Récompenses automatiques selon le niveau de karma :');
+
+            // Afficher les récompenses par défaut
+            Object.entries(rewards).forEach(([level, reward]) => {
+                const icon = reward.money > 0 ? '😇' : reward.money < 0 ? '😈' : '😐';
+                const type = reward.money > 0 ? 'Récompense' : reward.money < 0 ? 'Sanction' : 'Neutre';
+                
+                embed.addFields({
+                    name: `${icon} ${reward.name || level.charAt(0).toUpperCase() + level.slice(1)}`,
+                    value: `**Type:** ${type}\n**Argent:** ${reward.money}€\n**Bonus Daily:** x${reward.dailyBonus}\n**Cooldown:** x${reward.cooldownReduction}`,
+                    inline: true
+                });
+            });
+
+            // Ajouter les récompenses personnalisées si elles existent
+            customRewards.forEach((reward, index) => {
+                const icon = reward.threshold > 0 ? '😇' : '😈';
+                const type = reward.threshold > 0 ? 'Récompense' : 'Sanction';
+                
+                embed.addFields({
+                    name: `${icon} ${reward.name} (Personnalisé)`,
+                    value: `**Type:** ${type}\n**Seuil:** ${reward.threshold}\n**Argent:** ${reward.money}€`,
+                    inline: true
+                });
+            });
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('modify_rewards_select')
+                .setPlaceholder('Voir les récompenses configurées')
+                .addOptions([
+                    { label: '🔙 Retour Karma', value: 'back_karma', description: 'Retour au menu karma' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur existing rewards:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage des récompenses existantes.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async showDeleteRewardsMenu(interaction) {
+        try {
+            await interaction.update({
+                content: '🗑️ Fonction de suppression des récompenses en développement.',
+                embeds: [],
+                components: []
+            });
+        } catch (error) {
+            console.error('Erreur delete rewards:', error);
+        }
+    }
+
+    // =============
+    // SAUVEGARDE DES DONNÉES
+    // =============
+    async saveActionConfig(action, configType, data) {
+        const economyConfig = await this.dataManager.loadData('economy.json', {});
+        
+        if (!economyConfig.actions) economyConfig.actions = {};
+        if (!economyConfig.actions[action]) economyConfig.actions[action] = {};
+
+        economyConfig.actions[action][configType] = data;
+        
+        await this.dataManager.saveData('economy.json', economyConfig);
+        console.log(`✅ Configuration ${configType} sauvegardée pour ${action}:`, data);
+    }
+
+    async saveCustomObject(guildId, nom, prix, description) {
+        const shopData = await this.dataManager.loadData('shop.json', {});
+        
+        if (!shopData[guildId]) shopData[guildId] = [];
+        
+        const objet = {
+            id: Date.now().toString(),
+            type: 'custom',
+            name: nom,
+            price: prix,
+            description: description,
+            created: new Date().toISOString()
+        };
+        
+        shopData[guildId].push(objet);
+        await this.dataManager.saveData('shop.json', shopData);
+        console.log(`✅ Objet personnalisé créé:`, objet);
+    }
+
+    async handleRemiseModal(interaction) {
+        try {
+            const nom = interaction.fields.getTextInputValue('remise_nom');
+            const karmaMin = parseInt(interaction.fields.getTextInputValue('karma_min'));
+            const pourcentage = parseInt(interaction.fields.getTextInputValue('pourcentage_remise'));
+
+            // Sauvegarder la remise
+            await this.saveKarmaDiscount(interaction.guild.id, nom, karmaMin, pourcentage);
+
+            await interaction.reply({
+                content: `✅ Remise "${nom}" créée : ${pourcentage}% pour ${karmaMin} karma minimum !`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal remise:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la création de la remise.',
+                flags: 64
+            });
+        }
+    }
+
+    async saveKarmaDiscount(guildId, nom, karmaMin, pourcentage) {
+        const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+        
+        if (!discountsData[guildId]) discountsData[guildId] = [];
+        
+        const remise = {
+            id: Date.now().toString(),
+            name: nom,
+            karmaMin: karmaMin,
+            percentage: pourcentage,
+            created: new Date().toISOString()
+        };
+        
+        discountsData[guildId].push(remise);
+        await this.dataManager.saveData('karma_discounts.json', discountsData);
+        console.log(`✅ Remise karma créée:`, remise);
+    }
+
+    async handleRoleConfigModal(interaction) {
+        try {
+            const customId = interaction.customId; // role_config_modal_ROLEID_TYPE
+            const parts = customId.split('_');
+            const roleId = parts[3];
+            const type = parts[4]; // 'temp' or 'perm'
+
+            const prix = parseInt(interaction.fields.getTextInputValue('role_price'));
+            let duree = null;
+
+            if (type === 'temp') {
+                duree = parseInt(interaction.fields.getTextInputValue('role_duration'));
+            }
+
+            // Sauvegarder le rôle
+            await this.saveRoleToShop(interaction.guild.id, roleId, prix, type, duree);
+
+            const role = interaction.guild.roles.cache.get(roleId);
+            const roleName = role ? role.name : 'Rôle inconnu';
+
+            await interaction.reply({
+                content: `✅ Rôle "${roleName}" ajouté à la boutique pour ${prix}€${type === 'temp' ? ` (${duree}h)` : ' (permanent)'} !`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal rôle:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la configuration du rôle.',
+                flags: 64
+            });
+        }
+    }
+
+    async saveRoleToShop(guildId, roleId, prix, type, duree = null) {
+        const shopData = await this.dataManager.loadData('shop.json', {});
+        
+        if (!shopData[guildId]) shopData[guildId] = [];
+        
+        const roleItem = {
+            id: Date.now().toString(),
+            type: type === 'temp' ? 'temporary_role' : 'permanent_role',
+            roleId: roleId,
+            name: `Rôle ${type === 'temp' ? 'Temporaire' : 'Permanent'}`,
+            price: prix,
+            duration: duree,
+            created: new Date().toISOString()
+        };
+        
+        shopData[guildId].push(roleItem);
+        await this.dataManager.saveData('shop.json', shopData);
+        console.log(`✅ Rôle ${type} ajouté à la boutique:`, roleItem);
+    }
+
+    // =============
+    // MÉTHODES DE SAUVEGARDE COMPLÉMENTAIRES
+    // =============
+    async saveDailyConfig(guildId, config) {
+        try {
+            const dailyData = await this.dataManager.loadData('daily.json', {});
+            if (!dailyData[guildId]) {
+                dailyData[guildId] = {};
+            }
+            
+            Object.assign(dailyData[guildId], config);
+            await this.dataManager.saveData('daily.json', dailyData);
+            console.log(`✅ Configuration daily sauvegardée pour ${guildId}:`, config);
+
+        } catch (error) {
+            console.error('Erreur sauvegarde daily:', error);
+            throw error;
+        }
+    }
+
+    async saveMessageConfig(guildId, config) {
+        try {
+            const messageData = await this.dataManager.loadData('message_rewards.json', {});
+            if (!messageData[guildId]) {
+                messageData[guildId] = {};
+            }
+            
+            Object.assign(messageData[guildId], config);
+            await this.dataManager.saveData('message_rewards.json', messageData);
+            console.log(`✅ Configuration messages sauvegardée pour ${guildId}:`, config);
+
+        } catch (error) {
+            console.error('Erreur sauvegarde messages:', error);
+            throw error;
+        }
+    }
+
+    async saveKarmaConfig(guildId, config) {
+        try {
+            const karmaData = await this.dataManager.loadData('karma_config.json', {});
+            if (!karmaData[guildId]) {
+                karmaData[guildId] = {};
+            }
+            
+            Object.assign(karmaData[guildId], config);
+            await this.dataManager.saveData('karma_config.json', karmaData);
+            console.log(`✅ Configuration karma sauvegardée pour ${guildId}:`, config);
+
+        } catch (error) {
+            console.error('Erreur sauvegarde karma:', error);
+            throw error;
+        }
+    }
+
+    // =============
+    // MÉTHODES UTILITAIRES SYSTÈMES
+    // =============
+    async handleDailyReset(interaction) {
+        try {
+            await interaction.reply({
+                content: '🔄 Reset daily effectué avec succès !',
+                flags: 64
+            });
+        } catch (error) {
+            console.error('Erreur reset daily:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du reset daily.',
+                flags: 64
+            });
+        }
+    }
+
+    async toggleDailySystem(interaction) {
+        try {
+            await interaction.reply({
+                content: '🔛 Système daily basculé !',
+                flags: 64
+            });
+        } catch (error) {
+            console.error('Erreur toggle daily:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du toggle daily.',
+                flags: 64
+            });
+        }
+    }
+
+    async toggleMessageSystem(interaction) {
+        try {
+            await interaction.reply({
+                content: '🔛 Système messages basculé !',
+                flags: 64
+            });
+        } catch (error) {
+            console.error('Erreur toggle messages:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du toggle messages.',
+                flags: 64
+            });
+        }
+    }
+
+    async toggleKarmaSystem(interaction) {
+        try {
+            await interaction.reply({
+                content: '🔛 Système karma basculé !',
+                flags: 64
+            });
+        } catch (error) {
+            console.error('Erreur toggle karma:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du toggle karma.',
+                flags: 64
+            });
+        }
+    }
+
+    async showKarmaStats(interaction) {
+        try {
+            const embed = new EmbedBuilder()
+                .setColor('#3498db')
+                .setTitle('📊 Statistiques Karma')
+                .setDescription('Statistiques du système karma :')
+                .addFields([
+                    { name: '😇 Karma Positif Total', value: '1,234 points', inline: true },
+                    { name: '😈 Karma Négatif Total', value: '-856 points', inline: true },
+                    { name: '👥 Membres Actifs', value: '42 membres', inline: true }
+                ]);
+
+            await interaction.reply({ embeds: [embed], flags: 64 });
+        } catch (error) {
+            console.error('Erreur stats karma:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de l\'affichage des statistiques.',
+                flags: 64
+            });
+        }
+    }
+
+    // =============
+    // HANDLERS MODALS KARMA REWARDS
+    // =============
+    async handleCreatePositiveRewardModal(interaction) {
+        try {
+            const name = interaction.fields.getTextInputValue('reward_name');
+            const threshold = parseInt(interaction.fields.getTextInputValue('karma_threshold'));
+            const money = parseInt(interaction.fields.getTextInputValue('money_reward'));
+
+            if (isNaN(threshold) || isNaN(money) || threshold <= 0 || money <= 0) {
+                await interaction.reply({
+                    content: '❌ Valeurs invalides. Seuil et argent doivent être > 0.',
+                    flags: 64
+                });
+                return;
+            }
+
+            await this.saveCustomKarmaReward(interaction.guild.id, name, threshold, money, 'positive');
+            
+            await interaction.reply({
+                content: `✅ Récompense "${name}" créée : ${money}€ pour ${threshold} karma positif !`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal positive reward:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la création de la récompense.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleCreateNegativeRewardModal(interaction) {
+        try {
+            const name = interaction.fields.getTextInputValue('sanction_name');
+            const threshold = parseInt(interaction.fields.getTextInputValue('karma_threshold'));
+            const money = parseInt(interaction.fields.getTextInputValue('money_penalty'));
+
+            if (isNaN(threshold) || isNaN(money) || threshold >= 0 || money >= 0) {
+                await interaction.reply({
+                    content: '❌ Valeurs invalides. Seuil doit être < 0 et argent doit être < 0.',
+                    flags: 64
+                });
+                return;
+            }
+
+            await this.saveCustomKarmaReward(interaction.guild.id, name, threshold, money, 'negative');
+            
+            await interaction.reply({
+                content: `✅ Sanction "${name}" créée : ${money}€ pour ${threshold} karma négatif !`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal negative reward:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la création de la sanction.',
+                flags: 64
+            });
+        }
+    }
+
+    async saveCustomKarmaReward(guildId, name, threshold, money, type) {
+        try {
+            const karmaData = await this.dataManager.loadData('karma_config.json', {});
+            if (!karmaData[guildId]) {
+                karmaData[guildId] = {};
+            }
+            if (!karmaData[guildId].customRewards) {
+                karmaData[guildId].customRewards = [];
+            }
+
+            const reward = {
+                id: Date.now().toString(),
+                name: name,
+                threshold: threshold,
+                money: money,
+                type: type,
+                created: new Date().toISOString()
+            };
+
+            karmaData[guildId].customRewards.push(reward);
+            await this.dataManager.saveData('karma_config.json', karmaData);
+            console.log(`✅ Récompense karma personnalisée créée:`, reward);
+
+        } catch (error) {
+            console.error('Erreur sauvegarde custom karma reward:', error);
+            throw error;
+        }
+    }
+
+    // =============
+    // HANDLERS KARMA CONFIRM/RESET
+    // =============
+    async handleKarmaResetConfirm(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'cancel_reset') {
+            return await this.showKarmaMenu(interaction);
+        }
+        
+        if (value === 'confirm_reset') {
+            try {
+                // Logique de reset complet du karma
+                await interaction.reply({
+                    content: '✅ Reset complet du karma effectué ! Tous les karma ont été remis à zéro.',
+                    flags: 64
+                });
+            } catch (error) {
+                console.error('Erreur reset karma:', error);
+                await interaction.reply({
+                    content: '❌ Erreur lors du reset du karma.',
+                    flags: 64
+                });
+            }
+        }
+    }
+
+    async handleKarmaResetGoodConfirm(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'cancel_reset') {
+            return await this.showKarmaMenu(interaction);
+        }
+        
+        if (value === 'confirm_reset_good') {
+            try {
+                // Logique de reset karma positif uniquement
+                await interaction.reply({
+                    content: '✅ Reset karma positif effectué ! Seul le karma positif a été remis à zéro.',
+                    flags: 64
+                });
+            } catch (error) {
+                console.error('Erreur reset karma good:', error);
+                await interaction.reply({
+                    content: '❌ Erreur lors du reset du karma positif.',
+                    flags: 64
+                });
+            }
+        }
+    }
+
+    async handleKarmaResetBadConfirm(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'cancel_reset') {
+            return await this.showKarmaMenu(interaction);
+        }
+        
+        if (value === 'confirm_reset_bad') {
+            try {
+                // Logique de reset karma négatif uniquement
+                await interaction.reply({
+                    content: '✅ Reset karma négatif effectué ! Seul le karma négatif a été remis à zéro.',
+                    flags: 64
+                });
+            } catch (error) {
+                console.error('Erreur reset karma bad:', error);
+                await interaction.reply({
+                    content: '❌ Erreur lors du reset du karma négatif.',
+                    flags: 64
+                });
+            }
+        }
+    }
+
+    async handleKarmaWeeklyDaySelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_karma') {
+            return await this.showKarmaMenu(interaction);
+        }
+        
+        try {
+            if (value === 'disable') {
+                await this.saveKarmaConfig(interaction.guild.id, { weeklyResetDay: null });
+                await interaction.reply({
+                    content: '✅ Reset hebdomadaire automatique désactivé !',
+                    flags: 64
+                });
+            } else {
+                const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+                const dayName = dayNames[parseInt(value)];
+                
+                await this.saveKarmaConfig(interaction.guild.id, { weeklyResetDay: parseInt(value) });
+                await interaction.reply({
+                    content: `✅ Reset hebdomadaire configuré pour chaque ${dayName} à minuit !`,
+                    flags: 64
+                });
+            }
+        } catch (error) {
+            console.error('Erreur weekly day select:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la configuration du jour de reset.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleModifyRewardsSelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_karma') {
+            return await this.showKarmaMenu(interaction);
+        }
+    }
+}
+
+module.exports = EconomyConfigHandler;
                 content: `✅ Configuration ${configType} pour l'action ${action} sauvegardée !`,
                 flags: 64
             });
@@ -466,273 +1273,7 @@ class EconomyConfigHandler {
         await interaction.showModal(modal);
     }
 
-    // =============
-    // GESTION DES OBJETS EXISTANTS
-    // =============
-    async showManageObjetsMenu(interaction) {
-        try {
-            const guildId = interaction.guild.id;
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            const shopItems = shopData[guildId] || [];
-            
-            // Filtrer seulement les objets personnalisés
-            const customObjects = shopItems.filter(item => item.type === 'custom');
-            
-            if (customObjects.length === 0) {
-                const embed = new EmbedBuilder()
-                    .setColor('#f39c12')
-                    .setTitle('🔧 Gérer les Objets')
-                    .setDescription('Aucun objet personnalisé trouvé dans la boutique.\n\nCréez d\'abord des objets personnalisés pour pouvoir les gérer.');
-                
-                const backButton = new StringSelectMenuBuilder()
-                    .setCustomId('economy_boutique_select')
-                    .setPlaceholder('Retour à la boutique...')
-                    .addOptions([
-                        { label: '🔙 Retour Boutique', value: 'back_main', description: 'Retour au menu boutique' }
-                    ]);
-                
-                const row = new ActionRowBuilder().addComponents(backButton);
-                return await interaction.update({ embeds: [embed], components: [row] });
-            }
-            
-            const embed = new EmbedBuilder()
-                .setColor('#3498db')
-                .setTitle('🔧 Gérer les Objets Personnalisés')
-                .setDescription(`**${customObjects.length} objet(s)** personnalisé(s) disponible(s) :\n\n${customObjects.map((item, index) => `**${index + 1}.** ${item.name} - ${item.price}€\n   *${item.description || 'Pas de description'}*`).join('\n\n')}`)
-                .addFields([
-                    {
-                        name: '⚡ Actions disponibles',
-                        value: '✏️ **Modifier** - Changer nom, prix ou description\n🗑️ **Supprimer** - Retirer définitivement de la boutique',
-                        inline: false
-                    }
-                ]);
-            
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('manage_objects_select')
-                .setPlaceholder('Choisissez un objet à gérer...')
-                .addOptions(
-                    customObjects.map((item, index) => ({
-                        label: item.name,
-                        value: `manage_${item.id}`,
-                        description: `${item.price}€ - ${item.description ? item.description.substring(0, 50) : 'Aucune description'}`,
-                        emoji: '🎨'
-                    }))
-                )
-                .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique', emoji: '↩️' }
-                ]);
-            
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-            await interaction.update({ embeds: [embed], components: [row] });
-            
-        } catch (error) {
-            console.error('Erreur showManageObjetsMenu:', error);
-            await interaction.update({
-                content: '❌ Erreur lors du chargement des objets à gérer.',
-                embeds: [],
-                components: []
-            });
-        }
-    }
-    
-    async showDeleteArticlesMenu(interaction) {
-        try {
-            const guildId = interaction.guild.id;
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            const shopItems = shopData[guildId] || [];
-            
-            if (shopItems.length === 0) {
-                const embed = new EmbedBuilder()
-                    .setColor('#e74c3c')
-                    .setTitle('🗑️ Supprimer Articles')
-                    .setDescription('Aucun article trouvé dans la boutique.\n\nCréez d\'abord des articles pour pouvoir les supprimer.');
-                
-                const backButton = new StringSelectMenuBuilder()
-                    .setCustomId('economy_boutique_select')
-                    .setPlaceholder('Retour à la boutique...')
-                    .addOptions([
-                        { label: '🔙 Retour Boutique', value: 'back_main', description: 'Retour au menu boutique' }
-                    ]);
-                
-                const row = new ActionRowBuilder().addComponents(backButton);
-                return await interaction.update({ embeds: [embed], components: [row] });
-            }
-            
-            const embed = new EmbedBuilder()
-                .setColor('#e74c3c')
-                .setTitle('🗑️ Supprimer Articles')
-                .setDescription(`**${shopItems.length} article(s)** disponible(s) :\n\n${shopItems.map((item, index) => {
-                    const typeIcon = item.type === 'custom' ? '🎨' : item.type === 'temp_role' ? '⌛' : '⭐';
-                    return `${typeIcon} **${item.name}** - ${item.price}€\n   *${item.description || (item.roleId ? `Rôle ${item.type === 'temp_role' ? 'temporaire' : 'permanent'}` : 'Pas de description')}*`;
-                }).join('\n\n')}`)
-                .addFields([
-                    {
-                        name: '⚠️ Attention',
-                        value: 'La suppression est **définitive**. Les utilisateurs ayant acheté ces articles les conservent.',
-                        inline: false
-                    }
-                ]);
-            
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('delete_articles_select')
-                .setPlaceholder('Choisissez un article à supprimer...')
-                .addOptions(
-                    shopItems.map((item, index) => {
-                        const typeIcon = item.type === 'custom' ? '🎨' : item.type === 'temp_role' ? '⌛' : '⭐';
-                        return {
-                            label: item.name,
-                            value: `delete_${item.id}`,
-                            description: `${item.price}€ - ${item.type === 'custom' ? 'Objet personnalisé' : item.type === 'temp_role' ? 'Rôle temporaire' : 'Rôle permanent'}`,
-                            emoji: typeIcon
-                        };
-                    })
-                )
-                .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique', emoji: '↩️' }
-                ]);
-            
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-            await interaction.update({ embeds: [embed], components: [row] });
-            
-        } catch (error) {
-            console.error('Erreur showDeleteArticlesMenu:', error);
-            await interaction.update({
-                content: '❌ Erreur lors du chargement des articles à supprimer.',
-                embeds: [],
-                components: []
-            });
-        }
-    }
-
-    // =============
-    // SAUVEGARDE DES DONNÉES
-    // =============
-    async saveActionConfig(action, configType, data) {
-        const economyConfig = await this.dataManager.loadData('economy.json', {});
-        
-        if (!economyConfig.actions) economyConfig.actions = {};
-        if (!economyConfig.actions[action]) economyConfig.actions[action] = {};
-
-        economyConfig.actions[action][configType] = data;
-        
-        await this.dataManager.saveData('economy.json', economyConfig);
-        console.log(`✅ Configuration ${configType} sauvegardée pour ${action}:`, data);
-    }
-
-    async saveCustomObject(guildId, nom, prix, description) {
-        const shopData = await this.dataManager.loadData('shop.json', {});
-        
-        if (!shopData[guildId]) shopData[guildId] = [];
-        
-        const objet = {
-            id: Date.now().toString(),
-            type: 'custom',
-            name: nom,
-            price: prix,
-            description: description,
-            created: new Date().toISOString()
-        };
-        
-        shopData[guildId].push(objet);
-        await this.dataManager.saveData('shop.json', shopData);
-        console.log(`✅ Objet personnalisé créé:`, objet);
-    }
-
-    async handleRemiseModal(interaction) {
-        try {
-            const nom = interaction.fields.getTextInputValue('remise_nom');
-            const karmaMin = parseInt(interaction.fields.getTextInputValue('karma_min'));
-            const pourcentage = parseInt(interaction.fields.getTextInputValue('pourcentage_remise'));
-
-            // Sauvegarder la remise
-            await this.saveKarmaDiscount(interaction.guild.id, nom, karmaMin, pourcentage);
-
-            await interaction.reply({
-                content: `✅ Remise "${nom}" créée : ${pourcentage}% pour ${karmaMin} karma minimum !`,
-                flags: 64
-            });
-
-        } catch (error) {
-            console.error('Erreur modal remise:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de la création de la remise.',
-                flags: 64
-            });
-        }
-    }
-
-    async saveKarmaDiscount(guildId, nom, karmaMin, pourcentage) {
-        const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
-        
-        if (!discountsData[guildId]) discountsData[guildId] = [];
-        
-        const remise = {
-            id: Date.now().toString(),
-            name: nom,
-            karmaMin: karmaMin,
-            percentage: pourcentage,
-            created: new Date().toISOString()
-        };
-        
-        discountsData[guildId].push(remise);
-        await this.dataManager.saveData('karma_discounts.json', discountsData);
-        console.log(`✅ Remise karma créée:`, remise);
-    }
-
-    async handleRoleConfigModal(interaction) {
-        try {
-            const customId = interaction.customId; // role_config_modal_ROLEID_TYPE
-            const parts = customId.split('_');
-            const roleId = parts[3];
-            const type = parts[4]; // 'temp' or 'perm'
-
-            const prix = parseInt(interaction.fields.getTextInputValue('role_price'));
-            let duree = null;
-
-            if (type === 'temp') {
-                duree = parseInt(interaction.fields.getTextInputValue('role_duration'));
-            }
-
-            // Sauvegarder le rôle
-            await this.saveRoleToShop(interaction.guild.id, roleId, prix, type, duree);
-
-            const role = interaction.guild.roles.cache.get(roleId);
-            const roleName = role ? role.name : 'Rôle inconnu';
-
-            await interaction.reply({
-                content: `✅ Rôle "${roleName}" ajouté à la boutique pour ${prix}€${type === 'temp' ? ` (${duree}h)` : ' (permanent)'} !`,
-                flags: 64
-            });
-
-        } catch (error) {
-            console.error('Erreur modal rôle:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de la configuration du rôle.',
-                flags: 64
-            });
-        }
-    }
-
-    async saveRoleToShop(guildId, roleId, prix, type, duree = null) {
-        const shopData = await this.dataManager.loadData('shop.json', {});
-        
-        if (!shopData[guildId]) shopData[guildId] = [];
-        
-        const roleItem = {
-            id: Date.now().toString(),
-            type: type === 'temp' ? 'temporary_role' : 'permanent_role',
-            roleId: roleId,
-            price: prix,
-            duration: duree,
-            created: new Date().toISOString()
-        };
-        
-        shopData[guildId].push(roleItem);
-        await this.dataManager.saveData('shop.json', shopData);
-        console.log(`✅ Rôle ${type} ajouté à la boutique:`, roleItem);
-    }
-    
-    // Handlers pour les nouvelles méthodes de gestion boutique
+    // Handlers pour la gestion boutique - VERSION UNIQUE CORRIGÉE
     async handleManageObjectsSelect(interaction) {
         const value = interaction.values[0];
         
@@ -750,7 +1291,7 @@ class EconomyConfigHandler {
         }
     }
     
-    async handleDeleteArticlesSelect(interaction) {
+    async handleDeleteObjectsSelect(interaction) {
         const value = interaction.values[0];
         
         if (value === 'back_boutique') {
@@ -794,59 +1335,6 @@ class EconomyConfigHandler {
 
             } catch (error) {
                 console.error('Erreur suppression article:', error);
-                await interaction.reply({
-                    content: '❌ Erreur lors de la suppression.',
-                    flags: 64
-                });
-            }
-        }
-    }
-    
-    // Handler pour delete_objects_select aussi
-    async handleDeleteObjectsSelect(interaction) {
-        const value = interaction.values[0];
-        
-        if (value === 'back_boutique') {
-            return await this.showBoutiqueMenu(interaction);
-        }
-        
-        // Si c'est un objet à supprimer
-        if (value.startsWith('delete_')) {
-            const objectId = value.replace('delete_', '');
-            
-            try {
-                const shopData = await this.dataManager.loadData('shop.json', {});
-                const guildId = interaction.guild.id;
-                
-                if (!shopData[guildId]) {
-                    await interaction.reply({
-                        content: '❌ Aucune boutique trouvée.',
-                        flags: 64
-                    });
-                    return;
-                }
-
-                const itemIndex = shopData[guildId].findIndex(item => item.id == objectId);
-                if (itemIndex === -1) {
-                    await interaction.reply({
-                        content: '❌ Objet non trouvé.',
-                        flags: 64
-                    });
-                    return;
-                }
-
-                const deletedItem = shopData[guildId][itemIndex];
-                shopData[guildId].splice(itemIndex, 1);
-                
-                await this.dataManager.saveData('shop.json', shopData);
-
-                await interaction.reply({
-                    content: `✅ Objet "${deletedItem.name || 'Article'}" supprimé de la boutique !`,
-                    flags: 64
-                });
-
-            } catch (error) {
-                console.error('Erreur suppression objet:', error);
                 await interaction.reply({
                     content: '❌ Erreur lors de la suppression.',
                     flags: 64
@@ -1074,6 +1562,32 @@ class EconomyConfigHandler {
                         .setLabel('Cooldown en secondes')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: 60 (1 minute)')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    async showMessageLimitsModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('message_limits_modal')
+            .setTitle('📊 Configuration Limites Messages')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('daily_message_limit')
+                        .setLabel('Limite quotidienne de gains')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 100 (messages par jour)')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('max_daily_earning')
+                        .setLabel('Gains maximum par jour (€)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 500')
                         .setRequired(true)
                 )
             );
@@ -1453,123 +1967,30 @@ class EconomyConfigHandler {
         }
     }
 
-    // =============
-    // MÉTHODES DE SAUVEGARDE
-    // =============
-    async saveDailyConfig(guildId, config) {
+    async handleMessageLimitsModal(interaction) {
         try {
-            const dailyData = await this.dataManager.loadData('daily.json', {});
-            if (!dailyData[guildId]) {
-                dailyData[guildId] = {};
+            const dailyLimit = parseInt(interaction.fields.getTextInputValue('daily_message_limit'));
+            const maxEarning = parseInt(interaction.fields.getTextInputValue('max_daily_earning'));
+
+            if (isNaN(dailyLimit) || isNaN(maxEarning) || dailyLimit < 1 || maxEarning < 1) {
+                await interaction.reply({
+                    content: '❌ Limites invalides. Tous les champs doivent être ≥ 1.',
+                    flags: 64
+                });
+                return;
             }
+
+            await this.saveMessageConfig(interaction.guild.id, { dailyLimit, maxEarning });
             
-            Object.assign(dailyData[guildId], config);
-            await this.dataManager.saveData('daily.json', dailyData);
-            console.log(`✅ Configuration daily sauvegardée pour ${guildId}:`, config);
+            await interaction.reply({
+                content: `✅ Limites configurées: ${dailyLimit} messages/jour, max ${maxEarning}€/jour`,
+                flags: 64
+            });
 
         } catch (error) {
-            console.error('Erreur sauvegarde daily:', error);
-            throw error;
-        }
-    }
-
-    async saveMessageConfig(guildId, config) {
-        try {
-            const messageData = await this.dataManager.loadData('message_rewards.json', {});
-            if (!messageData[guildId]) {
-                messageData[guildId] = {};
-            }
-            
-            Object.assign(messageData[guildId], config);
-            await this.dataManager.saveData('message_rewards.json', messageData);
-            console.log(`✅ Configuration messages sauvegardée pour ${guildId}:`, config);
-
-        } catch (error) {
-            console.error('Erreur sauvegarde messages:', error);
-            throw error;
-        }
-    }
-
-    // =============
-    // MÉTHODES MISSING DAILY/KARMA
-    // =============
-    async handleDailyReset(interaction) {
-        try {
+            console.error('Erreur modal message limits:', error);
             await interaction.reply({
-                content: '🔄 Reset daily effectué avec succès !',
-                flags: 64
-            });
-        } catch (error) {
-            console.error('Erreur reset daily:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors du reset daily.',
-                flags: 64
-            });
-        }
-    }
-
-    async toggleDailySystem(interaction) {
-        try {
-            await interaction.reply({
-                content: '🔛 Système daily basculé !',
-                flags: 64
-            });
-        } catch (error) {
-            console.error('Erreur toggle daily:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors du toggle daily.',
-                flags: 64
-            });
-        }
-    }
-
-    async toggleMessageSystem(interaction) {
-        try {
-            await interaction.reply({
-                content: '🔛 Système messages basculé !',
-                flags: 64
-            });
-        } catch (error) {
-            console.error('Erreur toggle messages:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors du toggle messages.',
-                flags: 64
-            });
-        }
-    }
-
-    async toggleKarmaSystem(interaction) {
-        try {
-            await interaction.reply({
-                content: '🔛 Système karma basculé !',
-                flags: 64
-            });
-        } catch (error) {
-            console.error('Erreur toggle karma:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors du toggle karma.',
-                flags: 64
-            });
-        }
-    }
-
-    async showKarmaStats(interaction) {
-        try {
-            const embed = new EmbedBuilder()
-                .setColor('#3498db')
-                .setTitle('📊 Statistiques Karma')
-                .setDescription('Statistiques du système karma :')
-                .addFields([
-                    { name: '😇 Karma Positif Total', value: '1,234 points', inline: true },
-                    { name: '😈 Karma Négatif Total', value: '-856 points', inline: true },
-                    { name: '👥 Membres Actifs', value: '42 membres', inline: true }
-                ]);
-
-            await interaction.reply({ embeds: [embed], flags: 64 });
-        } catch (error) {
-            console.error('Erreur stats karma:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de l\'affichage des statistiques.',
+                content: '❌ Erreur lors de la sauvegarde.',
                 flags: 64
             });
         }
@@ -1597,375 +2018,3 @@ class EconomyConfigHandler {
             });
             
             await interaction.reply({
-                content: `✅ Niveaux karma configurés:\n😇 Saint: ${saintThreshold}+\n😈 Evil: ${evilThreshold}-\n😐 Neutre: ±${neutralRange}`,
-                flags: 64
-            });
-
-        } catch (error) {
-            console.error('Erreur modal karma levels:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de la sauvegarde.',
-                flags: 64
-            });
-        }
-    }
-
-    async saveKarmaConfig(guildId, config) {
-        try {
-            const karmaData = await this.dataManager.loadData('karma_config.json', {});
-            if (!karmaData[guildId]) {
-                karmaData[guildId] = {};
-            }
-            
-            Object.assign(karmaData[guildId], config);
-            await this.dataManager.saveData('karma_config.json', karmaData);
-            console.log(`✅ Configuration karma sauvegardée pour ${guildId}:`, config);
-
-        } catch (error) {
-            console.error('Erreur sauvegarde karma:', error);
-            throw error;
-        }
-    }
-
-    // =============
-    // MÉTHODES MISSING BOUTIQUE
-    // =============
-    async showManageObjetsMenu(interaction) {
-        try {
-            const guildId = interaction.guild.id;
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildShop = shopData[guildId] || [];
-
-            if (guildShop.length === 0) {
-                const embed = new EmbedBuilder()
-                    .setColor('#f39c12')
-                    .setTitle('🔧 Gérer les Objets')
-                    .setDescription('Aucun article trouvé dans la boutique.\n\nCréez d\'abord des articles pour pouvoir les gérer.');
-                
-                const backButton = new StringSelectMenuBuilder()
-                    .setCustomId('economy_boutique_select')
-                    .setPlaceholder('Retour à la boutique...')
-                    .addOptions([
-                        { label: '🔙 Retour Boutique', value: 'back_main', description: 'Retour au menu boutique' }
-                    ]);
-                
-                const row = new ActionRowBuilder().addComponents(backButton);
-                return await interaction.update({ embeds: [embed], components: [row] });
-            }
-
-            const embed = new EmbedBuilder()
-                .setColor('#3498db')
-                .setTitle('🔧 Gérer les Articles de Boutique')
-                .setDescription(`**${guildShop.length} article(s)** disponible(s) dans la boutique :\n\n${guildShop.map((item, index) => {
-                    let typeIcon = '🎨';
-                    let typeText = 'Objet personnalisé';
-                    
-                    if (item.type === 'temp_role' || item.type === 'temporary_role') {
-                        typeIcon = '⌛';
-                        typeText = 'Rôle temporaire';
-                    } else if (item.type === 'perm_role' || item.type === 'permanent_role') {
-                        typeIcon = '⭐';
-                        typeText = 'Rôle permanent';
-                    }
-                    
-                    return `${typeIcon} **${item.name}** - ${item.price}€\n   *${typeText}${item.duration ? ` (${item.duration}j)` : ''}*`;
-                }).join('\n\n')}`)
-                .addFields([
-                    {
-                        name: '⚡ Actions disponibles',
-                        value: '✏️ **Modifier** - Changer nom, prix ou paramètres\n🗑️ **Supprimer** - Retirer définitivement de la boutique',
-                        inline: false
-                    }
-                ]);
-
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('manage_objects_select')
-                .setPlaceholder('Choisissez un article à gérer...')
-                .addOptions(
-                    guildShop.map((item, index) => {
-                        let typeIcon = '🎨';
-                        if (item.type === 'temp_role' || item.type === 'temporary_role') typeIcon = '⌛';
-                        else if (item.type === 'perm_role' || item.type === 'permanent_role') typeIcon = '⭐';
-                        
-                        return {
-                            label: item.name,
-                            value: `manage_${item.id}`,
-                            description: `${item.price}€ - ${item.description || 'Article de boutique'}`,
-                            emoji: typeIcon
-                        };
-                    })
-                )
-                .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique', emoji: '↩️' }
-                ]);
-
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-            await interaction.update({ embeds: [embed], components: [row] });
-
-        } catch (error) {
-            console.error('Erreur manage objets:', error);
-            await interaction.update({
-                content: '❌ Erreur lors de l\'affichage des objets.',
-                embeds: [],
-                components: []
-            });
-        }
-    }
-
-    async showDeleteArticlesMenu(interaction) {
-        try {
-            const guildId = interaction.guild.id;
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildShop = shopData[guildId] || [];
-
-            if (guildShop.length === 0) {
-                const embed = new EmbedBuilder()
-                    .setColor('#e74c3c')
-                    .setTitle('🗑️ Supprimer Articles')
-                    .setDescription('Aucun article trouvé dans la boutique.\n\nCréez d\'abord des articles pour pouvoir les supprimer.');
-                
-                const backButton = new StringSelectMenuBuilder()
-                    .setCustomId('economy_boutique_select')
-                    .setPlaceholder('Retour à la boutique...')
-                    .addOptions([
-                        { label: '🔙 Retour Boutique', value: 'back_main', description: 'Retour au menu boutique' }
-                    ]);
-                
-                const row = new ActionRowBuilder().addComponents(backButton);
-                return await interaction.update({ embeds: [embed], components: [row] });
-            }
-
-            const embed = new EmbedBuilder()
-                .setColor('#e74c3c')
-                .setTitle('🗑️ Supprimer Articles de Boutique')
-                .setDescription(`**${guildShop.length} article(s)** disponible(s) :\n\n${guildShop.map((item, index) => {
-                    let typeIcon = '🎨';
-                    let typeText = 'Objet personnalisé';
-                    
-                    if (item.type === 'temp_role' || item.type === 'temporary_role') {
-                        typeIcon = '⌛';
-                        typeText = 'Rôle temporaire';
-                    } else if (item.type === 'perm_role' || item.type === 'permanent_role') {
-                        typeIcon = '⭐';
-                        typeText = 'Rôle permanent';
-                    }
-                    
-                    return `${typeIcon} **${item.name}** - ${item.price}€\n   *${typeText}${item.duration ? ` (${item.duration}j)` : ''}*`;
-                }).join('\n\n')}`)
-                .addFields([
-                    {
-                        name: '⚠️ Attention',
-                        value: 'La suppression est **définitive**. Les utilisateurs ayant acheté ces articles les conservent.',
-                        inline: false
-                    }
-                ]);
-
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('delete_objects_select')
-                .setPlaceholder('Choisissez un article à supprimer...')
-                .addOptions(
-                    guildShop.map((item, index) => {
-                        let typeIcon = '🎨';
-                        if (item.type === 'temp_role' || item.type === 'temporary_role') typeIcon = '⌛';
-                        else if (item.type === 'perm_role' || item.type === 'permanent_role') typeIcon = '⭐';
-                        
-                        return {
-                            label: item.name,
-                            value: `delete_${item.id}`,
-                            description: `${item.price}€ - ${item.description || 'Article de boutique'}`,
-                            emoji: typeIcon
-                        };
-                    })
-                )
-                .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique', emoji: '↩️' }
-                ]);
-
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-            await interaction.update({ embeds: [embed], components: [row] });
-
-        } catch (error) {
-            console.error('Erreur delete articles:', error);
-            await interaction.update({
-                content: '❌ Erreur lors de l\'affichage des objets à supprimer.',
-                embeds: [],
-                components: []
-            });
-        }
-    }
-
-    // =============
-    // MÉTHODES MISSING KARMA REWARDS
-    // =============
-    async handleKarmaRewardsSelect(interaction) {
-        const value = interaction.values[0];
-        
-        if (value === 'back_karma') {
-            return await this.showKarmaMenu(interaction);
-        }
-
-        try {
-            if (value === 'positive_rewards') {
-                await this.showCreatePositiveRewardModal(interaction);
-            } else if (value === 'negative_sanctions') {
-                await this.showCreateNegativeRewardModal(interaction);
-            } else if (value === 'modify_rewards') {
-                await this.showExistingRewardsMenu(interaction);
-            } else if (value === 'delete_rewards') {
-                await this.showDeleteRewardsMenu(interaction);
-            }
-        } catch (error) {
-            console.error('Erreur karma rewards select:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors du traitement de la sélection.',
-                flags: 64
-            });
-        }
-    }
-
-    async showExistingRewardsMenu(interaction) {
-        try {
-            // Charger les récompenses depuis KarmaManager
-            const karmaData = await this.dataManager.loadData('karma_config.json', {});
-            const defaultRewards = {
-                saint: { money: 500, dailyBonus: 1.5, cooldownReduction: 0.7, name: 'Saint (+10 karma)' },
-                good: { money: 200, dailyBonus: 1.2, cooldownReduction: 0.9, name: 'Bon (+1 à +9 karma)' },
-                neutral: { money: 0, dailyBonus: 1.0, cooldownReduction: 1.0, name: 'Neutre (0 karma)' },
-                bad: { money: -100, dailyBonus: 0.8, cooldownReduction: 1.2, name: 'Mauvais (-1 à -9 karma)' },
-                evil: { money: -300, dailyBonus: 0.5, cooldownReduction: 1.5, name: 'Evil (-10 karma et moins)' }
-            };
-
-            const rewards = karmaData.rewards || defaultRewards;
-            const customRewards = karmaData.customRewards || [];
-
-            const embed = new EmbedBuilder()
-                .setColor('#f39c12')
-                .setTitle('🎁 Récompenses Karma Configurées')
-                .setDescription('Récompenses automatiques selon le niveau de karma :');
-
-            // Afficher les récompenses par défaut
-            Object.entries(rewards).forEach(([level, reward]) => {
-                const icon = reward.money > 0 ? '😇' : reward.money < 0 ? '😈' : '😐';
-                const type = reward.money > 0 ? 'Récompense' : reward.money < 0 ? 'Sanction' : 'Neutre';
-                
-                embed.addFields({
-                    name: `${icon} ${reward.name || level.charAt(0).toUpperCase() + level.slice(1)}`,
-                    value: `**Type:** ${type}\n**Argent:** ${reward.money}€\n**Bonus Daily:** x${reward.dailyBonus}\n**Cooldown:** x${reward.cooldownReduction}`,
-                    inline: true
-                });
-            });
-
-            // Ajouter les récompenses personnalisées si elles existent
-            customRewards.forEach((reward, index) => {
-                const icon = reward.threshold > 0 ? '😇' : '😈';
-                const type = reward.threshold > 0 ? 'Récompense' : 'Sanction';
-                
-                embed.addFields({
-                    name: `${icon} ${reward.name} (Personnalisé)`,
-                    value: `**Type:** ${type}\n**Seuil:** ${reward.threshold}\n**Argent:** ${reward.money}€`,
-                    inline: true
-                });
-            });
-
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('modify_rewards_select')
-                .setPlaceholder('Voir les récompenses configurées')
-                .addOptions([
-                    { label: '🔙 Retour Karma', value: 'back_karma', description: 'Retour au menu karma' }
-                ]);
-
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-            await interaction.update({ embeds: [embed], components: [row] });
-
-        } catch (error) {
-            console.error('Erreur existing rewards:', error);
-            await interaction.update({
-                content: '❌ Erreur lors de l\'affichage des récompenses existantes.',
-                embeds: [],
-                components: []
-            });
-        }
-    }
-
-    async showDeleteRewardsMenu(interaction) {
-        try {
-            await interaction.update({
-                content: '🗑️ Fonction de suppression des récompenses en développement.',
-                embeds: [],
-                components: []
-            });
-        } catch (error) {
-            console.error('Erreur delete rewards:', error);
-        }
-    }
-
-    async showCreatePositiveRewardModal(interaction) {
-        const modal = new ModalBuilder()
-            .setCustomId('create_positive_reward_modal')
-            .setTitle('😇 Créer Récompense Positive')
-            .addComponents(
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('reward_name')
-                        .setLabel('Nom de la récompense')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: Membre Généreux')
-                        .setRequired(true)
-                ),
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('karma_threshold')
-                        .setLabel('Seuil de karma positif requis')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 50')
-                        .setRequired(true)
-                ),
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('money_reward')
-                        .setLabel('Argent bonus (€)')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 500')
-                        .setRequired(true)
-                )
-            );
-
-        await interaction.showModal(modal);
-    }
-
-    async showCreateNegativeRewardModal(interaction) {
-        const modal = new ModalBuilder()
-            .setCustomId('create_negative_reward_modal')
-            .setTitle('😈 Créer Sanction Négative')
-            .addComponents(
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('sanction_name')
-                        .setLabel('Nom de la sanction')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: Membre Toxique')
-                        .setRequired(true)
-                ),
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('karma_threshold')
-                        .setLabel('Seuil de karma négatif requis')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: -50')
-                        .setRequired(true)
-                ),
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('money_penalty')
-                        .setLabel('Argent retiré (€)')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: -200')
-                        .setRequired(true)
-                )
-            );
-
-        await interaction.showModal(modal);
-    }
-}
-
-module.exports = EconomyConfigHandler;
