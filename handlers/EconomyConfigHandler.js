@@ -1146,8 +1146,6 @@ class EconomyConfigHandler {
         if (value === 'back_karma') {
             return await this.showKarmaMenu(interaction);
         }
-    }
-}
 
 module.exports = EconomyConfigHandler;
                 content: `✅ Configuration ${configType} pour l'action ${action} sauvegardée !`,
@@ -1155,13 +1153,12 @@ module.exports = EconomyConfigHandler;
             });
 
         } catch (error) {
-            console.error('Erreur modal action:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de la sauvegarde de la configuration.',
-                flags: 64
-            });
-        }
-    }
+    console.error('Erreur modal action:', error);
+    await interaction.reply({
+        content: '❌ Erreur lors de la sauvegarde de la configuration.',
+        flags: 64
+    });
+}
 
     async handleObjetPersoModal(interaction) {
         try {
