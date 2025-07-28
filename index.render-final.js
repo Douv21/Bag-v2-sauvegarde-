@@ -1602,17 +1602,34 @@ class RenderSolutionBot {
 
                 // Ce routage est géré plus haut dans le code - supprimé pour éviter la duplication
 
-                // Ajouter handlers pour nouvelles fonctionnalités boutique
-                if (customId === 'objets_existants_select') {
-                    console.log('🎯 Sélection objet à modifier');
+                // Handlers pour nouvelles méthodes de gestion boutique
+                if (customId === 'manage_objects_select') {
+                    console.log('🎯 Gestion objets boutique');
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
                     const economyHandler = new EconomyConfigHandler(dataManager);
-                    await economyHandler.handleObjetModification(interaction);
+                    await economyHandler.handleManageObjectsSelect(interaction);
                     return;
                 }
 
                 if (customId === 'delete_articles_select') {
-                    console.log('🎯 Sélection article à supprimer');
+                    console.log('🎯 Suppression articles boutique');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleDeleteArticlesSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'delete_objects_select') {
+                    console.log('🎯 Suppression objets boutique');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleDeleteObjectsSelect(interaction);
+                    return;
+                }
+
+                // Handlers pour rôles boutique  
+                if (customId === 'role_temp_select' || customId === 'role_perm_select') {
+                    console.log('🎯 Sélection rôle boutique:', customId);
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
                     const economyHandler = new EconomyConfigHandler(dataManager);
                     await economyHandler.handleArticleDelete(interaction);
