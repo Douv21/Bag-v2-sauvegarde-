@@ -467,6 +467,144 @@ class EconomyConfigHandler {
     }
 
     // =============
+    // GESTION DES OBJETS EXISTANTS
+    // =============
+    async showManageObjetsMenu(interaction) {
+        try {
+            const guildId = interaction.guild.id;
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const shopItems = shopData[guildId] || [];
+            
+            // Filtrer seulement les objets personnalisés
+            const customObjects = shopItems.filter(item => item.type === 'custom');
+            
+            if (customObjects.length === 0) {
+                const embed = new EmbedBuilder()
+                    .setColor('#f39c12')
+                    .setTitle('🔧 Gérer les Objets')
+                    .setDescription('Aucun objet personnalisé trouvé dans la boutique.\n\nCréez d\'abord des objets personnalisés pour pouvoir les gérer.');
+                
+                const backButton = new StringSelectMenuBuilder()
+                    .setCustomId('economy_boutique_select')
+                    .setPlaceholder('Retour à la boutique...')
+                    .addOptions([
+                        { label: '🔙 Retour Boutique', value: 'back_main', description: 'Retour au menu boutique' }
+                    ]);
+                
+                const row = new ActionRowBuilder().addComponents(backButton);
+                return await interaction.update({ embeds: [embed], components: [row] });
+            }
+            
+            const embed = new EmbedBuilder()
+                .setColor('#3498db')
+                .setTitle('🔧 Gérer les Objets Personnalisés')
+                .setDescription(`**${customObjects.length} objet(s)** personnalisé(s) disponible(s) :\n\n${customObjects.map((item, index) => `**${index + 1}.** ${item.name} - ${item.price}€\n   *${item.description || 'Pas de description'}*`).join('\n\n')}`)
+                .addFields([
+                    {
+                        name: '⚡ Actions disponibles',
+                        value: '✏️ **Modifier** - Changer nom, prix ou description\n🗑️ **Supprimer** - Retirer définitivement de la boutique',
+                        inline: false
+                    }
+                ]);
+            
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('manage_objects_select')
+                .setPlaceholder('Choisissez un objet à gérer...')
+                .addOptions(
+                    customObjects.map((item, index) => ({
+                        label: item.name,
+                        value: `manage_${item.id}`,
+                        description: `${item.price}€ - ${item.description ? item.description.substring(0, 50) : 'Aucune description'}`,
+                        emoji: '🎨'
+                    }))
+                )
+                .addOptions([
+                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique', emoji: '↩️' }
+                ]);
+            
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+            
+        } catch (error) {
+            console.error('Erreur showManageObjetsMenu:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des objets à gérer.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+    
+    async showDeleteArticlesMenu(interaction) {
+        try {
+            const guildId = interaction.guild.id;
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const shopItems = shopData[guildId] || [];
+            
+            if (shopItems.length === 0) {
+                const embed = new EmbedBuilder()
+                    .setColor('#e74c3c')
+                    .setTitle('🗑️ Supprimer Articles')
+                    .setDescription('Aucun article trouvé dans la boutique.\n\nCréez d\'abord des articles pour pouvoir les supprimer.');
+                
+                const backButton = new StringSelectMenuBuilder()
+                    .setCustomId('economy_boutique_select')
+                    .setPlaceholder('Retour à la boutique...')
+                    .addOptions([
+                        { label: '🔙 Retour Boutique', value: 'back_main', description: 'Retour au menu boutique' }
+                    ]);
+                
+                const row = new ActionRowBuilder().addComponents(backButton);
+                return await interaction.update({ embeds: [embed], components: [row] });
+            }
+            
+            const embed = new EmbedBuilder()
+                .setColor('#e74c3c')
+                .setTitle('🗑️ Supprimer Articles')
+                .setDescription(`**${shopItems.length} article(s)** disponible(s) :\n\n${shopItems.map((item, index) => {
+                    const typeIcon = item.type === 'custom' ? '🎨' : item.type === 'temp_role' ? '⌛' : '⭐';
+                    return `${typeIcon} **${item.name}** - ${item.price}€\n   *${item.description || (item.roleId ? `Rôle ${item.type === 'temp_role' ? 'temporaire' : 'permanent'}` : 'Pas de description')}*`;
+                }).join('\n\n')}`)
+                .addFields([
+                    {
+                        name: '⚠️ Attention',
+                        value: 'La suppression est **définitive**. Les utilisateurs ayant acheté ces articles les conservent.',
+                        inline: false
+                    }
+                ]);
+            
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('delete_articles_select')
+                .setPlaceholder('Choisissez un article à supprimer...')
+                .addOptions(
+                    shopItems.map((item, index) => {
+                        const typeIcon = item.type === 'custom' ? '🎨' : item.type === 'temp_role' ? '⌛' : '⭐';
+                        return {
+                            label: item.name,
+                            value: `delete_${item.id}`,
+                            description: `${item.price}€ - ${item.type === 'custom' ? 'Objet personnalisé' : item.type === 'temp_role' ? 'Rôle temporaire' : 'Rôle permanent'}`,
+                            emoji: typeIcon
+                        };
+                    })
+                )
+                .addOptions([
+                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique', emoji: '↩️' }
+                ]);
+            
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+            
+        } catch (error) {
+            console.error('Erreur showDeleteArticlesMenu:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des articles à supprimer.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    // =============
     // SAUVEGARDE DES DONNÉES
     // =============
     async saveActionConfig(action, configType, data) {
@@ -593,195 +731,127 @@ class EconomyConfigHandler {
         await this.dataManager.saveData('shop.json', shopData);
         console.log(`✅ Rôle ${type} ajouté à la boutique:`, roleItem);
     }
-
-    async showManageObjetsMenu(interaction) {
-        try {
-            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildId = interaction.guild.id;
-            const guildItems = shopData[guildId] || [];
-
-            const customObjects = guildItems.filter(item => item.type === 'custom_object');
-
-            if (customObjects.length === 0) {
-                await interaction.update({
-                    content: '❌ Aucun objet personnalisé trouvé.',
-                    embeds: [],
-                    components: []
-                });
-                return;
-            }
-
-            const embed = new EmbedBuilder()
-                .setColor('#ffa500')
-                .setTitle('🔧 Modifier Objets Existants')
-                .setDescription(`${customObjects.length} objet(s) personnalisé(s) disponible(s)`)
-                .addFields(
-                    customObjects.slice(0, 5).map(obj => ({
-                        name: `🎨 ${obj.name}`,
-                        value: `Prix: ${obj.price}€\n${obj.description || 'Pas de description'}`,
-                        inline: true
-                    }))
-                );
-
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('objets_existants_select')
-                .setPlaceholder('Sélectionner un objet à modifier...')
-                .addOptions(
-                    customObjects.slice(0, 20).map(obj => ({
-                        label: obj.name,
-                        description: `${obj.price}€ - Créé le ${new Date(obj.created).toLocaleDateString()}`,
-                        value: obj.id
-                    }))
-                );
-
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-
-            await interaction.update({
-                embeds: [embed],
-                components: [row]
-            });
-
-        } catch (error) {
-            console.error('Erreur menu objets:', error);
-            await interaction.update({
-                content: '❌ Erreur lors du chargement des objets.',
-                embeds: [],
-                components: []
+    
+    // Handlers pour les nouvelles méthodes de gestion boutique
+    async handleManageObjectsSelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_boutique') {
+            return await this.showBoutiqueMenu(interaction);
+        }
+        
+        // Si c'est un objet à gérer
+        if (value.startsWith('manage_')) {
+            const objectId = value.replace('manage_', '');
+            await interaction.reply({
+                content: `🔧 Modification de l'objet ${objectId} (Fonctionnalité en développement)`,
+                flags: 64
             });
         }
     }
+    
+    async handleDeleteArticlesSelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_boutique') {
+            return await this.showBoutiqueMenu(interaction);
+        }
+        
+        // Si c'est un article à supprimer
+        if (value.startsWith('delete_')) {
+            const articleId = value.replace('delete_', '');
+            
+            try {
+                const shopData = await this.dataManager.loadData('shop.json', {});
+                const guildId = interaction.guild.id;
+                
+                if (!shopData[guildId]) {
+                    await interaction.reply({
+                        content: '❌ Aucune boutique trouvée.',
+                        flags: 64
+                    });
+                    return;
+                }
 
-    async showDeleteArticlesMenu(interaction) {
-        try {
-            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildId = interaction.guild.id;
-            const guildItems = shopData[guildId] || [];
+                const itemIndex = shopData[guildId].findIndex(item => item.id == articleId);
+                if (itemIndex === -1) {
+                    await interaction.reply({
+                        content: '❌ Article non trouvé.',
+                        flags: 64
+                    });
+                    return;
+                }
 
-            if (guildItems.length === 0) {
-                await interaction.update({
-                    content: '❌ Aucun article trouvé dans la boutique.',
-                    embeds: [],
-                    components: []
+                const deletedItem = shopData[guildId][itemIndex];
+                shopData[guildId].splice(itemIndex, 1);
+                
+                await this.dataManager.saveData('shop.json', shopData);
+
+                await interaction.reply({
+                    content: `✅ Article "${deletedItem.name || 'Article'}" supprimé de la boutique !`,
+                    flags: 64
                 });
-                return;
+
+            } catch (error) {
+                console.error('Erreur suppression article:', error);
+                await interaction.reply({
+                    content: '❌ Erreur lors de la suppression.',
+                    flags: 64
+                });
             }
-
-            const embed = new EmbedBuilder()
-                .setColor('#ff0000')
-                .setTitle('🗑️ Supprimer Articles')
-                .setDescription(`${guildItems.length} article(s) disponible(s)`);
-
-            if (guildItems.length > 0) {
-                embed.addFields(
-                    guildItems.slice(0, 5).map(item => {
-                        let typeIcon = '❓';
-                        let typeName = 'Inconnu';
-                        
-                        if (item.type === 'custom_object') {
-                            typeIcon = '🎨';
-                            typeName = 'Objet personnalisé';
-                        } else if (item.type === 'temporary_role') {
-                            typeIcon = '⌛';
-                            typeName = 'Rôle temporaire';
-                        } else if (item.type === 'permanent_role') {
-                            typeIcon = '⭐';
-                            typeName = 'Rôle permanent';
-                        }
-
-                        return {
-                            name: `${typeIcon} ${item.name || `Rôle <@&${item.roleId}>`}`,
-                            value: `${typeName} - ${item.price}€${item.duration ? ` (${item.duration}h)` : ''}`,
-                            inline: true
-                        };
-                    })
-                );
-            }
-
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('delete_articles_select')
-                .setPlaceholder('Sélectionner un article à supprimer...')
-                .addOptions(
-                    guildItems.slice(0, 20).map(item => {
-                        let label = item.name || `Rôle ${item.roleId}`;
-                        let typeIcon = item.type === 'custom_object' ? '🎨' : 
-                                     item.type === 'temporary_role' ? '⌛' : '⭐';
-                        
-                        return {
-                            label: `${typeIcon} ${label}`,
-                            description: `${item.price}€ - Supprimer cet article`,
-                            value: item.id
-                        };
-                    })
-                );
-
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-
-            await interaction.update({
-                embeds: [embed],
-                components: [row]
-            });
-
-        } catch (error) {
-            console.error('Erreur menu suppression:', error);
-            await interaction.update({
-                content: '❌ Erreur lors du chargement des articles.',
-                embeds: [],
-                components: []
-            });
         }
     }
-
-    async handleObjetModification(interaction) {
-        // Handler pour modifier un objet sélectionné
-        const itemId = interaction.values[0];
-        // TODO: Implémenter la modification d'objet
-        await interaction.reply({
-            content: `🔧 Modification de l'objet ${itemId} (En développement)`,
-            flags: 64
-        });
-    }
-
-    async handleArticleDelete(interaction) {
-        try {
-            const itemId = interaction.values[0];
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildId = interaction.guild.id;
+    
+    // Handler pour delete_objects_select aussi
+    async handleDeleteObjectsSelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_boutique') {
+            return await this.showBoutiqueMenu(interaction);
+        }
+        
+        // Si c'est un objet à supprimer
+        if (value.startsWith('delete_')) {
+            const objectId = value.replace('delete_', '');
             
-            if (!shopData[guildId]) {
+            try {
+                const shopData = await this.dataManager.loadData('shop.json', {});
+                const guildId = interaction.guild.id;
+                
+                if (!shopData[guildId]) {
+                    await interaction.reply({
+                        content: '❌ Aucune boutique trouvée.',
+                        flags: 64
+                    });
+                    return;
+                }
+
+                const itemIndex = shopData[guildId].findIndex(item => item.id == objectId);
+                if (itemIndex === -1) {
+                    await interaction.reply({
+                        content: '❌ Objet non trouvé.',
+                        flags: 64
+                    });
+                    return;
+                }
+
+                const deletedItem = shopData[guildId][itemIndex];
+                shopData[guildId].splice(itemIndex, 1);
+                
+                await this.dataManager.saveData('shop.json', shopData);
+
                 await interaction.reply({
-                    content: '❌ Aucune boutique trouvée.',
+                    content: `✅ Objet "${deletedItem.name || 'Article'}" supprimé de la boutique !`,
                     flags: 64
                 });
-                return;
-            }
 
-            const itemIndex = shopData[guildId].findIndex(item => item.id === itemId);
-            if (itemIndex === -1) {
+            } catch (error) {
+                console.error('Erreur suppression objet:', error);
                 await interaction.reply({
-                    content: '❌ Article non trouvé.',
+                    content: '❌ Erreur lors de la suppression.',
                     flags: 64
                 });
-                return;
             }
-
-            const deletedItem = shopData[guildId][itemIndex];
-            shopData[guildId].splice(itemIndex, 1);
-            
-            await this.dataManager.saveData('shop.json', shopData);
-
-            await interaction.reply({
-                content: `✅ Article "${deletedItem.name || 'Rôle'}" supprimé de la boutique !`,
-                flags: 64
-            });
-
-        } catch (error) {
-            console.error('Erreur suppression article:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de la suppression.',
-                flags: 64
-            });
         }
     }
 
@@ -1567,36 +1637,66 @@ class EconomyConfigHandler {
             const guildShop = shopData[guildId] || [];
 
             if (guildShop.length === 0) {
-                await interaction.update({
-                    content: '📦 Aucun objet créé dans la boutique.',
-                    embeds: [],
-                    components: []
-                });
-                return;
+                const embed = new EmbedBuilder()
+                    .setColor('#f39c12')
+                    .setTitle('🔧 Gérer les Objets')
+                    .setDescription('Aucun article trouvé dans la boutique.\n\nCréez d\'abord des articles pour pouvoir les gérer.');
+                
+                const backButton = new StringSelectMenuBuilder()
+                    .setCustomId('economy_boutique_select')
+                    .setPlaceholder('Retour à la boutique...')
+                    .addOptions([
+                        { label: '🔙 Retour Boutique', value: 'back_main', description: 'Retour au menu boutique' }
+                    ]);
+                
+                const row = new ActionRowBuilder().addComponents(backButton);
+                return await interaction.update({ embeds: [embed], components: [row] });
             }
 
             const embed = new EmbedBuilder()
-                .setColor('#2ecc71')
-                .setTitle('🔧 Objets Boutique Créés')
-                .setDescription(`${guildShop.length} objet(s) dans la boutique :`);
-
-            // Ajouter les objets existants
-            guildShop.forEach((item, index) => {
-                const icon = item.type === 'role_temp' ? '⌛' : item.type === 'role_perm' ? '⭐' : '🎨';
-                const typeText = item.type === 'role_temp' ? 'Rôle Temporaire' : item.type === 'role_perm' ? 'Rôle Permanent' : 'Objet Personnalisé';
-                
-                embed.addFields({
-                    name: `${icon} ${item.name}`,
-                    value: `**Type:** ${typeText}\n**Prix:** ${item.price}€\n**ID:** ${item.id}`,
-                    inline: true
-                });
-            });
+                .setColor('#3498db')
+                .setTitle('🔧 Gérer les Articles de Boutique')
+                .setDescription(`**${guildShop.length} article(s)** disponible(s) dans la boutique :\n\n${guildShop.map((item, index) => {
+                    let typeIcon = '🎨';
+                    let typeText = 'Objet personnalisé';
+                    
+                    if (item.type === 'temp_role' || item.type === 'temporary_role') {
+                        typeIcon = '⌛';
+                        typeText = 'Rôle temporaire';
+                    } else if (item.type === 'perm_role' || item.type === 'permanent_role') {
+                        typeIcon = '⭐';
+                        typeText = 'Rôle permanent';
+                    }
+                    
+                    return `${typeIcon} **${item.name}** - ${item.price}€\n   *${typeText}${item.duration ? ` (${item.duration}j)` : ''}*`;
+                }).join('\n\n')}`)
+                .addFields([
+                    {
+                        name: '⚡ Actions disponibles',
+                        value: '✏️ **Modifier** - Changer nom, prix ou paramètres\n🗑️ **Supprimer** - Retirer définitivement de la boutique',
+                        inline: false
+                    }
+                ]);
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('manage_objects_select')
-                .setPlaceholder('Voir les objets créés')
+                .setPlaceholder('Choisissez un article à gérer...')
+                .addOptions(
+                    guildShop.map((item, index) => {
+                        let typeIcon = '🎨';
+                        if (item.type === 'temp_role' || item.type === 'temporary_role') typeIcon = '⌛';
+                        else if (item.type === 'perm_role' || item.type === 'permanent_role') typeIcon = '⭐';
+                        
+                        return {
+                            label: item.name,
+                            value: `manage_${item.id}`,
+                            description: `${item.price}€ - ${item.description || 'Article de boutique'}`,
+                            emoji: typeIcon
+                        };
+                    })
+                )
                 .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
+                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique', emoji: '↩️' }
                 ]);
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
@@ -1619,24 +1719,66 @@ class EconomyConfigHandler {
             const guildShop = shopData[guildId] || [];
 
             if (guildShop.length === 0) {
-                await interaction.update({
-                    content: '🗑️ Aucun objet à supprimer dans la boutique.',
-                    embeds: [],
-                    components: []
-                });
-                return;
+                const embed = new EmbedBuilder()
+                    .setColor('#e74c3c')
+                    .setTitle('🗑️ Supprimer Articles')
+                    .setDescription('Aucun article trouvé dans la boutique.\n\nCréez d\'abord des articles pour pouvoir les supprimer.');
+                
+                const backButton = new StringSelectMenuBuilder()
+                    .setCustomId('economy_boutique_select')
+                    .setPlaceholder('Retour à la boutique...')
+                    .addOptions([
+                        { label: '🔙 Retour Boutique', value: 'back_main', description: 'Retour au menu boutique' }
+                    ]);
+                
+                const row = new ActionRowBuilder().addComponents(backButton);
+                return await interaction.update({ embeds: [embed], components: [row] });
             }
 
             const embed = new EmbedBuilder()
                 .setColor('#e74c3c')
-                .setTitle('🗑️ Supprimer Objets Boutique')
-                .setDescription('⚠️ Choisissez l\'objet à supprimer (action irréversible) :');
+                .setTitle('🗑️ Supprimer Articles de Boutique')
+                .setDescription(`**${guildShop.length} article(s)** disponible(s) :\n\n${guildShop.map((item, index) => {
+                    let typeIcon = '🎨';
+                    let typeText = 'Objet personnalisé';
+                    
+                    if (item.type === 'temp_role' || item.type === 'temporary_role') {
+                        typeIcon = '⌛';
+                        typeText = 'Rôle temporaire';
+                    } else if (item.type === 'perm_role' || item.type === 'permanent_role') {
+                        typeIcon = '⭐';
+                        typeText = 'Rôle permanent';
+                    }
+                    
+                    return `${typeIcon} **${item.name}** - ${item.price}€\n   *${typeText}${item.duration ? ` (${item.duration}j)` : ''}*`;
+                }).join('\n\n')}`)
+                .addFields([
+                    {
+                        name: '⚠️ Attention',
+                        value: 'La suppression est **définitive**. Les utilisateurs ayant acheté ces articles les conservent.',
+                        inline: false
+                    }
+                ]);
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('delete_objects_select')
-                .setPlaceholder('Voir les objets à supprimer')
+                .setPlaceholder('Choisissez un article à supprimer...')
+                .addOptions(
+                    guildShop.map((item, index) => {
+                        let typeIcon = '🎨';
+                        if (item.type === 'temp_role' || item.type === 'temporary_role') typeIcon = '⌛';
+                        else if (item.type === 'perm_role' || item.type === 'permanent_role') typeIcon = '⭐';
+                        
+                        return {
+                            label: item.name,
+                            value: `delete_${item.id}`,
+                            description: `${item.price}€ - ${item.description || 'Article de boutique'}`,
+                            emoji: typeIcon
+                        };
+                    })
+                )
                 .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
+                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique', emoji: '↩️' }
                 ]);
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
