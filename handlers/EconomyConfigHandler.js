@@ -1560,57 +1560,6 @@ class EconomyConfigHandler {
     // =============
     // MÉTHODES MISSING BOUTIQUE
     // =============
-    async showManageObjetsMenu(interaction) {
-        try {
-            const guildId = interaction.guild.id;
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildShop = shopData[guildId] || [];
-
-            if (guildShop.length === 0) {
-                await interaction.update({
-                    content: '📦 Aucun objet créé dans la boutique.',
-                    embeds: [],
-                    components: []
-                });
-                return;
-            }
-
-            const embed = new EmbedBuilder()
-                .setColor('#2ecc71')
-                .setTitle('🔧 Objets Boutique Créés')
-                .setDescription(`${guildShop.length} objet(s) dans la boutique :`);
-
-            // Ajouter les objets existants
-            guildShop.forEach((item, index) => {
-                const icon = item.type === 'role_temp' ? '⌛' : item.type === 'role_perm' ? '⭐' : '🎨';
-                const typeText = item.type === 'role_temp' ? 'Rôle Temporaire' : item.type === 'role_perm' ? 'Rôle Permanent' : 'Objet Personnalisé';
-                
-                embed.addFields({
-                    name: `${icon} ${item.name}`,
-                    value: `**Type:** ${typeText}\n**Prix:** ${item.price}€\n**ID:** ${item.id}`,
-                    inline: true
-                });
-            });
-
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('manage_objects_select')
-                .setPlaceholder('Voir les objets créés')
-                .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
-                ]);
-
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-            await interaction.update({ embeds: [embed], components: [row] });
-
-        } catch (error) {
-            console.error('Erreur manage objets:', error);
-            await interaction.update({
-                content: '❌ Erreur lors de l\'affichage des objets.',
-                embeds: [],
-                components: []
-            });
-        }
-    }
 
     async showDeleteArticlesMenu(interaction) {
         try {
