@@ -14,7 +14,7 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            await interaction.deferReply();
+            await interaction.deferReply({ flags: 64 }); // Ephemeral
             
             const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
             const config = levelManager.loadConfig();

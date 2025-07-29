@@ -17,38 +17,6 @@ module.exports = {
 
     async execute(interaction, dataManager) {
         try {
-            // Récupérer la configuration AVANT de répondre pour vérifier le canal
-            const config = await dataManager.getData('config');
-            const confessionConfig = config.confessions?.[interaction.guild.id] || {
-                channels: [],
-                logChannel: null,
-                autoThread: false,
-                threadName: 'Confession #{number}'
-            };
-
-            // Vérifier si la commande est utilisée dans un canal de confession configuré
-            if (!confessionConfig.channels || confessionConfig.channels.length === 0) {
-                return await interaction.reply({
-                    content: '❌ Aucun canal de confession configuré sur ce serveur.\n\n**Administrateurs:** Utilisez `/config-confession` pour configurer les canaux.',
-                    flags: 64
-                });
-            }
-
-            // Vérifier si le canal actuel est dans la liste des canaux de confession configurés
-            if (!confessionConfig.channels.includes(interaction.channel.id)) {
-                const configuredChannels = confessionConfig.channels
-                    .map(channelId => {
-                        const channel = interaction.guild.channels.cache.get(channelId);
-                        return channel ? `<#${channelId}>` : `Canal supprimé (${channelId})`;
-                    })
-                    .join(', ');
-                
-                return await interaction.reply({
-                    content: `❌ Cette commande ne peut être utilisée que dans les canaux de confession configurés.\n\n**Canaux autorisés:** ${configuredChannels}`,
-                    flags: 64
-                });
-            }
-
             // Répondre immédiatement pour éviter les timeouts
             await interaction.deferReply({ flags: 64 });
             
@@ -62,6 +30,15 @@ module.exports = {
                 });
             }
 
+            // Récupérer la configuration
+            const config = await dataManager.getData('config');
+            const confessionConfig = config.confessions?.[interaction.guild.id] || {
+                channels: [],
+                logChannel: null,
+                autoThread: false,
+                threadName: 'Confession #{number}'
+            };
+
             // Générer le numéro de confession unique
             if (!confessionConfig.confessionCounter) {
                 confessionConfig.confessionCounter = 0;
@@ -73,9 +50,22 @@ module.exports = {
             if (!config.confessions) config.confessions = {};
             config.confessions[interaction.guild.id] = confessionConfig;
             await dataManager.saveData('config', config);
+            
+            if (!confessionConfig.channels || confessionConfig.channels.length === 0) {
+                return await interaction.editReply({
+                    content: '❌ Aucun canal de confession configuré sur ce serveur.\n\nUtilisez `/config-confession` pour configurer les canaux.'
+                });
+            }
 
-            // Utiliser le canal actuel où la commande a été exécutée (déjà vérifié qu'il est autorisé)
-            const channel = interaction.channel;
+            // Prendre le premier canal configuré
+            const channelId = confessionConfig.channels[0];
+            const channel = interaction.guild.channels.cache.get(channelId);
+
+            if (!channel) {
+                return await interaction.editReply({
+                    content: '❌ Canal de confession introuvable.'
+                });
+            }
 
             // Créer l'embed de confession avec numéro
             const confessionEmbed = new EmbedBuilder()

@@ -14,10 +14,6 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            // Vérifier si l'interaction a déjà été acknowledgée
-            if (interaction.deferred || interaction.replied) {
-                return;
-            }
             await interaction.deferReply();
             
             const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
