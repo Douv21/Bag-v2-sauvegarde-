@@ -601,7 +601,7 @@ class EconomyConfigHandler {
             const guildId = interaction.guild.id;
             const guildItems = shopData[guildId] || [];
 
-            const customObjects = guildItems.filter(item => item.type === 'custom_object');
+            const customObjects = guildItems.filter(item => item.type === 'customq');
 
             if (customObjects.length === 0) {
                 await interaction.update({
@@ -679,7 +679,7 @@ class EconomyConfigHandler {
                         let typeIcon = '❓';
                         let typeName = 'Inconnu';
                         
-                        if (item.type === 'custom_object') {
+                        if (item.type === 'custom') {
                             typeIcon = '🎨';
                             typeName = 'Objet personnalisé';
                         } else if (item.type === 'temporary_role') {
@@ -705,7 +705,7 @@ class EconomyConfigHandler {
                 .addOptions(
                     guildItems.slice(0, 20).map(item => {
                         let label = item.name || `Rôle ${item.roleId}`;
-                        let typeIcon = item.type === 'custom_object' ? '🎨' : 
+                        let typeIcon = item.type === 'customq' ? '🎨' : 
                                      item.type === 'temporary_role' ? '⌛' : '⭐';
                         
                         return {
