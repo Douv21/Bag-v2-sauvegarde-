@@ -601,7 +601,7 @@ class EconomyConfigHandler {
             const guildId = interaction.guild.id;
             const guildItems = shopData[guildId] || [];
 
-            const customObjects = guildItems.filter(item => item.type === 'customq');
+            const customObjects = guildItems.filter(item => item.type === 'custom');
 
             if (customObjects.length === 0) {
                 await interaction.update({
