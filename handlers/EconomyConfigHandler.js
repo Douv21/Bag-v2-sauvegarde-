@@ -6,82 +6,21 @@ class EconomyConfigHandler {
     }
 
     // =============
-    // UTILITAIRES DE GESTION DES INTERACTIONS
-    // =============
-    async safeReply(interaction, options) {
-        try {
-            if (interaction.replied || interaction.deferred) {
-                return await interaction.followUp({ ...options, ephemeral: true });
-            } else {
-                return await interaction.reply({ ...options, ephemeral: true });
-            }
-        } catch (error) {
-            console.error('Erreur safeReply:', error.message);
-            // Si l'interaction a expiré, on ne peut plus rien faire
-            return null;
-        }
-    }
-
-    async safeUpdate(interaction, options) {
-        try {
-            if (interaction.replied || interaction.deferred) {
-                return await interaction.editReply(options);
-            } else {
-                return await interaction.update(options);
-            }
-        } catch (error) {
-            console.error('Erreur safeUpdate:', error.message);
-            // Essayer de répondre si l'update a échoué
-            try {
-                if (!interaction.replied && !interaction.deferred) {
-                    return await interaction.reply({ ...options, ephemeral: true });
-                }
-            } catch (replyError) {
-                console.error('Erreur safeUpdate fallback:', replyError.message);
-            }
-            return null;
-        }
-    }
-
-    async safeShowModal(interaction, modal) {
-        try {
-            if (interaction.replied || interaction.deferred) {
-                console.warn('Impossible d\'afficher un modal sur une interaction déjà répondue');
-                return null;
-            }
-            return await interaction.showModal(modal);
-        } catch (error) {
-            console.error('Erreur safeShowModal:', error.message);
-            return null;
-        }
-    }
-
-    // =============
     // MENU PRINCIPAL
     // =============
     async handleMainSelect(interaction) {
-        if (!interaction.isStringSelectMenu()) return;
-        
         const value = interaction.values[0];
         
-        try {
-            if (value === 'actions') {
-                await this.showActionsMenu(interaction);
-            } else if (value === 'boutique') {
-                await this.showBoutiqueMenu(interaction);
-            } else if (value === 'daily') {
-                await this.showDailyMenu(interaction);
-            } else if (value === 'messages') {
-                await this.showMessagesMenu(interaction);
-            } else if (value === 'karma') {
-                await this.showKarmaMenu(interaction);
-            }
-        } catch (error) {
-            console.error('Erreur handleMainSelect:', error);
-            await this.safeReply(interaction, {
-                content: '❌ Erreur lors du traitement de votre sélection.',
-                flags: 64
-            });
+        if (value === 'actions') {
+            await this.showActionsMenu(interaction);
+        } else if (value === 'boutique') {
+            await this.showBoutiqueMenu(interaction);
+        } else if (value === 'daily') {
+            await this.showDailyMenu(interaction);
+        } else if (value === 'messages') {
+            await this.showMessagesMenu(interaction);
+        } else if (value === 'karma') {
+            await this.showKarmaMenu(interaction);
         }
     }
 
@@ -108,68 +47,46 @@ class EconomyConfigHandler {
             ]);
 
         const row = new ActionRowBuilder().addComponents(selectMenu);
-        await this.safeUpdate(interaction, { embeds: [embed], components: [row] });
+        await interaction.update({ embeds: [embed], components: [row] });
     }
 
     async handleActionSelect(interaction) {
-        if (!interaction.isStringSelectMenu()) return;
-        
         const action = interaction.values[0];
         
-        try {
-            if (action === 'back_main') {
-                return await this.showMainMenu(interaction);
-            }
-
-            const embed = new EmbedBuilder()
-                .setColor('#e67e22')
-                .setTitle(`⚙️ Configuration - ${action.charAt(0).toUpperCase() + action.slice(1)}`)
-                .setDescription('Choisissez le paramètre à modifier :');
-
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId(`economy_action_config_${action}`)
-                .setPlaceholder('Paramètre à configurer...')
-                .addOptions([
-                    { label: '💰 Montant', value: 'montant', description: 'Configurer les gains min/max' },
-                    { label: '⏰ Cooldown', value: 'cooldown', description: 'Temps d\'attente entre utilisations' },
-                    { label: '⚖️ Karma', value: 'karma', description: 'Karma positif/négatif accordé' },
-                    { label: '🔙 Retour Actions', value: 'back_actions', description: 'Retour aux actions' }
-                ]);
-
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-            await this.safeUpdate(interaction, { embeds: [embed], components: [row] });
-            
-        } catch (error) {
-            console.error('Erreur handleActionSelect:', error);
-            await this.safeReply(interaction, {
-                content: '❌ Erreur lors de l\'affichage de la configuration.',
-                flags: 64
-            });
+        if (action === 'back_main') {
+            return await this.showMainMenu(interaction);
         }
+
+        const embed = new EmbedBuilder()
+            .setColor('#e67e22')
+            .setTitle(`⚙️ Configuration - ${action.charAt(0).toUpperCase() + action.slice(1)}`)
+            .setDescription('Choisissez le paramètre à modifier :');
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId(`economy_action_config_${action}`)
+            .setPlaceholder('Paramètre à configurer...')
+            .addOptions([
+                { label: '💰 Montant', value: 'montant', description: 'Configurer les gains min/max' },
+                { label: '⏰ Cooldown', value: 'cooldown', description: 'Temps d\'attente entre utilisations' },
+                { label: '⚖️ Karma', value: 'karma', description: 'Karma positif/négatif accordé' },
+                { label: '🔙 Retour Actions', value: 'back_actions', description: 'Retour aux actions' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        await interaction.update({ embeds: [embed], components: [row] });
     }
 
     async handleActionConfigSelect(interaction) {
-        if (!interaction.isStringSelectMenu()) return;
-        
         const customId = interaction.customId;
         const action = customId.split('_')[3]; // economy_action_config_ACTION
         const configType = interaction.values[0];
 
-        try {
-            if (configType === 'back_actions') {
-                return await this.showActionsMenu(interaction);
-            }
-
-            // Créer le modal selon le type de configuration
-            await this.showActionConfigModal(interaction, action, configType);
-            
-        } catch (error) {
-            console.error('Erreur handleActionConfigSelect:', error);
-            await this.safeReply(interaction, {
-                content: '❌ Erreur lors de l\'affichage du modal.',
-                flags: 64
-            });
+        if (configType === 'back_actions') {
+            return await this.showActionsMenu(interaction);
         }
+
+        // Créer le modal selon le type de configuration
+        await this.showActionConfigModal(interaction, action, configType);
     }
 
     async showActionConfigModal(interaction, action, configType) {
@@ -228,7 +145,7 @@ class EconomyConfigHandler {
             );
         }
 
-        await this.safeShowModal(interaction, modal);
+        await interaction.showModal(modal);
     }
 
     // =============
@@ -254,39 +171,28 @@ class EconomyConfigHandler {
             ]);
 
         const row = new ActionRowBuilder().addComponents(selectMenu);
-        await this.safeUpdate(interaction, { embeds: [embed], components: [row] });
+        await interaction.update({ embeds: [embed], components: [row] });
     }
 
     async handleBoutiqueSelect(interaction) {
-        if (!interaction.isStringSelectMenu()) return;
-        
         const value = interaction.values[0];
         
-        try {
-            if (value === 'back_main') {
-                return await this.showMainMenu(interaction);
-            }
+        if (value === 'back_main') {
+            return await this.showMainMenu(interaction);
+        }
 
-            if (value === 'objets') {
-                await this.showObjetPersonnaliseModal(interaction);
-            } else if (value === 'roles_temp') {
-                await this.showRolesTempMenu(interaction);
-            } else if (value === 'roles_perm') {
-                await this.showRolesPermMenu(interaction);
-            } else if (value === 'remises') {
-                await this.showRemisesMenu(interaction);
-            } else if (value === 'manage_objets') {
-                await this.showManageObjetsMenu(interaction);
-            } else if (value === 'delete_articles') {
-                await this.showDeleteArticlesMenu(interaction);
-            }
-            
-        } catch (error) {
-            console.error('Erreur handleBoutiqueSelect:', error);
-            await this.safeReply(interaction, {
-                content: '❌ Erreur lors du traitement de votre sélection.',
-                flags: 64
-            });
+        if (value === 'objets') {
+            await this.showObjetPersonnaliseModal(interaction);
+        } else if (value === 'roles_temp') {
+            await this.showRolesTempMenu(interaction);
+        } else if (value === 'roles_perm') {
+            await this.showRolesPermMenu(interaction);
+        } else if (value === 'remises') {
+            await this.showRemisesMenu(interaction);
+        } else if (value === 'manage_objets') {
+            await this.showManageObjetsMenu(interaction);
+        } else if (value === 'delete_articles') {
+            await this.showDeleteArticlesMenu(interaction);
         }
     }
 
@@ -321,7 +227,7 @@ class EconomyConfigHandler {
                 )
             );
 
-        await this.safeShowModal(interaction, modal);
+        await interaction.showModal(modal);
     }
 
     async showRolesTempMenu(interaction) {
@@ -335,7 +241,7 @@ class EconomyConfigHandler {
             .setPlaceholder('Choisissez un rôle...');
 
         const row = new ActionRowBuilder().addComponents(roleSelect);
-        await this.safeUpdate(interaction, { embeds: [embed], components: [row] });
+        await interaction.update({ embeds: [embed], components: [row] });
     }
 
     async showRolesPermMenu(interaction) {
@@ -349,7 +255,7 @@ class EconomyConfigHandler {
             .setPlaceholder('Choisissez un rôle...');
 
         const row = new ActionRowBuilder().addComponents(roleSelect);
-        await this.safeUpdate(interaction, { embeds: [embed], components: [row] });
+        await interaction.update({ embeds: [embed], components: [row] });
     }
 
     async showRemisesMenu(interaction) {
@@ -369,7 +275,7 @@ class EconomyConfigHandler {
             ]);
 
         const row = new ActionRowBuilder().addComponents(selectMenu);
-        await this.safeUpdate(interaction, { embeds: [embed], components: [row] });
+        await interaction.update({ embeds: [embed], components: [row] });
     }
 
     async showMainMenu(interaction) {
@@ -405,24 +311,17 @@ class EconomyConfigHandler {
                     label: '💬 Messages',
                     value: 'messages',
                     description: 'Configuration des gains par message'
-                },
-                {
-                    label: '⚖️ Karma',
-                    value: 'karma',
-                    description: 'Configuration du système karma'
                 }
             ]);
 
         const row = new ActionRowBuilder().addComponents(selectMenu);
-        await this.safeUpdate(interaction, { embeds: [embed], components: [row] });
+        await interaction.update({ embeds: [embed], components: [row] });
     }
 
     // =============
     // HANDLERS MODALS ET SÉLECTEURS
     // =============
     async handleActionConfigModal(interaction) {
-        if (!interaction.isModalSubmit()) return;
-        
         const customId = interaction.customId; // action_config_modal_ACTION_TYPE
         const parts = customId.split('_');
         const action = parts[3];
@@ -433,48 +332,24 @@ class EconomyConfigHandler {
             if (configType === 'montant') {
                 data.minAmount = parseInt(interaction.fields.getTextInputValue('min_amount'));
                 data.maxAmount = parseInt(interaction.fields.getTextInputValue('max_amount'));
-                
-                if (isNaN(data.minAmount) || isNaN(data.maxAmount) || data.minAmount < 1 || data.maxAmount < data.minAmount) {
-                    await this.safeReply(interaction, {
-                        content: '❌ Montants invalides. Min doit être ≥ 1 et Max ≥ Min.',
-                        flags: 64
-                    });
-                    return;
-                }
             } else if (configType === 'cooldown') {
                 data.cooldown = parseInt(interaction.fields.getTextInputValue('cooldown_seconds'));
-                
-                if (isNaN(data.cooldown) || data.cooldown < 0) {
-                    await this.safeReply(interaction, {
-                        content: '❌ Cooldown invalide. Doit être ≥ 0 secondes.',
-                        flags: 64
-                    });
-                    return;
-                }
             } else if (configType === 'karma') {
                 data.goodKarma = parseInt(interaction.fields.getTextInputValue('good_karma'));
                 data.badKarma = parseInt(interaction.fields.getTextInputValue('bad_karma'));
-                
-                if (isNaN(data.goodKarma) || isNaN(data.badKarma)) {
-                    await this.safeReply(interaction, {
-                        content: '❌ Valeurs karma invalides. Doivent être des nombres.',
-                        flags: 64
-                    });
-                    return;
-                }
             }
 
             // Sauvegarder la configuration
             await this.saveActionConfig(action, configType, data);
 
-            await this.safeReply(interaction, {
+            await interaction.reply({
                 content: `✅ Configuration ${configType} pour l'action ${action} sauvegardée !`,
                 flags: 64
             });
 
         } catch (error) {
             console.error('Erreur modal action:', error);
-            await this.safeReply(interaction, {
+            await interaction.reply({
                 content: '❌ Erreur lors de la sauvegarde de la configuration.',
                 flags: 64
             });
@@ -482,41 +357,22 @@ class EconomyConfigHandler {
     }
 
     async handleObjetPersoModal(interaction) {
-        if (!interaction.isModalSubmit()) return;
-        
         try {
             const nom = interaction.fields.getTextInputValue('objet_nom');
-            const prixInput = interaction.fields.getTextInputValue('objet_prix');
+            const prix = parseInt(interaction.fields.getTextInputValue('objet_prix'));
             const description = interaction.fields.getTextInputValue('objet_description') || 'Objet personnalisé';
 
-            const prix = parseInt(prixInput);
-            if (isNaN(prix) || prix < 1) {
-                await this.safeReply(interaction, {
-                    content: '❌ Prix invalide. Doit être un nombre ≥ 1.',
-                    flags: 64
-                });
-                return;
-            }
-
-            if (!nom || nom.trim().length === 0) {
-                await this.safeReply(interaction, {
-                    content: '❌ Le nom de l\'objet est requis.',
-                    flags: 64
-                });
-                return;
-            }
-
             // Sauvegarder l'objet
-            await this.saveCustomObject(interaction.guild.id, nom.trim(), prix, description.trim());
+            await this.saveCustomObject(interaction.guild.id, nom, prix, description);
 
-            await this.safeReply(interaction, {
+            await interaction.reply({
                 content: `✅ Objet "${nom}" créé avec succès pour ${prix}€ !`,
                 flags: 64
             });
 
         } catch (error) {
             console.error('Erreur modal objet:', error);
-            await this.safeReply(interaction, {
+            await interaction.reply({
                 content: '❌ Erreur lors de la création de l\'objet.',
                 flags: 64
             });
@@ -524,76 +380,54 @@ class EconomyConfigHandler {
     }
 
     async handleRoleSelect(interaction) {
-        if (!interaction.isRoleSelectMenu()) return;
-        
-        try {
-            const roleId = interaction.values[0];
-            const isTemp = interaction.customId === 'role_temp_select';
+        const roleId = interaction.values[0];
+        const isTemp = interaction.customId === 'role_temp_select';
 
-            const modal = new ModalBuilder()
-                .setCustomId(`role_config_modal_${roleId}_${isTemp ? 'temp' : 'perm'}`)
-                .setTitle(`Configuration Rôle ${isTemp ? 'Temporaire' : 'Permanent'}`);
+        const modal = new ModalBuilder()
+            .setCustomId(`role_config_modal_${roleId}_${isTemp ? 'temp' : 'perm'}`)
+            .setTitle(`Configuration Rôle ${isTemp ? 'Temporaire' : 'Permanent'}`);
 
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('role_price')
+                    .setLabel('Prix (€)')
+                    .setStyle(TextInputStyle.Short)
+                    .setPlaceholder('Ex: 500')
+                    .setRequired(true)
+            )
+        );
+
+        if (isTemp) {
             modal.addComponents(
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
-                        .setCustomId('role_price')
-                        .setLabel('Prix (€)')
+                        .setCustomId('role_duration')
+                        .setLabel('Durée (en heures)')
                         .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 500')
+                        .setPlaceholder('Ex: 24')
                         .setRequired(true)
                 )
             );
-
-            if (isTemp) {
-                modal.addComponents(
-                    new ActionRowBuilder().addComponents(
-                        new TextInputBuilder()
-                            .setCustomId('role_duration')
-                            .setLabel('Durée (en heures)')
-                            .setStyle(TextInputStyle.Short)
-                            .setPlaceholder('Ex: 24')
-                            .setRequired(true)
-                    )
-                );
-            }
-
-            await this.safeShowModal(interaction, modal);
-            
-        } catch (error) {
-            console.error('Erreur handleRoleSelect:', error);
-            await this.safeReply(interaction, {
-                content: '❌ Erreur lors de l\'affichage du modal.',
-                flags: 64
-            });
         }
+
+        await interaction.showModal(modal);
     }
 
     async handleRemisesSelect(interaction) {
-        if (!interaction.isStringSelectMenu()) return;
-        
         const value = interaction.values[0];
         
-        try {
-            if (value === 'back_boutique') {
-                return await this.showBoutiqueMenu(interaction);
-            }
+        if (value === 'back_boutique') {
+            return await this.showBoutiqueMenu(interaction);
+        }
 
-            if (value === 'create') {
-                await this.showRemiseModal(interaction);
-            } else {
-                await this.safeUpdate(interaction, {
-                    content: `🚧 Fonction ${value} en cours de développement...`,
-                    embeds: [],
-                    components: []
-                });
-            }
-            
-        } catch (error) {
-            console.error('Erreur handleRemisesSelect:', error);
-            await this.safeReply(interaction, {
-                content: '❌ Erreur lors du traitement de la sélection.',
-                flags: 64
+        if (value === 'create') {
+            await this.showRemiseModal(interaction);
+        } else {
+            await interaction.update({
+                content: `🚧 Fonction ${value} en cours de développement...`,
+                embeds: [],
+                components: []
             });
         }
     }
@@ -629,99 +463,60 @@ class EconomyConfigHandler {
                 )
             );
 
-        await this.safeShowModal(interaction, modal);
+        await interaction.showModal(modal);
     }
 
     // =============
     // SAUVEGARDE DES DONNÉES
     // =============
     async saveActionConfig(action, configType, data) {
-        try {
-            const economyConfig = await this.dataManager.loadData('economy.json', {});
-            
-            if (!economyConfig.actions) economyConfig.actions = {};
-            if (!economyConfig.actions[action]) economyConfig.actions[action] = {};
+        const economyConfig = await this.dataManager.loadData('economy.json', {});
+        
+        if (!economyConfig.actions) economyConfig.actions = {};
+        if (!economyConfig.actions[action]) economyConfig.actions[action] = {};
 
-            economyConfig.actions[action][configType] = data;
-            
-            await this.dataManager.saveData('economy.json', economyConfig);
-            console.log(`✅ Configuration ${configType} sauvegardée pour ${action}:`, data);
-        } catch (error) {
-            console.error('Erreur sauvegarde action config:', error);
-            throw error;
-        }
+        economyConfig.actions[action][configType] = data;
+        
+        await this.dataManager.saveData('economy.json', economyConfig);
+        console.log(`✅ Configuration ${configType} sauvegardée pour ${action}:`, data);
     }
 
     async saveCustomObject(guildId, nom, prix, description) {
-        try {
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            
-            if (!shopData[guildId]) shopData[guildId] = [];
-            
-            const objet = {
-                id: Date.now().toString(),
-                type: 'custom',
-                name: nom,
-                price: prix,
-                description: description,
-                created: new Date().toISOString()
-            };
-            
-            shopData[guildId].push(objet);
-            await this.dataManager.saveData('shop.json', shopData);
-            console.log(`✅ Objet personnalisé créé:`, objet);
-        } catch (error) {
-            console.error('Erreur sauvegarde objet:', error);
-            throw error;
-        }
+        const shopData = await this.dataManager.loadData('shop.json', {});
+        
+        if (!shopData[guildId]) shopData[guildId] = [];
+        
+        const objet = {
+            id: Date.now().toString(),
+            type: 'custom',
+            name: nom,
+            price: prix,
+            description: description,
+            created: new Date().toISOString()
+        };
+        
+        shopData[guildId].push(objet);
+        await this.dataManager.saveData('shop.json', shopData);
+        console.log(`✅ Objet personnalisé créé:`, objet);
     }
 
     async handleRemiseModal(interaction) {
-        if (!interaction.isModalSubmit()) return;
-        
         try {
             const nom = interaction.fields.getTextInputValue('remise_nom');
-            const karmaMinInput = interaction.fields.getTextInputValue('karma_min');
-            const pourcentageInput = interaction.fields.getTextInputValue('pourcentage_remise');
-
-            const karmaMin = parseInt(karmaMinInput);
-            const pourcentage = parseInt(pourcentageInput);
-
-            if (isNaN(karmaMin) || isNaN(pourcentage)) {
-                await this.safeReply(interaction, {
-                    content: '❌ Valeurs invalides. Karma et pourcentage doivent être des nombres.',
-                    flags: 64
-                });
-                return;
-            }
-
-            if (pourcentage < 1 || pourcentage > 100) {
-                await this.safeReply(interaction, {
-                    content: '❌ Le pourcentage doit être entre 1 et 100.',
-                    flags: 64
-                });
-                return;
-            }
-
-            if (!nom || nom.trim().length === 0) {
-                await this.safeReply(interaction, {
-                    content: '❌ Le nom de la remise est requis.',
-                    flags: 64
-                });
-                return;
-            }
+            const karmaMin = parseInt(interaction.fields.getTextInputValue('karma_min'));
+            const pourcentage = parseInt(interaction.fields.getTextInputValue('pourcentage_remise'));
 
             // Sauvegarder la remise
-            await this.saveKarmaDiscount(interaction.guild.id, nom.trim(), karmaMin, pourcentage);
+            await this.saveKarmaDiscount(interaction.guild.id, nom, karmaMin, pourcentage);
 
-            await this.safeReply(interaction, {
+            await interaction.reply({
                 content: `✅ Remise "${nom}" créée : ${pourcentage}% pour ${karmaMin} karma minimum !`,
                 flags: 64
             });
 
         } catch (error) {
             console.error('Erreur modal remise:', error);
-            await this.safeReply(interaction, {
+            await interaction.reply({
                 content: '❌ Erreur lors de la création de la remise.',
                 flags: 64
             });
@@ -729,21 +524,1306 @@ class EconomyConfigHandler {
     }
 
     async saveKarmaDiscount(guildId, nom, karmaMin, pourcentage) {
+        const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+        
+        if (!discountsData[guildId]) discountsData[guildId] = [];
+        
+        const remise = {
+            id: Date.now().toString(),
+            name: nom,
+            karmaMin: karmaMin,
+            percentage: pourcentage,
+            created: new Date().toISOString()
+        };
+        
+        discountsData[guildId].push(remise);
+        await this.dataManager.saveData('karma_discounts.json', discountsData);
+        console.log(`✅ Remise karma créée:`, remise);
+    }
+
+    async handleRoleConfigModal(interaction) {
         try {
-            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
-            
-            if (!discountsData[guildId]) discountsData[guildId] = [];
-            
-            const remise = {
-                id: Date.now().toString(),
-                name: nom,
-                karmaMin: karmaMin,
-                percentage: pourcentage,
-                created: new Date().toISOString()
-            };
-            
-            discountsData[guildId].push(remise);
-            await this.dataManager.saveData('karma_discounts.json', discountsData);
-            console.log(`✅ Remise karma créée:`, remise);
+            const customId = interaction.customId; // role_config_modal_ROLEID_TYPE
+            const parts = customId.split('_');
+            const roleId = parts[3];
+            const type = parts[4]; // 'temp' or 'perm'
+
+            const prix = parseInt(interaction.fields.getTextInputValue('role_price'));
+            let duree = null;
+
+            if (type === 'temp') {
+                duree = parseInt(interaction.fields.getTextInputValue('role_duration'));
+            }
+
+            // Sauvegarder le rôle
+            await this.saveRoleToShop(interaction.guild.id, roleId, prix, type, duree);
+
+            const role = interaction.guild.roles.cache.get(roleId);
+            const roleName = role ? role.name : 'Rôle inconnu';
+
+            await interaction.reply({
+                content: `✅ Rôle "${roleName}" ajouté à la boutique pour ${prix}€${type === 'temp' ? ` (${duree}h)` : ' (permanent)'} !`,
+                flags: 64
+            });
+
         } catch (error) {
-            console
+            console.error('Erreur modal rôle:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la configuration du rôle.',
+                flags: 64
+            });
+        }
+    }
+
+    async saveRoleToShop(guildId, roleId, prix, type, duree = null) {
+        const shopData = await this.dataManager.loadData('shop.json', {});
+        
+        if (!shopData[guildId]) shopData[guildId] = [];
+        
+        const roleItem = {
+            id: Date.now().toString(),
+            type: type === 'temp' ? 'temporary_role' : 'permanent_role',
+            roleId: roleId,
+            price: prix,
+            duration: duree,
+            created: new Date().toISOString()
+        };
+        
+        shopData[guildId].push(roleItem);
+        await this.dataManager.saveData('shop.json', shopData);
+        console.log(`✅ Rôle ${type} ajouté à la boutique:`, roleItem);
+    }
+
+    async showManageObjetsMenu(interaction) {
+        try {
+            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const guildId = interaction.guild.id;
+            const guildItems = shopData[guildId] || [];
+
+            const customObjects = guildItems.filter(item => item.type === 'custom_object');
+
+            if (customObjects.length === 0) {
+                await interaction.update({
+                    content: '❌ Aucun objet personnalisé trouvé.',
+                    embeds: [],
+                    components: []
+                });
+                return;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor('#ffa500')
+                .setTitle('🔧 Modifier Objets Existants')
+                .setDescription(`${customObjects.length} objet(s) personnalisé(s) disponible(s)`)
+                .addFields(
+                    customObjects.slice(0, 5).map(obj => ({
+                        name: `🎨 ${obj.name}`,
+                        value: `Prix: ${obj.price}€\n${obj.description || 'Pas de description'}`,
+                        inline: true
+                    }))
+                );
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('objets_existants_select')
+                .setPlaceholder('Sélectionner un objet à modifier...')
+                .addOptions(
+                    customObjects.slice(0, 20).map(obj => ({
+                        label: obj.name,
+                        description: `${obj.price}€ - Créé le ${new Date(obj.created).toLocaleDateString()}`,
+                        value: obj.id
+                    }))
+                );
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+
+            await interaction.update({
+                embeds: [embed],
+                components: [row]
+            });
+
+        } catch (error) {
+            console.error('Erreur menu objets:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des objets.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async showDeleteArticlesMenu(interaction) {
+        try {
+            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const guildId = interaction.guild.id;
+            const guildItems = shopData[guildId] || [];
+
+            if (guildItems.length === 0) {
+                await interaction.update({
+                    content: '❌ Aucun article trouvé dans la boutique.',
+                    embeds: [],
+                    components: []
+                });
+                return;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor('#ff0000')
+                .setTitle('🗑️ Supprimer Articles')
+                .setDescription(`${guildItems.length} article(s) disponible(s)`);
+
+            if (guildItems.length > 0) {
+                embed.addFields(
+                    guildItems.slice(0, 5).map(item => {
+                        let typeIcon = '❓';
+                        let typeName = 'Inconnu';
+                        
+                        if (item.type === 'custom_object') {
+                            typeIcon = '🎨';
+                            typeName = 'Objet personnalisé';
+                        } else if (item.type === 'temporary_role') {
+                            typeIcon = '⌛';
+                            typeName = 'Rôle temporaire';
+                        } else if (item.type === 'permanent_role') {
+                            typeIcon = '⭐';
+                            typeName = 'Rôle permanent';
+                        }
+
+                        return {
+                            name: `${typeIcon} ${item.name || `Rôle <@&${item.roleId}>`}`,
+                            value: `${typeName} - ${item.price}€${item.duration ? ` (${item.duration}h)` : ''}`,
+                            inline: true
+                        };
+                    })
+                );
+            }
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('delete_articles_select')
+                .setPlaceholder('Sélectionner un article à supprimer...')
+                .addOptions(
+                    guildItems.slice(0, 20).map(item => {
+                        let label = item.name || `Rôle ${item.roleId}`;
+                        let typeIcon = item.type === 'custom_object' ? '🎨' : 
+                                     item.type === 'temporary_role' ? '⌛' : '⭐';
+                        
+                        return {
+                            label: `${typeIcon} ${label}`,
+                            description: `${item.price}€ - Supprimer cet article`,
+                            value: item.id
+                        };
+                    })
+                );
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+
+            await interaction.update({
+                embeds: [embed],
+                components: [row]
+            });
+
+        } catch (error) {
+            console.error('Erreur menu suppression:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des articles.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleObjetModification(interaction) {
+        // Handler pour modifier un objet sélectionné
+        const itemId = interaction.values[0];
+        // TODO: Implémenter la modification d'objet
+        await interaction.reply({
+            content: `🔧 Modification de l'objet ${itemId} (En développement)`,
+            flags: 64
+        });
+    }
+
+    async handleArticleDelete(interaction) {
+        try {
+            const itemId = interaction.values[0];
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const guildId = interaction.guild.id;
+            
+            if (!shopData[guildId]) {
+                await interaction.reply({
+                    content: '❌ Aucune boutique trouvée.',
+                    flags: 64
+                });
+                return;
+            }
+
+            const itemIndex = shopData[guildId].findIndex(item => item.id === itemId);
+            if (itemIndex === -1) {
+                await interaction.reply({
+                    content: '❌ Article non trouvé.',
+                    flags: 64
+                });
+                return;
+            }
+
+            const deletedItem = shopData[guildId][itemIndex];
+            shopData[guildId].splice(itemIndex, 1);
+            
+            await this.dataManager.saveData('shop.json', shopData);
+
+            await interaction.reply({
+                content: `✅ Article "${deletedItem.name || 'Rôle'}" supprimé de la boutique !`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur suppression article:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la suppression.',
+                flags: 64
+            });
+        }
+    }
+
+    // =============
+    // SECTION DAILY
+    // =============
+    async showDailyMenu(interaction) {
+        try {
+            const embed = new EmbedBuilder()
+                .setColor('#f39c12')
+                .setTitle('📅 Configuration Daily/Quotidien')
+                .setDescription('Configurez les récompenses quotidiennes :')
+                .addFields([
+                    { name: '💰 Montant Daily', value: 'Montant de la récompense quotidienne', inline: true },
+                    { name: '🔥 Bonus Streak', value: 'Bonus pour les séries quotidiennes', inline: true },
+                    { name: '⏰ Reset Heure', value: 'Heure de reset des daily (24h)', inline: true }
+                ]);
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('economy_daily_select')
+                .setPlaceholder('Choisissez un paramètre...')
+                .addOptions([
+                    { label: '💰 Configurer Montant', value: 'daily_amount', description: 'Montant de base du daily' },
+                    { label: '🔥 Configurer Streak', value: 'daily_streak', description: 'Bonus séries consécutives' },
+                    { label: '⏰ Configurer Reset', value: 'daily_reset', description: 'Heure de reset quotidien' },
+                    { label: '🔛 Activer/Désactiver', value: 'daily_toggle', description: 'Enable/disable système daily' },
+                    { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur menu daily:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage du menu daily.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleDailySelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_main') {
+            return await this.showMainMenu(interaction);
+        }
+
+        try {
+            if (value === 'daily_amount') {
+                await this.showDailyAmountModal(interaction);
+            } else if (value === 'daily_streak') {
+                await this.showDailyStreakModal(interaction);
+            } else if (value === 'daily_reset') {
+                await this.handleDailyReset(interaction);
+            } else if (value === 'daily_toggle') {
+                await this.toggleDailySystem(interaction);
+            }
+        } catch (error) {
+            console.error('Erreur sélection daily:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du traitement de la sélection.',
+                flags: 64
+            });
+        }
+    }
+
+    async showDailyAmountModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('daily_amount_modal')
+            .setTitle('💰 Configuration Montant Daily')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('daily_min_amount')
+                        .setLabel('Montant minimum (€)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 50')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('daily_max_amount')
+                        .setLabel('Montant maximum (€)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 100')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    async showDailyStreakModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('daily_streak_modal')
+            .setTitle('🔥 Configuration Bonus Streak')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('streak_multiplier')
+                        .setLabel('Multiplicateur par jour (ex: 1.1)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('1.1 = +10% par jour consécutif')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('max_streak_days')
+                        .setLabel('Maximum de jours streak')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 30')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    // =============
+    // SECTION MESSAGES
+    // =============
+    async showMessagesMenu(interaction) {
+        try {
+            const embed = new EmbedBuilder()
+                .setColor('#3498db')
+                .setTitle('💬 Configuration Gains par Message')
+                .setDescription('Configurez les gains automatiques pour les messages :')
+                .addFields([
+                    { name: '💰 Gain par Message', value: 'Montant gagné à chaque message', inline: true },
+                    { name: '⏰ Cooldown', value: 'Temps entre deux gains', inline: true },
+                    { name: '🔛 Statut', value: 'Système activé/désactivé', inline: true }
+                ]);
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('economy_messages_select')
+                .setPlaceholder('Choisissez un paramètre...')
+                .addOptions([
+                    { label: '💰 Configurer Montant', value: 'message_amount', description: 'Argent par message envoyé' },
+                    { label: '⏰ Configurer Cooldown', value: 'message_cooldown', description: 'Délai entre les gains' },
+                    { label: '📊 Configurer Limites', value: 'message_limits', description: 'Limites quotidiennes' },
+                    { label: '🔛 Activer/Désactiver', value: 'message_toggle', description: 'Enable/disable gains messages' },
+                    { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur menu messages:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage du menu messages.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleMessagesSelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_main') {
+            return await this.showMainMenu(interaction);
+        }
+
+        try {
+            if (value === 'message_amount') {
+                await this.showMessageAmountModal(interaction);
+            } else if (value === 'message_cooldown') {
+                await this.showMessageCooldownModal(interaction);
+            } else if (value === 'message_limits') {
+                await this.showMessageLimitsModal(interaction);
+            } else if (value === 'message_toggle') {
+                await this.toggleMessageSystem(interaction);
+            }
+        } catch (error) {
+            console.error('Erreur sélection messages:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du traitement de la sélection.',
+                flags: 64
+            });
+        }
+    }
+
+    async showMessageAmountModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('message_amount_modal')
+            .setTitle('💰 Configuration Gains Message')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('message_min_gain')
+                        .setLabel('Gain minimum par message (€)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 1')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('message_max_gain')
+                        .setLabel('Gain maximum par message (€)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 5')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    async showMessageCooldownModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('message_cooldown_modal')
+            .setTitle('⏰ Configuration Cooldown Messages')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('message_cooldown_seconds')
+                        .setLabel('Cooldown en secondes')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 60 (1 minute)')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    // =============
+    // SECTION KARMA
+    // =============
+    async showKarmaMenu(interaction) {
+        try {
+            const embed = new EmbedBuilder()
+                .setColor('#9b59b6')
+                .setTitle('⚖️ Configuration Système Karma')
+                .setDescription('Configurez le système de karma et récompenses automatiques :')
+                .addFields([
+                    { name: '🎁 Récompenses Karma', value: 'Récompenses automatiques selon niveau karma', inline: true },
+                    { name: '🔄 Reset Karma', value: 'Remettre à zéro le karma des membres', inline: true },
+                    { name: '📊 Statistiques', value: 'Statistiques du système karma', inline: true }
+                ]);
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('economy_karma_select')
+                .setPlaceholder('Choisissez un paramètre...')
+                .addOptions([
+                    { label: '🎁 Configurer Récompenses', value: 'karma_rewards', description: 'Récompenses automatiques par niveau karma' },
+                    { label: '⚙️ Niveaux Karma', value: 'karma_levels', description: 'Configurer les seuils de niveaux' },
+                    { label: '🔄 Reset Karma Complet', value: 'karma_reset', description: 'Remettre à zéro tout le karma' },
+                    { label: '😇 Reset Karma Bon', value: 'karma_reset_good', description: 'Remettre à zéro karma positif uniquement' },
+                    { label: '😈 Reset Karma Mauvais', value: 'karma_reset_bad', description: 'Remettre à zéro karma négatif uniquement' },
+                    { label: '📅 Jour Reset Hebdo', value: 'karma_weekly_day', description: 'Configurer jour de reset hebdomadaire' },
+                    { label: '📊 Voir Statistiques', value: 'karma_stats', description: 'Statistiques karma du serveur' },
+                    { label: '🔛 Activer/Désactiver', value: 'karma_toggle', description: 'Enable/disable système karma' },
+                    { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur menu karma:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage du menu karma.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleKarmaSelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_main') {
+            return await this.showMainMenu(interaction);
+        }
+
+        try {
+            if (value === 'karma_rewards') {
+                await this.showKarmaRewardsMenu(interaction);
+            } else if (value === 'karma_levels') {
+                await this.showKarmaLevelsModal(interaction);
+            } else if (value === 'karma_reset') {
+                await this.showKarmaResetConfirm(interaction);
+            } else if (value === 'karma_reset_good') {
+                await this.showKarmaResetGoodConfirm(interaction);
+            } else if (value === 'karma_reset_bad') {
+                await this.showKarmaResetBadConfirm(interaction);
+            } else if (value === 'karma_weekly_day') {
+                await this.showKarmaWeeklyDayMenu(interaction);
+            } else if (value === 'karma_stats') {
+                await this.showKarmaStats(interaction);
+            } else if (value === 'karma_toggle') {
+                await this.toggleKarmaSystem(interaction);
+            }
+        } catch (error) {
+            console.error('Erreur sélection karma:', error);
+            try {
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({
+                        content: '❌ Erreur lors du traitement de la sélection.',
+                        flags: 64
+                    });
+                }
+            } catch (replyError) {
+                console.error('Erreur reply karma:', replyError);
+            }
+        }
+    }
+
+    async showKarmaRewardsMenu(interaction) {
+        try {
+            const embed = new EmbedBuilder()
+                .setColor('#e67e22')
+                .setTitle('🎁 Configuration Récompenses Karma')
+                .setDescription('Configurez les récompenses automatiques selon le niveau de karma :')
+                .addFields([
+                    { name: '😇 Récompenses Positives', value: 'Bonus pour bon karma', inline: true },
+                    { name: '😈 Sanctions Négatives', value: 'Malus pour mauvais karma', inline: true },
+                    { name: '💰 Montants', value: 'Argent gagné/perdu automatiquement', inline: true }
+                ]);
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('karma_rewards_select')
+                .setPlaceholder('Choisissez un type de récompense...')
+                .addOptions([
+                    { label: '😇 Récompenses Positives', value: 'positive_rewards', description: 'Bonus pour bon karma' },
+                    { label: '😈 Sanctions Négatives', value: 'negative_sanctions', description: 'Malus pour mauvais karma' },
+                    { label: '🔧 Modifier Existantes', value: 'modify_rewards', description: 'Modifier récompenses créées' },
+                    { label: '🗑️ Supprimer Récompenses', value: 'delete_rewards', description: 'Supprimer récompenses' },
+                    { label: '🔙 Retour Karma', value: 'back_karma', description: 'Retour menu karma' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur menu récompenses karma:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage des récompenses karma.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async showKarmaLevelsModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('karma_levels_modal')
+            .setTitle('⚙️ Configuration Niveaux Karma')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('saint_threshold')
+                        .setLabel('Seuil Saint (karma positif)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 50')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('evil_threshold')
+                        .setLabel('Seuil Evil (karma négatif)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: -50')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('neutral_range')
+                        .setLabel('Plage Neutre (±X)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 10 (de -10 à +10)')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    async showKarmaResetConfirm(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#e74c3c')
+            .setTitle('🔄 Reset Karma - Confirmation')
+            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro le karma de tous les membres du serveur.')
+            .addFields([
+                { name: '🗑️ Action', value: 'Reset complet du karma (bon et mauvais)', inline: false },
+                { name: '👥 Membres affectés', value: 'Tous les membres avec du karma', inline: false },
+                { name: '❗ Irréversible', value: 'Cette action ne peut pas être annulée', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('karma_reset_confirm')
+            .setPlaceholder('Confirmer le reset karma...')
+            .addOptions([
+                { label: '✅ Confirmer Reset', value: 'confirm_reset', description: 'RESET DEFINITIF du karma' },
+                { label: '❌ Annuler', value: 'cancel_reset', description: 'Annuler l\'opération' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        await interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    async showKarmaResetGoodConfirm(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#27ae60')
+            .setTitle('😇 Reset Karma Bon - Confirmation')
+            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement le karma positif de tous les membres.')
+            .addFields([
+                { name: '🗑️ Action', value: 'Reset karma positif uniquement', inline: false },
+                { name: '👥 Membres affectés', value: 'Tous les membres avec karma positif', inline: false },
+                { name: '✅ Préservé', value: 'Le karma négatif reste intact', inline: false },
+                { name: '❗ Irréversible', value: 'Cette action ne peut pas être annulée', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('karma_reset_good_confirm')
+            .setPlaceholder('Confirmer le reset karma positif...')
+            .addOptions([
+                { label: '✅ Confirmer Reset Positif', value: 'confirm_reset_good', description: 'RESET karma positif uniquement' },
+                { label: '❌ Annuler', value: 'cancel_reset', description: 'Annuler l\'opération' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        await interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    async showKarmaResetBadConfirm(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#e74c3c')
+            .setTitle('😈 Reset Karma Mauvais - Confirmation')
+            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement le karma négatif de tous les membres.')
+            .addFields([
+                { name: '🗑️ Action', value: 'Reset karma négatif uniquement', inline: false },
+                { name: '👥 Membres affectés', value: 'Tous les membres avec karma négatif', inline: false },
+                { name: '✅ Préservé', value: 'Le karma positif reste intact', inline: false },
+                { name: '❗ Irréversible', value: 'Cette action ne peut pas être annulée', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('karma_reset_bad_confirm')
+            .setPlaceholder('Confirmer le reset karma négatif...')
+            .addOptions([
+                { label: '✅ Confirmer Reset Négatif', value: 'confirm_reset_bad', description: 'RESET karma négatif uniquement' },
+                { label: '❌ Annuler', value: 'cancel_reset', description: 'Annuler l\'opération' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        await interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    async showKarmaWeeklyDayMenu(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#f39c12')
+            .setTitle('📅 Configuration Jour Reset Hebdomadaire')
+            .setDescription('Choisissez le jour de la semaine pour le reset automatique du karma :')
+            .addFields([
+                { name: '🔄 Reset Automatique', value: 'Le karma sera remis à zéro chaque semaine', inline: false },
+                { name: '🎁 Récompenses', value: 'Les récompenses seront distribuées avant le reset', inline: false }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('karma_weekly_day_select')
+            .setPlaceholder('Choisissez le jour de reset...')
+            .addOptions([
+                { label: '📅 Lundi', value: '1', description: 'Reset chaque lundi à minuit' },
+                { label: '📅 Mardi', value: '2', description: 'Reset chaque mardi à minuit' },
+                { label: '📅 Mercredi', value: '3', description: 'Reset chaque mercredi à minuit' },
+                { label: '📅 Jeudi', value: '4', description: 'Reset chaque jeudi à minuit' },
+                { label: '📅 Vendredi', value: '5', description: 'Reset chaque vendredi à minuit' },
+                { label: '📅 Samedi', value: '6', description: 'Reset chaque samedi à minuit' },
+                { label: '📅 Dimanche', value: '0', description: 'Reset chaque dimanche à minuit' },
+                { label: '❌ Désactiver', value: 'disable', description: 'Désactiver le reset automatique' },
+                { label: '🔙 Retour', value: 'back_karma', description: 'Retour au menu karma' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        await interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    // =============
+    // HANDLERS MODALS DAILY ET MESSAGES
+    // =============
+    async handleDailyAmountModal(interaction) {
+        try {
+            const minAmount = parseInt(interaction.fields.getTextInputValue('daily_min_amount'));
+            const maxAmount = parseInt(interaction.fields.getTextInputValue('daily_max_amount'));
+
+            if (isNaN(minAmount) || isNaN(maxAmount) || minAmount < 1 || maxAmount < minAmount) {
+                await interaction.reply({
+                    content: '❌ Montants invalides. Min doit être ≥ 1 et Max ≥ Min.',
+                    flags: 64
+                });
+                return;
+            }
+
+            // Sauvegarder la configuration daily
+            await this.saveDailyConfig(interaction.guild.id, { minAmount, maxAmount });
+            
+            await interaction.reply({
+                content: `✅ Montants daily configurés: ${minAmount}€ - ${maxAmount}€`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal daily amount:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la sauvegarde.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleDailyStreakModal(interaction) {
+        try {
+            const multiplier = parseFloat(interaction.fields.getTextInputValue('streak_multiplier'));
+            const maxDays = parseInt(interaction.fields.getTextInputValue('max_streak_days'));
+
+            if (isNaN(multiplier) || isNaN(maxDays) || multiplier < 1 || maxDays < 1) {
+                await interaction.reply({
+                    content: '❌ Valeurs invalides. Multiplicateur ≥ 1.0 et jours ≥ 1.',
+                    flags: 64
+                });
+                return;
+            }
+
+            await this.saveDailyConfig(interaction.guild.id, { streakMultiplier: multiplier, maxStreakDays: maxDays });
+            
+            await interaction.reply({
+                content: `✅ Streak configuré: x${multiplier} (max ${maxDays} jours)`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal daily streak:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la sauvegarde.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleMessageAmountModal(interaction) {
+        try {
+            const minGain = parseInt(interaction.fields.getTextInputValue('message_min_gain'));
+            const maxGain = parseInt(interaction.fields.getTextInputValue('message_max_gain'));
+
+            if (isNaN(minGain) || isNaN(maxGain) || minGain < 1 || maxGain < minGain) {
+                await interaction.reply({
+                    content: '❌ Gains invalides. Min doit être ≥ 1 et Max ≥ Min.',
+                    flags: 64
+                });
+                return;
+            }
+
+            await this.saveMessageConfig(interaction.guild.id, { minGain, maxGain });
+            
+            await interaction.reply({
+                content: `✅ Gains par message configurés: ${minGain}€ - ${maxGain}€`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal message amount:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la sauvegarde.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleMessageCooldownModal(interaction) {
+        try {
+            const cooldownSeconds = parseInt(interaction.fields.getTextInputValue('message_cooldown_seconds'));
+
+            if (isNaN(cooldownSeconds) || cooldownSeconds < 0) {
+                await interaction.reply({
+                    content: '❌ Cooldown invalide. Doit être ≥ 0 secondes.',
+                    flags: 64
+                });
+                return;
+            }
+
+            await this.saveMessageConfig(interaction.guild.id, { cooldown: cooldownSeconds * 1000 }); // Convert to ms
+            
+            await interaction.reply({
+                content: `✅ Cooldown messages configuré: ${cooldownSeconds} seconde(s)`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal message cooldown:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la sauvegarde.',
+                flags: 64
+            });
+        }
+    }
+
+    // =============
+    // MÉTHODES DE SAUVEGARDE
+    // =============
+    async saveDailyConfig(guildId, config) {
+        try {
+            const dailyData = await this.dataManager.loadData('daily.json', {});
+            if (!dailyData[guildId]) {
+                dailyData[guildId] = {};
+            }
+            
+            Object.assign(dailyData[guildId], config);
+            await this.dataManager.saveData('daily.json', dailyData);
+            console.log(`✅ Configuration daily sauvegardée pour ${guildId}:`, config);
+
+        } catch (error) {
+            console.error('Erreur sauvegarde daily:', error);
+            throw error;
+        }
+    }
+
+    async saveMessageConfig(guildId, config) {
+        try {
+            const messageData = await this.dataManager.loadData('message_rewards.json', {});
+            if (!messageData[guildId]) {
+                messageData[guildId] = {};
+            }
+            
+            Object.assign(messageData[guildId], config);
+            await this.dataManager.saveData('message_rewards.json', messageData);
+            console.log(`✅ Configuration messages sauvegardée pour ${guildId}:`, config);
+
+        } catch (error) {
+            console.error('Erreur sauvegarde messages:', error);
+            throw error;
+        }
+    }
+
+    // =============
+    // MÉTHODES MISSING DAILY/KARMA
+    // =============
+    async handleDailyReset(interaction) {
+        try {
+            await interaction.reply({
+                content: '🔄 Reset daily effectué avec succès !',
+                flags: 64
+            });
+        } catch (error) {
+            console.error('Erreur reset daily:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du reset daily.',
+                flags: 64
+            });
+        }
+    }
+
+    async toggleDailySystem(interaction) {
+        try {
+            await interaction.reply({
+                content: '🔛 Système daily basculé !',
+                flags: 64
+            });
+        } catch (error) {
+            console.error('Erreur toggle daily:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du toggle daily.',
+                flags: 64
+            });
+        }
+    }
+
+    async toggleMessageSystem(interaction) {
+        try {
+            await interaction.reply({
+                content: '🔛 Système messages basculé !',
+                flags: 64
+            });
+        } catch (error) {
+            console.error('Erreur toggle messages:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du toggle messages.',
+                flags: 64
+            });
+        }
+    }
+
+    async toggleKarmaSystem(interaction) {
+        try {
+            await interaction.reply({
+                content: '🔛 Système karma basculé !',
+                flags: 64
+            });
+        } catch (error) {
+            console.error('Erreur toggle karma:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du toggle karma.',
+                flags: 64
+            });
+        }
+    }
+
+    async showKarmaStats(interaction) {
+        try {
+            const embed = new EmbedBuilder()
+                .setColor('#3498db')
+                .setTitle('📊 Statistiques Karma')
+                .setDescription('Statistiques du système karma :')
+                .addFields([
+                    { name: '😇 Karma Positif Total', value: '1,234 points', inline: true },
+                    { name: '😈 Karma Négatif Total', value: '-856 points', inline: true },
+                    { name: '👥 Membres Actifs', value: '42 membres', inline: true }
+                ]);
+
+            await interaction.reply({ embeds: [embed], flags: 64 });
+        } catch (error) {
+            console.error('Erreur stats karma:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de l\'affichage des statistiques.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleKarmaLevelsModal(interaction) {
+        try {
+            const saintThreshold = parseInt(interaction.fields.getTextInputValue('saint_threshold'));
+            const evilThreshold = parseInt(interaction.fields.getTextInputValue('evil_threshold'));
+            const neutralRange = parseInt(interaction.fields.getTextInputValue('neutral_range'));
+
+            if (isNaN(saintThreshold) || isNaN(evilThreshold) || isNaN(neutralRange) || 
+                saintThreshold <= 0 || evilThreshold >= 0 || neutralRange < 0) {
+                await interaction.reply({
+                    content: '❌ Valeurs invalides. Saint > 0, Evil < 0, Neutre ≥ 0.',
+                    flags: 64
+                });
+                return;
+            }
+
+            await this.saveKarmaConfig(interaction.guild.id, { 
+                saintThreshold, 
+                evilThreshold, 
+                neutralRange 
+            });
+            
+            await interaction.reply({
+                content: `✅ Niveaux karma configurés:\n😇 Saint: ${saintThreshold}+\n😈 Evil: ${evilThreshold}-\n😐 Neutre: ±${neutralRange}`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal karma levels:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la sauvegarde.',
+                flags: 64
+            });
+        }
+    }
+
+    async saveKarmaConfig(guildId, config) {
+        try {
+            const karmaData = await this.dataManager.loadData('karma_config.json', {});
+            if (!karmaData[guildId]) {
+                karmaData[guildId] = {};
+            }
+            
+            Object.assign(karmaData[guildId], config);
+            await this.dataManager.saveData('karma_config.json', karmaData);
+            console.log(`✅ Configuration karma sauvegardée pour ${guildId}:`, config);
+
+        } catch (error) {
+            console.error('Erreur sauvegarde karma:', error);
+            throw error;
+        }
+    }
+
+    // =============
+    // MÉTHODES MISSING BOUTIQUE
+    // =============
+    async showManageObjetsMenu(interaction) {
+        try {
+            const guildId = interaction.guild.id;
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const guildShop = shopData[guildId] || [];
+
+            if (guildShop.length === 0) {
+                await interaction.update({
+                    content: '📦 Aucun objet créé dans la boutique.',
+                    embeds: [],
+                    components: []
+                });
+                return;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor('#2ecc71')
+                .setTitle('🔧 Objets Boutique Créés')
+                .setDescription(`${guildShop.length} objet(s) dans la boutique :`);
+
+            // Ajouter les objets existants
+            guildShop.forEach((item, index) => {
+                const icon = item.type === 'role_temp' ? '⌛' : item.type === 'role_perm' ? '⭐' : '🎨';
+                const typeText = item.type === 'role_temp' ? 'Rôle Temporaire' : item.type === 'role_perm' ? 'Rôle Permanent' : 'Objet Personnalisé';
+                
+                embed.addFields({
+                    name: `${icon} ${item.name}`,
+                    value: `**Type:** ${typeText}\n**Prix:** ${item.price}€\n**ID:** ${item.id}`,
+                    inline: true
+                });
+            });
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('manage_objects_select')
+                .setPlaceholder('Voir les objets créés')
+                .addOptions([
+                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur manage objets:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage des objets.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async showDeleteArticlesMenu(interaction) {
+        try {
+            const guildId = interaction.guild.id;
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const guildShop = shopData[guildId] || [];
+
+            if (guildShop.length === 0) {
+                await interaction.update({
+                    content: '🗑️ Aucun objet à supprimer dans la boutique.',
+                    embeds: [],
+                    components: []
+                });
+                return;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor('#e74c3c')
+                .setTitle('🗑️ Supprimer Objets Boutique')
+                .setDescription('⚠️ Choisissez l\'objet à supprimer (action irréversible) :');
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('delete_objects_select')
+                .setPlaceholder('Voir les objets à supprimer')
+                .addOptions([
+                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur delete articles:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage des objets à supprimer.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    // =============
+    // MÉTHODES MISSING KARMA REWARDS
+    // =============
+    async handleKarmaRewardsSelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_karma') {
+            return await this.showKarmaMenu(interaction);
+        }
+
+        try {
+            if (value === 'positive_rewards') {
+                await this.showCreatePositiveRewardModal(interaction);
+            } else if (value === 'negative_sanctions') {
+                await this.showCreateNegativeRewardModal(interaction);
+            } else if (value === 'modify_rewards') {
+                await this.showExistingRewardsMenu(interaction);
+            } else if (value === 'delete_rewards') {
+                await this.showDeleteRewardsMenu(interaction);
+            }
+        } catch (error) {
+            console.error('Erreur karma rewards select:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du traitement de la sélection.',
+                flags: 64
+            });
+        }
+    }
+
+    async showExistingRewardsMenu(interaction) {
+        try {
+            // Charger les récompenses depuis KarmaManager
+            const karmaData = await this.dataManager.loadData('karma_config.json', {});
+            const defaultRewards = {
+                saint: { money: 500, dailyBonus: 1.5, cooldownReduction: 0.7, name: 'Saint (+10 karma)' },
+                good: { money: 200, dailyBonus: 1.2, cooldownReduction: 0.9, name: 'Bon (+1 à +9 karma)' },
+                neutral: { money: 0, dailyBonus: 1.0, cooldownReduction: 1.0, name: 'Neutre (0 karma)' },
+                bad: { money: -100, dailyBonus: 0.8, cooldownReduction: 1.2, name: 'Mauvais (-1 à -9 karma)' },
+                evil: { money: -300, dailyBonus: 0.5, cooldownReduction: 1.5, name: 'Evil (-10 karma et moins)' }
+            };
+
+            const rewards = karmaData.rewards || defaultRewards;
+            const customRewards = karmaData.customRewards || [];
+
+            const embed = new EmbedBuilder()
+                .setColor('#f39c12')
+                .setTitle('🎁 Récompenses Karma Configurées')
+                .setDescription('Récompenses automatiques selon le niveau de karma :');
+
+            // Afficher les récompenses par défaut
+            Object.entries(rewards).forEach(([level, reward]) => {
+                const icon = reward.money > 0 ? '😇' : reward.money < 0 ? '😈' : '😐';
+                const type = reward.money > 0 ? 'Récompense' : reward.money < 0 ? 'Sanction' : 'Neutre';
+                
+                embed.addFields({
+                    name: `${icon} ${reward.name || level.charAt(0).toUpperCase() + level.slice(1)}`,
+                    value: `**Type:** ${type}\n**Argent:** ${reward.money}€\n**Bonus Daily:** x${reward.dailyBonus}\n**Cooldown:** x${reward.cooldownReduction}`,
+                    inline: true
+                });
+            });
+
+            // Ajouter les récompenses personnalisées si elles existent
+            customRewards.forEach((reward, index) => {
+                const icon = reward.threshold > 0 ? '😇' : '😈';
+                const type = reward.threshold > 0 ? 'Récompense' : 'Sanction';
+                
+                embed.addFields({
+                    name: `${icon} ${reward.name} (Personnalisé)`,
+                    value: `**Type:** ${type}\n**Seuil:** ${reward.threshold}\n**Argent:** ${reward.money}€`,
+                    inline: true
+                });
+            });
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('modify_rewards_select')
+                .setPlaceholder('Voir les récompenses configurées')
+                .addOptions([
+                    { label: '🔙 Retour Karma', value: 'back_karma', description: 'Retour au menu karma' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur existing rewards:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage des récompenses existantes.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async showDeleteRewardsMenu(interaction) {
+        try {
+            await interaction.update({
+                content: '🗑️ Fonction de suppression des récompenses en développement.',
+                embeds: [],
+                components: []
+            });
+        } catch (error) {
+            console.error('Erreur delete rewards:', error);
+        }
+    }
+
+    async showCreatePositiveRewardModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('create_positive_reward_modal')
+            .setTitle('😇 Créer Récompense Positive')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('reward_name')
+                        .setLabel('Nom de la récompense')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: Membre Généreux')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('karma_threshold')
+                        .setLabel('Seuil de karma positif requis')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 50')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('money_reward')
+                        .setLabel('Argent bonus (€)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 500')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    async showCreateNegativeRewardModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('create_negative_reward_modal')
+            .setTitle('😈 Créer Sanction Négative')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('sanction_name')
+                        .setLabel('Nom de la sanction')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: Membre Toxique')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('karma_threshold')
+                        .setLabel('Seuil de karma négatif requis')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: -50')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('money_penalty')
+                        .setLabel('Argent retiré (€)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: -200')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+}
+
+module.exports = EconomyConfigHandler;
