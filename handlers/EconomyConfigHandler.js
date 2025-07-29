@@ -601,7 +601,7 @@ class EconomyConfigHandler {
             const guildId = interaction.guild.id;
             const guildItems = shopData[guildId] || [];
 
-            const customObjects = guildItems.filter(item => item.type === 'custom');
+            const customObjects = guildItems.filter(item => item.type === 'custom_object');
 
             if (customObjects.length === 0) {
                 await interaction.update({
@@ -679,7 +679,7 @@ class EconomyConfigHandler {
                         let typeIcon = '❓';
                         let typeName = 'Inconnu';
                         
-                        if (item.type === 'custom') {
+                        if (item.type === 'custom_object') {
                             typeIcon = '🎨';
                             typeName = 'Objet personnalisé';
                         } else if (item.type === 'temporary_role') {
@@ -705,7 +705,7 @@ class EconomyConfigHandler {
                 .addOptions(
                     guildItems.slice(0, 20).map(item => {
                         let label = item.name || `Rôle ${item.roleId}`;
-                        let typeIcon = item.type === 'customq' ? '🎨' : 
+                        let typeIcon = item.type === 'custom_object' ? '🎨' : 
                                      item.type === 'temporary_role' ? '⌛' : '⭐';
                         
                         return {
@@ -1560,6 +1560,57 @@ class EconomyConfigHandler {
     // =============
     // MÉTHODES MISSING BOUTIQUE
     // =============
+    async showManageObjetsMenu(interaction) {
+        try {
+            const guildId = interaction.guild.id;
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const guildShop = shopData[guildId] || [];
+
+            if (guildShop.length === 0) {
+                await interaction.update({
+                    content: '📦 Aucun objet créé dans la boutique.',
+                    embeds: [],
+                    components: []
+                });
+                return;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor('#2ecc71')
+                .setTitle('🔧 Objets Boutique Créés')
+                .setDescription(`${guildShop.length} objet(s) dans la boutique :`);
+
+            // Ajouter les objets existants
+            guildShop.forEach((item, index) => {
+                const icon = item.type === 'role_temp' ? '⌛' : item.type === 'role_perm' ? '⭐' : '🎨';
+                const typeText = item.type === 'role_temp' ? 'Rôle Temporaire' : item.type === 'role_perm' ? 'Rôle Permanent' : 'Objet Personnalisé';
+                
+                embed.addFields({
+                    name: `${icon} ${item.name}`,
+                    value: `**Type:** ${typeText}\n**Prix:** ${item.price}€\n**ID:** ${item.id}`,
+                    inline: true
+                });
+            });
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('manage_objects_select')
+                .setPlaceholder('Voir les objets créés')
+                .addOptions([
+                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur manage objets:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage des objets.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
 
     async showDeleteArticlesMenu(interaction) {
         try {
