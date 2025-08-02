@@ -15,7 +15,9 @@ module.exports = {
         const userData = economyData[userKey] || { balance: 0, goodKarma: 0, badKarma: 0, inventory: [] };
         
         // Filtrer les objets pour ne montrer que les objets personnalisés
-        const customObjects = userData.inventory ? userData.inventory.filter(item => item.type === 'custom_object') : [];
+        const customObjects = userData.inventory ? userData.inventory.filter(item => 
+            item.type === 'custom_object' || item.type === 'custom' || !item.type
+        ) : [];
         
         // Vérifier si l'utilisateur a des objets personnalisés
         if (customObjects.length === 0) {
@@ -118,8 +120,10 @@ module.exports = {
 
 function getItemEmoji(type) {
     switch(type) {
-        case 'custom_object': return '🎨';
-        case 'temporary_role': return '⌛';
+        case 'custom_object':
+        case 'custom': return '🎨';
+        case 'temporary_role':
+        case 'temp_role': return '⌛';
         case 'permanent_role': return '⭐';
         default: return '📦';
     }

@@ -2524,7 +2524,7 @@ async function handleShopPurchase(interaction, dataManager) {
             from: 'shop'
         };
 
-        if (item.type === 'temporary_role' && item.roleId && item.duration) {
+        if ((item.type === 'temporary_role' || item.type === 'temp_role') && item.roleId && item.duration) {
             inventoryItem.roleId = item.roleId;
             inventoryItem.duration = item.duration;
             inventoryItem.expiresAt = new Date(Date.now() + (item.duration * 24 * 60 * 60 * 1000)).toISOString();
@@ -2536,7 +2536,7 @@ async function handleShopPurchase(interaction, dataManager) {
         await dataManager.updateUser(userId, guildId, userData);
 
         let effectMessage = '';
-        if (item.type === 'temporary_role' && item.roleId) {
+        if ((item.type === 'temporary_role' || item.type === 'temp_role') && item.roleId) {
             try {
                 const role = await interaction.guild.roles.fetch(item.roleId);
                 if (role) {
@@ -2572,7 +2572,7 @@ async function handleShopPurchase(interaction, dataManager) {
             } catch (error) {
                 effectMessage = '\n⚠️ Erreur lors de l\'attribution du rôle.';
             }
-        } else if (item.type === 'custom_object') {
+        } else if (item.type === 'custom_object' || item.type === 'custom') {
             effectMessage = '\n🎁 Objet personnalisé acheté !';
         } else {
             effectMessage = '\n📦 Objet ajouté à votre inventaire !';
