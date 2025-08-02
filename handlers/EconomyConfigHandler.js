@@ -2075,12 +2075,26 @@ class EconomyConfigHandler {
                 });
             });
 
+            const options = [
+                { label: '🔙 Retour Karma', value: 'back_karma', description: 'Retour au menu karma' }
+            ];
+
+            // Ajouter les récompenses personnalisées modifiables
+            if (customRewards.length > 0) {
+                customRewards.forEach((reward, index) => {
+                    const icon = reward.threshold > 0 ? '😇' : '😈';
+                    options.unshift({
+                        label: `✏️ ${reward.name}`,
+                        description: `Modifier "${reward.name}" (${reward.threshold > 0 ? '+' : ''}${reward.threshold} karma)`,
+                        value: `modify_${index}`
+                    });
+                });
+            }
+
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('modify_rewards_select')
-                .setPlaceholder('Voir les récompenses configurées')
-                .addOptions([
-                    { label: '🔙 Retour Karma', value: 'back_karma', description: 'Retour au menu karma' }
-                ]);
+                .setPlaceholder(customRewards.length > 0 ? 'Sélectionner une récompense à modifier...' : 'Aucune récompense modifiable')
+                .addOptions(options);
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
             await interaction.update({ embeds: [embed], components: [row] });
@@ -2097,13 +2111,270 @@ class EconomyConfigHandler {
 
     async showDeleteRewardsMenu(interaction) {
         try {
+            const karmaData = await this.dataManager.loadData('karma_config.json', {});
+            const customRewards = karmaData.customRewards || [];
+
+            if (customRewards.length === 0) {
+                await interaction.update({
+                    content: '❌ Aucune récompense personnalisée à supprimer.\n\n💡 **Astuce :** Seules les récompenses personnalisées peuvent être supprimées. Les récompenses par défaut (Saint, Bon, Neutre, Mauvais, Evil) ne peuvent pas être supprimées.',
+                    embeds: [],
+                    components: [
+                        new ActionRowBuilder().addComponents(
+                            new StringSelectMenuBuilder()
+                                .setCustomId('karma_rewards_select')
+                                .setPlaceholder('Retour au menu...')
+                                .addOptions([
+                                    { label: '🔙 Retour Récompenses', value: 'back_karma', description: 'Retour au menu récompenses karma' }
+                                ])
+                        )
+                    ]
+                });
+                return;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor('#e74c3c')
+                .setTitle('🗑️ Supprimer Récompenses Karma')
+                .setDescription(`${customRewards.length} récompense(s) personnalisée(s) trouvée(s) :`)
+                .setFooter({ text: '⚠️ Cette action est irréversible !' });
+
+            // Afficher les récompenses personnalisées
+            customRewards.forEach((reward, index) => {
+                const icon = reward.threshold > 0 ? '😇' : '😈';
+                const type = reward.threshold > 0 ? 'Récompense' : 'Sanction';
+                
+                embed.addFields({
+                    name: `${icon} ${reward.name}`,
+                    value: `**Type:** ${type}\n**Seuil:** ${reward.threshold}\n**Argent:** ${reward.money}€`,
+                    inline: true
+                });
+            });
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('delete_reward_select')
+                .setPlaceholder('Sélectionner une récompense à supprimer...')
+                .addOptions([
+                    ...customRewards.map((reward, index) => ({
+                        label: `🗑️ ${reward.name}`,
+                        description: `Supprimer "${reward.name}" (${reward.threshold > 0 ? '+' : ''}${reward.threshold} karma)`,
+                        value: index.toString()
+                    })),
+                    { label: '🔙 Retour Récompenses', value: 'back_rewards', description: 'Retour au menu récompenses karma' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur delete rewards:', error);
             await interaction.update({
-                content: '🗑️ Fonction de suppression des récompenses en développement.',
+                content: '❌ Erreur lors de l\'affichage du menu de suppression.',
                 embeds: [],
                 components: []
             });
+        }
+    }
+
+    async handleModifyRewardsSelect(interaction) {
+        try {
+            const value = interaction.values[0];
+            
+            if (value === 'back_karma') {
+                return await this.showKarmaMenu(interaction);
+            }
+
+            if (value.startsWith('modify_')) {
+                const rewardIndex = parseInt(value.replace('modify_', ''));
+                const karmaData = await this.dataManager.loadData('karma_config.json', {});
+                const customRewards = karmaData.customRewards || [];
+
+                if (rewardIndex < 0 || rewardIndex >= customRewards.length) {
+                    await interaction.update({
+                        content: '❌ Récompense non trouvée.',
+                        embeds: [],
+                        components: []
+                    });
+                    return;
+                }
+
+                const reward = customRewards[rewardIndex];
+                await this.showModifyRewardModal(interaction, reward, rewardIndex);
+            }
+
         } catch (error) {
-            console.error('Erreur delete rewards:', error);
+            console.error('Erreur modify rewards select:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de la sélection de la récompense.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async showModifyRewardModal(interaction, reward, rewardIndex) {
+        try {
+            const modal = new ModalBuilder()
+                .setCustomId(`modify_reward_modal_${rewardIndex}`)
+                .setTitle(`✏️ Modifier ${reward.name}`);
+
+            const nameInput = new TextInputBuilder()
+                .setCustomId('reward_name')
+                .setLabel('Nom de la récompense')
+                .setStyle(TextInputStyle.Short)
+                .setValue(reward.name)
+                .setRequired(true)
+                .setMaxLength(50);
+
+            const thresholdInput = new TextInputBuilder()
+                .setCustomId('reward_threshold')
+                .setLabel('Seuil de karma (ex: 10 ou -5)')
+                .setStyle(TextInputStyle.Short)
+                .setValue(reward.threshold.toString())
+                .setRequired(true)
+                .setPlaceholder('Nombre positif ou négatif');
+
+            const moneyInput = new TextInputBuilder()
+                .setCustomId('reward_money')
+                .setLabel('Montant d\'argent (€)')
+                .setStyle(TextInputStyle.Short)
+                .setValue(reward.money.toString())
+                .setRequired(true)
+                .setPlaceholder('Montant en euros (peut être négatif)');
+
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(nameInput),
+                new ActionRowBuilder().addComponents(thresholdInput),
+                new ActionRowBuilder().addComponents(moneyInput)
+            );
+
+            await interaction.showModal(modal);
+
+        } catch (error) {
+            console.error('Erreur affichage modal modification reward:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de l\'affichage du modal de modification.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleDeleteRewardSelect(interaction) {
+        try {
+            const value = interaction.values[0];
+            
+            if (value === 'back_rewards') {
+                return await this.showKarmaRewardsMenu(interaction);
+            }
+
+            const rewardIndex = parseInt(value);
+            const karmaData = await this.dataManager.loadData('karma_config.json', {});
+            const customRewards = karmaData.customRewards || [];
+
+            if (rewardIndex < 0 || rewardIndex >= customRewards.length) {
+                await interaction.update({
+                    content: '❌ Récompense non trouvée.',
+                    embeds: [],
+                    components: []
+                });
+                return;
+            }
+
+            const rewardToDelete = customRewards[rewardIndex];
+            const embed = new EmbedBuilder()
+                .setColor('#e74c3c')
+                .setTitle('⚠️ Confirmation de Suppression')
+                .setDescription(`Êtes-vous sûr de vouloir supprimer cette récompense ?`)
+                .addFields({
+                    name: `${rewardToDelete.threshold > 0 ? '😇' : '😈'} ${rewardToDelete.name}`,
+                    value: `**Seuil:** ${rewardToDelete.threshold > 0 ? '+' : ''}${rewardToDelete.threshold} karma\n**Argent:** ${rewardToDelete.money}€`,
+                    inline: false
+                })
+                .setFooter({ text: '⚠️ Cette action est irréversible !' });
+
+            const confirmMenu = new StringSelectMenuBuilder()
+                .setCustomId('confirm_delete_reward')
+                .setPlaceholder('Confirmer la suppression...')
+                .addOptions([
+                    { 
+                        label: '🗑️ Confirmer la Suppression', 
+                        value: `confirm_${rewardIndex}`, 
+                        description: `Supprimer définitivement "${rewardToDelete.name}"`,
+                        emoji: '⚠️'
+                    },
+                    { 
+                        label: '❌ Annuler', 
+                        value: 'cancel', 
+                        description: 'Retour au menu sans supprimer' 
+                    }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(confirmMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur sélection suppression reward:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de la sélection de la récompense.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleConfirmDeleteReward(interaction) {
+        try {
+            const value = interaction.values[0];
+            
+            if (value === 'cancel') {
+                return await this.showDeleteRewardsMenu(interaction);
+            }
+
+            if (value.startsWith('confirm_')) {
+                const rewardIndex = parseInt(value.replace('confirm_', ''));
+                const karmaData = await this.dataManager.loadData('karma_config.json', {});
+                const customRewards = karmaData.customRewards || [];
+
+                if (rewardIndex < 0 || rewardIndex >= customRewards.length) {
+                    await interaction.update({
+                        content: '❌ Récompense non trouvée.',
+                        embeds: [],
+                        components: []
+                    });
+                    return;
+                }
+
+                const deletedReward = customRewards[rewardIndex];
+                
+                // Supprimer la récompense
+                customRewards.splice(rewardIndex, 1);
+                karmaData.customRewards = customRewards;
+                
+                // Sauvegarder
+                await this.dataManager.saveData('karma_config.json', karmaData);
+
+                await interaction.update({
+                    content: `✅ **Récompense supprimée avec succès !**\n\n🗑️ **"${deletedReward.name}"** a été supprimée définitivement.\n**Seuil:** ${deletedReward.threshold > 0 ? '+' : ''}${deletedReward.threshold} karma\n**Argent:** ${deletedReward.money}€`,
+                    embeds: [],
+                    components: [
+                        new ActionRowBuilder().addComponents(
+                            new StringSelectMenuBuilder()
+                                .setCustomId('karma_rewards_select')
+                                .setPlaceholder('Retour au menu...')
+                                .addOptions([
+                                    { label: '🔙 Retour Récompenses', value: 'back_karma', description: 'Retour au menu récompenses karma' }
+                                ])
+                        )
+                    ]
+                });
+            }
+
+        } catch (error) {
+            console.error('Erreur confirmation suppression reward:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de la suppression de la récompense.',
+                embeds: [],
+                components: []
+            });
         }
     }
 
