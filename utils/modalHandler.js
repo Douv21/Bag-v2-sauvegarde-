@@ -17,7 +17,9 @@ class ModalHandler {
             'karma_levels_modal',
             'create_positive_reward_modal',
             'create_negative_reward_modal',
-            'custom_message_modal'
+            'custom_message_modal',
+            'edit_item_modal',
+            'modify_reward_modal'
         ]);
 
         // Liste des modals prévues mais non implémentées

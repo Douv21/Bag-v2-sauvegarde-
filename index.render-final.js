@@ -1131,6 +1131,100 @@ class RenderSolutionBot {
                         });
                         return;
                     }
+
+                    // Handler pour modal modification récompense karma
+                    if (interaction.customId.startsWith('modify_reward_modal_')) {
+                        try {
+                            const rewardIndex = parseInt(interaction.customId.replace('modify_reward_modal_', ''));
+                            const name = interaction.fields.getTextInputValue('reward_name').trim();
+                            const threshold = parseInt(interaction.fields.getTextInputValue('reward_threshold'));
+                            const money = parseInt(interaction.fields.getTextInputValue('reward_money'));
+                            
+                            // Validation
+                            if (!name || name.length > 50) {
+                                await interaction.reply({
+                                    content: '❌ Le nom doit contenir entre 1 et 50 caractères.',
+                                    flags: 64
+                                });
+                                return;
+                            }
+                            
+                            if (isNaN(threshold) || threshold === 0) {
+                                await interaction.reply({
+                                    content: '❌ Le seuil de karma doit être un nombre différent de 0.',
+                                    flags: 64
+                                });
+                                return;
+                            }
+                            
+                            if (isNaN(money)) {
+                                await interaction.reply({
+                                    content: '❌ Le montant d\'argent doit être un nombre valide.',
+                                    flags: 64
+                                });
+                                return;
+                            }
+                            
+                            // Charger les données karma
+                            const karmaData = await dataManager.loadData('karma_config.json', {});
+                            const customRewards = karmaData.customRewards || [];
+                            
+                            if (rewardIndex < 0 || rewardIndex >= customRewards.length) {
+                                await interaction.reply({
+                                    content: '❌ Récompense non trouvée.',
+                                    flags: 64
+                                });
+                                return;
+                            }
+                            
+                            // Vérifier que le seuil n'est pas déjà utilisé par une autre récompense
+                            const duplicateIndex = customRewards.findIndex((reward, index) => 
+                                index !== rewardIndex && reward.threshold === threshold
+                            );
+                            
+                            if (duplicateIndex !== -1) {
+                                await interaction.reply({
+                                    content: `❌ Le seuil ${threshold} est déjà utilisé par la récompense "${customRewards[duplicateIndex].name}".`,
+                                    flags: 64
+                                });
+                                return;
+                            }
+                            
+                            const oldReward = { ...customRewards[rewardIndex] };
+                            
+                            // Modifier la récompense
+                            customRewards[rewardIndex] = {
+                                name: name,
+                                threshold: threshold,
+                                money: money,
+                                createdAt: oldReward.createdAt || new Date().toISOString(),
+                                modifiedAt: new Date().toISOString()
+                            };
+                            
+                            karmaData.customRewards = customRewards;
+                            await dataManager.saveData('karma_config.json', karmaData);
+                            
+                            await interaction.reply({
+                                content: `✅ **Récompense modifiée avec succès !**\n\n` +
+                                         `📝 **Nom :** ${name}\n` +
+                                         `📊 **Seuil :** ${threshold > 0 ? '+' : ''}${threshold} karma\n` +
+                                         `💰 **Argent :** ${money}€\n\n` +
+                                         `**Anciennes valeurs :**\n` +
+                                         `• Nom : ${oldReward.name}\n` +
+                                         `• Seuil : ${oldReward.threshold > 0 ? '+' : ''}${oldReward.threshold} karma\n` +
+                                         `• Argent : ${oldReward.money}€`,
+                                flags: 64
+                            });
+                            
+                        } catch (error) {
+                            console.error('Erreur modification récompense karma:', error);
+                            await interaction.reply({
+                                content: '❌ Erreur lors de la modification de la récompense.',
+                                flags: 64
+                            });
+                        }
+                        return;
+                    }
                     
                     if (interaction.customId.startsWith('edit_item_modal_')) {
                         const itemId = interaction.customId.replace('edit_item_modal_', '');
@@ -1772,7 +1866,8 @@ class RenderSolutionBot {
                     return;
                 }
 
-                if (customId === 'manage_objects_select' || customId === 'delete_objects_select' || customId === 'modify_rewards_select') {
+                if (customId === 'manage_objects_select' || customId === 'delete_objects_select' || customId === 'modify_rewards_select' || 
+                    customId === 'delete_reward_select' || customId === 'confirm_delete_reward') {
                     console.log('🎯 Sélection boutique/karma navigation');
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
                     const economyHandler = new EconomyConfigHandler(dataManager);
@@ -1787,6 +1882,15 @@ class RenderSolutionBot {
                     } else if (customId === 'manage_objects_select') {
                         // Gérer la modification d'un objet spécifique
                         await economyHandler.handleObjetModification(interaction);
+                    } else if (customId === 'modify_rewards_select') {
+                        // Gérer la modification des récompenses karma
+                        await economyHandler.handleModifyRewardsSelect(interaction);
+                    } else if (customId === 'delete_reward_select') {
+                        // Gérer la sélection de récompense à supprimer
+                        await economyHandler.handleDeleteRewardSelect(interaction);
+                    } else if (customId === 'confirm_delete_reward') {
+                        // Gérer la confirmation de suppression de récompense
+                        await economyHandler.handleConfirmDeleteReward(interaction);
                     }
                     return;
                 }
