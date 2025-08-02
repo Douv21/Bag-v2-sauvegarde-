@@ -91,12 +91,22 @@ async function handleObjectInteraction(interaction, dataManager) {
             if (!obj) return await interaction.update({ content: '❌ Objet introuvable ou expiré.', components: [], embeds: [] });
 
             // Remove from user's inventory by ID
+            if (!economyData[userKey]) {
+                economyData[userKey] = { balance: 0, goodKarma: 0, badKarma: 0, inventory: [] };
+            }
+            if (!economyData[userKey].inventory) {
+                economyData[userKey].inventory = [];
+            }
             economyData[userKey].inventory = userData.inventory.filter(item => item.id.toString() !== objectId);
 
             // Add to target's inventory
             const targetKey = `${targetId}_${guildId}`;
             if (!economyData[targetKey]) {
                 economyData[targetKey] = { balance: 0, goodKarma: 0, badKarma: 0, inventory: [] };
+            }
+            // Ensure inventory exists even if the user data was created before this property
+            if (!economyData[targetKey].inventory) {
+                economyData[targetKey].inventory = [];
             }
             economyData[targetKey].inventory.push(obj);
 
@@ -115,6 +125,12 @@ async function handleObjectInteraction(interaction, dataManager) {
             if (!obj) return await interaction.update({ content: '❌ Objet introuvable ou expiré.', components: [], embeds: [] });
 
             // Remove from user's inventory by ID
+            if (!economyData[userKey]) {
+                economyData[userKey] = { balance: 0, goodKarma: 0, badKarma: 0, inventory: [] };
+            }
+            if (!economyData[userKey].inventory) {
+                economyData[userKey].inventory = [];
+            }
             economyData[userKey].inventory = userData.inventory.filter(item => item.id.toString() !== objectId);
             await dataManager.saveData('economy.json', economyData);
 
