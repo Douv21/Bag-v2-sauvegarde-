@@ -36,7 +36,7 @@ module.exports = {
                 {
                     name: '📦 Vos Objets Personnalisés',
                     value: customObjects.map((item, index) => {
-                        const emoji = this.getItemEmoji(item.type);
+                        const emoji = getItemEmoji(item.type);
                         return `${emoji} **${item.name}** ${item.description ? `- ${item.description}` : ''}`;
                     }).join('\n') || 'Aucun objet',
                     inline: false
@@ -56,7 +56,7 @@ module.exports = {
                     label: item.name,
                     value: item.id.toString(), // Utiliser l'ID unique de l'objet
                     description: item.description || 'Objet personnalisé',
-                    emoji: this.getItemEmoji(item.type)
+                    emoji: getItemEmoji(item.type)
                 }))
             );
         
@@ -92,7 +92,7 @@ module.exports = {
                 .setFooter({ text: 'Interaction d\'objet personnalisé' });
             
             // Envoyer dans le canal actuel
-            await interaction.reply({
+            await interaction.followUp({
                 embeds: [embed],
                 content: `<@${targetMember.id}> vous avez été mentionné !`
             });
@@ -101,19 +101,26 @@ module.exports = {
             
         } catch (error) {
             console.error('❌ Erreur interaction personnalisée:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de l\'envoi de l\'interaction personnalisée.',
-                flags: 64
-            });
-        }
-    },
-
-    getItemEmoji(type) {
-        switch(type) {
-            case 'custom': return '🎨';
-            case 'temp_role': return '⌛';
-            case 'perm_role': return '⭐';
-            default: return '📦';
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Erreur lors de l\'envoi de l\'interaction personnalisée.',
+                    flags: 64
+                });
+            } else {
+                await interaction.followUp({
+                    content: '❌ Erreur lors de l\'envoi de l\'interaction personnalisée.',
+                    flags: 64
+                });
+            }
         }
     }
 };
+
+function getItemEmoji(type) {
+    switch(type) {
+        case 'custom': return '🎨';
+        case 'temp_role': return '⌛';
+        case 'perm_role': return '⭐';
+        default: return '📦';
+    }
+}

@@ -127,17 +127,22 @@ async function handleObjectInteraction(interaction, dataManager) {
             const members = (await interaction.guild.members.fetch()).filter(m => !m.user.bot);
             if (members.size === 0) return await interaction.reply({ content: '❌ Aucun membre à cibler.', ephemeral: true });
 
-            const userSelect = new StringSelectMenuBuilder()
-                .setCustomId(`custom_user_select_${objectId}`)
-                .setPlaceholder('Choisissez un utilisateur à cibler');
-
             // Temporary storage for the message content
             interaction.client.tempStore = interaction.client.tempStore || {};
             interaction.client.tempStore[`${userId}_${objectId}`] = message;
 
+            const userSelect = new StringSelectMenuBuilder()
+                .setCustomId(`custom_user_select_${objectId}`)
+                .setPlaceholder('Choisissez un utilisateur à cibler')
+                .addOptions(members.map(m => ({ 
+                    label: m.user.username, 
+                    value: m.id,
+                    description: m.user.tag
+                })).slice(0, 25));
+
             return await interaction.reply({
                 content: 'À qui voulez-vous envoyer cette interaction ?',
-                components: [new ActionRowBuilder().addComponents(userSelect.addOptions(members.map(m => ({ label: m.user.username, value: m.id })).slice(0, 25)))],
+                components: [new ActionRowBuilder().addComponents(userSelect)],
                 ephemeral: true
             });
         }
