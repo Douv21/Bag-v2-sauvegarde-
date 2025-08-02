@@ -1,0 +1,84 @@
+nohup: ignoring input
+🔑 MONGODB_PASSWORD non configuré - sauvegarde locale uniquement
+🎨 LevelCardGenerator initialisé
+🌐 Serveur Web actif sur port 3000
+📊 Status: http://localhost:5000/commands-status
+✅ Port 5000 ouvert pour Render.com
+🛡️ Initialisation du système de sauvegarde MongoDB...
+🎯 Initialisation du déploiement...
+🚀 Nouveau déploiement détecté: local-1754144519909
+📥 Nouveau déploiement - restauration des données...
+📁 Utilisation des fichiers locaux existants
+🆕 Création des fichiers de configuration par défaut...
+⏭️ economy.json existe déjà
+⏭️ confessions.json existe déjà
+⏭️ counting.json existe déjà
+⏭️ autothread.json existe déjà
+⏭️ shop.json existe déjà
+⏭️ karma_config.json existe déjà
+⏭️ message_rewards.json existe déjà
+🔍 Vérification intégrité des données locales...
+✅ economy.json valide
+✅ confessions.json valide
+✅ counting.json valide
+✅ autothread.json valide
+✅ shop.json valide
+✅ karma_config.json valide
+✅ message_rewards.json valide
+✅ Toutes les données sont valides
+✅ Restauration complète terminée
+🛡️ Démarrage du système de sauvegarde...
+📁 Mode sauvegarde locale uniquement
+🕐 Sauvegarde automatique simple démarrée (toutes les 30 minutes)
+✅ Système de sauvegarde actif
+📥 Premier déploiement - données restaurées depuis MongoDB
+📂 Chargement des commandes...
+✅ add-level-reward
+✅ adminxp
+✅ ajout-argent
+✅ ajout-karma
+✅ autothread
+✅ backup-status
+✅ boutique
+✅ clear-commands
+✅ comptage
+✅ confess
+✅ config-confession
+✅ config-economie
+✅ config-level
+✅ configeconomie
+✅ crime
+✅ daily
+✅ dashboard
+✅ diagnostics
+✅ donner
+✅ economie
+✅ force-backup
+✅ karma
+✅ leaderboard
+✅ level
+✅ mongodb-backup
+✅ mongodb-diagnostic
+✅ objet
+✅ parier
+✅ parier
+✅ pecher
+✅ profil-carte
+✅ profil-utilisateur
+⚠️ config.json non trouvé, utilisation de la configuration par défaut
+✅ reset
+✅ retrait-argent
+✅ retrait-karma
+✅ stats
+✅ test-level-notif
+✅ topargent
+✅ travailler
+✅ voler
+✅ voler
+✅ 39 commandes chargées
+❌ Erreur connexion Discord: Error [TokenInvalid]: An invalid token was provided.
+    at Client.login (/workspace/node_modules/discord.js/src/client/Client.js:217:52)
+    at RenderSolutionBot.initializeDiscord (/workspace/index.render-final.js:293:31)
+    at async RenderSolutionBot.initializeSystemsAndDiscord (/workspace/index.render-final.js:274:9) {
+  code: 'TokenInvalid'
+}
