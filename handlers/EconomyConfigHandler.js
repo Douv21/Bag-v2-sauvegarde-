@@ -910,13 +910,38 @@ class EconomyConfigHandler {
     }
 
     async handleObjetModification(interaction) {
-        // Handler pour modifier un objet sélectionné
-        const itemId = interaction.values[0];
-        // TODO: Implémenter la modification d'objet
-        await interaction.reply({
-            content: `🔧 Modification de l'objet ${itemId} (En développement)`,
-            flags: 64
-        });
+        try {
+            const itemId = interaction.values[0];
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const guildId = interaction.guild.id;
+            
+            if (!shopData[guildId]) {
+                await interaction.reply({
+                    content: '❌ Aucune boutique trouvée.',
+                    flags: 64
+                });
+                return;
+            }
+
+            const item = shopData[guildId].find(item => item.id === itemId);
+            if (!item) {
+                await interaction.reply({
+                    content: '❌ Article non trouvé.',
+                    flags: 64
+                });
+                return;
+            }
+
+            // Utiliser la méthode showEditItemModal existante
+            await this.showEditItemModal(interaction, item);
+
+        } catch (error) {
+            console.error('Erreur modification objet:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la modification.',
+                flags: 64
+            });
+        }
     }
 
     async handleArticleDelete(interaction) {
