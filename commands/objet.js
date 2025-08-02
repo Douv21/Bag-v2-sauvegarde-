@@ -52,9 +52,9 @@ module.exports = {
             .setCustomId('object_selection')
             .setPlaceholder('Choisissez un objet...')
             .addOptions(
-                customObjects.map((item, index) => ({
+                customObjects.map(item => ({
                     label: item.name,
-                    value: `object_${index}`,
+                    value: item.id.toString(), // Utiliser l'ID unique de l'objet
                     description: item.description || 'Objet personnalisé',
                     emoji: this.getItemEmoji(item.type)
                 }))
