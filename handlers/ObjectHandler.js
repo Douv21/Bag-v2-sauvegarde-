@@ -228,9 +228,9 @@ async function handleObjectInteraction(interaction, dataManager) {
 
 function getItemTypeLabel(type) {
     switch (type) {
-        case 'custom': return 'Objet personnalisé';
-        case 'temp_role': return 'Rôle temporaire';
-        case 'perm_role': return 'Rôle permanent';
+        case 'custom_object': return 'Objet personnalisé';
+        case 'temporary_role': return 'Rôle temporaire';
+        case 'permanent_role': return 'Rôle permanent';
         default: return 'Inconnu';
     }
 }

@@ -488,7 +488,7 @@ class EconomyConfigHandler {
         
         const objet = {
             id: Date.now().toString(),
-            type: 'custom',
+            type: 'custom_object',
             name: nom,
             price: prix,
             description: description,
@@ -1689,8 +1689,8 @@ class EconomyConfigHandler {
 
             // Ajouter les objets existants
             guildShop.forEach((item, index) => {
-                const icon = item.type === 'role_temp' ? '⌛' : item.type === 'role_perm' ? '⭐' : '🎨';
-                const typeText = item.type === 'role_temp' ? 'Rôle Temporaire' : item.type === 'role_perm' ? 'Rôle Permanent' : 'Objet Personnalisé';
+                const icon = item.type === 'temporary_role' ? '⌛' : item.type === 'permanent_role' ? '⭐' : '🎨';
+                const typeText = item.type === 'temporary_role' ? 'Rôle Temporaire' : item.type === 'permanent_role' ? 'Rôle Permanent' : 'Objet Personnalisé';
                 
                 embed.addFields({
                     name: `${icon} ${item.name}`,

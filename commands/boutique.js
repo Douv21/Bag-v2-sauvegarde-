@@ -14,7 +14,7 @@ module.exports = {
             const shopData = await dataManager.loadData('shop.json', {});
             const economyConfig = await dataManager.loadData('economy.json', {});
             const allShopItems = shopData[guildId] || [];
-            // Afficher tous les types d'objets (custom, temp_role, perm_role)
+            // Afficher tous les types d'objets (custom_object, temporary_role, permanent_role)
             const shopItems = allShopItems;
 
             // Calculer le karma net de l'utilisateur (goodKarma - badKarma, badKarma est déjà négatif)
@@ -60,13 +60,13 @@ module.exports = {
                 let typeIcon = '🏆';
                 let typeText = 'Objet virtuel';
                 
-                if (item.type === 'temp_role') {
+                if (item.type === 'temporary_role') {
                     typeIcon = '⌛';
-                    typeText = `Rôle temporaire (${item.duration}j)`;
-                } else if (item.type === 'perm_role') {
+                    typeText = `Rôle temporaire (${item.duration}h)`;
+                } else if (item.type === 'permanent_role') {
                     typeIcon = '⭐';
                     typeText = 'Rôle permanent';
-                } else if (item.type === 'custom') {
+                } else if (item.type === 'custom_object') {
                     typeIcon = '🎨';
                     typeText = 'Objet personnalisé';
                 }
@@ -95,9 +95,9 @@ module.exports = {
                     .addOptions(
                         shopItems.slice(0, 25).map((item, index) => {
                             let emoji = '🎨';
-                            if (item.type === 'temp_role') emoji = '⌛';
-                            else if (item.type === 'perm_role') emoji = '⭐';
-                            else if (item.type === 'custom') emoji = '🎨';
+                            if (item.type === 'temporary_role') emoji = '⌛';
+                            else if (item.type === 'permanent_role') emoji = '⭐';
+                            else if (item.type === 'custom_object') emoji = '🎨';
                             
                             const finalPrice = karmaDiscountPercent > 0 ? 
                                 Math.floor(item.price * (100 - karmaDiscountPercent) / 100) : item.price;
