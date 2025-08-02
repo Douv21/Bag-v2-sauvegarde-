@@ -880,7 +880,7 @@ class RenderSolutionBot {
                             name: name,
                             price: price,
                             description: description,
-                            type: 'custom',
+                            type: 'custom_object',
                             createdAt: new Date().toISOString()
                         });
                         
@@ -951,7 +951,7 @@ class RenderSolutionBot {
                             name: role.name,
                             price: price,
                             description: `Rôle temporaire ${role.name} pour ${duration} jours`,
-                            type: 'temp_role',
+                            type: 'temporary_role',
                             roleId: roleId,
                             duration: duration,
                             createdAt: new Date().toISOString()
@@ -1015,7 +1015,7 @@ class RenderSolutionBot {
                             name: role.name,
                             price: price,
                             description: `Rôle permanent ${role.name}`,
-                            type: 'perm_role',
+                            type: 'permanent_role',
                             roleId: roleId,
                             createdAt: new Date().toISOString()
                         });
@@ -1101,10 +1101,10 @@ class RenderSolutionBot {
                                 if (price >= 1 && price <= 999999) {
                                     item.price = price;
                                     
-                                    if (item.type === 'custom') {
+                                    if (item.type === 'custom_object') {
                                         item.name = interaction.fields.getTextInputValue('item_name');
                                         item.description = interaction.fields.getTextInputValue('item_description') || '';
-                                    } else if (item.type === 'temp_role') {
+                                    } else if (item.type === 'temporary_role') {
                                         const duration = parseInt(interaction.fields.getTextInputValue('item_duration'));
                                         if (duration >= 1 && duration <= 365) {
                                             item.duration = duration;
@@ -1168,7 +1168,7 @@ class RenderSolutionBot {
                                 price: price,
                                 duration: duration,
                                 roleId: roleId,
-                                type: 'temp_role',
+                                type: 'temporary_role',
                                 createdAt: new Date().toISOString(),
                                 createdBy: interaction.user.id
                             };
@@ -1218,7 +1218,7 @@ class RenderSolutionBot {
                                 name: `Rôle: ${role?.name || 'Rôle'}`,
                                 price: price,
                                 roleId: roleId,
-                                type: 'perm_role',
+                                type: 'permanent_role',
                                 createdAt: new Date().toISOString(),
                                 createdBy: interaction.user.id
                             };
@@ -1271,7 +1271,7 @@ class RenderSolutionBot {
                                 name: name,
                                 price: price,
                                 description: description,
-                                type: 'custom',
+                                type: 'custom_object',
                                 createdAt: new Date().toISOString(),
                                 createdBy: interaction.user.id
                             };
@@ -2349,7 +2349,7 @@ async function handleShopPurchase(interaction, dataManager) {
             id: uniqueId,
             name: item.name,
             description: item.description || 'Objet de la boutique',
-            type: item.type || 'custom',
+            type: item.type || 'custom_object',
             price: finalPrice,
             purchaseDate: new Date().toISOString(),
             from: 'shop'
@@ -2399,7 +2399,7 @@ async function handleShopPurchase(interaction, dataManager) {
             } catch (error) {
                 effectMessage = '\n⚠️ Erreur lors de l\'attribution du rôle.';
             }
-        } else if (item.type === 'custom') {
+        } else if (item.type === 'custom_object') {
             effectMessage = '\n🎁 Objet personnalisé acheté !';
         } else {
             effectMessage = '\n📦 Objet ajouté à votre inventaire !';
