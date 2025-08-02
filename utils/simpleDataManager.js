@@ -112,16 +112,6 @@ class SimpleDataManager {
         this.setData('economy.json', economy);
     }
 
-    // Sauvegarder (fichiers locaux uniquement)
-    async saveData(filename, data) {
-        this.setData(filename, data);
-    }
-
-    // Charger (fichiers locaux uniquement)
-    async loadData(filename, defaultValue = {}) {
-        const data = this.getData(filename);
-        return Object.keys(data).length === 0 ? defaultValue : data;
-    }
 }
 
 module.exports = new SimpleDataManager();
