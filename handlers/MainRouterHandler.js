@@ -20,6 +20,7 @@ class MainRouterHandler {
         const AutoThreadConfigHandler = require('./AutoThreadConfigHandler');
         const CountingConfigHandler = require('./CountingConfigHandler');
         const DashboardHandler = require('./DashboardHandler');
+        const ObjectHandler = require('./ObjectHandler');
 
         // Import du ConfessionHandler original pour les méthodes complètes
         const ConfessionHandler = require('./ConfessionHandler');
@@ -29,7 +30,8 @@ class MainRouterHandler {
             economy: new EconomyConfigHandler(this.dataManager),
             autothread: new AutoThreadConfigHandler(this.dataManager),
             counting: new CountingConfigHandler(this.dataManager),
-            dashboard: new DashboardHandler(this.dataManager)
+            dashboard: new DashboardHandler(this.dataManager),
+            object: ObjectHandler // L'ObjectHandler est une fonction, pas une classe
         };
     }
 
@@ -155,6 +157,17 @@ class MainRouterHandler {
                     await handler.handleKarmaDiscountsInteraction(interaction);
                 }
                 return true;
+            }
+
+            // Routes pour les objets personnalisés
+            if (customId === 'object_selection' ||
+                customId.startsWith('object_action_menu_') ||
+                customId.startsWith('offer_user_select_') ||
+                customId.startsWith('confirm_delete_') ||
+                customId.startsWith('use_user_select_') || 
+                customId.startsWith('custom_message_modal_')) {
+                console.log(`➡️ Routage vers ObjectHandler: ${customId}`);
+                return await this.routeToObjectHandler(interaction, customId);
             }
 
             // Routes spéciales pour les commandes principales
@@ -814,6 +827,16 @@ class MainRouterHandler {
                 console.log(`CustomId dashboard non géré: ${customId}`);
                 return false;
         }
+    }
+
+    /**
+     * Router vers le handler des objets
+     */
+    async routeToObjectHandler(interaction, customId) {
+        const objectHandler = this.handlers.object;
+        
+        // Déléguer toutes les interactions d'objets au ObjectHandler (fonction)
+        return await objectHandler.handleObjectInteraction(interaction, this.dataManager);
     }
 
     /**
