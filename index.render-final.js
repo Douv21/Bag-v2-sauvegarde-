@@ -2265,7 +2265,19 @@ async function handleShopPurchase(interaction, dataManager) {
         const shopItems = shopData[guildId] || [];
 
         // Trouver l'objet sélectionné
-        const item = shopItems.find(i => (i.id || shopItems.indexOf(i)).toString() === itemId);
+        let item;
+        if (itemId.startsWith('shop_item_')) {
+            // Handle new generated identifiers - extract index
+            const indexMatch = itemId.match(/shop_item_(\d+)_/);
+            if (indexMatch) {
+                const itemIndex = parseInt(indexMatch[1]);
+                item = shopItems[itemIndex];
+            }
+        } else {
+            // Handle original item IDs or direct index
+            item = shopItems.find(i => (i.id || shopItems.indexOf(i)).toString() === itemId);
+        }
+        
         if (!item) {
             return await interaction.reply({
                 content: '❌ Objet introuvable dans la boutique.',
@@ -2303,8 +2315,11 @@ async function handleShopPurchase(interaction, dataManager) {
         // Ajouter l'objet à l'inventaire
         if (!userData.inventory) userData.inventory = [];
         
+        // Generate a truly unique ID
+        const uniqueId = item.id || `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${userId.slice(-4)}`;
+        
         const inventoryItem = {
-            id: item.id || Date.now().toString(),
+            id: uniqueId,
             name: item.name,
             description: item.description || 'Objet de la boutique',
             type: item.type || 'custom',
