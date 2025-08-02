@@ -2311,6 +2311,20 @@ async handleObjectInteraction(interaction, dataManager) {
                         emoji: '🎁'
                     },
                     {
+                        label: 'Supprimer l\'objet',
+                        value: `object_delete_${objectIndex}`,
+                        description: 'Retirer cet objet de votre inventaire',
+                        emoji: '🗑️'
+                    },
+                    {
+                        label: 'Interaction personnalisée',
+                        value: `object_custom_${objectIndex}`,
+                        description: 'Utiliser avec un message personnalisé',
+                        emoji: '💬'x}`,
+                        description: 'Donner cet objet à un autre membre',
+                        emoji: '🎁'
+                    },
+                    {
                         label: 'Supprimer',
                         value: `object_delete_${objectIndex}`,
                         description: 'Retirer l\'objet de votre inventaire',
