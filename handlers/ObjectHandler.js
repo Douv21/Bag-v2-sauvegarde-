@@ -71,13 +71,11 @@ async function handleObjectInteraction(interaction, dataManager) {
                     return await interaction.update({ content: `🗑️ Êtes-vous sûr de vouloir supprimer **${obj.name}** ?`, components: [new ActionRowBuilder().addComponents(confirm)], embeds: [] });
                 }
                 case 'use': {
-                    const modal = new ModalBuilder()
-                        .setCustomId(`custom_message_modal_${objectId}`)
-                        .setTitle('Interaction personnalisée')
-                        .addComponents(new ActionRowBuilder().addComponents(
-                            new TextInputBuilder().setCustomId('custom_message').setLabel('Votre message').setStyle(TextInputStyle.Paragraph).setRequired(true)
-                        ));
-                    return await interaction.showModal(modal);
+                    const select = new UserSelectMenuBuilder()
+                        .setCustomId(`custom_user_select_${objectId}`)
+                        .setPlaceholder('À qui envoyer cette interaction ?');
+
+                    return await interaction.update({ content: `💬 À qui veux-tu envoyer **${obj.name}** avec un message personnalisé ?`, components: [new ActionRowBuilder().addComponents(select)], embeds: [] });
                 }
             }
         }
@@ -137,45 +135,55 @@ async function handleObjectInteraction(interaction, dataManager) {
             return await interaction.update({ content: `🗑️ **${obj.name}** a été supprimé.`, components: [], embeds: [] });
         }
 
-        // --- Step 3c: Handling the custom message modal ---
+        // --- Step 5: Handling the custom message modal ---
         if (interaction.isModalSubmit() && customId.startsWith('custom_message_modal_')) {
             const objectId = customId.replace('custom_message_modal_', '');
             const message = interaction.fields.getTextInputValue('custom_message');
+            const selectedObject = userData.inventory.find(item => item.id.toString() === objectId);
 
-            // Temporary storage for the message content
-            interaction.client.tempStore = interaction.client.tempStore || {};
-            interaction.client.tempStore[`${userId}_${objectId}`] = message;
+            if (!selectedObject) {
+                return await interaction.reply({ content: '❌ Objet introuvable ou expiré.', ephemeral: true });
+            }
 
-            const userSelect = new UserSelectMenuBuilder()
-                .setCustomId(`custom_user_select_${objectId}`)
-                .setPlaceholder('Choisissez un utilisateur à cibler');
+            // Get the target user ID from temporary storage
+            const targetId = interaction.client.tempStore[`${userId}_${objectId}_target`];
+            if (!targetId) {
+                return await interaction.reply({ content: '❌ Erreur: utilisateur cible non trouvé.', ephemeral: true });
+            }
 
-            return await interaction.reply({
-                content: 'À qui voulez-vous envoyer cette interaction ?',
-                components: [new ActionRowBuilder().addComponents(userSelect)],
-                ephemeral: true
-            });
+            try {
+                const targetMember = await interaction.guild.members.fetch(targetId);
+                const objetCommand = require('../commands/objet'); // require command file to call executeCustomInteraction
+
+                await objetCommand.executeCustomInteraction(interaction, dataManager, selectedObject, message, targetMember);
+
+                // Clean up temporary storage
+                delete interaction.client.tempStore[`${userId}_${objectId}_target`];
+            } catch (error) {
+                console.error('Erreur lors de l\'exécution de l\'interaction personnalisée:', error);
+                return await interaction.reply({ content: '❌ Erreur lors de l\'exécution de l\'interaction.', ephemeral: true });
+            }
         }
 
-        // --- Step 4: Finalizing the custom message action ---
+        // --- Step 4: User selects target for custom message ---
         if (customId.startsWith('custom_user_select_')) {
             const objectId = customId.replace('custom_user_select_', '');
-            const targetId = interaction.users.first().id;
+            const targetId = interaction.values[0];
             const selectedObject = userData.inventory.find(item => item.id.toString() === objectId);
 
             if (!selectedObject) return await interaction.update({ content: '❌ Objet introuvable ou expiré.', components:[], embeds: []});
 
-            const message = interaction.client.tempStore[`${userId}_${objectId}`];
-            if (!message) return await interaction.update({ content: '❌ Erreur: message personnalisé non trouvé.', components:[], embeds: []});
+            // Store the target user ID temporarily
+            interaction.client.tempStore = interaction.client.tempStore || {};
+            interaction.client.tempStore[`${userId}_${objectId}_target`] = targetId;
 
-            const targetMember = await interaction.guild.members.fetch(targetId);
-            const objetCommand = require('../commands/objet'); // require command file to call executeCustomInteraction
-
-            // We need to deferUpdate here as executeCustomInteraction does its own reply
-            await interaction.deferUpdate();
-            await objetCommand.executeCustomInteraction(interaction, dataManager, selectedObject, message, targetMember);
-
-            delete interaction.client.tempStore[`${userId}_${objectId}`];
+            const modal = new ModalBuilder()
+                .setCustomId(`custom_message_modal_${objectId}`)
+                .setTitle('Interaction personnalisée')
+                .addComponents(new ActionRowBuilder().addComponents(
+                    new TextInputBuilder().setCustomId('custom_message').setLabel('Votre message').setStyle(TextInputStyle.Paragraph).setRequired(true)
+                ));
+            return await interaction.showModal(modal);
         }
 
     } catch (err) {

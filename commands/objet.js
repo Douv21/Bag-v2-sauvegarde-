@@ -92,7 +92,7 @@ module.exports = {
                 .setFooter({ text: 'Interaction d\'objet personnalisé' });
             
             // Envoyer dans le canal actuel
-            await interaction.followUp({
+            await interaction.reply({
                 embeds: [embed],
                 content: `<@${targetMember.id}> vous avez été mentionné !`
             });
