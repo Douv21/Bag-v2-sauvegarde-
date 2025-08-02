@@ -1011,6 +1011,53 @@ class EconomyConfigHandler {
         await interaction.showModal(modal);
     }
 
+    async showMessageLimitsModal(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('message_limits_modal')
+            .setTitle('📊 Limites Messages');
+
+        const maxDailyInput = new TextInputBuilder()
+            .setCustomId('max_daily_messages')
+            .setLabel('Messages max par jour par utilisateur')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('100')
+            .setRequired(false)
+            .setMaxLength(5);
+
+        const maxHourlyInput = new TextInputBuilder()
+            .setCustomId('max_hourly_messages')
+            .setLabel('Messages max par heure par utilisateur')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('20')
+            .setRequired(false)
+            .setMaxLength(3);
+
+        const spamProtectionInput = new TextInputBuilder()
+            .setCustomId('spam_protection')
+            .setLabel('Protection anti-spam (messages/minute)')
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder('5')
+            .setRequired(false)
+            .setMaxLength(2);
+
+        const exemptRolesInput = new TextInputBuilder()
+            .setCustomId('exempt_roles')
+            .setLabel('Rôles exemptés (IDs séparés par virgules)')
+            .setStyle(TextInputStyle.Paragraph)
+            .setPlaceholder('123456789,987654321')
+            .setRequired(false)
+            .setMaxLength(200);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(maxDailyInput),
+            new ActionRowBuilder().addComponents(maxHourlyInput),
+            new ActionRowBuilder().addComponents(spamProtectionInput),
+            new ActionRowBuilder().addComponents(exemptRolesInput)
+        );
+
+        await interaction.showModal(modal);
+    }
+
     // =============
     // SECTION KARMA
     // =============
@@ -1383,6 +1430,49 @@ class EconomyConfigHandler {
         }
     }
 
+    async handleMessageLimitsModal(interaction) {
+        try {
+            const guildId = interaction.guild.id;
+            const maxDaily = interaction.fields.getTextInputValue('max_daily_messages') || '';
+            const maxHourly = interaction.fields.getTextInputValue('max_hourly_messages') || '';
+            const spamProtection = interaction.fields.getTextInputValue('spam_protection') || '';
+            const exemptRoles = interaction.fields.getTextInputValue('exempt_roles') || '';
+
+            const config = {};
+            
+            if (maxDaily) config.maxDailyMessages = parseInt(maxDaily) || 100;
+            if (maxHourly) config.maxHourlyMessages = parseInt(maxHourly) || 20;
+            if (spamProtection) config.spamProtection = parseInt(spamProtection) || 5;
+            if (exemptRoles) {
+                config.exemptRoles = exemptRoles.split(',').map(id => id.trim()).filter(id => id);
+            }
+
+            await this.saveMessageLimitsConfig(guildId, config);
+
+            const configText = Object.entries(config).map(([key, value]) => {
+                switch(key) {
+                    case 'maxDailyMessages': return `📅 Max quotidien: ${value}`;
+                    case 'maxHourlyMessages': return `⏰ Max horaire: ${value}`;
+                    case 'spamProtection': return `🛡️ Anti-spam: ${value}/min`;
+                    case 'exemptRoles': return `👑 Rôles exemptés: ${value.length}`;
+                    default: return `${key}: ${value}`;
+                }
+            }).join('\n');
+
+            await interaction.reply({
+                content: `✅ **Limites messages configurées**\n\n${configText}`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal message limits:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la sauvegarde des limites.',
+                flags: 64
+            });
+        }
+    }
+
     // =============
     // MÉTHODES DE SAUVEGARDE
     // =============
@@ -1416,6 +1506,23 @@ class EconomyConfigHandler {
 
         } catch (error) {
             console.error('Erreur sauvegarde messages:', error);
+            throw error;
+        }
+    }
+
+    async saveMessageLimitsConfig(guildId, config) {
+        try {
+            const limitsData = await this.dataManager.loadData('message_limits.json', {});
+            if (!limitsData[guildId]) {
+                limitsData[guildId] = {};
+            }
+            
+            Object.assign(limitsData[guildId], config);
+            await this.dataManager.saveData('message_limits.json', limitsData);
+            console.log(`✅ Configuration limites messages sauvegardée pour ${guildId}:`, config);
+
+        } catch (error) {
+            console.error('Erreur sauvegarde limites messages:', error);
             throw error;
         }
     }

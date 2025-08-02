@@ -6,6 +6,8 @@ const deploymentManager = require('./utils/deploymentManager');
 const mongoBackup = require('./utils/mongoBackupManager');
 const levelManager = require('./utils/levelManager');
 const { handleObjectInteraction } = require('./handlers/ObjectHandler');
+const { errorHandler, ErrorLevels } = require('./utils/errorHandler');
+const { modalHandler } = require('./utils/modalHandler');
 
 // Handlers pour les nouvelles fonctionnalités karma
 async function handleKarmaResetComplete(interaction) {
@@ -344,6 +346,12 @@ class RenderSolutionBot {
                     const customId = interaction.customId;
                     console.log(`🎯 Modal submit détecté: ${customId}`);
                     
+                    // Vérifier d'abord si le modal est implémenté
+                    const modalImplemented = await modalHandler.handleModalSubmission(interaction);
+                    if (!modalImplemented) {
+                        return; // Modal non implémenté, déjà géré par modalHandler
+                    }
+                    
                     if (customId.includes('_amounts_modal_') || customId.includes('_cooldown_modal_') || customId.includes('_karma_modal_')) {
                         console.log('🎯 Modal action économique → handleActionModal');
                         const dataManager = require('./utils/simpleDataManager'); // AJOUT: dataManager requis ici
@@ -356,7 +364,11 @@ class RenderSolutionBot {
                 
                 await this.handleInteraction(interaction);
             } catch (error) {
-                console.error('❌ Erreur interactionCreate:', error);
+                await errorHandler.handleCriticalError(error, {
+                    context: 'interactionCreate event',
+                    interactionType: interaction.type,
+                    customId: interaction.customId
+                }, interaction);
             }
         });
 
@@ -379,7 +391,12 @@ class RenderSolutionBot {
                 await this.handleAutoThread(message);
                 
             } catch (error) {
-                console.error('❌ Erreur messageCreate:', error);
+                await errorHandler.logError(ErrorLevels.ERROR, 'Erreur traitement message', error, {
+                    messageId: message.id,
+                    authorId: message.author.id,
+                    guildId: message.guild?.id,
+                    channelId: message.channel.id
+                });
             }
         });
 
@@ -387,8 +404,10 @@ class RenderSolutionBot {
             await this.handleVoiceXP(oldState, newState);
         });
 
-        this.client.on('error', error => {
-            console.error('❌ Erreur Discord:', error);
+        this.client.on('error', async error => {
+            await errorHandler.logError(ErrorLevels.CRITICAL, 'Erreur client Discord', error, {
+                context: 'Discord client error event'
+            });
         });
     }
 
@@ -489,6 +508,14 @@ class RenderSolutionBot {
                         const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
                         const economyHandler = new EconomyConfigHandler(dataManager);
                         await economyHandler.handleMessageCooldownModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'message_limits_modal') {
+                        console.log('🎯 Modal message limits');
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleMessageLimitsModal(interaction);
                         return;
                     }
 
