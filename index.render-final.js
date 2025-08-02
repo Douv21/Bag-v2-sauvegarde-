@@ -1642,6 +1642,14 @@ class RenderSolutionBot {
                     return;
                 }
 
+                if (customId === 'edit_articles_select') {
+                    console.log('🎯 Sélection article à modifier');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleEditArticleSelect(interaction);
+                    return;
+                }
+
                 // Handlers pour nouvelles sections Daily et Messages
                 if (customId === 'economy_daily_select') {
                     console.log('🎯 Sélection daily config');
