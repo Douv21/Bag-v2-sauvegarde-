@@ -1515,6 +1515,11 @@ class RenderSolutionBot {
                     customId.startsWith('custom_message_modal_') ||
                     customId.startsWith('confirm_delete_') ||
                     customId === 'cancel_delete') {
+
+                    class RenderSolutionBot {
+    constructor() {
+        this.initializeWebServer();
+                    }
                     // AJOUTER DANS LA CLASSE RenderSolutionBot
 async handleObjectInteraction(interaction, dataManager) {
     const customId = interaction.customId;
