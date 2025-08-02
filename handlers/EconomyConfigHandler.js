@@ -601,7 +601,7 @@ class EconomyConfigHandler {
             const guildId = interaction.guild.id;
             const guildItems = shopData[guildId] || [];
 
-            const customObjects = guildItems.filter(item => item.type === 'custom_object');
+            const customObjects = guildItems.filter(item => item.type === 'custom_object' || item.type === 'custom');
 
             if (customObjects.length === 0) {
                 await interaction.update({
@@ -679,13 +679,13 @@ class EconomyConfigHandler {
                         let typeIcon = '❓';
                         let typeName = 'Inconnu';
                         
-                        if (item.type === 'custom_object') {
+                        if (item.type === 'custom_object' || item.type === 'custom') {
                             typeIcon = '🎨';
                             typeName = 'Objet personnalisé';
-                        } else if (item.type === 'temporary_role') {
+                        } else if (item.type === 'temporary_role' || item.type === 'temp_role') {
                             typeIcon = '⌛';
                             typeName = 'Rôle temporaire';
-                        } else if (item.type === 'permanent_role') {
+                        } else if (item.type === 'permanent_role' || item.type === 'perm_role') {
                             typeIcon = '⭐';
                             typeName = 'Rôle permanent';
                         }
@@ -705,8 +705,8 @@ class EconomyConfigHandler {
                 .addOptions(
                     guildItems.slice(0, 20).map(item => {
                         let label = item.name || `Rôle ${item.roleId}`;
-                        let typeIcon = item.type === 'custom_object' ? '🎨' : 
-                                     item.type === 'temporary_role' ? '⌛' : '⭐';
+                        let typeIcon = (item.type === 'custom_object' || item.type === 'custom') ? '🎨' : 
+                                     (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : '⭐';
                         
                         return {
                             label: `${typeIcon} ${label}`,
@@ -1689,8 +1689,10 @@ class EconomyConfigHandler {
 
             // Ajouter les objets existants
             guildShop.forEach((item, index) => {
-                const icon = item.type === 'temporary_role' ? '⌛' : item.type === 'permanent_role' ? '⭐' : '🎨';
-                const typeText = item.type === 'temporary_role' ? 'Rôle Temporaire' : item.type === 'permanent_role' ? 'Rôle Permanent' : 'Objet Personnalisé';
+                const icon = (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : 
+                           (item.type === 'permanent_role' || item.type === 'perm_role') ? '⭐' : '🎨';
+                const typeText = (item.type === 'temporary_role' || item.type === 'temp_role') ? 'Rôle Temporaire' : 
+                               (item.type === 'permanent_role' || item.type === 'perm_role') ? 'Rôle Permanent' : 'Objet Personnalisé';
                 
                 embed.addFields({
                     name: `${icon} ${item.name}`,
@@ -1699,12 +1701,25 @@ class EconomyConfigHandler {
                 });
             });
 
+            const selectMenuOptions = [
+                { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
+            ];
+
+            // Ajouter les objets dans le menu de sélection
+            guildShop.slice(0, 20).forEach(item => {
+                const icon = (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : 
+                           (item.type === 'permanent_role' || item.type === 'perm_role') ? '⭐' : '🎨';
+                selectMenuOptions.push({
+                    label: `${icon} ${item.name || `Rôle ${item.roleId}`}`,
+                    description: `${item.price}€ - Modifier cet objet`,
+                    value: item.id.toString()
+                });
+            });
+
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('manage_objects_select')
-                .setPlaceholder('Voir les objets créés')
-                .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
-                ]);
+                .setPlaceholder('Choisir un objet à modifier...')
+                .addOptions(selectMenuOptions);
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
             await interaction.update({ embeds: [embed], components: [row] });
@@ -1737,14 +1752,41 @@ class EconomyConfigHandler {
             const embed = new EmbedBuilder()
                 .setColor('#e74c3c')
                 .setTitle('🗑️ Supprimer Objets Boutique')
-                .setDescription('⚠️ Choisissez l\'objet à supprimer (action irréversible) :');
+                .setDescription(`⚠️ ${guildShop.length} objet(s) à supprimer (action irréversible) :`);
+
+            // Ajouter les objets existants dans l'embed
+            guildShop.slice(0, 10).forEach((item, index) => {
+                const icon = (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : 
+                           (item.type === 'permanent_role' || item.type === 'perm_role') ? '⭐' : '🎨';
+                const typeText = (item.type === 'temporary_role' || item.type === 'temp_role') ? 'Rôle Temporaire' : 
+                               (item.type === 'permanent_role' || item.type === 'perm_role') ? 'Rôle Permanent' : 'Objet Personnalisé';
+                
+                embed.addFields({
+                    name: `${icon} ${item.name || `Rôle ${item.roleId}`}`,
+                    value: `**Type:** ${typeText}\n**Prix:** ${item.price}€\n**ID:** ${item.id}`,
+                    inline: true
+                });
+            });
+
+            const selectMenuOptions = [
+                { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
+            ];
+
+            // Ajouter les objets dans le menu de sélection
+            guildShop.slice(0, 20).forEach(item => {
+                const icon = (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : 
+                           (item.type === 'permanent_role' || item.type === 'perm_role') ? '⭐' : '🎨';
+                selectMenuOptions.push({
+                    label: `${icon} ${item.name || `Rôle ${item.roleId}`}`,
+                    description: `${item.price}€ - Supprimer définitivement`,
+                    value: item.id.toString()
+                });
+            });
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('delete_objects_select')
-                .setPlaceholder('Voir les objets à supprimer')
-                .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
-                ]);
+                .setPlaceholder('Choisir un objet à supprimer...')
+                .addOptions(selectMenuOptions);
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
             await interaction.update({ embeds: [embed], components: [row] });
