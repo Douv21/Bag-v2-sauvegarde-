@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { REST, Routes } = require('discord.js');
+const { handleObjectInteraction } = require('./ObjectHandler');
 
 class CommandHandler {
     constructor(client, dataManager) {
@@ -78,28 +79,37 @@ class CommandHandler {
 
     setupCommandListener() {
         this.client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isChatInputCommand()) return;
+            if (interaction.isChatInputCommand()) {
+                const command = this.commands.get(interaction.commandName);
+                if (!command) return;
 
-            const command = this.commands.get(interaction.commandName);
-            if (!command) return;
+                try {
+                    await this.handleCooldown(interaction, command);
+                    await command.execute(interaction, this.dataManager);
+                } catch (error) {
+                    console.error(`❌ Erreur commande ${interaction.commandName}:`, error);
 
-            try {
-                await this.handleCooldown(interaction, command);
-                await command.execute(interaction, this.dataManager);
-                
-            } catch (error) {
-                console.error(`❌ Erreur commande ${interaction.commandName}:`, error);
-                
-                const errorMessage = {
-                    content: 'Une erreur est survenue lors de l\'exécution de cette commande.',
-                    flags: 64
-                };
+                    const errorMessage = {
+                        content: 'Une erreur est survenue lors de l\'exécution de cette commande.',
+                        flags: 64
+                    };
 
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp(errorMessage).catch(() => {});
-                } else {
-                    await interaction.reply(errorMessage).catch(() => {});
+                    if (interaction.replied || interaction.deferred) {
+                        await interaction.followUp(errorMessage).catch(() => {});
+                    } else {
+                        await interaction.reply(errorMessage).catch(() => {});
+                    }
                 }
+            } else if (interaction.isStringSelectMenu() || interaction.isButton() || interaction.isModalSubmit()) {
+                // Déléguer aux gestionnaires spécialisés en fonction du customId
+                if (interaction.customId.startsWith('object_') ||
+                    interaction.customId.startsWith('offer_') ||
+                    interaction.customId.startsWith('confirm_delete') ||
+                    interaction.customId === 'cancel_delete' ||
+                    interaction.customId.startsWith('custom_message_modal')) {
+                    await handleObjectInteraction(interaction, this.dataManager);
+                }
+                // Note: On pourrait ajouter d'autres handlers ici avec des `else if`
             }
         });
     }
