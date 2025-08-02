@@ -1536,8 +1536,8 @@ class RenderSolutionBot {
                 if (customId.startsWith('object_') ||
                     customId.startsWith('offer_user_select_') ||
                     customId.startsWith('confirm_delete_') ||
-                    customId.startsWith('custom_message_modal_') ||
-                    customId.startsWith('custom_user_select_')) {
+                    customId.startsWith('use_user_select_') ||
+                    customId.startsWith('custom_message_modal_')) {
                     
                     console.log('🎯 Routage objet:', customId);
                     await handleObjectInteraction(interaction, dataManager);
