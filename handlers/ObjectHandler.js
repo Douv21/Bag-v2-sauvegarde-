@@ -194,24 +194,25 @@ async function handleObjectInteraction(interaction, dataManager) {
 
             try {
                 const targetMember = await interaction.guild.members.fetch(targetId);
-                const objetCommand = require('../commands/objet');
 
-                // Déférer la réponse pour qu'elle soit visible par tous
-                await interaction.deferReply({ ephemeral: false });
-                await objetCommand.executeCustomInteraction(interaction, dataManager, selectedObject, message, targetMember);
+                // Créer le message texte simple : nom du membre + texte personnalisé + objet + ping du membre
+                const messageContent = `**${interaction.user.displayName}** ${message} **${selectedObject.name}** <@${targetId}>`;
+                
+                // Répondre directement avec le message personnalisé (non éphémère pour que le ping soit visible)
+                await interaction.reply({
+                    content: messageContent
+                });
 
                 // Nettoyer le stockage temporaire
                 delete interaction.client.tempStore[`${userId}_${objectId}_target`];
 
-                // Envoyer une confirmation visible par tous
-                await interaction.editReply({ 
-                    content: `✅ Interaction envoyée avec **${selectedObject.name}** vers ${targetMember.displayName}!`
-                });
+                console.log(`💬 ${interaction.user.tag} a utilisé "${selectedObject.name}" sur ${targetMember.tag}: ${message}`);
 
             } catch (error) {
                 console.error('❌ Erreur lors de l\'interaction personnalisée:', error);
-                await interaction.editReply({ 
-                    content: '❌ Erreur lors de l\'envoi de l\'interaction personnalisée.' 
+                await interaction.reply({ 
+                    content: '❌ Erreur lors de l\'envoi de l\'interaction personnalisée.',
+                    ephemeral: true 
                 });
             }
         }
