@@ -594,148 +594,17 @@ class EconomyConfigHandler {
         console.log(`✅ Rôle ${type} ajouté à la boutique:`, roleItem);
     }
 
-    async showManageObjetsMenu(interaction) {
-        try {
-            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildId = interaction.guild.id;
-            const guildItems = shopData[guildId] || [];
 
-            const customObjects = guildItems.filter(item => item.type === 'custom_object');
-
-            if (customObjects.length === 0) {
-                await interaction.update({
-                    content: '❌ Aucun objet personnalisé trouvé.',
-                    embeds: [],
-                    components: []
-                });
-                return;
-            }
-
-            const embed = new EmbedBuilder()
-                .setColor('#ffa500')
-                .setTitle('🔧 Modifier Objets Existants')
-                .setDescription(`${customObjects.length} objet(s) personnalisé(s) disponible(s)`)
-                .addFields(
-                    customObjects.slice(0, 5).map(obj => ({
-                        name: `🎨 ${obj.name}`,
-                        value: `Prix: ${obj.price}€\n${obj.description || 'Pas de description'}`,
-                        inline: true
-                    }))
-                );
-
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('objets_existants_select')
-                .setPlaceholder('Sélectionner un objet à modifier...')
-                .addOptions(
-                    customObjects.slice(0, 20).map(obj => ({
-                        label: obj.name,
-                        description: `${obj.price}€ - Créé le ${new Date(obj.created).toLocaleDateString()}`,
-                        value: obj.id
-                    }))
-                );
-
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-
-            await interaction.update({
-                embeds: [embed],
-                components: [row]
-            });
-
-        } catch (error) {
-            console.error('Erreur menu objets:', error);
-            await interaction.update({
-                content: '❌ Erreur lors du chargement des objets.',
-                embeds: [],
-                components: []
-            });
-        }
-    }
-
-    async showDeleteArticlesMenu(interaction) {
-        try {
-            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
-            const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildId = interaction.guild.id;
-            const guildItems = shopData[guildId] || [];
-
-            if (guildItems.length === 0) {
-                await interaction.update({
-                    content: '❌ Aucun article trouvé dans la boutique.',
-                    embeds: [],
-                    components: []
-                });
-                return;
-            }
-
-            const embed = new EmbedBuilder()
-                .setColor('#ff0000')
-                .setTitle('🗑️ Supprimer Articles')
-                .setDescription(`${guildItems.length} article(s) disponible(s)`);
-
-            if (guildItems.length > 0) {
-                embed.addFields(
-                    guildItems.slice(0, 5).map(item => {
-                        let typeIcon = '❓';
-                        let typeName = 'Inconnu';
-                        
-                        if (item.type === 'custom_object') {
-                            typeIcon = '🎨';
-                            typeName = 'Objet personnalisé';
-                        } else if (item.type === 'temporary_role') {
-                            typeIcon = '⌛';
-                            typeName = 'Rôle temporaire';
-                        } else if (item.type === 'permanent_role') {
-                            typeIcon = '⭐';
-                            typeName = 'Rôle permanent';
-                        }
-
-                        return {
-                            name: `${typeIcon} ${item.name || `Rôle <@&${item.roleId}>`}`,
-                            value: `${typeName} - ${item.price}€${item.duration ? ` (${item.duration}h)` : ''}`,
-                            inline: true
-                        };
-                    })
-                );
-            }
-
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('delete_articles_select')
-                .setPlaceholder('Sélectionner un article à supprimer...')
-                .addOptions(
-                    guildItems.slice(0, 20).map(item => {
-                        let label = item.name || `Rôle ${item.roleId}`;
-                        let typeIcon = item.type === 'custom_object' ? '🎨' : 
-                                     item.type === 'temporary_role' ? '⌛' : '⭐';
-                        
-                        return {
-                            label: `${typeIcon} ${label}`,
-                            description: `${item.price}€ - Supprimer cet article`,
-                            value: item.id
-                        };
-                    })
-                );
-
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-
-            await interaction.update({
-                embeds: [embed],
-                components: [row]
-            });
-
-        } catch (error) {
-            console.error('Erreur menu suppression:', error);
-            await interaction.update({
-                content: '❌ Erreur lors du chargement des articles.',
-                embeds: [],
-                components: []
-            });
-        }
-    }
 
     async handleObjetModification(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'back_boutique') {
+            return await this.showBoutiqueMenu(interaction);
+        }
+        
         // Handler pour modifier un objet sélectionné
-        const itemId = interaction.values[0];
+        const itemId = value;
         // TODO: Implémenter la modification d'objet
         await interaction.reply({
             content: `🔧 Modification de l'objet ${itemId} (En développement)`,
@@ -745,7 +614,13 @@ class EconomyConfigHandler {
 
     async handleArticleDelete(interaction) {
         try {
-            const itemId = interaction.values[0];
+            const value = interaction.values[0];
+            
+            if (value === 'back_boutique') {
+                return await this.showBoutiqueMenu(interaction);
+            }
+            
+            const itemId = value;
             const shopData = await this.dataManager.loadData('shop.json', {});
             const guildId = interaction.guild.id;
             
@@ -1669,13 +1544,16 @@ class EconomyConfigHandler {
     // =============
     async showManageObjetsMenu(interaction) {
         try {
-            const guildId = interaction.guild.id;
+            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
             const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildShop = shopData[guildId] || [];
+            const guildId = interaction.guild.id;
+            const guildItems = shopData[guildId] || [];
 
-            if (guildShop.length === 0) {
+            const customObjects = guildItems.filter(item => item.type === 'custom_object');
+
+            if (customObjects.length === 0) {
                 await interaction.update({
-                    content: '📦 Aucun objet créé dans la boutique.',
+                    content: '❌ Aucun objet personnalisé trouvé.',
                     embeds: [],
                     components: []
                 });
@@ -1683,36 +1561,44 @@ class EconomyConfigHandler {
             }
 
             const embed = new EmbedBuilder()
-                .setColor('#2ecc71')
-                .setTitle('🔧 Objets Boutique Créés')
-                .setDescription(`${guildShop.length} objet(s) dans la boutique :`);
-
-            // Ajouter les objets existants
-            guildShop.forEach((item, index) => {
-                const icon = item.type === 'temporary_role' ? '⌛' : item.type === 'permanent_role' ? '⭐' : '🎨';
-                const typeText = item.type === 'temporary_role' ? 'Rôle Temporaire' : item.type === 'permanent_role' ? 'Rôle Permanent' : 'Objet Personnalisé';
-                
-                embed.addFields({
-                    name: `${icon} ${item.name}`,
-                    value: `**Type:** ${typeText}\n**Prix:** ${item.price}€\n**ID:** ${item.id}`,
-                    inline: true
-                });
-            });
+                .setColor('#ffa500')
+                .setTitle('🔧 Modifier Objets Existants')
+                .setDescription(`${customObjects.length} objet(s) personnalisé(s) disponible(s)`)
+                .addFields(
+                    customObjects.slice(0, 5).map(obj => ({
+                        name: `🎨 ${obj.name}`,
+                        value: `Prix: ${obj.price}€\n${obj.description || 'Pas de description'}`,
+                        inline: true
+                    }))
+                );
 
             const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('manage_objects_select')
-                .setPlaceholder('Voir les objets créés')
-                .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
-                ]);
+                .setCustomId('objets_existants_select')
+                .setPlaceholder('Sélectionner un objet à modifier...')
+                .addOptions(
+                    customObjects.slice(0, 20).map(obj => ({
+                        label: obj.name,
+                        description: `${obj.price}€ - Créé le ${new Date(obj.created).toLocaleDateString()}`,
+                        value: obj.id
+                    }))
+                );
+
+            // Ajouter l'option retour
+            selectMenu.addOptions([
+                { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
+            ]);
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
-            await interaction.update({ embeds: [embed], components: [row] });
+
+            await interaction.update({
+                embeds: [embed],
+                components: [row]
+            });
 
         } catch (error) {
-            console.error('Erreur manage objets:', error);
+            console.error('Erreur menu objets:', error);
             await interaction.update({
-                content: '❌ Erreur lors de l\'affichage des objets.',
+                content: '❌ Erreur lors du chargement des objets.',
                 embeds: [],
                 components: []
             });
@@ -1721,13 +1607,14 @@ class EconomyConfigHandler {
 
     async showDeleteArticlesMenu(interaction) {
         try {
-            const guildId = interaction.guild.id;
+            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
             const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildShop = shopData[guildId] || [];
+            const guildId = interaction.guild.id;
+            const guildItems = shopData[guildId] || [];
 
-            if (guildShop.length === 0) {
+            if (guildItems.length === 0) {
                 await interaction.update({
-                    content: '🗑️ Aucun objet à supprimer dans la boutique.',
+                    content: '❌ Aucun article trouvé dans la boutique.',
                     embeds: [],
                     components: []
                 });
@@ -1735,24 +1622,69 @@ class EconomyConfigHandler {
             }
 
             const embed = new EmbedBuilder()
-                .setColor('#e74c3c')
-                .setTitle('🗑️ Supprimer Objets Boutique')
-                .setDescription('⚠️ Choisissez l\'objet à supprimer (action irréversible) :');
+                .setColor('#ff0000')
+                .setTitle('🗑️ Supprimer Articles')
+                .setDescription(`${guildItems.length} article(s) disponible(s)`);
+
+            if (guildItems.length > 0) {
+                embed.addFields(
+                    guildItems.slice(0, 5).map(item => {
+                        let typeIcon = '❓';
+                        let typeName = 'Inconnu';
+                        
+                        if (item.type === 'custom_object') {
+                            typeIcon = '🎨';
+                            typeName = 'Objet personnalisé';
+                        } else if (item.type === 'temporary_role') {
+                            typeIcon = '⌛';
+                            typeName = 'Rôle temporaire';
+                        } else if (item.type === 'permanent_role') {
+                            typeIcon = '⭐';
+                            typeName = 'Rôle permanent';
+                        }
+
+                        return {
+                            name: `${typeIcon} ${item.name || `Rôle <@&${item.roleId}>`}`,
+                            value: `${typeName} - ${item.price}€${item.duration ? ` (${item.duration}h)` : ''}`,
+                            inline: true
+                        };
+                    })
+                );
+            }
 
             const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('delete_objects_select')
-                .setPlaceholder('Voir les objets à supprimer')
-                .addOptions([
-                    { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
-                ]);
+                .setCustomId('delete_articles_select')
+                .setPlaceholder('Sélectionner un article à supprimer...')
+                .addOptions(
+                    guildItems.slice(0, 20).map(item => {
+                        let label = item.name || `Rôle ${item.roleId}`;
+                        let typeIcon = item.type === 'custom_object' ? '🎨' : 
+                                     item.type === 'temporary_role' ? '⌛' : '⭐';
+                        
+                        return {
+                            label: `${typeIcon} ${label}`,
+                            description: `${item.price}€ - Supprimer cet article`,
+                            value: item.id
+                        };
+                    })
+                );
+
+            // Ajouter l'option retour
+            selectMenu.addOptions([
+                { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
+            ]);
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
-            await interaction.update({ embeds: [embed], components: [row] });
+
+            await interaction.update({
+                embeds: [embed],
+                components: [row]
+            });
 
         } catch (error) {
-            console.error('Erreur delete articles:', error);
+            console.error('Erreur menu suppression:', error);
             await interaction.update({
-                content: '❌ Erreur lors de l\'affichage des objets à supprimer.',
+                content: '❌ Erreur lors du chargement des articles.',
                 embeds: [],
                 components: []
             });
