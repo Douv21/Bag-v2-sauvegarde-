@@ -104,19 +104,38 @@ async function handleObjectInteraction(interaction, dataManager) {
             }
         }
 
-        if (customId.startsWith('offer_user_select_')) {
-            const parts = customId.split('_');
-            const index = parseInt(parts[3]);
-            const targetId = parts[4];
+        if (customId === 'offer_user_select') {
+            const value = interaction.values[0];
+            const parts = value.split('_');
+            const index = parseInt(parts[2]);
+            const targetId = parts[3];
             const obj = customObjects[index];
             if (!obj) return;
 
-            userData.inventory = userData.inventory.filter((item, idx) => !(item.type === 'custom' && idx === index));
-            await dataManager.saveData('economy.json', economyData);
+            // Retirer l'objet de l'inventaire de l'utilisateur
+            const userInventory = userData.inventory;
+            let itemRemoved = false;
+            const newInventory = userInventory.reduce((acc, item) => {
+                if (item.type === 'custom' && !itemRemoved) {
+                    const itemIndexInCustom = customObjects.indexOf(obj);
+                    if (customObjects.indexOf(item) === itemIndexInCustom) {
+                        itemRemoved = true;
+                        return acc;
+                    }
+                }
+                acc.push(item);
+                return acc;
+            }, []);
 
+            economyData[userKey].inventory = newInventory;
+
+            // Ajouter l'objet à l'inventaire de la cible
             const targetKey = `${targetId}_${guildId}`;
-            if (!economyData[targetKey]) economyData[targetKey] = { inventory: [] };
+            if (!economyData[targetKey]) {
+                economyData[targetKey] = { balance: 0, goodKarma: 0, badKarma: 0, inventory: [] };
+            }
             economyData[targetKey].inventory.push(obj);
+
             await dataManager.saveData('economy.json', economyData);
 
             return await interaction.update({
@@ -126,24 +145,39 @@ async function handleObjectInteraction(interaction, dataManager) {
             });
         }
 
-        if (customId.startsWith('confirm_delete_')) {
-            const index = parseInt(customId.replace('confirm_delete_', ''));
+        if (customId === 'confirm_delete') {
+            const value = interaction.values[0];
+            if (value === 'cancel_delete') {
+                return await interaction.update({
+                    content: '❌ Suppression annulée.',
+                    components: [],
+                    embeds: []
+                });
+            }
+
+            const index = parseInt(value.replace('confirm_delete_', ''));
             const obj = customObjects[index];
             if (!obj) return;
 
-            userData.inventory = userData.inventory.filter((item, idx) => !(item.type === 'custom' && idx === index));
+            const userInventory = userData.inventory;
+            let itemRemoved = false;
+            const newInventory = userInventory.reduce((acc, item) => {
+                if (item.type === 'custom' && !itemRemoved) {
+                    const itemIndexInCustom = customObjects.indexOf(obj);
+                     if (customObjects.indexOf(item) === itemIndexInCustom) {
+                        itemRemoved = true;
+                        return acc;
+                    }
+                }
+                acc.push(item);
+                return acc;
+            }, []);
+
+            economyData[userKey].inventory = newInventory;
             await dataManager.saveData('economy.json', economyData);
 
             return await interaction.update({
                 content: `🗑️ **${obj.name}** a été supprimé.`,
-                components: [],
-                embeds: []
-            });
-        }
-
-        if (customId === 'cancel_delete') {
-            return await interaction.update({
-                content: '❌ Suppression annulée.',
                 components: [],
                 embeds: []
             });
@@ -154,11 +188,50 @@ async function handleObjectInteraction(interaction, dataManager) {
             const obj = customObjects[index];
             const message = interaction.fields.getTextInputValue('custom_message');
 
+            // Ici, il faudrait choisir un membre cible. Ajoutons un sélecteur d'utilisateur.
+            const members = (await interaction.guild.members.fetch()).filter(m => !m.user.bot);
+             if (members.size === 0) {
+                return await interaction.reply({ content: '❌ Aucun membre à cibler.', ephemeral: true });
+            }
+
+            const userSelect = new StringSelectMenuBuilder()
+                .setCustomId(`custom_user_select_${index}`)
+                .setPlaceholder('Choisissez un utilisateur à cibler')
+                .addOptions(members.map(m => ({
+                    label: m.user.username,
+                    value: m.id
+                })));
+
+            // Sauvegarder le message temporairement
+            // NOTE: Une meilleure approche serait une base de données temporaire ou un cache
+            interaction.client.tempStore = interaction.client.tempStore || {};
+            interaction.client.tempStore[`${userId}_${index}`] = message;
+
             return await interaction.reply({
-                content: `💬 Vous utilisez **${obj.name}** :\n> ${message}`,
+                content: 'À qui voulez-vous envoyer cette interaction ?',
+                components: [new ActionRowBuilder().addComponents(userSelect)],
                 ephemeral: true
             });
         }
+
+        if (customId.startsWith('custom_user_select_')) {
+            const index = parseInt(customId.replace('custom_user_select_', ''));
+            const targetId = interaction.values[0];
+            const selectedObject = customObjects[index];
+
+            const message = interaction.client.tempStore[`${userId}_${index}`];
+            if (!message) {
+                return await interaction.update({ content: '❌ Erreur: message personnalisé non trouvé.', components:[], embeds: []});
+            }
+
+            const targetMember = await interaction.guild.members.fetch(targetId);
+            const objetCommand = require('../commands/objet');
+            await objetCommand.executeCustomInteraction(interaction, dataManager, selectedObject, message, targetMember);
+
+            // Nettoyer le store temporaire
+            delete interaction.client.tempStore[`${userId}_${index}`];
+        }
+
     } catch (err) {
         console.error('Erreur objet :', err);
         if (!interaction.replied && !interaction.deferred) {
