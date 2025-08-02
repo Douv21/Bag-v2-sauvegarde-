@@ -68,35 +68,12 @@ module.exports = {
     
     async executeCustomInteraction(interaction, dataManager, selectedObject, customText, targetMember) {
         try {
-            // Créer l'embed pour l'interaction personnalisée
-            const embed = new EmbedBuilder()
-                .setColor('#9b59b6')
-                .setTitle('💬 Interaction Personnalisée')
-                .setDescription(`**${interaction.user.displayName}** utilise **${selectedObject.name}** !\n\n${customText}`)
-                .addFields([
-                    {
-                        name: '👤 Utilisateur',
-                        value: `<@${interaction.user.id}>`,
-                        inline: true
-                    },
-                    {
-                        name: '🎯 Cible',
-                        value: `<@${targetMember.id}>`,
-                        inline: true
-                    },
-                    {
-                        name: '🎨 Objet Utilisé',
-                        value: selectedObject.name,
-                        inline: true
-                    }
-                ])
-                .setTimestamp()
-                .setFooter({ text: 'Interaction d\'objet personnalisé' });
+            // Créer le message texte simple : texte personnalisé + objet + ping du membre
+            const messageContent = `${customText} **${selectedObject.name}** <@${targetMember.id}>`;
             
             // Envoyer dans le canal actuel - Message non éphémère pour que le ping soit visible
             await interaction.followUp({
-                embeds: [embed],
-                content: `<@${targetMember.id}> vous avez été mentionné !`
+                content: messageContent
                 // Suppression du flag ephemeral pour que le ping soit visible à tous
             });
             
