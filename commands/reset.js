@@ -1,7 +1,20 @@
 // commands/admin/reset.js
 const { SlashCommandBuilder } = require('discord.js');
 const { REST, Routes } = require('discord.js');
-const config = require('../../config.json'); // adapte le chemin si besoin
+// Configuration par défaut si config.json n'existe pas
+const config = {
+    roles: {
+        admin: [], // IDs des rôles admin
+        moderator: [] // IDs des rôles modérateur
+    }
+};
+
+try {
+    const configFile = require('../../config.json');
+    Object.assign(config, configFile);
+} catch (error) {
+    console.log('⚠️ config.json non trouvé, utilisation de la configuration par défaut');
+} // adapte le chemin si besoin
 
 module.exports = {
   data: new SlashCommandBuilder()
