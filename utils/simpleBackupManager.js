@@ -4,6 +4,7 @@
  */
 
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 const https = require('https');
 
@@ -253,7 +254,7 @@ class SimpleBackupManager {
                 missingEconomyEntries: []
             };
             
-            if (!fs.existsSync(economyPath) || !fs.existsSync(levelUsersPath)) {
+            if (!fsSync.existsSync(economyPath) || !fsSync.existsSync(levelUsersPath)) {
                 return { isValid: false, issues };
             }
 
