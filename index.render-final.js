@@ -1506,16 +1506,11 @@ class RenderSolutionBot {
                 }
 
                 // Routage pour la commande /objet
-                if (customId === 'object_selection' || 
-                    customId === 'object_action_menu' ||
-                    customId.startsWith('object_offer_') ||
-                    customId.startsWith('object_delete_') ||
-                    customId.startsWith('object_custom_') ||
+                if (customId.startsWith('object_') ||
                     customId.startsWith('offer_user_select_') ||
-                    customId.startsWith('custom_user_select_') ||
-                    customId.startsWith('custom_message_modal_') ||
                     customId.startsWith('confirm_delete_') ||
-                    customId === 'cancel_delete') {
+                    customId.startsWith('custom_message_modal_') ||
+                    customId.startsWith('custom_user_select_')) {
                     
                     console.log('🎯 Routage objet:', customId);
                     await handleObjectInteraction(interaction, dataManager);

@@ -1,4 +1,4 @@
-const { ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, UserSelectMenuBuilder } = require('discord.js');
 
 async function handleObjectInteraction(interaction, dataManager) {
     const customId = interaction.customId;
@@ -52,13 +52,9 @@ async function handleObjectInteraction(interaction, dataManager) {
 
             switch (action) {
                 case 'offer': {
-                    const members = (await interaction.guild.members.fetch()).filter(m => !m.user.bot && m.id !== userId);
-                    if (members.size === 0) return await interaction.update({ content: '❌ Aucun membre disponible.', components: [] });
-
-                    const select = new StringSelectMenuBuilder()
+                    const select = new UserSelectMenuBuilder()
                         .setCustomId(`offer_user_select_${objectId}`)
-                        .setPlaceholder('À qui offrir cet objet ?')
-                        .addOptions(members.map(m => ({ label: m.user.username, value: m.id })).slice(0, 25));
+                        .setPlaceholder('À qui offrir cet objet ?');
 
                     return await interaction.update({ content: `🎁 À qui veux-tu offrir **${obj.name}** ?`, components: [new ActionRowBuilder().addComponents(select)], embeds: [] });
                 }
