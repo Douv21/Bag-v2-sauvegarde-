@@ -8,6 +8,7 @@ const levelManager = require('./utils/levelManager');
 const { handleObjectInteraction } = require('./handlers/ObjectHandler');
 const { errorHandler, ErrorLevels } = require('./utils/errorHandler');
 const { modalHandler } = require('./utils/modalHandler');
+const { wrapInteraction } = require('./utils/interactionWrapper');
 
 // Handlers pour les nouvelles fonctionnalités karma
 async function handleKarmaResetComplete(interaction) {
@@ -31,18 +32,26 @@ async function handleKarmaResetComplete(interaction) {
         
         dataManager.saveData('economy.json', economyData);
         
-        await interaction.update({
-            content: `✅ **Reset karma complet terminé !**\n\n🧹 ${resetCount} membre(s) affecté(s)\n⚖️ Karma bon et mauvais remis à zéro`,
-            embeds: [],
-            components: []
-        });
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.update({
+                content: `✅ **Reset karma complet terminé !**\n\n🧹 ${resetCount} membre(s) affecté(s)\n⚖️ Karma bon et mauvais remis à zéro`,
+                embeds: [],
+                components: []
+            });
+        }
     } catch (error) {
         console.error('Erreur reset karma complet:', error);
-        await interaction.update({
-            content: '❌ Erreur lors du reset karma complet.',
-            embeds: [],
-            components: []
-        });
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.update({
+                    content: '❌ Erreur lors du reset karma complet.',
+                    embeds: [],
+                    components: []
+                });
+            }
+        } catch (updateError) {
+            console.error('Erreur lors de la mise à jour de l\'interaction:', updateError);
+        }
     }
 }
 
@@ -66,18 +75,26 @@ async function handleKarmaResetGood(interaction) {
         
         dataManager.saveData('economy.json', economyData);
         
-        await interaction.update({
-            content: `✅ **Reset karma positif terminé !**\n\n😇 ${resetCount} membre(s) affecté(s)\n⚖️ Karma positif remis à zéro\n🔒 Karma négatif préservé`,
-            embeds: [],
-            components: []
-        });
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.update({
+                content: `✅ **Reset karma positif terminé !**\n\n😇 ${resetCount} membre(s) affecté(s)\n⚖️ Karma positif remis à zéro\n🔒 Karma négatif préservé`,
+                embeds: [],
+                components: []
+            });
+        }
     } catch (error) {
         console.error('Erreur reset karma bon:', error);
-        await interaction.update({
-            content: '❌ Erreur lors du reset karma positif.',
-            embeds: [],
-            components: []
-        });
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.update({
+                    content: '❌ Erreur lors du reset karma positif.',
+                    embeds: [],
+                    components: []
+                });
+            }
+        } catch (updateError) {
+            console.error('Erreur lors de la mise à jour de l\'interaction:', updateError);
+        }
     }
 }
 
@@ -101,18 +118,26 @@ async function handleKarmaResetBad(interaction) {
         
         dataManager.saveData('economy.json', economyData);
         
-        await interaction.update({
-            content: `✅ **Reset karma négatif terminé !**\n\n😈 ${resetCount} membre(s) affecté(s)\n⚖️ Karma négatif remis à zéro\n🔒 Karma positif préservé`,
-            embeds: [],
-            components: []
-        });
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.update({
+                content: `✅ **Reset karma négatif terminé !**\n\n😈 ${resetCount} membre(s) affecté(s)\n⚖️ Karma négatif remis à zéro\n🔒 Karma positif préservé`,
+                embeds: [],
+                components: []
+            });
+        }
     } catch (error) {
         console.error('Erreur reset karma mauvais:', error);
-        await interaction.update({
-            content: '❌ Erreur lors du reset karma négatif.',
-            embeds: [],
-            components: []
-        });
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.update({
+                    content: '❌ Erreur lors du reset karma négatif.',
+                    embeds: [],
+                    components: []
+                });
+            }
+        } catch (updateError) {
+            console.error('Erreur lors de la mise à jour de l\'interaction:', updateError);
+        }
     }
 }
 
@@ -340,6 +365,8 @@ class RenderSolutionBot {
         });
 
         this.client.on('interactionCreate', async interaction => {
+            const wrappedInteraction = wrapInteraction(interaction);
+            
             try {
                 // Traitement spécial pour les modals d'actions économiques AVANT handleInteraction
                 if (interaction.isModalSubmit()) {
@@ -364,11 +391,38 @@ class RenderSolutionBot {
                 
                 await this.handleInteraction(interaction);
             } catch (error) {
-                await errorHandler.handleCriticalError(error, {
-                    context: 'interactionCreate event',
-                    interactionType: interaction.type,
-                    customId: interaction.customId
-                }, interaction);
+                // Gestion spécifique des erreurs Discord d'interaction
+                if (error.code === 40060) {
+                    console.warn('⚠️ Interaction déjà reconnue (40060) - ignorée silencieusement');
+                    return;
+                }
+                
+                // Log de l'erreur pour investigation
+                await errorHandler.logError(
+                    ErrorLevels.ERROR,
+                    'Erreur dans interactionCreate',
+                    error,
+                    {
+                        context: 'interactionCreate event',
+                        interactionType: interaction.type,
+                        customId: interaction.customId,
+                        interactionAge: Date.now() - interaction.createdTimestamp,
+                        interactionReplied: interaction.replied,
+                        interactionDeferred: interaction.deferred
+                    }
+                );
+                
+                // Tentative de réponse sécurisée
+                try {
+                    if (!interaction.replied && !interaction.deferred && wrappedInteraction.isValid()) {
+                        await wrappedInteraction.safeReply({
+                            content: '❌ Une erreur inattendue s\'est produite. L\'équipe technique a été notifiée.',
+                            flags: 64
+                        });
+                    }
+                } catch (replyError) {
+                    console.error('❌ Impossible de répondre à l\'interaction après erreur:', replyError);
+                }
             }
         });
 
@@ -1390,22 +1444,13 @@ class RenderSolutionBot {
                             
                             const channel = await interaction.guild.channels.fetch(channelId);
                             
-                            await interaction.update({
-                                content: `✅ Canal de notification défini sur ${channel.name}`,
-                                embeds: [],
-                                components: []
-                            });
-                            
-                            // Retour automatique au menu après 2 secondes
-                            setTimeout(async () => {
-                                try {
-                                    const LevelConfigHandler = require('./handlers/LevelConfigHandler');
-                                    const levelHandler = new LevelConfigHandler();
-                                    await levelHandler.showNotificationsConfig(interaction);
-                                } catch (error) {
-                                    console.error('Erreur retour menu notifications:', error);
-                                }
-                            }, 2000);
+                            if (!interaction.replied && !interaction.deferred) {
+                                await interaction.update({
+                                    content: `✅ Canal de notification défini sur ${channel.name}`,
+                                    embeds: [],
+                                    components: []
+                                });
+                            }
                             
                         } else if (customId === 'level_card_style') {
                             const style = interaction.values[0];
@@ -1414,11 +1459,13 @@ class RenderSolutionBot {
                             config.notifications.cardStyle = style;
                             levelManager.saveConfig(config);
                             
-                            await interaction.update({
-                                content: `✅ Style de carte changé en **${style}**.`,
-                                embeds: [],
-                                components: []
-                            });
+                            if (!interaction.replied && !interaction.deferred) {
+                                await interaction.update({
+                                    content: `✅ Style de carte changé en **${style}**.`,
+                                    embeds: [],
+                                    components: []
+                                });
+                            }
                             // Pas de setTimeout - retour au menu sera fait manuellement
                             
                         } else if (customId === 'remove_role_reward') {
@@ -1430,18 +1477,22 @@ class RenderSolutionBot {
                                 delete config.roleRewards[level];
                                 levelManager.saveConfig(config);
                                 
-                                await interaction.update({
-                                    content: `✅ Récompense du niveau ${level} supprimée.`,
-                                    embeds: [],
-                                    components: []
-                                });
+                                if (!interaction.replied && !interaction.deferred) {
+                                    await interaction.update({
+                                        content: `✅ Récompense du niveau ${level} supprimée.`,
+                                        embeds: [],
+                                        components: []
+                                    });
+                                }
                                 // Pas de setTimeout - retour au menu sera fait manuellement
                             } else {
-                                await interaction.update({
-                                    content: '❌ Récompense introuvable.',
-                                    embeds: [],
-                                    components: []
-                                });
+                                if (!interaction.replied && !interaction.deferred) {
+                                    await interaction.update({
+                                        content: '❌ Récompense introuvable.',
+                                        embeds: [],
+                                        components: []
+                                    });
+                                }
                             }
                             
                         } else if (customId === 'add_role_reward_select') {
@@ -2388,9 +2439,13 @@ async function handleShopPurchase(interaction, dataManager) {
                     await interaction.member.roles.add(role);
                     effectMessage = `\n👤 Rôle **${role.name}** attribué pour ${item.duration} jour${item.duration > 1 ? 's' : ''} !`;
                     
+                    // Programmer la suppression du rôle sans utiliser l'interaction
                     setTimeout(async () => {
                         try {
-                            await interaction.member.roles.remove(role);
+                            const guild = this.client.guilds.cache.get(interaction.guild.id);
+                            const member = await guild.members.fetch(interaction.user.id);
+                            await member.roles.remove(role);
+                            console.log(`🕰️ Rôle temporaire ${role.name} retiré de ${member.user.tag}`);
                         } catch (error) {
                             console.error('Erreur suppression rôle temporaire:', error);
                         }
