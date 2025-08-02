@@ -1722,6 +1722,12 @@ class RenderSolutionBot {
                         await economyHandler.showBoutiqueMenu(interaction);
                     } else if (interaction.values[0] === 'back_karma') {
                         await economyHandler.showKarmaMenu(interaction);
+                    } else if (customId === 'delete_objects_select') {
+                        // Gérer la suppression d'un objet spécifique
+                        await economyHandler.handleArticleDelete(interaction);
+                    } else if (customId === 'manage_objects_select') {
+                        // Gérer la modification d'un objet spécifique
+                        await economyHandler.handleObjetModification(interaction);
                     }
                     return;
                 }
