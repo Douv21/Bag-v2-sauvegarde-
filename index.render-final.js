@@ -2511,16 +2511,6 @@ async handleObjectInteraction(interaction, dataManager) {
     }
 }
 
-// À ajouter aussi dans ton fichier, en-dehors de la classe
-function getItemTypeLabel(type) {
-    switch (type) {
-        case 'custom': return 'Objet personnalisé';
-        case 'temp_role': return 'Rôle temporaire';
-        case 'perm_role': return 'Rôle permanent';
-        default: return 'Autre';
-    }
-}
-
 // Variables globales pour les cooldowns des messages
 const cooldowns = {};
 
@@ -2662,7 +2652,7 @@ async function handleShopPurchase(interaction, dataManager) {
     }
 }
 
-// À ajouter aussi dans ton fichier, en-dehors de la classe
+// Fonction utilitaire pour les types d'objets
 function getItemTypeLabel(type) {
     switch (type) {
         case 'custom': return 'Objet personnalisé';
