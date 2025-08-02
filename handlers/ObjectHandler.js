@@ -126,21 +126,13 @@ async function handleObjectInteraction(interaction, dataManager) {
             const objectId = customId.replace('custom_message_modal_', '');
             const message = interaction.fields.getTextInputValue('custom_message');
 
-            const members = (await interaction.guild.members.fetch()).filter(m => !m.user.bot);
-            if (members.size === 0) return await interaction.reply({ content: '❌ Aucun membre à cibler.', ephemeral: true });
-
             // Temporary storage for the message content
             interaction.client.tempStore = interaction.client.tempStore || {};
             interaction.client.tempStore[`${userId}_${objectId}`] = message;
 
-            const userSelect = new StringSelectMenuBuilder()
+            const userSelect = new UserSelectMenuBuilder()
                 .setCustomId(`custom_user_select_${objectId}`)
-                .setPlaceholder('Choisissez un utilisateur à cibler')
-                .addOptions(members.map(m => ({ 
-                    label: m.user.username, 
-                    value: m.id,
-                    description: m.user.tag
-                })).slice(0, 25));
+                .setPlaceholder('Choisissez un utilisateur à cibler');
 
             return await interaction.reply({
                 content: 'À qui voulez-vous envoyer cette interaction ?',
@@ -152,7 +144,7 @@ async function handleObjectInteraction(interaction, dataManager) {
         // --- Step 4: Finalizing the custom message action ---
         if (customId.startsWith('custom_user_select_')) {
             const objectId = customId.replace('custom_user_select_', '');
-            const targetId = interaction.values[0];
+            const targetId = interaction.users.first().id;
             const selectedObject = userData.inventory.find(item => item.id.toString() === objectId);
 
             if (!selectedObject) return await interaction.update({ content: '❌ Objet introuvable ou expiré.', components:[], embeds: []});
