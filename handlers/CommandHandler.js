@@ -1,7 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { REST, Routes } = require('discord.js');
-const { handleObjectInteraction } = require('./ObjectHandler');
 
 class CommandHandler {
     constructor(client, dataManager) {
@@ -100,17 +99,8 @@ class CommandHandler {
                         await interaction.reply(errorMessage).catch(() => {});
                     }
                 }
-            } else if (interaction.isStringSelectMenu() || interaction.isButton() || interaction.isModalSubmit()) {
-                // Déléguer aux gestionnaires spécialisés en fonction du customId
-                if (interaction.customId.startsWith('object_') ||
-                    interaction.customId.startsWith('offer_') ||
-                    interaction.customId.startsWith('confirm_delete') ||
-                    interaction.customId === 'cancel_delete' ||
-                    interaction.customId.startsWith('custom_message_modal')) {
-                    await handleObjectInteraction(interaction, this.dataManager);
-                }
-                // Note: On pourrait ajouter d'autres handlers ici avec des `else if`
             }
+            // Note: Les autres interactions sont gérées par le routeur principal dans index.render-final.js
         });
     }
 
