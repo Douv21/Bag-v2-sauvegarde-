@@ -8,6 +8,10 @@ const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
 
+// Import du système de gestion des modals et d'erreurs
+const { modalHandler } = require('./utils/modalHandler');
+const { errorHandler, ErrorLevels } = require('./utils/errorHandler');
+
 // Configuration optimisée pour Render.com
 const client = new Client({
     intents: [
@@ -107,26 +111,46 @@ async function registerCommands() {
 
 // Gestionnaire d'interactions
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const command = client.commands.get(interaction.commandName);
-    if (!command) return;
-
     try {
-        await command.execute(interaction);
-    } catch (error) {
-        console.error(`❌ Erreur commande ${interaction.commandName}:`, error);
-        
-        const errorMessage = {
-            content: 'Une erreur est survenue lors de l\'exécution de cette commande.',
-            flags: 64
-        };
-
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp(errorMessage).catch(() => {});
-        } else {
-            await interaction.reply(errorMessage).catch(() => {});
+        // Gestion spéciale des modals
+        if (interaction.isModalSubmit()) {
+            console.log(`🎯 Modal submit détecté: ${interaction.customId}`);
+            
+            // Vérifier si le modal est implémenté
+            const modalImplemented = await modalHandler.handleModalSubmission(interaction);
+            if (!modalImplemented) {
+                return; // Modal non implémenté, déjà géré par modalHandler
+            }
+            
+            // Si le modal est implémenté, il faut le traiter ici
+            // Pour l'instant, on log juste qu'il est implémenté
+            console.log(`✅ Modal ${interaction.customId} est implémenté mais pas encore traité dans ce fichier`);
+            
+            await errorHandler.respondWithError(
+                interaction,
+                ErrorLevels.WARNING,
+                'Modal Implémenté',
+                'Ce modal est implémenté mais le traitement complet nécessite une mise à jour du système.\n\n' +
+                'Veuillez utiliser les commandes slash en attendant la mise à jour complète.'
+            );
+            return;
         }
+
+        // Gestion des commandes slash
+        if (!interaction.isChatInputCommand()) return;
+
+        const command = client.commands.get(interaction.commandName);
+        if (!command) return;
+
+        await command.execute(interaction);
+        
+    } catch (error) {
+        await errorHandler.handleCriticalError(error, {
+            context: 'interactionCreate event',
+            interactionType: interaction.type,
+            customId: interaction.customId,
+            commandName: interaction.commandName
+        }, interaction);
     }
 });
 

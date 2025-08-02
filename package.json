@@ -19,11 +19,11 @@
   "author": "BAG Bot Team",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^14.21.0",
-    "express": "^4.18.2",
     "canvas": "^2.11.2",
-    "sharp": "^0.32.6",
-    "mongodb": "^6.3.0"
+    "discord.js": "^14.21.0",
+    "express": "^4.21.2",
+    "mongodb": "^6.3.0",
+    "sharp": "^0.32.6"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
