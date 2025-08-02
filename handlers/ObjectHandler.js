@@ -203,9 +203,9 @@ async function handleObjectInteraction(interaction, dataManager) {
                 // Nettoyer le stockage temporaire
                 delete interaction.client.tempStore[`${userId}_${objectId}_target`];
 
-                // Envoyer une confirmation
+                // Envoyer une confirmation éphémère
                 await interaction.editReply({ 
-                    content: `✅ Interaction envoyée avec **${selectedObject.name}** vers ${targetMember.displayName}!` 
+                    content: `✅ Interaction envoyée avec **${selectedObject.name}** vers ${targetMember.displayName}!`
                 });
 
             } catch (error) {
