@@ -120,7 +120,7 @@ async function handleKarmaWeeklyDaySelection(interaction, dayValue) {
 
         const dayNames = {
             '0': 'Dimanche',
-            '1': 'Lundi', 
+            '1': 'Lundi',
             '2': 'Mardi',
             '3': 'Mercredi',
             '4': 'Jeudi',
@@ -175,7 +175,7 @@ class RenderSolutionBot {
     async initializeWebServer() {
         // 1. Serveur web d'abord (port 5000 pour Render.com)
         const app = express();
-        const PORT = process.env.PORT || 3000;
+        const PORT = process.env.PORT || 5000;
 
         app.use(express.json());
 
@@ -247,7 +247,7 @@ class RenderSolutionBot {
             console.log('📊 Status: http://localhost:5000/commands-status');
             console.log('✅ Port 5000 ouvert pour Render.com');
 
-            // 2. Initialiser le système de sauvegarde et Discord
+            // 2. Initialiser Discord après le serveur web
             setTimeout(() => this.initializeSystemsAndDiscord(), 1000);
         });
     }
@@ -435,7 +435,7 @@ class RenderSolutionBot {
 
                 console.log(`🔧 /${interaction.commandName} par ${interaction.user.tag}`);
                 await command.execute(interaction, dataManager);
-            } 
+            }
             else if (interaction.isModalSubmit()) {
                 console.log(`📝 Modal: ${interaction.customId}`);
 
@@ -877,7 +877,7 @@ class RenderSolutionBot {
 
                         if (isNaN(price) || price < 1 || price > 999999) {
                             await interaction.reply({
-                                content: '❌ Le prix doit être un nombre entre 1 et 999999.',<previous_generation>
+                                content: '❌ Le prix doit être un nombre entre 1 et 999999.',
                                 flags: 64
                             });
                             return;
@@ -1105,7 +1105,6 @@ class RenderSolutionBot {
                     }
 
 
-
                     if (interaction.customId === 'temp_role_price_modal') {
                         const price = parseInt(interaction.fields.getTextInputValue('role_price'));
                         const duration = parseInt(interaction.fields.getTextInputValue('role_duration'));
@@ -1148,9 +1147,9 @@ class RenderSolutionBot {
                             shopData[guildId].push(newItem);
                             fs.writeFileSync(shopPath, JSON.stringify(shopData, null, 2));
 
-                            await interaction.reply({ 
-                                content: `✅ **Rôle temporaire ajouté !**\n\n⏰ **${role?.name}**\n💰 Prix: ${price}€\n📅 Durée: ${duration} jour(s)`, 
-                                flags: 64 
+                            await interaction.reply({
+                                content: `✅ **Rôle temporaire ajouté !**\n\n⏰ **${role?.name}**\n💰 Prix: ${price}€\n📅 Durée: ${duration} jour(s)`,
+                                flags: 64
                             });
                         } else {
                             await interaction.reply({ content: '❌ Valeurs invalides (prix: 1-999,999€, durée: 1-365 jours)', flags: 64 });
@@ -1198,9 +1197,9 @@ class RenderSolutionBot {
                             shopData[guildId].push(newItem);
                             fs.writeFileSync(shopPath, JSON.stringify(shopData, null, 2));
 
-                            await interaction.reply({ 
-                                content: `✅ **Rôle permanent ajouté !**\n\n⭐ **${role?.name}**\n💰 Prix: ${price}€\n🔒 Permanent`, 
-                                flags: 64 
+                            await interaction.reply({
+                                content: `✅ **Rôle permanent ajouté !**\n\n⭐ **${role?.name}**\n💰 Prix: ${price}€\n🔒 Permanent`,
+                                flags: 64
                             });
                         } else {
                             await interaction.reply({ content: '❌ Prix invalide (1-999,999€)', flags: 64 });
@@ -1251,9 +1250,9 @@ class RenderSolutionBot {
                             shopData[guildId].push(newItem);
                             fs.writeFileSync(shopPath, JSON.stringify(shopData, null, 2));
 
-                            await interaction.reply({ 
-                                content: `✅ **Objet créé avec succès !**\n\n🎨 **${name}** - ${price}€\n📝 ${description}`, 
-                                flags: 64 
+                            await interaction.reply({
+                                content: `✅ **Objet créé avec succès !**\n\n🎨 **${name}** - ${price}€\n📝 ${description}`,
+                                flags: 64
                             });
                         } else {
                             await interaction.reply({ content: '❌ Prix invalide (1-999,999€)', flags: 64 });
@@ -1337,8 +1336,8 @@ class RenderSolutionBot {
                 }
 
                 // Routage pour les sous-menus de configuration des niveaux
-                if (customId === 'notifications_config_menu' || 
-                    customId === 'role_rewards_config_menu' || 
+                if (customId === 'notifications_config_menu' ||
+                    customId === 'role_rewards_config_menu' ||
                     customId === 'level_formula_config_menu' ||
                     customId === 'level_notification_channel' ||
                     customId === 'level_card_style' ||
@@ -1505,13 +1504,12 @@ class RenderSolutionBot {
                 }
 
                 // Routage pour la commande /objet
-                if (customId === 'object_selection' || 
+                if (customId === 'object_selection' ||
                     customId === 'object_action_menu' ||
                     customId.startsWith('object_offer_') ||
                     customId.startsWith('object_delete_') ||
                     customId.startsWith('object_custom_') ||
                     customId.startsWith('offer_user_select_') ||
-                    customId.startsWith('custom_user_select_') ||
                     customId.startsWith('custom_message_modal_') ||
                     customId.startsWith('confirm_delete_') ||
                     customId === 'cancel_delete') {
@@ -1722,9 +1720,9 @@ class RenderSolutionBot {
                         const handled = await router.handleInteraction(interaction);
 
                         if (!handled && !interaction.replied && !interaction.deferred) {
-                            await interaction.reply({ 
-                                content: '❌ Cette interaction n\'est pas encore implémentée.', 
-                                flags: 64 
+                            await interaction.reply({
+                                content: '❌ Cette interaction n\'est pas encore implémentée.',
+                                flags: 64
                             });
                         }
                     } else {
@@ -1734,8 +1732,7 @@ class RenderSolutionBot {
             }
 
         } catch (error) {
-            ```text
-        console.error('❌ Erreur interaction:', error);
+            console.error('❌ Erreur interaction:', error);
             if (!interaction.replied && !interaction.deferred) {
                 try {
                     await interaction.reply({
@@ -1845,7 +1842,7 @@ class RenderSolutionBot {
             const autoThreadConfig = config[guildId];
             if (!autoThreadConfig || !autoThreadConfig.enabled) return;
 
-            const isChannelConfigured = autoThreadConfig.channels?.some(c => 
+            const isChannelConfigured = autoThreadConfig.channels?.some(c =>
                 (typeof c === 'string' ? c : c.channelId) === channelId
             );
             if (!isChannelConfigured) return;
@@ -2034,9 +2031,9 @@ class RenderSolutionBot {
                 // Retour automatique au menu après 2 secondes
                 setTimeout(async () => {
                     try {
-                        await levelHandler.showNotificationsConfig({ 
-                            ...interaction, 
-                            update: (options) => interaction.editReply(options) 
+                        await levelHandler.showNotificationsConfig({
+                            ...interaction,
+                            update: (options) => interaction.editReply(options)
                         });
                     } catch (error) {
                         console.log('Timeout notification config - interaction expirée');
@@ -2118,8 +2115,8 @@ class RenderSolutionBot {
 
             case 'list_rewards':
                 const rewards = config.roleRewards || {};
-                const rewardsList = Object.keys(rewards).length > 0 
-                    ? Object.entries(rewards).map(([level, roleId]) => 
+                const rewardsList = Object.keys(rewards).length > 0
+                    ? Object.entries(rewards).map(([level, roleId]) =>
                         `Niveau ${level}: <@&${roleId}>`).join('\n')
                     : 'Aucune récompense configurée';
 
@@ -2131,9 +2128,9 @@ class RenderSolutionBot {
                 // Retour automatique au menu après 5 secondes
                 setTimeout(async () => {
                     try {
-                        await levelHandler.showRoleRewardsConfig({ 
-                            ...interaction, 
-                            update: (options) => interaction.editReply(options) 
+                        await levelHandler.showRoleRewardsConfig({
+                            ...interaction,
+                            update: (options) => interaction.editReply(options)
                         });
                     } catch (error) {
                         console.log('Timeout role rewards config - interaction expirée');
@@ -2233,9 +2230,9 @@ class RenderSolutionBot {
                 // Retour automatique au menu après 3 secondes
                 setTimeout(async () => {
                     try {
-                        await levelHandler.showLevelFormulaConfig({ 
-                            ...interaction, 
-                            update: (options) => interaction.editReply(options) 
+                        await levelHandler.showLevelFormulaConfig({
+                            ...interaction,
+                            update: (options) => interaction.editReply(options)
                         });
                     } catch (error) {
                         console.log('Timeout level formula config - interaction expirée');
@@ -2323,7 +2320,6 @@ async handleObjectInteraction(interaction, dataManager) {
                         emoji: '💬'
                     }
                 ]);
-
             const row = new ActionRowBuilder().addComponents(actionMenu);
             return await interaction.update({
                 embeds: [embed],
@@ -2562,7 +2558,7 @@ async function handleShopPurchase(interaction, dataManager) {
 
         // Calculer le prix final avec remise
         const originalPrice = item.price;
-        const finalPrice = discountPercent > 0 ? 
+        const finalPrice = discountPercent > 0 ?
             Math.floor(originalPrice * (100 - discountPercent) / 100) : originalPrice;
 
         // Vérifier si l'utilisateur a assez d'argent
@@ -2602,357 +2598,6 @@ async function handleShopPurchase(interaction, dataManager) {
         await dataManager.updateUser(userId, guildId, userData);
 
         let effectMessage = '';
-        if (item.type === 'temporary_role' && item.roleId) {
-            try {
-                const role = await interaction.guild.roles.fetch(item.roleId);
-                if (role) {
-                    await interaction.member.roles.add(role);
-                    effectMessage = `\n👤 Rôle **${role.name}** attribué pour ${item.duration} jour${item.duration > 1 ? 's' : ''} !`;
-
-                    setTimeout(async () => {
-                        try {
-                            await interaction.member.roles.remove(role);
-                        } catch (error) {
-                            console.error('Erreur suppression rôle temporaire:', error);
-                        }
-                    }, item.duration * 24 * 60 * 60 * 1000);
-                } else {
-                    effectMessage = '\n⚠️ Rôle introuvable.';
-                }
-            } catch (error) {
-                effectMessage = '\n⚠️ Erreur lors de l\'attribution du rôle.';
-            }
-        } else if (item.type === 'permanent_role' && item.roleId) {
-            try {
-                const role = await interaction.guild.roles.fetch(item.roleId);
-                if (role) {
-                    await interaction.member.roles.add(role);
-                    effectMessage = `\n👤 Rôle **${role.name}** attribué de façon permanente !`;
-                } else {
-                    effectMessage = '\n⚠️ Rôle introuvable.';
-                }
-            } catch (error) {
-                effectMessage = '\n⚠️ Erreur lors de l\'attribution du rôle.';
-            }
-        } else if (item.type === 'custom') {
-            effectMessage = '\n🎁 Objet personnalisé acheté !';
-        } else {
-            effectMessage = '\n📦 Objet ajouté à votre inventaire !';
-        }
-
-        // Message de confirmation avec détails de la remise
-        let confirmMessage = `✅ **Achat réussi !**\n\n🛒 **${item.name}**\n💰 Prix payé: **${finalPrice}€**`;
-
-        if (discountPercent > 0) {
-            const savedAmount = originalPrice - finalPrice;
-            confirmMessage += `\n💸 Prix original: ~~${originalPrice}€~~\n🎯 Remise karma (${discountPercent}%): **-${savedAmount}€**\n⚖️ Votre karma net: ${userKarmaNet}`;
-        }
-
-        confirmMessage += `\n💳 Nouveau solde: **${userData.balance}€**${effectMessage}`;
-
-        await interaction.reply({
-            content: confirmMessage,
-            flags: 64
-        });
-
-        console.log(`🛒 ${interaction.user.tag} a acheté "${item.name}" pour ${finalPrice}€ (remise: ${discountPercent}%)`);
-
-    } catch (error) {
-        console.error('❌ Erreur handleShopPurchase:', error);
-        await interaction.reply({
-            content: '❌ Erreur lors de l\'achat.',
-            flags: 64
-        });
-    }
-}
-                        emoji: '🗑️'
-                    },
-                    {
-                        label: 'Interaction personnalisée',
-                        value: `object_custom_${objectIndex}`,
-                        description: 'Utiliser l\'objet avec un message personnalisé',
-                        emoji: '💬'
-                    }
-                ]);
-            const row = new ActionRowBuilder().addComponents(actionMenu);
-            return await interaction.update({
-                embeds: [embed],
-                components: [row]
-            });
-        }
-
-        // Action menu (offrir, supprimer, interaction personnalisée)
-        if (customId === 'object_action_menu') {
-            const actionValue = interaction.values[0];
-            if (actionValue.startsWith('object_offer_')) {
-                const objectIndex = parseInt(actionValue.replace('object_offer_', ''));
-                const selectedObject = customObjects[objectIndex];
-                if (!selectedObject) {
-                    return await interaction.update({
-                        content: '❌ Objet introuvable.',
-                        components: []
-                    });
-                }
-                const guild = await interaction.guild.fetch();
-                const members = await guild.members.fetch();
-                const options = members
-                    .filter(m => !m.user.bot && m.id !== userId)
-                    .map(m => ({
-                        label: m.user.username,
-                        value: `offer_user_select_${objectIndex}_${m.id}`
-                    }))
-                    .slice(0, 25);
-                if (options.length === 0) {
-                    return await interaction.update({
-                        content: '❌ Aucun membre à qui offrir cet objet.',
-                        components: []
-                    });
-                }
-                const memberSelect = new (require('discord.js').StringSelectMenuBuilder)()
-                    .setCustomId('offer_user_select')
-                    .setPlaceholder('Choisissez le membre à qui offrir')
-                    .addOptions(options);
-                const row = new (require('discord.js').ActionRowBuilder)().addComponents(memberSelect);
-                return await interaction.update({
-                    content: `Sélectionnez le membre à qui offrir **${selectedObject.name}** :`,
-                    components: [row],
-                    embeds: []
-                });
-            }
-            if (actionValue.startsWith('object_delete_')) {
-                const objectIndex = parseInt(actionValue.replace('object_delete_', ''));
-                const selectedObject = customObjects[objectIndex];
-                if (!selectedObject) {
-                    return await interaction.update({
-                        content: '❌ Objet introuvable.',
-                        components: []
-                    });
-                }
-                const confirmRow = new (require('discord.js').ActionRowBuilder)().addComponents(
-                    new (require('discord.js').StringSelectMenuBuilder)()
-                        .setCustomId('confirm_delete')
-                        .setPlaceholder('Confirmer la suppression')
-                        .addOptions([
-                            { label: 'Oui, supprimer', value: `confirm_delete_${objectIndex}`, emoji: '✅' },
-                            { label: 'Annuler', value: 'cancel_delete', emoji: '❌' }
-                        ])
-                );
-                return await interaction.update({
-                    content: `Êtes-vous sûr de vouloir supprimer **${selectedObject.name}** ?`,
-                    components: [confirmRow],
-                    embeds: []
-                });
-            }
-            if (actionValue.startsWith('object_custom_')) {
-                const objectIndex = parseInt(actionValue.replace('object_custom_', ''));
-                const selectedObject = customObjects[objectIndex];
-                if (!selectedObject) {
-                    return await interaction.update({
-                        content: '❌ Objet introuvable.',
-                        components: []
-                    });
-                }
-                // Modal Discord pour message personnalisé
-                const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-                const modal = new ModalBuilder()
-                    .setCustomId(`custom_message_modal_${objectIndex}`)
-                    .setTitle('Interaction personnalisée')
-                    .addComponents(
-                        new ActionRowBuilder().addComponents(
-                            new TextInputBuilder()
-                                .setCustomId('custom_message')
-                                .setLabel('Votre message/interaction')
-                                .setStyle(TextInputStyle.Paragraph)
-                                .setPlaceholder('Décrivez ce que vous faites avec l\'objet...')
-                                .setRequired(true)
-                        )
-                    );
-                return await interaction.showModal(modal);
-            }
-        }
-
-        // Offrir à un membre (sélection dans la liste)
-        if (customId.startsWith('offer_user_select_')) {
-            const parts = customId.split('_');
-            const objectIndex = parseInt(parts[3]);
-            const targetUserId = parts[4];
-            const selectedObject = customObjects[objectIndex];
-            if (!selectedObject) {
-                return await interaction.update({
-                    content: '❌ Objet introuvable.',
-                    components: []
-                });
-            }
-            // Retirer l'objet à l'utilisateur courant
-            let found = false;
-            userData.inventory = userData.inventory.filter((item, idx) => {
-                if (item.type === 'custom' && idx === objectIndex && !found) {
-                    found = true;
-                    return false;
-                }
-                return true;
-            });
-            await dataManager.saveData('economy.json', economyData);
-            // Ajouter l'objet à l'utilisateur cible
-            const targetKey = `${targetUserId}_${guildId}`;
-            if (!economyData[targetKey]) economyData[targetKey] = { inventory: [] };
-            economyData[targetKey].inventory.push(selectedObject);
-            await dataManager.saveData('economy.json', economyData);
-            return await interaction.update({
-                content: `🎁 Vous avez offert **${selectedObject.name}** à <@${targetUserId}> !`,
-                components: [],
-                embeds: []
-            });
-        }
-
-        // Confirmation suppression
-        if (customId.startsWith('confirm_delete_')) {
-            const objectIndex = parseInt(customId.replace('confirm_delete_', ''));
-            const selectedObject = customObjects[objectIndex];
-            if (!selectedObject) {
-                return await interaction.update({
-                    content: '❌ Objet introuvable.',
-                    components: []
-                });
-            }
-            let found = false;
-            userData.inventory = userData.inventory.filter((item, idx) => {
-                if (item.type === 'custom' && idx === objectIndex && !found) {
-                    found = true;
-                    return false;
-                }
-                return true;
-            });
-            await dataManager.saveData('economy.json', economyData);
-            return await interaction.update({
-                content: `🗑️ **${selectedObject.name}** a été supprimé de votre inventaire.`,
-                components: [],
-                embeds: []
-            });
-        }
-        if (customId === 'cancel_delete') {
-            return await interaction.update({
-                content: 'Suppression annulée.',
-                components: [],
-                embeds: []
-            });
-        }
-
-        // Interaction personnalisée (réponse au modal)
-        if (interaction.isModalSubmit() && customId.startsWith('custom_message_modal_')) {
-            const objectIndex = parseInt(customId.replace('custom_message_modal_', ''));
-            const selectedObject = customObjects[objectIndex];
-            if (!selectedObject) {
-                return await interaction.reply({
-                    content: '❌ Objet introuvable.',
-                    ephemeral: true
-                });
-            }
-            const messageValue = interaction.fields.getTextInputValue('custom_message');
-            return await interaction.reply({
-                content: `💬 Vous utilisez **${selectedObject.name}** :\n> ${messageValue}`,
-                ephemeral: true
-            });
-        }
-    } catch (error) {
-        console.error('Erreur dans handleObjectInteraction:', error);
-        if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({
-                content: '❌ Erreur lors du traitement de la sélection.',
-                ephemeral: true
-            });
-        }
-    }
-}
-
-// À ajouter aussi dans ton fichier, en-dehors de la classe
-function getItemTypeLabel(type) {
-    switch (type) {
-        case 'custom': return 'Objet personnalisé';
-        case 'temp_role': return 'Rôle temporaire';
-        case 'perm_role': return 'Rôle permanent';
-        default: return 'Autre';
-    }
-}
-
-// Variables globales pour les cooldowns des messages
-const cooldowns = {};
-
-// Fonction pour gérer les achats avec remises karma automatiques
-async function handleShopPurchase(interaction, dataManager) {
-    try {
-        const guildId = interaction.guild.id;
-        const userId = interaction.user.id;
-        const itemId = interaction.values[0];
-
-        // Charger les données
-        const userData = await dataManager.getUser(userId, guildId);
-        const shopData = await dataManager.loadData('shop.json', {});
-        const economyConfig = await dataManager.loadData('economy.json', {});
-        const shopItems = shopData[guildId] || [];
-
-        // Trouver l'objet sélectionné
-        const item = shopItems.find(i => (i.id || shopItems.indexOf(i)).toString() === itemId);
-        if (!item) {
-            return await interaction.reply({
-                content: '❌ Objet introuvable dans la boutique.',
-                flags: 64
-            });
-        }
-
-        // Calculer le karma net et la remise (karma bon - karma mauvais)
-        const userKarmaNet = (userData.goodKarma || 0) - Math.abs(userData.badKarma || 0);
-        let discountPercent = 0;
-
-        if (economyConfig.karmaDiscounts?.enabled && economyConfig.karmaDiscounts?.ranges) {
-            const applicableRanges = economyConfig.karmaDiscounts.ranges.filter(range => userKarmaNet >= range.minKarma);
-            const bestRange = applicableRanges.sort((a, b) => b.minKarma - a.minKarma)[0];
-            discountPercent = bestRange ? bestRange.discount : 0;
-        }
-
-        // Calculer le prix final avec remise
-        const originalPrice = item.price;
-        const finalPrice = discountPercent > 0 ? 
-            Math.floor(originalPrice * (100 - discountPercent) / 100) : originalPrice;
-
-        // Vérifier si l'utilisateur a assez d'argent
-        if (userData.balance < finalPrice) {
-            const missingAmount = finalPrice - userData.balance;
-            return await interaction.reply({
-                content: `❌ **Solde insuffisant !**\n\n💰 Prix: ${finalPrice}€ ${discountPercent > 0 ? `(remise ${discountPercent}% appliquée)` : ''}\n💳 Votre solde: ${userData.balance}€\n❌ Manque: ${missingAmount}€`,
-                flags: 64
-            });
-        }
-
-        // Déduire l'argent
-        userData.balance -= finalPrice;
-
-        // Ajouter l'objet à l'inventaire
-        if (!userData.inventory) userData.inventory = [];
-
-        const inventoryItem = {
-            id: item.id || Date.now().toString(),
-            name: item.name,
-            description: item.description || 'Objet de la boutique',
-            type: item.type || 'custom',
-            price: finalPrice,
-            purchaseDate: new Date().toISOString(),
-            from: 'shop'
-        };
-
-        if (item.type === 'temporary_role' && item.roleId && item.duration) {
-            inventoryItem.roleId = item.roleId;
-            inventoryItem.duration = item.duration;
-            inventoryItem.expiresAt = new Date(Date.now() + (item.duration * 24 * 60 * 60 * 1000)).toISOString();
-        } else if (item.type === 'permanent_role' && item.roleId) {
-            inventoryItem.roleId = item.roleId;
-        }
-
-        userData.inventory.push(inventoryItem);
-        await dataManager.updateUser(userId, guildId, userData);
-
-        let effectMessage = '';
-        ```text
         if (item.type === 'temporary_role' && item.roleId) {
             try {
                 const role = await interaction.guild.roles.fetch(item.roleId);
