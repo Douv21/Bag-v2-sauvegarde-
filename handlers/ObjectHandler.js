@@ -12,8 +12,10 @@ async function handleObjectInteraction(interaction, dataManager) {
 
         // --- Step 1: User selects an object ---
         if (customId === 'object_selection') {
-            const objectId = interaction.values[0];
-            const obj = userData.inventory.find(item => item.id.toString() === objectId);
+            const objectValue = interaction.values[0];
+            // Extract the original ID from the combined value (objectId_index)
+            const originalObjectId = objectValue.split('_')[0];
+            const obj = userData.inventory.find(item => (item.id || '').toString() === originalObjectId);
 
             if (!obj) {
                 return await interaction.update({ content: '❌ Objet introuvable ou expiré.', components: [] });

@@ -104,10 +104,13 @@ module.exports = {
                             const priceDisplay = karmaDiscountPercent > 0 ? 
                                 `${finalPrice}€ (était ${item.price}€)` : `${item.price}€`;
 
+                            // Ensure unique value - use item.id if available, otherwise create unique identifier
+                            const uniqueValue = item.id ? item.id.toString() : `shop_item_${index}_${Date.now().toString(36)}`;
+
                             return {
                                 label: item.name,
                                 description: `${priceDisplay} - ${(item.description || 'Aucune description').substring(0, 60)}`,
-                                value: (item.id || index).toString(),
+                                value: uniqueValue,
                                 emoji: emoji
                             };
                         })
