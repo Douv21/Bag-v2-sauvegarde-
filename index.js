@@ -12,6 +12,7 @@ const fs = require('fs');
 const DataManager = require('./managers/DataManager');
 const KarmaManager = require('./managers/KarmaManager');
 const InteractionHandler = require('./handlers/InteractionHandler');
+const MainRouterHandler = require('./handlers/MainRouterHandler');
 const CommandHandler = require('./handlers/CommandHandler');
 
 class BagBotRender {
@@ -30,7 +31,8 @@ class BagBotRender {
         // Gestionnaires
         this.dataManager = new DataManager();
         this.karmaManager = new KarmaManager(this.dataManager);
-        this.interactionHandler = new InteractionHandler(this.client, this.dataManager);
+        this.interactionHandler = new InteractionHandler(this.dataManager);
+        this.mainRouterHandler = new MainRouterHandler(this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
 
         // Collections
@@ -146,7 +148,62 @@ class BagBotRender {
             await this.registerSlashCommands();
         });
 
-        // Les interactions sont gérées automatiquement dans InteractionHandler
+        // Gestion des interactions (boutons, menus, modals, commandes slash)
+        this.client.on('interactionCreate', async (interaction) => {
+            try {
+                // Gestion des commandes slash
+                if (interaction.isChatInputCommand()) {
+                    const command = this.client.commands.get(interaction.commandName);
+                    if (!command) return;
+                    
+                    await command.execute(interaction);
+                    return;
+                }
+                
+                // Gestion des autres interactions (boutons, menus, modals)
+                if (interaction.isStringSelectMenu() || interaction.isChannelSelectMenu() || 
+                    interaction.isRoleSelectMenu() || interaction.isButton() || interaction.isModalSubmit()) {
+                    
+                    // Vérifier si l'interaction a déjà été répondue
+                    if (interaction.replied || interaction.deferred) {
+                        console.log(`⚠️ Interaction déjà traitée: ${interaction.customId}`);
+                        return;
+                    }
+                    
+                    console.log(`🔄 Traitement interaction: ${interaction.customId}`);
+                    
+                    // Router vers le MainRouterHandler
+                    const handled = await this.mainRouterHandler.handleInteraction(interaction);
+                    
+                    if (!handled) {
+                        console.log(`❌ Interaction non gérée: ${interaction.customId}`);
+                        
+                        // Répondre uniquement si pas encore répondu
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.reply({
+                                content: '❌ Cette interaction n\'est pas encore implémentée.',
+                                ephemeral: true
+                            });
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur interaction:', error);
+                
+                // Répondre avec une erreur uniquement si pas encore répondu
+                if (!interaction.replied && !interaction.deferred) {
+                    try {
+                        await interaction.reply({ 
+                            content: 'Une erreur est survenue lors du traitement de cette interaction.', 
+                            ephemeral: true 
+                        });
+                    } catch (replyError) {
+                        console.error('❌ Erreur lors de la réponse d\'erreur:', replyError);
+                    }
+                }
+            }
+        });
 
         // Messages pour économie et auto-thread
         this.client.on('messageCreate', async (message) => {

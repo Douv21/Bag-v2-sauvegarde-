@@ -16,7 +16,7 @@ class MainRouterHandler {
      */
     initializeHandlers() {
         const ConfessionConfigHandler = require('./ConfessionConfigHandler');
-
+        const EconomyConfigHandler = require('./EconomyConfigHandler');
         const AutoThreadConfigHandler = require('./AutoThreadConfigHandler');
         const CountingConfigHandler = require('./CountingConfigHandler');
         const DashboardHandler = require('./DashboardHandler');
@@ -26,7 +26,7 @@ class MainRouterHandler {
         
         this.handlers = {
             confession: new ConfessionHandler(this.dataManager),
-
+            economy: new EconomyConfigHandler(this.dataManager),
             autothread: new AutoThreadConfigHandler(this.dataManager),
             counting: new CountingConfigHandler(this.dataManager),
             dashboard: new DashboardHandler(this.dataManager)
@@ -37,7 +37,7 @@ class MainRouterHandler {
      * Router principal pour toutes les interactions
      */
     async handleInteraction(interaction) {
-        if (!interaction.isStringSelectMenu() && !interaction.isChannelSelectMenu() && !interaction.isRoleSelectMenu() && !interaction.isButton()) {
+        if (!interaction.isStringSelectMenu() && !interaction.isChannelSelectMenu() && !interaction.isRoleSelectMenu() && !interaction.isButton() && !interaction.isModalSubmit()) {
             return false;
         }
 
