@@ -60,13 +60,13 @@ module.exports = {
                 let typeIcon = '🏆';
                 let typeText = 'Objet virtuel';
                 
-                if (item.type === 'temporary_role') {
+                if (item.type === 'temporary_role' || item.type === 'temp_role') {
                     typeIcon = '⌛';
                     typeText = `Rôle temporaire (${item.duration}h)`;
                 } else if (item.type === 'permanent_role') {
                     typeIcon = '⭐';
                     typeText = 'Rôle permanent';
-                } else if (item.type === 'custom_object') {
+                } else if (item.type === 'custom_object' || item.type === 'custom') {
                     typeIcon = '🎨';
                     typeText = 'Objet personnalisé';
                 }
@@ -95,9 +95,9 @@ module.exports = {
                     .addOptions(
                         shopItems.slice(0, 25).map((item, index) => {
                             let emoji = '🎨';
-                            if (item.type === 'temporary_role') emoji = '⌛';
+                            if (item.type === 'temporary_role' || item.type === 'temp_role') emoji = '⌛';
                             else if (item.type === 'permanent_role') emoji = '⭐';
-                            else if (item.type === 'custom_object') emoji = '🎨';
+                            else if (item.type === 'custom_object' || item.type === 'custom') emoji = '🎨';
                             
                             const finalPrice = karmaDiscountPercent > 0 ? 
                                 Math.floor(item.price * (100 - karmaDiscountPercent) / 100) : item.price;

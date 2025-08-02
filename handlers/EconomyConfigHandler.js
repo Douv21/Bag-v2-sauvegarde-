@@ -285,7 +285,10 @@ class EconomyConfigHandler {
             .setDescription('Choisissez la section à configurer :')
             .addFields([
                 { name: '🎯 Actions Économiques', value: 'Configurer les 6 actions (montant, cooldown, karma)', inline: true },
-                { name: '🏪 Boutique', value: 'Objets personnalisés, rôles, remises karma', inline: true }
+                { name: '🏪 Boutique', value: 'Objets personnalisés, rôles, remises karma', inline: true },
+                { name: '📅 Daily/Quotidien', value: 'Configuration des récompenses quotidiennes', inline: true },
+                { name: '💬 Messages', value: 'Configuration des gains par message', inline: true },
+                { name: '⚖️ Karma', value: 'Système karma et récompenses automatiques', inline: true }
             ]);
 
         const selectMenu = new StringSelectMenuBuilder()
@@ -311,6 +314,11 @@ class EconomyConfigHandler {
                     label: '💬 Messages',
                     value: 'messages',
                     description: 'Configuration des gains par message'
+                },
+                {
+                    label: '⚖️ Karma',
+                    value: 'karma',
+                    description: 'Système karma et récompenses automatiques'
                 }
             ]);
 
