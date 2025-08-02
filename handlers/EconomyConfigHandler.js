@@ -292,7 +292,7 @@ class EconomyConfigHandler {
             ]);
 
         const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('economy_main_config')
+            .setCustomId('economy_main_config_submenu')
             .setPlaceholder('🔧 Choisissez une section...')
             .addOptions([
                 {
