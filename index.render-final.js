@@ -5,6 +5,7 @@ const express = require('express');
 const deploymentManager = require('./utils/deploymentManager');
 const mongoBackup = require('./utils/mongoBackupManager');
 const levelManager = require('./utils/levelManager');
+const { handleObjectInteraction } = require('./handlers/ObjectHandler');
 
 // Handlers pour les nouvelles fonctionnalités karma
 async function handleKarmaResetComplete(interaction) {
