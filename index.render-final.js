@@ -1646,6 +1646,14 @@ class RenderSolutionBot {
                     return;
                 }
                 
+                if (customId === 'economy_main_config_submenu') {
+                    console.log('🎯 Menu économie submenu');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleMainSelect(interaction);
+                    return;
+                }
+                
                 if (customId === 'economy_actions_select') {
                     console.log('🎯 Sélection action économique');
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');

@@ -93,10 +93,11 @@ module.exports = {
                 .setTimestamp()
                 .setFooter({ text: 'Interaction d\'objet personnalisé' });
             
-            // Envoyer dans le canal actuel
+            // Envoyer dans le canal actuel - Message non éphémère pour que le ping soit visible
             await interaction.followUp({
                 embeds: [embed],
                 content: `<@${targetMember.id}> vous avez été mentionné !`
+                // Suppression du flag ephemeral pour que le ping soit visible à tous
             });
             
             console.log(`💬 ${interaction.user.tag} a utilisé "${selectedObject.name}" sur ${targetMember.tag}: ${customText}`);
