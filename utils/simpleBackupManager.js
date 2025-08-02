@@ -211,6 +211,26 @@ class SimpleBackupManager {
     async performBackup() {
         console.log('💾 Démarrage sauvegarde automatique...');
         
+        // Vérification d'intégrité avant sauvegarde
+        const integrityCheck = await this.verifyDataIntegrity();
+        if (!integrityCheck.isValid) {
+            console.log('⚠️ Problèmes d\'intégrité détectés avant sauvegarde');
+            console.log(`   - Inventaires manquants: ${integrityCheck.issues.missingInventories.length}`);
+            console.log(`   - Incohérences XP: ${integrityCheck.issues.xpInconsistencies.length}`);
+            
+            // Optionnel: déclencher une réparation automatique
+            if (process.env.AUTO_REPAIR_DATA === 'true') {
+                console.log('🔧 Réparation automatique activée...');
+                try {
+                    const DataIntegrityFixer = require('../fix-data-integrity');
+                    const fixer = new DataIntegrityFixer();
+                    await fixer.runRepair();
+                } catch (error) {
+                    console.error('❌ Erreur réparation automatique:', error);
+                }
+            }
+        }
+        
         const webhookSuccess = await this.backupToWebhook();
         const localSuccess = await this.createLocalBackup();
 
@@ -218,6 +238,59 @@ class SimpleBackupManager {
         console.log(success ? '✅ Sauvegarde terminée' : '❌ Échec sauvegarde complète');
         
         return success;
+    }
+
+    // VÉRIFICATION INTÉGRITÉ DES DONNÉES
+    async verifyDataIntegrity() {
+        try {
+            const dataDir = path.join(__dirname, '..', 'data');
+            const economyPath = path.join(dataDir, 'economy.json');
+            const levelUsersPath = path.join(dataDir, 'level_users.json');
+            
+            const issues = {
+                missingInventories: [],
+                xpInconsistencies: [],
+                missingEconomyEntries: []
+            };
+            
+            if (!fs.existsSync(economyPath) || !fs.existsSync(levelUsersPath)) {
+                return { isValid: false, issues };
+            }
+
+            const economy = JSON.parse(await fs.readFile(economyPath, 'utf8'));
+            const levelUsers = JSON.parse(await fs.readFile(levelUsersPath, 'utf8'));
+
+            // Vérifier les inventaires manquants
+            Object.keys(economy).forEach(key => {
+                if (!economy[key].inventory) {
+                    issues.missingInventories.push(key);
+                }
+            });
+
+            // Vérifier les incohérences XP
+            Object.keys(levelUsers).forEach(levelKey => {
+                const levelData = levelUsers[levelKey];
+                const economyKey = `${levelData.userId}_${levelData.guildId}`;
+                
+                if (economy[economyKey]) {
+                    const economyXP = economy[economyKey].xp || 0;
+                    if (Math.abs(levelData.xp - economyXP) > 10) { // Tolérance de 10 XP
+                        issues.xpInconsistencies.push({
+                            key: economyKey,
+                            levelXP: levelData.xp,
+                            economyXP: economyXP
+                        });
+                    }
+                }
+            });
+
+            const isValid = issues.missingInventories.length === 0 && issues.xpInconsistencies.length === 0;
+            
+            return { isValid, issues };
+        } catch (error) {
+            console.error('❌ Erreur vérification intégrité:', error);
+            return { isValid: false, issues: { error: error.message } };
+        }
     }
 
     // DÉMARRAGE SAUVEGARDE PÉRIODIQUE

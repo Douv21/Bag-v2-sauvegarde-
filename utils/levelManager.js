@@ -195,6 +195,40 @@ class LevelManager {
         return level;
     }
 
+    // Fonction utilitaire pour synchroniser les XP avec economy.json
+    syncXPWithEconomy(userId, guildId, newXP) {
+        try {
+            const path = require('path');
+            const economyPath = path.join(__dirname, '../data/economy.json');
+            
+            if (require('fs').existsSync(economyPath)) {
+                const economyData = JSON.parse(require('fs').readFileSync(economyPath, 'utf8'));
+                const economyKey = `${userId}_${guildId}`;
+                
+                if (!economyData[economyKey]) {
+                    economyData[economyKey] = {
+                        balance: 1000,
+                        goodKarma: 0,
+                        badKarma: 0,
+                        dailyStreak: 0,
+                        lastDaily: null,
+                        messageCount: 0,
+                        xp: 0,
+                        inventory: []
+                    };
+                }
+                
+                economyData[economyKey].xp = Math.max(0, newXP);
+                economyData[economyKey].updatedAt = new Date().toISOString();
+                
+                require('fs').writeFileSync(economyPath, JSON.stringify(economyData, null, 2));
+                console.log(`🔄 XP synchronisé avec economy.json: ${userId} = ${newXP} XP`);
+            }
+        } catch (error) {
+            console.log(`⚠️ Erreur sync economy.json: ${error.message}`);
+        }
+    }
+
     // Nouvelle fonction pour récupérer le rôle configuré pour un niveau spécifique
     getRoleForLevel(level, guild = null) {
         try {
@@ -287,6 +321,9 @@ class LevelManager {
             users[userKey] = userLevel;
             this.saveUsers(users);
             
+            // Synchroniser les XP avec economy.json
+            this.syncXPWithEconomy(userId, guildId, userLevel.xp);
+            
             // Set cooldown
             this.cooldowns.set(cooldownKey, Date.now());
             
@@ -331,39 +368,8 @@ class LevelManager {
         users[userKey].xp = Math.max(0, newXP);
         users[userKey].level = this.calculateLevelFromXP(users[userKey].xp);
         
-        // Également synchroniser avec economy.json
-        try {
-            const path = require('path');
-            const economyPath = path.join(__dirname, '../data/economy.json');
-            
-            if (require('fs').existsSync(economyPath)) {
-                const economyData = JSON.parse(require('fs').readFileSync(economyPath, 'utf8'));
-                const economyKey = `${guildId}_${userId}`;
-                
-                if (!economyData[economyKey]) {
-                    economyData[economyKey] = {
-                        id: userId,
-                        guildId: guildId,
-                        balance: 0,
-                        karma_good: 0,
-                        karma_bad: 0,
-                        karmaGood: 0,
-                        karmaBad: 0,
-                        xp: 0,
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    };
-                }
-                
-                economyData[economyKey].xp = Math.max(0, newXP);
-                economyData[economyKey].updatedAt = new Date().toISOString();
-                
-                require('fs').writeFileSync(economyPath, JSON.stringify(economyData, null, 2));
-                console.log(`💾 XP synchronisé avec economy.json: ${userId} = ${newXP} XP`);
-            }
-        } catch (error) {
-            console.log(`⚠️ Erreur sync economy.json lors de setUserXP: ${error.message}`);
-        }
+        // Synchroniser avec economy.json
+        this.syncXPWithEconomy(userId, guildId, newXP);
         
         this.saveUsers(users);
         return users[userKey];
@@ -395,6 +401,9 @@ class LevelManager {
             // Save user data
             users[userKey] = userLevel;
             this.saveUsers(users);
+            
+            // Synchroniser les XP avec economy.json
+            this.syncXPWithEconomy(userId, guildId, userLevel.xp);
             
             console.log(`🎤 ${context.user?.username || userId} a gagné ${xpGain} XP vocal (Total: ${userLevel.xp}, Niveau: ${newLevel})`);
             

@@ -76,14 +76,22 @@ class SimpleDataManager {
         const economy = this.getData('economy.json');
         const key = `${userId}_${guildId}`;
         
-        return economy[key] || {
+        const defaultUser = {
             balance: 1000,
             goodKarma: 0,
             badKarma: 0,
             dailyStreak: 0,
             lastDaily: null,
-            messageCount: 0
+            messageCount: 0,
+            inventory: [] // Inclure l'inventaire par défaut
         };
+        
+        // Retourner l'utilisateur existant ou créer un nouveau avec les données par défaut
+        return economy[key] ? {
+            ...defaultUser,
+            ...economy[key],
+            inventory: economy[key].inventory || [] // S'assurer que l'inventaire existe
+        } : defaultUser;
     }
 
     // Obtenir tous les utilisateurs d'un serveur
@@ -108,8 +116,28 @@ class SimpleDataManager {
     async updateUser(userId, guildId, userData) {
         const economy = this.getData('economy.json');
         const key = `${userId}_${guildId}`;
-        economy[key] = userData;
+        
+        // Préserver les données existantes et merger avec les nouvelles
+        const existingData = economy[key] || {
+            balance: 1000,
+            goodKarma: 0,
+            badKarma: 0,
+            dailyStreak: 0,
+            lastDaily: null,
+            messageCount: 0,
+            inventory: [] // Assurer que l'inventaire existe toujours
+        };
+        
+        // Merger les données en préservant l'inventaire et autres propriétés
+        economy[key] = {
+            ...existingData,
+            ...userData,
+            // S'assurer que l'inventaire est préservé s'il n'est pas dans userData
+            inventory: userData.inventory || existingData.inventory || []
+        };
+        
         this.setData('economy.json', economy);
+        return economy[key];
     }
 
 }
