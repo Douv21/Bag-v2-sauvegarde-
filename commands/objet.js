@@ -68,8 +68,8 @@ module.exports = {
     
     async executeCustomInteraction(interaction, dataManager, selectedObject, customText, targetMember) {
         try {
-            // Créer le message texte simple : texte personnalisé + objet + ping du membre
-            const messageContent = `${customText} **${selectedObject.name}** <@${targetMember.id}>`;
+            // Créer le message texte simple : nom du membre + texte personnalisé + objet + ping du membre
+            const messageContent = `**${interaction.user.displayName}** ${customText} **${selectedObject.name}** <@${targetMember.id}>`;
             
             // Envoyer dans le canal actuel - Message non éphémère pour que le ping soit visible
             await interaction.followUp({

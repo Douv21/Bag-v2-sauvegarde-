@@ -196,16 +196,16 @@ async function handleObjectInteraction(interaction, dataManager) {
                 const targetMember = await interaction.guild.members.fetch(targetId);
                 const objetCommand = require('../commands/objet');
 
-                // Déférer la réponse car executeCustomInteraction fait sa propre réponse
-                await interaction.deferReply({ ephemeral: true });
+                // Déférer la réponse pour qu'elle soit visible par tous
+                await interaction.deferReply({ ephemeral: false });
                 await objetCommand.executeCustomInteraction(interaction, dataManager, selectedObject, message, targetMember);
 
                 // Nettoyer le stockage temporaire
                 delete interaction.client.tempStore[`${userId}_${objectId}_target`];
 
-                // Envoyer une confirmation
+                // Envoyer une confirmation visible par tous
                 await interaction.editReply({ 
-                    content: `✅ Interaction envoyée avec **${selectedObject.name}** vers ${targetMember.displayName}!` 
+                    content: `✅ Interaction envoyée avec **${selectedObject.name}** vers ${targetMember.displayName}!`
                 });
 
             } catch (error) {
