@@ -733,6 +733,182 @@ class EconomyConfigHandler {
         }
     }
 
+    async handleEditItemSelect(interaction) {
+        try {
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const guildId = interaction.guild.id;
+            const guildItems = shopData[guildId] || [];
+
+            if (guildItems.length === 0) {
+                await interaction.update({
+                    content: '❌ Aucun article trouvé dans la boutique.',
+                    embeds: [],
+                    components: []
+                });
+                return;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor('#ffa500')
+                .setTitle('✏️ Modifier Articles')
+                .setDescription(`${guildItems.length} article(s) disponible(s)`);
+
+            if (guildItems.length > 0) {
+                embed.addFields(
+                    guildItems.slice(0, 5).map(item => {
+                        let typeIcon = '❓';
+                        let typeName = 'Inconnu';
+                        
+                        if (item.type === 'custom_object' || item.type === 'custom') {
+                            typeIcon = '🎨';
+                            typeName = 'Objet personnalisé';
+                        } else if (item.type === 'temporary_role' || item.type === 'temp_role') {
+                            typeIcon = '⌛';
+                            typeName = 'Rôle temporaire';
+                        } else if (item.type === 'permanent_role' || item.type === 'perm_role') {
+                            typeIcon = '⭐';
+                            typeName = 'Rôle permanent';
+                        }
+
+                        return {
+                            name: `${typeIcon} ${item.name || `Rôle <@&${item.roleId}>`}`,
+                            value: `${typeName} - ${item.price}€${item.duration ? ` (${item.duration}h)` : ''}`,
+                            inline: true
+                        };
+                    })
+                );
+            }
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('edit_articles_select')
+                .setPlaceholder('Sélectionner un article à modifier...')
+                .addOptions(
+                    guildItems.slice(0, 20).map(item => {
+                        let label = item.name || `Rôle ${item.roleId}`;
+                        let typeIcon = (item.type === 'custom_object' || item.type === 'custom') ? '🎨' : 
+                                     (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : '⭐';
+                        
+                        return {
+                            label: `${typeIcon} ${label}`,
+                            description: `${item.price}€ - Modifier cet article`,
+                            value: item.id
+                        };
+                    })
+                );
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+
+            await interaction.update({
+                embeds: [embed],
+                components: [row]
+            });
+
+        } catch (error) {
+            console.error('Erreur menu modification:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des articles.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleEditArticleSelect(interaction) {
+        try {
+            const itemId = interaction.values[0];
+            const shopData = await this.dataManager.loadData('shop.json', {});
+            const guildId = interaction.guild.id;
+            
+            if (!shopData[guildId]) {
+                await interaction.reply({
+                    content: '❌ Aucune boutique trouvée.',
+                    flags: 64
+                });
+                return;
+            }
+
+            const item = shopData[guildId].find(i => i.id === itemId);
+            if (!item) {
+                await interaction.reply({
+                    content: '❌ Article non trouvé.',
+                    flags: 64
+                });
+                return;
+            }
+
+            await this.showEditItemModal(interaction, item);
+
+        } catch (error) {
+            console.error('Erreur sélection article à modifier:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la sélection.',
+                flags: 64
+            });
+        }
+    }
+
+    async showEditItemModal(interaction, item) {
+        try {
+            const modal = new ModalBuilder()
+                .setCustomId(`edit_item_modal_${item.id}`)
+                .setTitle('✏️ Modifier Article');
+
+            // Champ prix (toujours présent)
+            const priceInput = new TextInputBuilder()
+                .setCustomId('item_price')
+                .setLabel('💰 Prix (1-999,999€)')
+                .setStyle(TextInputStyle.Short)
+                .setValue(item.price.toString())
+                .setRequired(true);
+
+            const components = [new ActionRowBuilder().addComponents(priceInput)];
+
+            // Pour les objets personnalisés
+            if (item.type === 'custom_object' || item.type === 'custom') {
+                const nameInput = new TextInputBuilder()
+                    .setCustomId('item_name')
+                    .setLabel('📝 Nom de l\'objet')
+                    .setStyle(TextInputStyle.Short)
+                    .setValue(item.name || '')
+                    .setRequired(true);
+
+                const descInput = new TextInputBuilder()
+                    .setCustomId('item_description')
+                    .setLabel('📋 Description (optionnel)')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setValue(item.description || '')
+                    .setRequired(false);
+
+                components.push(
+                    new ActionRowBuilder().addComponents(nameInput),
+                    new ActionRowBuilder().addComponents(descInput)
+                );
+            }
+
+            // Pour les rôles temporaires
+            if (item.type === 'temporary_role' || item.type === 'temp_role') {
+                const durationInput = new TextInputBuilder()
+                    .setCustomId('item_duration')
+                    .setLabel('⏰ Durée en heures (1-365)')
+                    .setStyle(TextInputStyle.Short)
+                    .setValue(item.duration ? item.duration.toString() : '24')
+                    .setRequired(true);
+
+                components.push(new ActionRowBuilder().addComponents(durationInput));
+            }
+
+            modal.addComponents(...components);
+            await interaction.showModal(modal);
+
+        } catch (error) {
+            console.error('Erreur affichage modal modification:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de l\'affichage du modal.',
+                flags: 64
+            });
+        }
+    }
+
     async handleObjetModification(interaction) {
         // Handler pour modifier un objet sélectionné
         const itemId = interaction.values[0];
