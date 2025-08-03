@@ -13,6 +13,14 @@ services:
           type: web
           name: bag-bot-v2
           property: host
+      - key: MONGODB_USERNAME
+        value: douvdouv21
+      - key: MONGODB_PASSWORD
+        value: bagv2
+      - key: MONGODB_CLUSTER_URL
+        value: cluster0.yir9dvo.mongodb.net
+      - key: DEBUG_BACKUP
+        value: "true"
     healthCheckPath: /health
     region: oregon
     scaling:

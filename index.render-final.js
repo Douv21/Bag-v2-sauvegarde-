@@ -2656,4 +2656,49 @@ async function handleShopPurchase(interaction, dataManager) {
 
 const app = new RenderSolutionBot();
 
+// Configurer la sauvegarde d'urgence avant la fin du processus
+console.log('🛡️ Configuration du système de sauvegarde d\'urgence...');
+
+// Handler de sauvegarde d'urgence unifié
+const emergencyBackupHandler = async (signal) => {
+    console.log(`🚨 Signal ${signal} reçu - Sauvegarde d'urgence en cours...`);
+    
+    try {
+        // Sauvegarde d'urgence via deployment manager
+        await deploymentManager.emergencyBackup();
+        console.log('✅ Sauvegarde d\'urgence terminée');
+    } catch (error) {
+        console.error('❌ Erreur sauvegarde d\'urgence:', error);
+    }
+    
+    // Fermer proprement
+    if (app.client) {
+        await app.client.destroy();
+        console.log('🔌 Client Discord fermé');
+    }
+    
+    console.log('👋 Arrêt du bot terminé');
+    process.exit(0);
+};
+
+// Configurer les handlers pour tous les signaux d'arrêt
+process.on('SIGTERM', () => emergencyBackupHandler('SIGTERM'));
+process.on('SIGINT', () => emergencyBackupHandler('SIGINT'));
+process.on('beforeExit', () => emergencyBackupHandler('beforeExit'));
+
+// Handler pour les erreurs non gérées avec sauvegarde
+process.on('unhandledRejection', async (error) => {
+    console.error('❌ Erreur non gérée détectée:', error);
+    console.log('🚨 Déclenchement sauvegarde d\'urgence...');
+    
+    try {
+        await deploymentManager.emergencyBackup();
+        console.log('✅ Sauvegarde d\'urgence après erreur terminée');
+    } catch (backupError) {
+        console.error('❌ Échec sauvegarde d\'urgence:', backupError);
+    }
+});
+
+console.log('✅ Système de sauvegarde d\'urgence configuré');
+
 module.exports = { RenderSolutionBot, handleShopPurchase };
