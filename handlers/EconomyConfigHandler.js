@@ -472,7 +472,7 @@ class EconomyConfigHandler {
         await interaction.showModal(modal);
     }
 
-    async showModifyRemisesMenu(interaction) {
+    async showModifyRemisesModalOld(interaction) {
         const modal = new ModalBuilder()
             .setCustomId('modify_remises_modal')
             .setTitle('Modifier une Remise Karma')
@@ -506,7 +506,7 @@ class EconomyConfigHandler {
         await interaction.showModal(modal);
     }
 
-    async showDeleteRemisesMenu(interaction) {
+    async showDeleteRemisesModalOld(interaction) {
         const modal = new ModalBuilder()
             .setCustomId('delete_remises_modal')
             .setTitle('Supprimer une Remise Karma')
