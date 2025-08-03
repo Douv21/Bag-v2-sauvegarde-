@@ -12,7 +12,7 @@ module.exports = {
             
             const userData = await dataManager.getUser(userId, guildId);
             const shopData = await dataManager.loadData('shop.json', {});
-            const economyConfig = await dataManager.loadData('economy.json', {});
+            const karmaDiscountsData = await dataManager.loadData('karma_discounts.json', {});
             const allShopItems = shopData[guildId] || [];
             // Afficher tous les types d'objets (custom_object, temporary_role, permanent_role)
             const shopItems = allShopItems;
@@ -20,21 +20,23 @@ module.exports = {
             // Calculer le karma net de l'utilisateur (goodKarma - badKarma, badKarma est déjà négatif)
             const userKarmaNet = (userData.goodKarma || 0) - (userData.badKarma || 0);
             
-            // Fonction pour calculer la remise basée sur le karma net
-            const calculateKarmaDiscount = (userKarmaNet, economyConfig) => {
-                if (!economyConfig.karmaDiscounts || !economyConfig.karmaDiscounts.enabled || !economyConfig.karmaDiscounts.ranges) {
+            // Fonction pour calculer la remise basée sur le karma net depuis karma_discounts.json
+            const calculateKarmaDiscount = (userKarmaNet, karmaDiscountsData, guildId) => {
+                const guildDiscounts = karmaDiscountsData[guildId] || [];
+                
+                if (guildDiscounts.length === 0) {
                     return 0;
                 }
                 
                 // Trier les tranches par karma descendant et trouver la meilleure applicable
-                const applicableRange = economyConfig.karmaDiscounts.ranges
-                    .filter(range => userKarmaNet >= range.minKarma)
-                    .sort((a, b) => b.minKarma - a.minKarma)[0];
+                const applicableDiscount = guildDiscounts
+                    .filter(discount => userKarmaNet >= discount.karmaMin)
+                    .sort((a, b) => b.karmaMin - a.karmaMin)[0];
                 
-                return applicableRange ? applicableRange.discount : 0;
+                return applicableDiscount ? applicableDiscount.percentage : 0;
             };
 
-            const karmaDiscountPercent = calculateKarmaDiscount(userKarmaNet, economyConfig);
+            const karmaDiscountPercent = calculateKarmaDiscount(userKarmaNet, karmaDiscountsData, guildId);
 
             if (shopItems.length === 0) {
                 return await interaction.reply({

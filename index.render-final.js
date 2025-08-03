@@ -590,6 +590,14 @@ class RenderSolutionBot {
                         return;
                     }
                     
+                    if (interaction.customId.startsWith('edit_discount_modal_')) {
+                        console.log('🎯 Modal modification remise karma:', interaction.customId);
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleEditDiscountModal(interaction);
+                        return;
+                    }
+                    
                     if (interaction.customId.startsWith('role_config_modal_')) {
                         console.log('🎯 Modal config rôle:', interaction.customId);
                         const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
@@ -1875,7 +1883,8 @@ class RenderSolutionBot {
                 }
 
                 if (customId === 'manage_objects_select' || customId === 'delete_objects_select' || customId === 'modify_rewards_select' || 
-                    customId === 'delete_reward_select' || customId === 'confirm_delete_reward') {
+                    customId === 'delete_reward_select' || customId === 'confirm_delete_reward' || customId === 'modify_discount_select' || 
+                    customId === 'delete_discount_select' || customId === 'confirm_delete_discount') {
                     console.log('🎯 Sélection boutique/karma navigation');
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
                     const economyHandler = new EconomyConfigHandler(dataManager);
@@ -1884,6 +1893,8 @@ class RenderSolutionBot {
                         await economyHandler.showBoutiqueMenu(interaction);
                     } else if (interaction.values[0] === 'back_karma') {
                         await economyHandler.showKarmaMenu(interaction);
+                    } else if (interaction.values[0] === 'back_remises') {
+                        await economyHandler.showRemisesMenu(interaction);
                     } else if (customId === 'delete_objects_select') {
                         // Gérer la suppression d'un objet spécifique
                         await economyHandler.handleArticleDelete(interaction);
@@ -1899,6 +1910,15 @@ class RenderSolutionBot {
                     } else if (customId === 'confirm_delete_reward') {
                         // Gérer la confirmation de suppression de récompense
                         await economyHandler.handleConfirmDeleteReward(interaction);
+                    } else if (customId === 'modify_discount_select') {
+                        // Gérer la sélection de remise karma à modifier
+                        await economyHandler.handleModifyDiscountSelect(interaction);
+                    } else if (customId === 'delete_discount_select') {
+                        // Gérer la sélection de remise karma à supprimer
+                        await economyHandler.handleDeleteDiscountSelect(interaction);
+                    } else if (customId === 'confirm_delete_discount') {
+                        // Gérer la confirmation de suppression de remise karma
+                        await economyHandler.handleConfirmDeleteDiscount(interaction);
                     }
                     return;
                 }
@@ -2465,7 +2485,7 @@ async function handleShopPurchase(interaction, dataManager) {
         // Charger les données
         const userData = await dataManager.getUser(userId, guildId);
         const shopData = await dataManager.loadData('shop.json', {});
-        const economyConfig = await dataManager.loadData('economy.json', {});
+        const karmaDiscountsData = await dataManager.loadData('karma_discounts.json', {});
         const shopItems = shopData[guildId] || [];
 
         // Trouver l'objet sélectionné
@@ -2493,10 +2513,12 @@ async function handleShopPurchase(interaction, dataManager) {
         const userKarmaNet = (userData.goodKarma || 0) - Math.abs(userData.badKarma || 0);
         let discountPercent = 0;
         
-        if (economyConfig.karmaDiscounts?.enabled && economyConfig.karmaDiscounts?.ranges) {
-            const applicableRanges = economyConfig.karmaDiscounts.ranges.filter(range => userKarmaNet >= range.minKarma);
-            const bestRange = applicableRanges.sort((a, b) => b.minKarma - a.minKarma)[0];
-            discountPercent = bestRange ? bestRange.discount : 0;
+        const guildDiscounts = karmaDiscountsData[guildId] || [];
+        if (guildDiscounts.length > 0) {
+            const applicableDiscount = guildDiscounts
+                .filter(discount => userKarmaNet >= discount.karmaMin)
+                .sort((a, b) => b.karmaMin - a.karmaMin)[0];
+            discountPercent = applicableDiscount ? applicableDiscount.percentage : 0;
         }
 
         // Calculer le prix final avec remise
