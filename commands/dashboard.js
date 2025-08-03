@@ -14,8 +14,14 @@ module.exports = {
             });
         }
 
-        // URL du dashboard - utilise l'URL de déploiement Render.com
-        const DASHBOARD_URL = process.env.RENDER_EXTERNAL_URL || 'https://bag-bot-v2.onrender.com';
+        // URL du dashboard - ordre de priorité:
+        // 1. Variable d'environnement RENDER_EXTERNAL_URL
+        // 2. Variable d'environnement DASHBOARD_URL  
+        // 3. URL par défaut du service déployé
+        const DASHBOARD_URL = process.env.RENDER_EXTERNAL_URL || 
+                              process.env.DASHBOARD_URL || 
+                              'http://localhost:5000';
+        
         const serverDashboard = `${DASHBOARD_URL}/dashboard/${interaction.guildId}`;
 
         const embed = new EmbedBuilder()
@@ -44,6 +50,15 @@ module.exports = {
                 iconURL: interaction.guild.iconURL() 
             })
             .setTimestamp();
+
+        // Ajouter une note sur l'URL utilisée en mode développement
+        if (DASHBOARD_URL.includes('localhost')) {
+            embed.addFields({
+                name: '⚠️ Mode Développement',
+                value: 'Dashboard en local - Assurez-vous que le serveur soit démarré (`npm start`)',
+                inline: false
+            });
+        }
 
         await interaction.reply({
             embeds: [embed],

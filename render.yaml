@@ -8,6 +8,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          type: web
+          name: bag-bot-v2
+          property: host
     healthCheckPath: /health
     region: oregon
     scaling:
