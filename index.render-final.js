@@ -590,6 +590,22 @@ class RenderSolutionBot {
                         return;
                     }
                     
+                    if (interaction.customId === 'modify_remises_modal') {
+                        console.log('🎯 Modal modification remise karma');
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleModifyRemiseModal(interaction);
+                        return;
+                    }
+                    
+                    if (interaction.customId === 'delete_remises_modal') {
+                        console.log('🎯 Modal suppression remise karma');
+                        const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                        const economyHandler = new EconomyConfigHandler(dataManager);
+                        await economyHandler.handleDeleteRemiseModal(interaction);
+                        return;
+                    }
+                    
                     if (interaction.customId.startsWith('edit_discount_modal_')) {
                         console.log('🎯 Modal modification remise karma:', interaction.customId);
                         const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');

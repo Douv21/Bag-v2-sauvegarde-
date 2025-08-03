@@ -564,6 +564,30 @@ class EconomyConfigHandler {
             const karmaMin = parseInt(interaction.fields.getTextInputValue('karma_min'));
             const pourcentage = parseInt(interaction.fields.getTextInputValue('pourcentage_remise'));
 
+            // Validation des données
+            if (isNaN(karmaMin) || isNaN(pourcentage) || karmaMin < 0 || pourcentage < 0 || pourcentage > 100) {
+                await interaction.reply({
+                    content: '❌ Données invalides. Karma minimum ≥ 0, pourcentage entre 0 et 100.',
+                    flags: 64
+                });
+                return;
+            }
+
+            // Vérifier si la remise existe déjà
+            const discountsData = await this.dataManager.loadData('karma_discounts', {});
+            const guildId = interaction.guild.id;
+            
+            if (discountsData[guildId]) {
+                const existingRemise = discountsData[guildId].find(r => r.name.toLowerCase() === nom.toLowerCase());
+                if (existingRemise) {
+                    await interaction.reply({
+                        content: `❌ Une remise nommée "${nom}" existe déjà.`,
+                        flags: 64
+                    });
+                    return;
+                }
+            }
+
             // Sauvegarder la remise
             await this.saveKarmaDiscount(interaction.guild.id, nom, karmaMin, pourcentage);
 
@@ -597,6 +621,110 @@ class EconomyConfigHandler {
         discountsData[guildId].push(remise);
         await this.dataManager.saveData('karma_discounts', discountsData);
         console.log(`✅ Remise karma créée:`, remise);
+    }
+
+    async handleModifyRemiseModal(interaction) {
+        try {
+            const nom = interaction.fields.getTextInputValue('remise_nom');
+            const karmaMin = parseInt(interaction.fields.getTextInputValue('karma_min'));
+            const pourcentage = parseInt(interaction.fields.getTextInputValue('pourcentage_remise'));
+
+            // Validation des données
+            if (isNaN(karmaMin) || isNaN(pourcentage) || karmaMin < 0 || pourcentage < 0 || pourcentage > 100) {
+                await interaction.reply({
+                    content: '❌ Données invalides. Karma minimum ≥ 0, pourcentage entre 0 et 100.',
+                    flags: 64
+                });
+                return;
+            }
+
+            // Modifier la remise existante
+            const discountsData = await this.dataManager.loadData('karma_discounts', {});
+            const guildId = interaction.guild.id;
+            
+            if (!discountsData[guildId]) {
+                await interaction.reply({
+                    content: '❌ Aucune remise trouvée à modifier.',
+                    flags: 64
+                });
+                return;
+            }
+
+            const remiseIndex = discountsData[guildId].findIndex(r => r.name.toLowerCase() === nom.toLowerCase());
+            
+            if (remiseIndex === -1) {
+                await interaction.reply({
+                    content: `❌ Remise "${nom}" introuvable.`,
+                    flags: 64
+                });
+                return;
+            }
+
+            // Mettre à jour la remise
+            discountsData[guildId][remiseIndex].karmaMin = karmaMin;
+            discountsData[guildId][remiseIndex].percentage = pourcentage;
+            discountsData[guildId][remiseIndex].modified = new Date().toISOString();
+            
+            await this.dataManager.saveData('karma_discounts', discountsData);
+
+            await interaction.reply({
+                content: `✅ Remise "${nom}" modifiée : ${pourcentage}% pour ${karmaMin} karma minimum !`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal modification remise:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la modification de la remise.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleDeleteRemiseModal(interaction) {
+        try {
+            const nom = interaction.fields.getTextInputValue('remise_nom');
+
+            // Supprimer la remise
+            const discountsData = await this.dataManager.loadData('karma_discounts', {});
+            const guildId = interaction.guild.id;
+            
+            if (!discountsData[guildId]) {
+                await interaction.reply({
+                    content: '❌ Aucune remise trouvée à supprimer.',
+                    flags: 64
+                });
+                return;
+            }
+
+            const remiseIndex = discountsData[guildId].findIndex(r => r.name.toLowerCase() === nom.toLowerCase());
+            
+            if (remiseIndex === -1) {
+                await interaction.reply({
+                    content: `❌ Remise "${nom}" introuvable.`,
+                    flags: 64
+                });
+                return;
+            }
+
+            // Supprimer la remise
+            const removedRemise = discountsData[guildId].splice(remiseIndex, 1)[0];
+            await this.dataManager.saveData('karma_discounts', discountsData);
+            
+            console.log(`✅ Remise karma supprimée:`, removedRemise);
+
+            await interaction.reply({
+                content: `✅ Remise "${nom}" supprimée avec succès !`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal suppression remise:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la suppression de la remise.',
+                flags: 64
+            });
+        }
     }
 
     async handleRoleConfigModal(interaction) {
