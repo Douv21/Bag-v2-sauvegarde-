@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-03T18:27:38.621Z",
+  "timestamp": "2025-08-03T18:27:33.907Z",
   "deployment": "local",
   "files": {
     "economy.json": {
@@ -597,6 +597,14 @@
           "type": "temp_role",
           "createdAt": "2025-07-26T21:45:40.743Z",
           "createdBy": "943487722738311219"
+        },
+        {
+          "id": 1753602834934,
+          "name": "Test",
+          "price": 594939,
+          "description": "Objet personnalisé",
+          "type": "custom",
+          "createdAt": "2025-07-27T07:53:54.934Z"
         },
         {
           "id": "1753606461399",

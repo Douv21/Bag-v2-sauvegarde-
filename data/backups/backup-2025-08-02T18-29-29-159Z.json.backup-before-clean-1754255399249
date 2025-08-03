@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-03T18:27:38.621Z",
+  "timestamp": "2025-08-02T18:29:29.159Z",
   "deployment": "local",
   "files": {
     "economy.json": {
@@ -350,6 +350,24 @@
         "inventory": [],
         "createdAt": "2025-08-02T18:27:39.891Z",
         "updatedAt": "2025-08-02T18:27:39.891Z"
+      },
+      "999999999999999999_888888888888888888": {
+        "balance": 4900,
+        "goodKarma": 10,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 0,
+        "inventory": [
+          {
+            "id": "test_item_1",
+            "name": "Item Test",
+            "description": "Item de test",
+            "type": "custom",
+            "price": 100,
+            "purchaseDate": "2025-08-02T18:29:29.154Z"
+          }
+        ]
       }
     },
     "level_users.json": {
@@ -519,9 +537,7 @@
         "multiplier": 1.5
       }
     },
-    "confessions.json": {
-      "count": 0
-    },
+    "confessions.json": {},
     "counting.json": {
       "1360897918504271882": {
         "channels": [
@@ -599,6 +615,14 @@
           "createdBy": "943487722738311219"
         },
         {
+          "id": 1753602834934,
+          "name": "Test",
+          "price": 594939,
+          "description": "Objet personnalisé",
+          "type": "custom",
+          "createdAt": "2025-07-27T07:53:54.934Z"
+        },
+        {
           "id": "1753606461399",
           "type": "custom",
           "name": "Fouet",
@@ -622,31 +646,6 @@
         "dayOfWeek": 0,
         "lastReset": null
       }
-    },
-    "karma_discounts.json": {
-      "1360897918504271882": [
-        {
-          "id": "1753700000001",
-          "name": "Remise Saint",
-          "karmaMin": 10,
-          "percentage": 20,
-          "created": "2025-07-27T15:00:00.000Z"
-        },
-        {
-          "id": "1753700000002",
-          "name": "Remise Bon",
-          "karmaMin": 5,
-          "percentage": 10,
-          "created": "2025-07-27T15:00:00.000Z"
-        },
-        {
-          "id": "1753700000003",
-          "name": "Remise VIP",
-          "karmaMin": 25,
-          "percentage": 35,
-          "created": "2025-07-27T15:00:00.000Z"
-        }
-      ]
     },
     "message_rewards.json": {
       "1360897918504271882": {
