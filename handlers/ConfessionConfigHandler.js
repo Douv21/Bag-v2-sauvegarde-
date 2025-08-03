@@ -108,8 +108,8 @@ class ConfessionConfigHandler {
 
     async showChannelsConfig(interaction) {
         const guildId = interaction.guild.id;
-        const config = await this.dataManager.loadData('confessions.json', {});
-        const guildConfig = config[guildId] || { channels: [] };
+        const config = await this.dataManager.getData('config');
+        const guildConfig = config.confessions?.[guildId] || { channels: [] };
 
         const embed = new EmbedBuilder()
             .setColor('#2ecc71')

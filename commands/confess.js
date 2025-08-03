@@ -39,6 +39,24 @@ module.exports = {
                 threadName: 'Confession #{number}'
             };
 
+            if (!confessionConfig.channels || confessionConfig.channels.length === 0) {
+                return await interaction.editReply({
+                    content: '❌ Aucun canal de confession configuré sur ce serveur.\n\nUtilisez `/config-confession` pour configurer les canaux.'
+                });
+            }
+
+            // Vérifier si le channel actuel est autorisé pour les confessions
+            const currentChannelId = interaction.channel.id;
+            if (!confessionConfig.channels.includes(currentChannelId)) {
+                const authorizedChannels = confessionConfig.channels
+                    .map(chId => `<#${chId}>`)
+                    .join(', ');
+                
+                return await interaction.editReply({
+                    content: `❌ Vous ne pouvez utiliser cette commande que dans les canaux autorisés :\n${authorizedChannels}\n\nUtilisez \`/config-confession\` pour modifier la configuration.`
+                });
+            }
+
             // Générer le numéro de confession unique
             if (!confessionConfig.confessionCounter) {
                 confessionConfig.confessionCounter = 0;
@@ -50,22 +68,9 @@ module.exports = {
             if (!config.confessions) config.confessions = {};
             config.confessions[interaction.guild.id] = confessionConfig;
             await dataManager.saveData('config', config);
-            
-            if (!confessionConfig.channels || confessionConfig.channels.length === 0) {
-                return await interaction.editReply({
-                    content: '❌ Aucun canal de confession configuré sur ce serveur.\n\nUtilisez `/config-confession` pour configurer les canaux.'
-                });
-            }
 
-            // Prendre le premier canal configuré
-            const channelId = confessionConfig.channels[0];
-            const channel = interaction.guild.channels.cache.get(channelId);
-
-            if (!channel) {
-                return await interaction.editReply({
-                    content: '❌ Canal de confession introuvable.'
-                });
-            }
+            // Utiliser le channel actuel pour envoyer la confession
+            const channel = interaction.channel;
 
             // Créer l'embed de confession avec numéro
             const confessionEmbed = new EmbedBuilder()
