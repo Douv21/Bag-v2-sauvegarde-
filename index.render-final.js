@@ -1686,6 +1686,14 @@ class RenderSolutionBot {
                     return;
                 }
 
+                if (customId === 'remises_karma_select') {
+                    console.log('🎯 Sélection remises karma');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleRemisesSelect(interaction);
+                    return;
+                }
+
                 // Routage pour achats boutique avec remises automatiques
                 if (customId === 'shop_purchase') {
                     console.log('🎯 Routage achat boutique avec remises karma: shop_purchase');
