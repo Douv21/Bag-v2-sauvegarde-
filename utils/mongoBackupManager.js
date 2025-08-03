@@ -16,12 +16,12 @@ class MongoBackupManager {
         this.connected = false;
         
         // Construction de la chaîne de connexion avec les nouvelles variables
-        const username = process.env.MONGODB_USERNAME || 'douvdouv21';
+        const username = process.env.MONGODB_USERNAME;
         const password = process.env.MONGODB_PASSWORD;
-        let clusterUrl = process.env.MONGODB_CLUSTER_URL || 'cluster0.5ujrblq.mongodb.net';
+        let clusterUrl = process.env.MONGODB_CLUSTER_URL;
         
         // Nettoyer l'URL si elle contient déjà le format complet
-        if (clusterUrl.includes('mongodb+srv://')) {
+        if (clusterUrl && clusterUrl.includes('mongodb+srv://')) {
             // Extraire juste le nom du cluster depuis l'URL complète
             const match = clusterUrl.match(/@([^\/\?]+)/);
             if (match) {
