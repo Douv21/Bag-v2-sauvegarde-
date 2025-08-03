@@ -807,29 +807,21 @@ class RenderSolutionBot {
                             return;
                         }
                         
-                        // Sauvegarder dans karma_discounts.json
+                        // Sauvegarder dans karma_discounts
                         const guildId = interaction.guild.id;
-                        const fs = require('fs');
-                        const path = require('path');
+                        const discountsData = await dataManager.loadData('karma_discounts', {});
                         
-                        const discountsPath = path.join(__dirname, 'data', 'karma_discounts.json');
-                        let allDiscounts = {};
+                        if (!discountsData[guildId]) discountsData[guildId] = [];
                         
-                        if (fs.existsSync(discountsPath)) {
-                            allDiscounts = JSON.parse(fs.readFileSync(discountsPath, 'utf8'));
-                        }
-                        
-                        if (!allDiscounts[guildId]) allDiscounts[guildId] = [];
-                        
-                        allDiscounts[guildId].push({
-                            id: Date.now(),
+                        discountsData[guildId].push({
+                            id: Date.now().toString(),
                             name: name,
-                            karmaRequired: karma,
+                            karmaMin: karma,
                             percentage: percent,
-                            createdAt: new Date().toISOString()
+                            created: new Date().toISOString()
                         });
                         
-                        fs.writeFileSync(discountsPath, JSON.stringify(allDiscounts, null, 2));
+                        await dataManager.saveData('karma_discounts', discountsData);
                         
                         await interaction.reply({
                             content: `✅ Remise **${name}** créée avec succès (${karma} karma → ${percent}% de remise).`,
@@ -862,30 +854,22 @@ class RenderSolutionBot {
                             return;
                         }
                         
-                        // Modifier dans karma_discounts.json
+                        // Modifier dans karma_discounts
                         const guildId = interaction.guild.id;
-                        const fs = require('fs');
-                        const path = require('path');
+                        const discountsData = await dataManager.loadData('karma_discounts', {});
                         
-                        const discountsPath = path.join(__dirname, 'data', 'karma_discounts.json');
-                        let allDiscounts = {};
-                        
-                        if (fs.existsSync(discountsPath)) {
-                            allDiscounts = JSON.parse(fs.readFileSync(discountsPath, 'utf8'));
-                        }
-                        
-                        if (allDiscounts[guildId]) {
-                            const discountIndex = allDiscounts[guildId].findIndex(d => d.id.toString() === discountId);
+                        if (discountsData[guildId]) {
+                            const discountIndex = discountsData[guildId].findIndex(d => d.id.toString() === discountId);
                             if (discountIndex !== -1) {
-                                allDiscounts[guildId][discountIndex] = {
-                                    ...allDiscounts[guildId][discountIndex],
+                                discountsData[guildId][discountIndex] = {
+                                    ...discountsData[guildId][discountIndex],
                                     name: name,
-                                    karmaRequired: karma,
+                                    karmaMin: karma,
                                     percentage: percent,
-                                    updatedAt: new Date().toISOString()
+                                    updated: new Date().toISOString()
                                 };
                                 
-                                fs.writeFileSync(discountsPath, JSON.stringify(allDiscounts, null, 2));
+                                await dataManager.saveData('karma_discounts', discountsData);
                                 
                                 await interaction.reply({
                                     content: `✅ Remise **${name}** modifiée avec succès (${karma} karma → ${percent}% de remise).`,
@@ -2485,7 +2469,7 @@ async function handleShopPurchase(interaction, dataManager) {
         // Charger les données
         const userData = await dataManager.getUser(userId, guildId);
         const shopData = await dataManager.loadData('shop.json', {});
-        const karmaDiscountsData = await dataManager.loadData('karma_discounts.json', {});
+                    const karmaDiscountsData = await dataManager.loadData('karma_discounts', {});
         const shopItems = shopData[guildId] || [];
 
         // Trouver l'objet sélectionné

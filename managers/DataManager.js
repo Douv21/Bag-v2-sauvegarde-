@@ -43,7 +43,8 @@ class DataManager {
             'cooldowns': 'cooldowns.json',
             
             // Configuration karma personnalisé
-            'karma_config': 'karma_config.json'
+            'karma_config': 'karma_config.json',
+            'karma_discounts': 'karma_discounts.json'
         };
     }
 

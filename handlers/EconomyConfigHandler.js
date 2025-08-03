@@ -582,7 +582,7 @@ class EconomyConfigHandler {
     }
 
     async saveKarmaDiscount(guildId, nom, karmaMin, pourcentage) {
-        const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+        const discountsData = await this.dataManager.loadData('karma_discounts', {});
         
         if (!discountsData[guildId]) discountsData[guildId] = [];
         
@@ -595,7 +595,7 @@ class EconomyConfigHandler {
         };
         
         discountsData[guildId].push(remise);
-        await this.dataManager.saveData('karma_discounts.json', discountsData);
+        await this.dataManager.saveData('karma_discounts', discountsData);
         console.log(`✅ Remise karma créée:`, remise);
     }
 
@@ -2507,7 +2507,7 @@ class EconomyConfigHandler {
 
     async showModifyRemisesMenu(interaction) {
         try {
-            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+            const discountsData = await this.dataManager.loadData('karma_discounts', {});
             const guildId = interaction.guild.id;
             const guildDiscounts = discountsData[guildId] || [];
 
@@ -2570,7 +2570,7 @@ class EconomyConfigHandler {
 
     async showDeleteRemisesMenu(interaction) {
         try {
-            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+            const discountsData = await this.dataManager.loadData('karma_discounts', {});
             const guildId = interaction.guild.id;
             const guildDiscounts = discountsData[guildId] || [];
 
@@ -2640,7 +2640,7 @@ class EconomyConfigHandler {
             }
 
             const discountIndex = parseInt(value);
-            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+            const discountsData = await this.dataManager.loadData('karma_discounts', {});
             const guildId = interaction.guild.id;
             const guildDiscounts = discountsData[guildId] || [];
 
@@ -2722,7 +2722,7 @@ class EconomyConfigHandler {
             }
 
             const discountIndex = parseInt(value);
-            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+            const discountsData = await this.dataManager.loadData('karma_discounts', {});
             const guildId = interaction.guild.id;
             const guildDiscounts = discountsData[guildId] || [];
 
@@ -2787,7 +2787,7 @@ class EconomyConfigHandler {
 
             if (value.startsWith('confirm_')) {
                 const discountIndex = parseInt(value.replace('confirm_', ''));
-                const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+                const discountsData = await this.dataManager.loadData('karma_discounts', {});
                 const guildId = interaction.guild.id;
                 const guildDiscounts = discountsData[guildId] || [];
 
@@ -2807,7 +2807,7 @@ class EconomyConfigHandler {
                 discountsData[guildId] = guildDiscounts;
                 
                 // Sauvegarder
-                await this.dataManager.saveData('karma_discounts.json', discountsData);
+                await this.dataManager.saveData('karma_discounts', discountsData);
 
                 await interaction.update({
                     content: `✅ **Remise supprimée avec succès !**\n\n🗑️ **"${deletedDiscount.name}"** a été supprimée définitivement.\n**Karma minimum:** ${deletedDiscount.karmaMin}\n**Remise:** ${deletedDiscount.percentage}%`,
@@ -2852,7 +2852,7 @@ class EconomyConfigHandler {
                 return;
             }
 
-            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+            const discountsData = await this.dataManager.loadData('karma_discounts', {});
             const guildId = interaction.guild.id;
             const guildDiscounts = discountsData[guildId] || [];
 
@@ -2874,7 +2874,7 @@ class EconomyConfigHandler {
             };
 
             discountsData[guildId] = guildDiscounts;
-            await this.dataManager.saveData('karma_discounts.json', discountsData);
+            await this.dataManager.saveData('karma_discounts', discountsData);
 
             await interaction.reply({
                 content: `✅ **Remise modifiée avec succès !**\n\n💸 **"${name}"**\n**Karma minimum:** ${karmaMin}\n**Remise:** ${percentage}%`,

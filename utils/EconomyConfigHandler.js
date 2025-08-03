@@ -524,7 +524,7 @@ class EconomyConfigHandler {
     }
 
     async saveKarmaDiscount(guildId, nom, karmaMin, pourcentage) {
-        const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+        const discountsData = await this.dataManager.loadData('karma_discounts', {});
         
         if (!discountsData[guildId]) discountsData[guildId] = [];
         
@@ -537,7 +537,7 @@ class EconomyConfigHandler {
         };
         
         discountsData[guildId].push(remise);
-        await this.dataManager.saveData('karma_discounts.json', discountsData);
+        await this.dataManager.saveData('karma_discounts', discountsData);
         console.log(`✅ Remise karma créée:`, remise);
     }
 
@@ -1629,13 +1629,13 @@ class EconomyConfigHandler {
 
     async saveKarmaConfig(guildId, config) {
         try {
-            const karmaData = await this.dataManager.loadData('karma_config.json', {});
+            const karmaData = await this.dataManager.loadData('karma_config', {});
             if (!karmaData[guildId]) {
                 karmaData[guildId] = {};
             }
             
             Object.assign(karmaData[guildId], config);
-            await this.dataManager.saveData('karma_config.json', karmaData);
+            await this.dataManager.saveData('karma_config', karmaData);
             console.log(`✅ Configuration karma sauvegardée pour ${guildId}:`, config);
 
         } catch (error) {
@@ -1771,7 +1771,7 @@ class EconomyConfigHandler {
     async showExistingRewardsMenu(interaction) {
         try {
             // Charger les récompenses depuis KarmaManager
-            const karmaData = await this.dataManager.loadData('karma_config.json', {});
+            const karmaData = await this.dataManager.loadData('karma_config', {});
             const defaultRewards = {
                 saint: { money: 500, dailyBonus: 1.5, cooldownReduction: 0.7, name: 'Saint (+10 karma)' },
                 good: { money: 200, dailyBonus: 1.2, cooldownReduction: 0.9, name: 'Bon (+1 à +9 karma)' },
