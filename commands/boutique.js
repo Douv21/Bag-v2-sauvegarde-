@@ -12,7 +12,7 @@ module.exports = {
             
             const userData = await dataManager.getUser(userId, guildId);
             const shopData = await dataManager.loadData('shop.json', {});
-            const karmaDiscountsData = await dataManager.loadData('karma_discounts.json', {});
+            const karmaDiscountsData = await dataManager.loadData('karma_discounts', {});
             const allShopItems = shopData[guildId] || [];
             // Afficher tous les types d'objets (custom_object, temporary_role, permanent_role)
             const shopItems = allShopItems;

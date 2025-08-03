@@ -22,6 +22,7 @@ class SimpleBackupManager {
             'autothread.json',
             'shop.json',
             'karma_config.json',
+    'karma_discounts.json',
             'message_rewards.json',
             'daily.json',
             'actions.json',

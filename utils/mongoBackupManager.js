@@ -82,6 +82,7 @@ class MongoBackupManager {
             
             // Configuration karma et récompenses
             'karma_config.json': 'karma',
+        'karma_discounts.json': 'karma',
             'daily.json': 'daily_config',
             'message_rewards.json': 'message_rewards',
             'actions.json': 'actions_config',
