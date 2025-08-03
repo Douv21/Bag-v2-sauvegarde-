@@ -138,6 +138,18 @@ class BagBotRender {
                 res.status(500).json({ error: error.message });
             }
         });
+
+        // Dashboard routes
+        this.app.get('/dashboard', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+        });
+
+        this.app.get('/dashboard/:guildId', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+        });
+
+        // Static files for dashboard
+        this.app.use(express.static(path.join(__dirname, 'public')));
     }
 
     setupDiscordEvents() {

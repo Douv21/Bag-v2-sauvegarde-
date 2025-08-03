@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="outerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ff4444;stop-opacity:0.8"/>
+      <stop offset="70%" style="stop-color:#cc2222;stop-opacity:0.4"/>
+      <stop offset="100%" style="stop-color:#aa1111;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="innerGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ff6666;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#cc2222;stop-opacity:1"/>
+    </radialGradient>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#ffdddd;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.8"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Glow effect -->
+  <circle cx="100" cy="100" r="90" fill="url(#outerGlow)" opacity="0.6"/>
+  
+  <!-- Main circle border -->
+  <circle cx="100" cy="100" r="80" fill="none" stroke="url(#innerGradient)" stroke-width="4"/>
+  
+  <!-- Inner circle -->
+  <circle cx="100" cy="100" r="75" fill="#1a1a1a"/>
+  
+  <!-- Decorative couple silhouettes -->
+  <g transform="translate(100,60)">
+    <!-- Female silhouette -->
+    <path d="M-15,-10 Q-20,-15 -15,-20 Q-10,-25 -5,-20 Q0,-15 -5,-10 Q-8,-5 -10,0 Q-12,5 -15,10 Q-18,15 -15,20" 
+          fill="url(#innerGradient)" opacity="0.7"/>
+    <!-- Male silhouette -->
+    <path d="M5,-10 Q0,-15 5,-20 Q10,-25 15,-20 Q20,-15 15,-10 Q12,-5 10,0 Q8,5 5,10 Q2,15 5,20" 
+          fill="#333" opacity="0.8"/>
+    <!-- Heart symbol -->
+    <path d="M-2,-5 Q-5,-8 -8,-5 Q-8,-2 -5,1 L0,6 L5,1 Q8,-2 8,-5 Q5,-8 2,-5 Q0,-3 -2,-5" 
+          fill="url(#innerGradient)" opacity="0.9"/>
+  </g>
+  
+  <!-- Decorative swirls -->
+  <g stroke="url(#innerGradient)" stroke-width="2" fill="none" opacity="0.6">
+    <!-- Left swirl -->
+    <path d="M30,80 Q25,75 30,70 Q35,65 40,70 Q45,75 40,80"/>
+    <path d="M25,120 Q20,115 25,110 Q30,105 35,110 Q40,115 35,120"/>
+    <!-- Right swirl -->
+    <path d="M170,80 Q175,75 170,70 Q165,65 160,70 Q155,75 160,80"/>
+    <path d="M175,120 Q180,115 175,110 Q170,105 165,110 Q160,115 165,120"/>
+  </g>
+  
+  <!-- BAG Text -->
+  <text x="100" y="150" text-anchor="middle" font-family="serif" font-size="42" font-weight="bold" 
+        fill="url(#textGradient)" letter-spacing="3px">BAG</text>
+</svg>
