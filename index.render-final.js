@@ -236,6 +236,18 @@ class RenderSolutionBot {
             }
         });
 
+        // Dashboard routes
+        app.get('/dashboard', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+        });
+
+        app.get('/dashboard/:guildId', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+        });
+
+        // Static files for dashboard
+        app.use(express.static(path.join(__dirname, 'public')));
+
         // Endpoint status système de sauvegarde
         app.get('/backup-status', async (req, res) => {
             try {
