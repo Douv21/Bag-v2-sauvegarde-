@@ -1,1 +1,25 @@
-{}
+{
+  "1360897918504271882": [
+    {
+      "id": "1753700000001",
+      "name": "Remise Saint",
+      "karmaMin": 10,
+      "percentage": 20,
+      "created": "2025-07-27T15:00:00.000Z"
+    },
+    {
+      "id": "1753700000002", 
+      "name": "Remise Bon",
+      "karmaMin": 5,
+      "percentage": 10,
+      "created": "2025-07-27T15:00:00.000Z"
+    },
+    {
+      "id": "1753700000003",
+      "name": "Remise VIP",
+      "karmaMin": 25,
+      "percentage": 35,
+      "created": "2025-07-27T15:00:00.000Z"
+    }
+  ]
+}

@@ -431,12 +431,10 @@ class EconomyConfigHandler {
 
         if (value === 'create') {
             await this.showRemiseModal(interaction);
-        } else {
-            await interaction.update({
-                content: `🚧 Fonction ${value} en cours de développement...`,
-                embeds: [],
-                components: []
-            });
+        } else if (value === 'modify') {
+            await this.showModifyRemisesMenu(interaction);
+        } else if (value === 'delete') {
+            await this.showDeleteRemisesMenu(interaction);
         }
     }
 
@@ -467,6 +465,58 @@ class EconomyConfigHandler {
                         .setLabel('Pourcentage de remise (%)')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: 20')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    async showModifyRemisesMenu(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('modify_remises_modal')
+            .setTitle('Modifier une Remise Karma')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('remise_nom')
+                        .setLabel('Nom de la remise')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: Remise Saint')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('karma_min')
+                        .setLabel('Karma minimum requis')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 10')
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('pourcentage_remise')
+                        .setLabel('Pourcentage de remise (%)')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: 20')
+                        .setRequired(true)
+                )
+            );
+
+        await interaction.showModal(modal);
+    }
+
+    async showDeleteRemisesMenu(interaction) {
+        const modal = new ModalBuilder()
+            .setCustomId('delete_remises_modal')
+            .setTitle('Supprimer une Remise Karma')
+            .addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('remise_nom')
+                        .setLabel('Nom de la remise')
+                        .setStyle(TextInputStyle.Short)
+                        .setPlaceholder('Ex: Remise Saint')
                         .setRequired(true)
                 )
             );
@@ -1945,11 +1995,12 @@ class EconomyConfigHandler {
 
     async showDeleteArticlesMenu(interaction) {
         try {
-            const guildId = interaction.guild.id;
+            const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
             const shopData = await this.dataManager.loadData('shop.json', {});
-            const guildShop = shopData[guildId] || [];
+            const guildId = interaction.guild.id;
+            const guildItems = shopData[guildId] || [];
 
-            if (guildShop.length === 0) {
+            if (guildItems.length === 0) {
                 await interaction.update({
                     content: '🗑️ Aucun objet à supprimer dans la boutique.',
                     embeds: [],
@@ -2452,6 +2503,391 @@ class EconomyConfigHandler {
             );
 
         await interaction.showModal(modal);
+    }
+
+    async showModifyRemisesMenu(interaction) {
+        try {
+            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+            const guildId = interaction.guild.id;
+            const guildDiscounts = discountsData[guildId] || [];
+
+            if (guildDiscounts.length === 0) {
+                await interaction.update({
+                    content: '❌ Aucune remise karma configurée à modifier.\n\n💡 **Astuce :** Créez d\'abord des remises avec l\'option "Créer Remise".',
+                    embeds: [],
+                    components: [
+                        new ActionRowBuilder().addComponents(
+                            new StringSelectMenuBuilder()
+                                .setCustomId('remises_karma_select')
+                                .setPlaceholder('Retour aux remises...')
+                                .addOptions([
+                                    { label: '🔙 Retour Remises', value: 'back_boutique', description: 'Retour au menu remises karma' }
+                                ])
+                        )
+                    ]
+                });
+                return;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor('#f39c12')
+                .setTitle('✏️ Modifier Remises Karma')
+                .setDescription(`${guildDiscounts.length} remise(s) trouvée(s) :`)
+                .setFooter({ text: 'Sélectionnez une remise à modifier' });
+
+            guildDiscounts.forEach((discount, index) => {
+                embed.addFields({
+                    name: `💸 ${discount.name}`,
+                    value: `**Karma min:** ${discount.karmaMin}\n**Remise:** ${discount.percentage}%`,
+                    inline: true
+                });
+            });
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('modify_discount_select')
+                .setPlaceholder('Choisir une remise à modifier...')
+                .addOptions([
+                    ...guildDiscounts.map((discount, index) => ({
+                        label: `✏️ ${discount.name}`,
+                        description: `${discount.percentage}% pour ${discount.karmaMin}+ karma`,
+                        value: index.toString()
+                    })),
+                    { label: '🔙 Retour Remises', value: 'back_remises', description: 'Retour au menu remises karma' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur affichage remises à modifier:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage des remises.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async showDeleteRemisesMenu(interaction) {
+        try {
+            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+            const guildId = interaction.guild.id;
+            const guildDiscounts = discountsData[guildId] || [];
+
+            if (guildDiscounts.length === 0) {
+                await interaction.update({
+                    content: '❌ Aucune remise karma configurée à supprimer.\n\n💡 **Astuce :** Créez d\'abord des remises avec l\'option "Créer Remise".',
+                    embeds: [],
+                    components: [
+                        new ActionRowBuilder().addComponents(
+                            new StringSelectMenuBuilder()
+                                .setCustomId('remises_karma_select')
+                                .setPlaceholder('Retour aux remises...')
+                                .addOptions([
+                                    { label: '🔙 Retour Remises', value: 'back_boutique', description: 'Retour au menu remises karma' }
+                                ])
+                        )
+                    ]
+                });
+                return;
+            }
+
+            const embed = new EmbedBuilder()
+                .setColor('#e74c3c')
+                .setTitle('🗑️ Supprimer Remises Karma')
+                .setDescription(`⚠️ ${guildDiscounts.length} remise(s) à supprimer (action irréversible) :`)
+                .setFooter({ text: '⚠️ Cette action est définitive !' });
+
+            guildDiscounts.forEach((discount, index) => {
+                embed.addFields({
+                    name: `💸 ${discount.name}`,
+                    value: `**Karma min:** ${discount.karmaMin}\n**Remise:** ${discount.percentage}%`,
+                    inline: true
+                });
+            });
+
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('delete_discount_select')
+                .setPlaceholder('Choisir une remise à supprimer...')
+                .addOptions([
+                    ...guildDiscounts.map((discount, index) => ({
+                        label: `🗑️ ${discount.name}`,
+                        description: `Supprimer ${discount.percentage}% pour ${discount.karmaMin}+ karma`,
+                        value: index.toString()
+                    })),
+                    { label: '🔙 Retour Remises', value: 'back_remises', description: 'Retour au menu remises karma' }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur affichage remises à supprimer:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'affichage des remises.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleModifyDiscountSelect(interaction) {
+        try {
+            const value = interaction.values[0];
+            
+            if (value === 'back_remises') {
+                return await this.showRemisesMenu(interaction);
+            }
+
+            const discountIndex = parseInt(value);
+            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+            const guildId = interaction.guild.id;
+            const guildDiscounts = discountsData[guildId] || [];
+
+            if (discountIndex < 0 || discountIndex >= guildDiscounts.length) {
+                await interaction.update({
+                    content: '❌ Remise non trouvée.',
+                    embeds: [],
+                    components: []
+                });
+                return;
+            }
+
+            const discount = guildDiscounts[discountIndex];
+            await this.showEditDiscountModal(interaction, discount, discountIndex);
+
+        } catch (error) {
+            console.error('Erreur sélection remise à modifier:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de la sélection de la remise.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async showEditDiscountModal(interaction, discount, discountIndex) {
+        try {
+            const modal = new ModalBuilder()
+                .setCustomId(`edit_discount_modal_${discountIndex}`)
+                .setTitle(`✏️ Modifier ${discount.name}`);
+
+            const nameInput = new TextInputBuilder()
+                .setCustomId('discount_name')
+                .setLabel('Nom de la remise')
+                .setStyle(TextInputStyle.Short)
+                .setValue(discount.name)
+                .setRequired(true)
+                .setMaxLength(50);
+
+            const karmaMinInput = new TextInputBuilder()
+                .setCustomId('karma_min')
+                .setLabel('Karma minimum requis')
+                .setStyle(TextInputStyle.Short)
+                .setValue(discount.karmaMin.toString())
+                .setRequired(true)
+                .setPlaceholder('Nombre positif ou nul');
+
+            const percentageInput = new TextInputBuilder()
+                .setCustomId('percentage')
+                .setLabel('Pourcentage de remise (%)')
+                .setStyle(TextInputStyle.Short)
+                .setValue(discount.percentage.toString())
+                .setRequired(true)
+                .setPlaceholder('Entre 1 et 100');
+
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(nameInput),
+                new ActionRowBuilder().addComponents(karmaMinInput),
+                new ActionRowBuilder().addComponents(percentageInput)
+            );
+
+            await interaction.showModal(modal);
+
+        } catch (error) {
+            console.error('Erreur affichage modal modification remise:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de l\'affichage du modal de modification.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleDeleteDiscountSelect(interaction) {
+        try {
+            const value = interaction.values[0];
+            
+            if (value === 'back_remises') {
+                return await this.showRemisesMenu(interaction);
+            }
+
+            const discountIndex = parseInt(value);
+            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+            const guildId = interaction.guild.id;
+            const guildDiscounts = discountsData[guildId] || [];
+
+            if (discountIndex < 0 || discountIndex >= guildDiscounts.length) {
+                await interaction.update({
+                    content: '❌ Remise non trouvée.',
+                    embeds: [],
+                    components: []
+                });
+                return;
+            }
+
+            const discountToDelete = guildDiscounts[discountIndex];
+            const embed = new EmbedBuilder()
+                .setColor('#e74c3c')
+                .setTitle('⚠️ Confirmation de Suppression')
+                .setDescription(`Êtes-vous sûr de vouloir supprimer cette remise ?`)
+                .addFields({
+                    name: `💸 ${discountToDelete.name}`,
+                    value: `**Karma minimum:** ${discountToDelete.karmaMin}\n**Remise:** ${discountToDelete.percentage}%`,
+                    inline: false
+                })
+                .setFooter({ text: '⚠️ Cette action est irréversible !' });
+
+            const confirmMenu = new StringSelectMenuBuilder()
+                .setCustomId('confirm_delete_discount')
+                .setPlaceholder('Confirmer la suppression...')
+                .addOptions([
+                    { 
+                        label: '🗑️ Confirmer la Suppression', 
+                        value: `confirm_${discountIndex}`, 
+                        description: `Supprimer définitivement "${discountToDelete.name}"`,
+                        emoji: '⚠️'
+                    },
+                    { 
+                        label: '❌ Annuler', 
+                        value: 'cancel', 
+                        description: 'Retour au menu sans supprimer' 
+                    }
+                ]);
+
+            const row = new ActionRowBuilder().addComponents(confirmMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
+        } catch (error) {
+            console.error('Erreur sélection suppression remise:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de la sélection de la remise.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleConfirmDeleteDiscount(interaction) {
+        try {
+            const value = interaction.values[0];
+            
+            if (value === 'cancel') {
+                return await this.showDeleteRemisesMenu(interaction);
+            }
+
+            if (value.startsWith('confirm_')) {
+                const discountIndex = parseInt(value.replace('confirm_', ''));
+                const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+                const guildId = interaction.guild.id;
+                const guildDiscounts = discountsData[guildId] || [];
+
+                if (discountIndex < 0 || discountIndex >= guildDiscounts.length) {
+                    await interaction.update({
+                        content: '❌ Remise non trouvée.',
+                        embeds: [],
+                        components: []
+                    });
+                    return;
+                }
+
+                const deletedDiscount = guildDiscounts[discountIndex];
+                
+                // Supprimer la remise
+                guildDiscounts.splice(discountIndex, 1);
+                discountsData[guildId] = guildDiscounts;
+                
+                // Sauvegarder
+                await this.dataManager.saveData('karma_discounts.json', discountsData);
+
+                await interaction.update({
+                    content: `✅ **Remise supprimée avec succès !**\n\n🗑️ **"${deletedDiscount.name}"** a été supprimée définitivement.\n**Karma minimum:** ${deletedDiscount.karmaMin}\n**Remise:** ${deletedDiscount.percentage}%`,
+                    embeds: [],
+                    components: [
+                        new ActionRowBuilder().addComponents(
+                            new StringSelectMenuBuilder()
+                                .setCustomId('remises_karma_select')
+                                .setPlaceholder('Retour au menu...')
+                                .addOptions([
+                                    { label: '🔙 Retour Remises', value: 'back_boutique', description: 'Retour au menu remises karma' }
+                                ])
+                        )
+                    ]
+                });
+            }
+
+        } catch (error) {
+            console.error('Erreur confirmation suppression remise:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de la suppression de la remise.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleEditDiscountModal(interaction) {
+        try {
+            const customId = interaction.customId; // edit_discount_modal_INDEX
+            const discountIndex = parseInt(customId.split('_')[3]);
+
+            const name = interaction.fields.getTextInputValue('discount_name');
+            const karmaMin = parseInt(interaction.fields.getTextInputValue('karma_min'));
+            const percentage = parseInt(interaction.fields.getTextInputValue('percentage'));
+
+            if (isNaN(karmaMin) || isNaN(percentage) || karmaMin < 0 || percentage < 1 || percentage > 100) {
+                await interaction.reply({
+                    content: '❌ Valeurs invalides. Karma minimum ≥ 0, pourcentage entre 1 et 100.',
+                    flags: 64
+                });
+                return;
+            }
+
+            const discountsData = await this.dataManager.loadData('karma_discounts.json', {});
+            const guildId = interaction.guild.id;
+            const guildDiscounts = discountsData[guildId] || [];
+
+            if (discountIndex < 0 || discountIndex >= guildDiscounts.length) {
+                await interaction.reply({
+                    content: '❌ Remise non trouvée.',
+                    flags: 64
+                });
+                return;
+            }
+
+            // Modifier la remise
+            guildDiscounts[discountIndex] = {
+                ...guildDiscounts[discountIndex],
+                name: name,
+                karmaMin: karmaMin,
+                percentage: percentage,
+                modified: new Date().toISOString()
+            };
+
+            discountsData[guildId] = guildDiscounts;
+            await this.dataManager.saveData('karma_discounts.json', discountsData);
+
+            await interaction.reply({
+                content: `✅ **Remise modifiée avec succès !**\n\n💸 **"${name}"**\n**Karma minimum:** ${karmaMin}\n**Remise:** ${percentage}%`,
+                flags: 64
+            });
+
+        } catch (error) {
+            console.error('Erreur modal modification remise:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la modification de la remise.',
+                flags: 64
+            });
+        }
     }
 }
 
