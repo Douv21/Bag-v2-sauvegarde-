@@ -11,7 +11,13 @@ class DashboardManager {
             config: {},
             lastUpdate: null
         };
-        this.init();
+        
+        // S'assurer que le DOM est prêt avant d'initialiser
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.init());
+        } else {
+            this.init();
+        }
     }
 
     init() {
@@ -23,8 +29,12 @@ class DashboardManager {
         const logoImg = document.getElementById('logoImg');
         if (logoImg) {
             logoImg.onerror = () => {
-                logoImg.style.display = 'none';
-                logoImg.parentElement.innerHTML += '<i class="fas fa-heart" style="font-size: 2rem; color: white;"></i>';
+                if (logoImg && logoImg.style) {
+                    logoImg.style.display = 'none';
+                }
+                if (logoImg && logoImg.parentElement) {
+                    logoImg.parentElement.innerHTML += '<i class="fas fa-heart" style="font-size: 2rem; color: white;"></i>';
+                }
             };
         }
     }
@@ -75,8 +85,10 @@ class DashboardManager {
     async loadSectionContent(section) {
         const container = document.getElementById('content-container');
         
-        // Show loading state
-        this.showLoading(container);
+        // Show loading state only if container exists
+        if (container) {
+            this.showLoading(container);
+        }
 
         try {
             switch (section) {
@@ -110,8 +122,15 @@ class DashboardManager {
     }
 
     showOverviewSection() {
-        document.getElementById('overview-section').style.display = 'block';
-        document.getElementById('dynamic-content').style.display = 'none';
+        const overviewSection = document.getElementById('overview-section');
+        const dynamicContent = document.getElementById('dynamic-content');
+        
+        if (overviewSection) {
+            overviewSection.style.display = 'block';
+        }
+        if (dynamicContent) {
+            dynamicContent.style.display = 'none';
+        }
     }
 
     async showEconomySection() {
@@ -510,10 +529,17 @@ class DashboardManager {
     }
 
     showDynamicContent(content) {
-        document.getElementById('overview-section').style.display = 'none';
+        const overviewSection = document.getElementById('overview-section');
         const dynamicContent = document.getElementById('dynamic-content');
-        dynamicContent.innerHTML = content;
-        dynamicContent.style.display = 'block';
+        
+        if (overviewSection) {
+            overviewSection.style.display = 'none';
+        }
+        
+        if (dynamicContent) {
+            dynamicContent.innerHTML = content;
+            dynamicContent.style.display = 'block';
+        }
         
         // Add dynamic styles
         this.addDynamicStyles();
@@ -624,22 +650,26 @@ class DashboardManager {
     }
 
     showLoading(container) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 4rem;">
-                <div class="loading"></div>
-                <p style="margin-top: 1rem; color: var(--text-secondary);">Chargement...</p>
-            </div>
-        `;
+        if (container) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 4rem;">
+                    <div class="loading"></div>
+                    <p style="margin-top: 1rem; color: var(--text-secondary);">Chargement...</p>
+                </div>
+            `;
+        }
     }
 
     showError(message) {
         const container = document.getElementById('content-container');
-        container.innerHTML = `
-            <div class="message error">
-                <i class="fas fa-exclamation-triangle"></i>
-                ${message}
-            </div>
-        `;
+        if (container) {
+            container.innerHTML = `
+                <div class="message error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${message}
+                </div>
+            `;
+        }
     }
 
     showSuccess(message) {
@@ -717,11 +747,19 @@ class DashboardManager {
         const statusDot = document.querySelector('.status-dot');
         
         if (health.discord === 'connected') {
-            statusElement.textContent = 'Bot en ligne';
-            statusDot.style.background = '#22c55e';
+            if (statusElement) {
+                statusElement.textContent = 'Bot en ligne';
+            }
+            if (statusDot && statusDot.style) {
+                statusDot.style.background = '#22c55e';
+            }
         } else {
-            statusElement.textContent = 'Bot déconnecté';
-            statusDot.style.background = '#ef4444';
+            if (statusElement) {
+                statusElement.textContent = 'Bot déconnecté';
+            }
+            if (statusDot && statusDot.style) {
+                statusDot.style.background = '#ef4444';
+            }
         }
     }
 
