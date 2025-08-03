@@ -1372,10 +1372,10 @@ class RenderSolutionBot {
                                 if (price >= 1 && price <= 999999) {
                                     item.price = price;
                                     
-                                    if (item.type === 'custom_object') {
+                                    if (item.type === 'custom_object' || item.type === 'custom') {
                                         item.name = interaction.fields.getTextInputValue('item_name');
                                         item.description = interaction.fields.getTextInputValue('item_description') || '';
-                                    } else if (item.type === 'temporary_role') {
+                                    } else if (item.type === 'temporary_role' || item.type === 'temp_role') {
                                         const duration = parseInt(interaction.fields.getTextInputValue('item_duration'));
                                         if (duration >= 1 && duration <= 365) {
                                             item.duration = duration;

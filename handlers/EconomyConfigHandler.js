@@ -2140,10 +2140,10 @@ class EconomyConfigHandler {
             const embed = new EmbedBuilder()
                 .setColor('#e74c3c')
                 .setTitle('🗑️ Supprimer Objets Boutique')
-                .setDescription(`⚠️ ${guildShop.length} objet(s) à supprimer (action irréversible) :`);
+                .setDescription(`⚠️ ${guildItems.length} objet(s) à supprimer (action irréversible) :`);
 
             // Ajouter les objets existants dans l'embed
-            guildShop.slice(0, 10).forEach((item, index) => {
+            guildItems.slice(0, 10).forEach((item, index) => {
                 const icon = (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : 
                            (item.type === 'permanent_role' || item.type === 'perm_role') ? '⭐' : '🎨';
                 const typeText = (item.type === 'temporary_role' || item.type === 'temp_role') ? 'Rôle Temporaire' : 
@@ -2161,7 +2161,7 @@ class EconomyConfigHandler {
             ];
 
             // Ajouter les objets dans le menu de sélection
-            guildShop.slice(0, 20).forEach(item => {
+            guildItems.slice(0, 20).forEach(item => {
                 const icon = (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : 
                            (item.type === 'permanent_role' || item.type === 'perm_role') ? '⭐' : '🎨';
                 selectMenuOptions.push({
