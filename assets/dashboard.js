@@ -14,8 +14,8 @@ module.exports = {
             });
         }
 
-        // URL du dashboard déployé sur Render.com (à modifier après déploiement)
-        const DASHBOARD_URL = 'https://bag-dashboard.onrender.com';
+        // URL du dashboard - utilise l'URL actuelle du serveur
+        const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:5000';
         const serverDashboard = `${DASHBOARD_URL}/dashboard/${interaction.guildId}`;
 
         const embed = new EmbedBuilder()

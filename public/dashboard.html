@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAG Dashboard - Interface Administrative</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #e53e3e;
+            --secondary-red: #c53030;
+            --dark-red: #9b2c2c;
+            --light-red: #feb2b2;
+            --bg-dark: #0f0f0f;
+            --bg-card: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #6a6a6a;
+            --border-color: #333333;
+            --shadow-primary: 0 10px 25px rgba(229, 62, 62, 0.15);
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --gradient-primary: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+            --gradient-card: linear-gradient(145deg, #1e1e1e 0%, #2a2a2a 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(229, 62, 62, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(229, 62, 62, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(229, 62, 62, 0.05) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        /* Header */
+        .header {
+            background: var(--gradient-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .brand-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 25px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        /* Main Layout */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            min-height: calc(100vh - 120px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--gradient-card);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+            height: fit-content;
+            position: sticky;
+            top: 140px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-primary);
+            transition: left 0.3s ease;
+            opacity: 0.1;
+        }
+
+        .nav-link:hover::before,
+        .nav-link.active::before {
+            left: 0;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--text-primary);
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background: rgba(229, 62, 62, 0.15);
+            color: var(--light-red);
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Content Area */
+        .content {
+            background: var(--gradient-card);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+        }
+
+        .content-header {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        .content-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .content-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-primary);
+            border-color: var(--primary-red);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .card-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .stat-value.highlight {
+            color: var(--light-red);
+        }
+
+        /* Action Buttons */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .action-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-primary);
+            transition: left 0.3s ease;
+            opacity: 0.1;
+        }
+
+        .action-btn:hover::before {
+            left: 0;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-red);
+            box-shadow: var(--shadow-primary);
+        }
+
+        .action-btn i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary-red);
+        }
+
+        .action-btn h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .action-btn p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .sidebar {
+                position: static;
+                order: 2;
+            }
+
+            .content {
+                order: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .main-container {
+                padding: 1rem;
+            }
+
+            .content-title {
+                font-size: 2rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-red);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Success/Error Messages */
+        .message {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="/logo-bag.svg" alt="BAG Logo" id="logoImg">
+                </div>
+                <div>
+                    <div class="brand-text">BAG Dashboard</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Interface Administrative v2.0</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span id="botStatus">Bot en ligne</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" data-section="overview">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <span>Vue d'ensemble</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="economy">
+                            <i class="nav-icon fas fa-coins"></i>
+                            <span>Économie</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="confessions">
+                            <i class="nav-icon fas fa-comment-dots"></i>
+                            <span>Confessions</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="levels">
+                            <i class="nav-icon fas fa-chart-line"></i>
+                            <span>Système de niveaux</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="counting">
+                            <i class="nav-icon fas fa-calculator"></i>
+                            <span>Comptage</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="autothread">
+                            <i class="nav-icon fas fa-comments"></i>
+                            <span>Auto-Thread</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-section="settings">
+                            <i class="nav-icon fas fa-cog"></i>
+                            <span>Paramètres</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Content -->
+        <main class="content">
+            <div id="content-container">
+                <!-- Overview Section (Default) -->
+                <div id="overview-section" class="content-section">
+                    <div class="content-header">
+                        <h1 class="content-title">Vue d'ensemble</h1>
+                        <p class="content-subtitle">Tableau de bord principal de votre serveur Discord</p>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Statistiques générales</h3>
+                                <div class="card-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Membres actifs</span>
+                                    <span class="stat-value highlight" id="activeMembers">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Messages aujourd'hui</span>
+                                    <span class="stat-value" id="todayMessages">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Commandes utilisées</span>
+                                    <span class="stat-value" id="commandsUsed">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Économie</h3>
+                                <div class="card-icon">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Total argent en circulation</span>
+                                    <span class="stat-value highlight" id="totalMoney">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Transactions aujourd'hui</span>
+                                    <span class="stat-value" id="todayTransactions">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Top richesse</span>
+                                    <span class="stat-value" id="richestUser">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Confessions</h3>
+                                <div class="card-icon">
+                                    <i class="fas fa-mask"></i>
+                                </div>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Total confessions</span>
+                                    <span class="stat-value highlight" id="totalConfessions">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Cette semaine</span>
+                                    <span class="stat-value" id="weekConfessions">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Moyenne par jour</span>
+                                    <span class="stat-value" id="avgConfessions">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Système de niveaux</h3>
+                                <div class="card-icon">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                            </div>
+                            <div class="card-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Plus haut niveau</span>
+                                    <span class="stat-value highlight" id="highestLevel">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">XP total distribué</span>
+                                    <span class="stat-value" id="totalXP">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Récompenses données</span>
+                                    <span class="stat-value" id="rewardsGiven">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-grid">
+                        <a href="#" class="action-btn" data-section="economy">
+                            <i class="fas fa-coins"></i>
+                            <h3>Configurer l'économie</h3>
+                            <p>Gérer les paramètres économiques du serveur</p>
+                        </a>
+                        <a href="#" class="action-btn" data-section="confessions">
+                            <i class="fas fa-comment-dots"></i>
+                            <h3>Gérer les confessions</h3>
+                            <p>Configuration des canaux et modération</p>
+                        </a>
+                        <a href="#" class="action-btn" data-section="levels">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>Système de niveaux</h3>
+                            <p>Récompenses et progression des membres</p>
+                        </a>
+                        <a href="#" class="action-btn" data-section="settings">
+                            <i class="fas fa-cog"></i>
+                            <h3>Paramètres avancés</h3>
+                            <p>Configuration générale du bot</p>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Other sections will be loaded dynamically -->
+                <div id="dynamic-content" style="display: none;">
+                    <!-- Content will be loaded here via JavaScript -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/dashboard.js"></script>
+</body>
+</html>
