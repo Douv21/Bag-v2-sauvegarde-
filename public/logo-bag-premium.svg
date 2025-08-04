@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient pour l'effet de lueur externe -->
+    <radialGradient id="outerGlow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" style="stop-color:#ff4444;stop-opacity:0.8"/>
+      <stop offset="40%" style="stop-color:#e53e3e;stop-opacity:0.6"/>
+      <stop offset="70%" style="stop-color:#cc2222;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#aa1111;stop-opacity:0"/>
+    </radialGradient>
+    
+    <!-- Gradient pour le cercle principal -->
+    <radialGradient id="mainCircle" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#2a2a2a;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#0f0f0f;stop-opacity:1"/>
+    </radialGradient>
+    
+    <!-- Gradient pour les éléments décoratifs -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6666;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#e53e3e;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#cc2222;stop-opacity:1"/>
+    </linearGradient>
+    
+    <!-- Gradient pour le texte -->
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
+      <stop offset="30%" style="stop-color:#ffeeee;stop-opacity:1"/>
+      <stop offset="70%" style="stop-color:#ffdddd;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.9"/>
+    </linearGradient>
+    
+    <!-- Filtre pour l'effet de lueur -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Effet de lueur externe -->
+  <circle cx="100" cy="100" r="95" fill="url(#outerGlow)" opacity="0.7"/>
+  
+  <!-- Cercle principal avec bordure lumineuse -->
+  <circle cx="100" cy="100" r="85" fill="none" stroke="url(#accentGradient)" stroke-width="3" filter="url(#glow)"/>
+  
+  <!-- Cercle intérieur -->
+  <circle cx="100" cy="100" r="82" fill="url(#mainCircle)"/>
+  
+  <!-- Silhouettes du couple au centre -->
+  <g transform="translate(100,70)">
+    <!-- Silhouette féminine -->
+    <path d="M-20,-15 Q-25,-20 -20,-25 Q-15,-30 -8,-25 Q-5,-20 -8,-15 Q-12,-8 -15,-2 Q-18,5 -20,12 Q-22,18 -18,22 Q-15,25 -12,22 Q-10,18 -12,15" 
+          fill="url(#accentGradient)" opacity="0.8"/>
+    
+    <!-- Silhouette masculine -->
+    <path d="M8,-15 Q3,-20 8,-25 Q13,-30 20,-25 Q25,-20 20,-15 Q16,-8 13,-2 Q10,5 8,12 Q6,18 10,22 Q13,25 16,22 Q18,18 16,15" 
+          fill="#444" opacity="0.9"/>
+    
+    <!-- Cœur central stylisé -->
+    <g transform="translate(0,5)">
+      <path d="M-6,-8 Q-10,-12 -14,-8 Q-14,-4 -10,0 L0,10 L10,0 Q14,-4 14,-8 Q10,-12 6,-8 Q3,-5 0,-6 Q-3,-5 -6,-8 Z" 
+            fill="url(#accentGradient)" opacity="0.9" filter="url(#glow)"/>
+    </g>
+  </g>
+  
+  <!-- Ornements décoratifs -->
+  <g stroke="url(#accentGradient)" stroke-width="2.5" fill="none" opacity="0.7">
+    <!-- Ornements gauches -->
+    <path d="M25,75 Q18,68 25,60 Q32,52 40,60 Q48,68 40,75 Q35,80 30,75"/>
+    <path d="M20,125 Q13,118 20,110 Q27,102 35,110 Q43,118 35,125 Q30,130 25,125"/>
+    
+    <!-- Ornements droits -->
+    <path d="M175,75 Q182,68 175,60 Q168,52 160,60 Q152,68 160,75 Q165,80 170,75"/>
+    <path d="M180,125 Q187,118 180,110 Q173,102 165,110 Q157,118 165,125 Q170,130 175,125"/>
+    
+    <!-- Ornements supérieurs et inférieurs -->
+    <path d="M100,25 Q108,18 115,25 Q122,32 115,40 Q108,48 100,40 Q92,32 100,25"/>
+    <path d="M100,175 Q108,182 115,175 Q122,168 115,160 Q108,152 100,160 Q92,168 100,175"/>
+  </g>
+  
+  <!-- Texte BAG avec style premium -->
+  <text x="100" y="155" text-anchor="middle" 
+        font-family="serif" font-size="48" font-weight="bold" 
+        fill="url(#textGradient)" 
+        letter-spacing="4px"
+        filter="url(#glow)">BAG</text>
+        
+  <!-- Sous-titre discret -->
+  <text x="100" y="175" text-anchor="middle" 
+        font-family="sans-serif" font-size="12" font-weight="300" 
+        fill="url(#accentGradient)" 
+        opacity="0.8"
+        letter-spacing="2px">PREMIUM</text>
+</svg>
