@@ -8,9 +8,16 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          type: web
+          name: bagbot-v2
+          property: host
       - key: MONGODB_USERNAME
-        value: YOUR_MONGODB_USERNAME
+        value: douvdouv21
       - key: MONGODB_PASSWORD
-        value: YOUR_MONGODB_PASSWORD  
+        value: bagv2
       - key: MONGODB_CLUSTER_URL
-        value: YOUR_CLUSTER_URL
+        value: cluster0.yir9dvo.mongodb.net
+      - key: DEBUG_BACKUP
+        value: "true"
