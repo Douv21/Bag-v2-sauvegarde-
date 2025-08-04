@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-03T18:27:33.907Z",
+  "timestamp": "2025-08-04T13:35:36.477Z",
   "deployment": "local",
   "files": {
     "economy.json": {
@@ -22,7 +22,9 @@
           1753181391406
         ],
         "inventory": [],
-        "xp": 934
+        "xp": 934,
+        "money": 3885,
+        "level": 1
       },
       "943487722738311219_1360897918504271882": {
         "balance": 6120,
@@ -63,7 +65,9 @@
             "from": "shop"
           }
         ],
-        "xp": 6004
+        "xp": 6004,
+        "money": 6120,
+        "level": 1
       },
       "1150782046181015582_1360897918504271882": {
         "balance": 1017,
@@ -73,7 +77,9 @@
         "lastDaily": null,
         "messageCount": 6,
         "inventory": [],
-        "xp": 49
+        "xp": 49,
+        "money": 1017,
+        "level": 1
       },
       "actions": {
         "travailler": {
@@ -125,7 +131,13 @@
           "goodKarma": 0,
           "badKarma": -1
         },
-        "inventory": []
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
       },
       "519883409917607937_1360897918504271882": {
         "balance": 1020,
@@ -134,7 +146,10 @@
         "dailyStreak": 0,
         "lastDaily": null,
         "messageCount": 1,
-        "inventory": []
+        "inventory": [],
+        "money": 1020,
+        "level": 1,
+        "xp": 0
       },
       "1342885031856836629_1360897918504271882": {
         "balance": 1580,
@@ -143,12 +158,21 @@
         "dailyStreak": 0,
         "lastDaily": null,
         "messageCount": 29,
-        "inventory": []
+        "inventory": [],
+        "money": 1580,
+        "level": 1,
+        "xp": 0
       },
       "karma": {
         "autoReset": true,
         "resetDay": "dimanche",
-        "inventory": []
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
       },
       "1396872608154386472_1360897918504271882": {
         "balance": 1020,
@@ -157,7 +181,10 @@
         "dailyStreak": 0,
         "lastDaily": null,
         "messageCount": 1,
-        "inventory": []
+        "inventory": [],
+        "money": 1020,
+        "level": 1,
+        "xp": 0
       },
       "1394407529508900894_1360897918504271882": {
         "balance": 1020,
@@ -166,7 +193,10 @@
         "dailyStreak": 0,
         "lastDaily": null,
         "messageCount": 1,
-        "inventory": []
+        "inventory": [],
+        "money": 1020,
+        "level": 1,
+        "xp": 0
       },
       "739103557600673792_1360897918504271882": {
         "balance": 2020,
@@ -176,12 +206,20 @@
         "lastDaily": null,
         "messageCount": 83,
         "inventory": [],
-        "xp": 500
+        "xp": 500,
+        "money": 2020,
+        "level": 1
       },
       "daily": {
         "amount": 50,
         "enabled": true,
-        "inventory": []
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
       },
       "karmaRewards": [
         {
@@ -232,13 +270,21 @@
         "lastDaily": null,
         "messageCount": 6,
         "inventory": [],
-        "xp": 40
+        "xp": 40,
+        "money": 1100,
+        "level": 1
       },
       "messages": {
         "enabled": false,
         "amount": 5,
         "cooldown": 60000,
-        "inventory": []
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
       },
       "1108053454519271535_1360897918504271882": {
         "balance": 1080,
@@ -248,7 +294,9 @@
         "lastDaily": null,
         "messageCount": 4,
         "inventory": [],
-        "xp": 17
+        "xp": 17,
+        "money": 1080,
+        "level": 1
       },
       "karmaDiscounts": {
         "enabled": true,
@@ -268,7 +316,13 @@
             "createdAt": "2025-07-22T16:11:25.606Z"
           }
         ],
-        "inventory": []
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
       },
       "253847407043805185_1360897918504271882": {
         "balance": 1320,
@@ -277,7 +331,10 @@
         "dailyStreak": 0,
         "lastDaily": null,
         "messageCount": 16,
-        "inventory": []
+        "inventory": [],
+        "money": 1320,
+        "level": 1,
+        "xp": 0
       },
       "1173342775396286521_1360897918504271882": {
         "balance": 1473,
@@ -287,7 +344,9 @@
         "lastDaily": null,
         "messageCount": 62,
         "inventory": [],
-        "xp": 667
+        "xp": 667,
+        "money": 1473,
+        "level": 1
       },
       "266247151355559937_1360897918504271882": {
         "balance": 1200,
@@ -297,7 +356,9 @@
         "lastDaily": null,
         "messageCount": 15,
         "inventory": [],
-        "xp": 101
+        "xp": 101,
+        "money": 1200,
+        "level": 1
       },
       "909739750225772544_1360897918504271882": {
         "balance": 1160,
@@ -307,7 +368,9 @@
         "lastDaily": 0,
         "messageCount": 20,
         "inventory": [],
-        "xp": 232
+        "xp": 232,
+        "money": 1160,
+        "level": 1
       },
       "723788041382264833_1360897918504271882": {
         "balance": 1040,
@@ -317,7 +380,9 @@
         "lastDaily": 0,
         "messageCount": 4,
         "inventory": [],
-        "xp": 43
+        "xp": 43,
+        "money": 1040,
+        "level": 1
       },
       "749851490486714378_1360897918504271882": {
         "balance": 1020,
@@ -327,7 +392,9 @@
         "lastDaily": 0,
         "messageCount": 2,
         "inventory": [],
-        "xp": 21
+        "xp": 21,
+        "money": 1020,
+        "level": 1
       },
       "1296142706149691487_1360897918504271882": {
         "balance": 1160,
@@ -337,7 +404,9 @@
         "lastDaily": 0,
         "messageCount": 19,
         "inventory": [],
-        "xp": 205
+        "xp": 205,
+        "money": 1160,
+        "level": 1
       },
       "560058104113528843_1360897918504271882": {
         "balance": 1000,
@@ -349,7 +418,9 @@
         "xp": 0,
         "inventory": [],
         "createdAt": "2025-08-02T18:27:39.891Z",
-        "updatedAt": "2025-08-02T18:27:39.891Z"
+        "updatedAt": "2025-08-02T18:27:39.891Z",
+        "money": 1000,
+        "level": 1
       }
     },
     "level_users.json": {
@@ -599,6 +670,14 @@
           "createdBy": "943487722738311219"
         },
         {
+          "id": 1753602834934,
+          "name": "Test",
+          "price": 594939,
+          "description": "Objet personnalisé",
+          "type": "custom",
+          "createdAt": "2025-07-27T07:53:54.934Z"
+        },
+        {
           "id": "1753606461399",
           "type": "custom",
           "name": "Fouet",
@@ -835,7 +914,11 @@
             "1360897918558797909"
           ]
         }
-      }
+      },
+      "prefix": "!",
+      "botName": "BagBot",
+      "version": "2.0.0",
+      "maintenance": false
     }
   }
 }
