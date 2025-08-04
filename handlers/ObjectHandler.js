@@ -18,7 +18,13 @@ async function handleObjectInteraction(interaction, dataManager) {
             const obj = userData.inventory.find(item => (item.id || '').toString() === originalObjectId);
 
             if (!obj) {
-                return await interaction.update({ content: '❌ Objet introuvable ou expiré.', components: [] });
+                console.log(`⚠️ Objet introuvable: ${originalObjectId} - Nettoyage automatique de l'inventaire`);
+                // Nettoyer l'inventaire automatiquement
+                await cleanupUserInventory(userId, guildId, dataManager);
+                return await interaction.update({ 
+                    content: '❌ Cet objet n\'existe plus. Votre inventaire a été mis à jour.\n\nUtilisez `/objet` à nouveau pour voir vos objets actuels.', 
+                    components: [] 
+                });
             }
 
             const embed = new EmbedBuilder()
@@ -49,7 +55,12 @@ async function handleObjectInteraction(interaction, dataManager) {
             const obj = userData.inventory.find(item => item.id.toString() === objectId);
 
             if (!obj) {
-                return await interaction.update({ content: '❌ Objet introuvable ou expiré.', components: [] });
+                console.log(`⚠️ Objet action introuvable: ${objectId} - Nettoyage automatique`);
+                await cleanupUserInventory(userId, guildId, dataManager);
+                return await interaction.update({ 
+                    content: '❌ Cet objet n\'existe plus. Votre inventaire a été mis à jour.\n\nUtilisez `/objet` à nouveau pour voir vos objets actuels.', 
+                    components: [] 
+                });
             }
 
             switch (action) {
@@ -235,6 +246,36 @@ function getItemTypeLabel(type) {
         default: return 'Inconnu';
     }
 }
+
+// Méthode pour nettoyer automatiquement l'inventaire des objets corrompus
+async function cleanupUserInventory(userId, guildId, dataManager) {
+        try {
+            const economyData = await dataManager.loadData('economy.json', {});
+            const userKey = `${userId}_${guildId}`;
+            
+            if (economyData[userKey] && economyData[userKey].inventory) {
+                const originalLength = economyData[userKey].inventory.length;
+                
+                // Filtrer les objets valides (avec ID et nom)
+                economyData[userKey].inventory = economyData[userKey].inventory.filter(item => {
+                    if (!item.id || !item.name) {
+                        console.log(`🧹 Suppression objet corrompu: ${JSON.stringify(item)}`);
+                        return false;
+                    }
+                    return true;
+                });
+                
+                const cleanedCount = originalLength - economyData[userKey].inventory.length;
+                
+                if (cleanedCount > 0) {
+                    await dataManager.saveData('economy.json', economyData);
+                    console.log(`✅ ${cleanedCount} objet(s) corrompu(s) supprimé(s) de l'inventaire de ${userKey}`);
+                }
+            }
+        } catch (error) {
+            console.error('❌ Erreur lors du nettoyage automatique de l\'inventaire:', error);
+        }
+    }
 
 module.exports = {
     handleObjectInteraction
