@@ -18,10 +18,15 @@ class DataManager {
         this.dataTypes = {
             // Système économie
             'users': 'users.json',
+            'economy': 'economy.json',
             'actions': 'actions.json',
             'shop': 'shop.json',
             'daily': 'daily.json',
             'daily_cooldowns': 'daily_cooldowns.json',
+            
+            // Système level - AJOUTÉ
+            'level_users': 'level_users.json',
+            'level_config': 'level_config.json',
             
             // Système confession
             'confessions': path.join('logs', 'confessions.json'),
@@ -46,6 +51,21 @@ class DataManager {
             'karma_config': 'karma_config.json',
             'karma_discounts': 'karma_discounts.json'
         };
+
+        // Initialiser le LevelBackupManager
+        this.initializeLevelBackup();
+    }
+
+    // Initialiser le système de sauvegarde level
+    initializeLevelBackup() {
+        try {
+            const LevelBackupManager = require('../utils/levelBackupManager');
+            this.levelBackupManager = new LevelBackupManager();
+            console.log('✅ LevelBackupManager initialisé');
+        } catch (error) {
+            console.error('❌ Erreur initialisation LevelBackupManager:', error);
+            this.levelBackupManager = null;
+        }
     }
 
     ensureDataDirectory() {
@@ -137,10 +157,37 @@ class DataManager {
     getDefaultData(type) {
         const defaults = {
             'users': {},
+            'economy': {},
             'actions': {},
             'shop': {},
             'daily': {},
             'daily_cooldowns': {},
+            
+            // Données level par défaut
+            'level_users': {},
+            'level_config': {
+                textXP: {
+                    min: 15,
+                    max: 25,
+                    cooldown: 10000
+                },
+                voiceXP: {
+                    amount: 150,
+                    interval: 60000
+                },
+                xpCooldown: 10000,
+                notifications: {
+                    enabled: true,
+                    channelId: null,
+                    cardStyle: "holographic"
+                },
+                roleRewards: {},
+                levelFormula: {
+                    baseXP: 100,
+                    multiplier: 1.5
+                }
+            },
+            
             'confessions': [],
             'counting': {},
             'config': {
@@ -300,6 +347,72 @@ class DataManager {
         } catch (error) {
             console.error('❌ Erreur backup:', error);
             return null;
+        }
+    }
+
+    /**
+     * Méthodes spécialisées pour les données level
+     */
+    
+    // Créer une sauvegarde des données level
+    async createLevelBackup(label = null) {
+        if (this.levelBackupManager) {
+            return await this.levelBackupManager.createLevelBackup(label);
+        } else {
+            console.error('❌ LevelBackupManager non disponible');
+            return null;
+        }
+    }
+
+    // Restaurer les données level
+    async restoreLevelData(backupFilename) {
+        if (this.levelBackupManager) {
+            const success = await this.levelBackupManager.restoreLevelData(backupFilename);
+            if (success) {
+                // Vider le cache pour forcer le rechargement
+                this.clearCache('level_users');
+                this.clearCache('level_config');
+            }
+            return success;
+        } else {
+            console.error('❌ LevelBackupManager non disponible');
+            return false;
+        }
+    }
+
+    // Synchroniser les données XP
+    async synchronizeLevelXP(direction = 'economy_to_level') {
+        if (this.levelBackupManager) {
+            const result = await this.levelBackupManager.synchronizeXPData(direction);
+            if (result.syncCount > 0) {
+                // Vider le cache pour forcer le rechargement
+                this.clearCache('level_users');
+                this.clearCache('economy');
+            }
+            return result;
+        } else {
+            console.error('❌ LevelBackupManager non disponible');
+            return { syncCount: 0, errorCount: 1 };
+        }
+    }
+
+    // Diagnostiquer les problèmes level
+    async diagnoseLevelIssues() {
+        if (this.levelBackupManager) {
+            return await this.levelBackupManager.diagnoseLevelIssues();
+        } else {
+            console.error('❌ LevelBackupManager non disponible');
+            return { issues: ['LevelBackupManager non disponible'], recommendations: [], syncStatus: 'error' };
+        }
+    }
+
+    // Lister les sauvegardes level
+    listLevelBackups() {
+        if (this.levelBackupManager) {
+            return this.levelBackupManager.listBackups();
+        } else {
+            console.error('❌ LevelBackupManager non disponible');
+            return [];
         }
     }
 

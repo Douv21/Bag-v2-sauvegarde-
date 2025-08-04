@@ -599,14 +599,6 @@
           "createdBy": "943487722738311219"
         },
         {
-          "id": 1753602834934,
-          "name": "Test",
-          "price": 594939,
-          "description": "Objet personnalisé",
-          "type": "custom",
-          "createdAt": "2025-07-27T07:53:54.934Z"
-        },
-        {
           "id": "1753606461399",
           "type": "custom",
           "name": "Fouet",
