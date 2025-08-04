@@ -3,6 +3,7 @@ services:
     name: bag-bot-v2
     env: node
     plan: free
+    nodeVersion: 18
     buildCommand: npm install
     startCommand: node index.render-final.js
     envVars:
