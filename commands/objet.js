@@ -14,10 +14,18 @@ module.exports = {
         const userKey = `${userId}_${guildId}`;
         const userData = economyData[userKey] || { balance: 0, goodKarma: 0, badKarma: 0, inventory: [] };
         
-        // Filtrer les objets pour ne montrer que les objets personnalisés
-        const customObjects = userData.inventory ? userData.inventory.filter(item => 
-            item.type === 'custom_object' || item.type === 'custom' || !item.type
-        ) : [];
+        // Filtrer les objets pour ne montrer que les objets personnalisés ET valides
+        const customObjects = userData.inventory ? userData.inventory.filter(item => {
+            // Validation robuste: l'objet doit avoir un ID et un nom
+            const isValid = item && item.id && item.name;
+            const isCustom = item.type === 'custom_object' || item.type === 'custom' || !item.type;
+            
+            if (!isValid) {
+                console.log(`🧹 Objet invalide détecté et ignoré: ${JSON.stringify(item)}`);
+            }
+            
+            return isValid && isCustom;
+        }) : [];
         
         // Vérifier si l'utilisateur a des objets personnalisés
         if (customObjects.length === 0) {
