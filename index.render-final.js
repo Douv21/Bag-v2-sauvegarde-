@@ -296,7 +296,7 @@ class RenderSolutionBot {
                 // Charger les données depuis les fichiers JSON
                 const economyData = dataManager.loadData('economy.json', {});
                 const confessionData = dataManager.loadData('confessions.json', {});
-                const levelData = dataManager.loadData('levels.json', {});
+                const levelData = dataManager.loadData('level_users.json', {});
                 
                 // Calculer les statistiques
                 let stats = {
@@ -379,6 +379,106 @@ class RenderSolutionBot {
                     highestLevel: 47,
                     totalXP: '1,234,567',
                     rewardsGiven: 89
+                });
+            }
+        });
+
+        // API endpoint pour les configurations du dashboard
+        app.get('/api/configs', async (req, res) => {
+            try {
+                const dataManager = require('./utils/simpleDataManager');
+                
+                // Charger les configurations depuis les fichiers JSON
+                const economyConfig = dataManager.loadData('economy.json', {});
+                const levelConfig = dataManager.loadData('level_config.json', {});
+                const karmaConfig = dataManager.loadData('karma_config.json', {});
+                const confessionConfig = dataManager.loadData('confessions.json', {});
+                
+                // Structurer les configurations pour le dashboard
+                const configs = {
+                    economy: {
+                        dailyReward: economyConfig.dailyReward || 100,
+                        workReward: economyConfig.workReward || { min: 50, max: 200 },
+                        crimeReward: economyConfig.crimeReward || { min: 100, max: 500 },
+                        crimeFail: economyConfig.crimeFail || { min: 20, max: 100 },
+                        betLimit: economyConfig.betLimit || 1000,
+                        interestRate: economyConfig.interestRate || 0.02
+                    },
+                    levels: {
+                        textXP: levelConfig.textXP || { min: 5, max: 15, cooldown: 60000 },
+                        voiceXP: levelConfig.voiceXP || { amount: 10, interval: 60000, perMinute: 10 },
+                        notifications: levelConfig.notifications || { enabled: true, channelId: null, cardStyle: 'futuristic' },
+                        roleRewards: levelConfig.roleRewards || [],
+                        levelFormula: levelConfig.levelFormula || { baseXP: 100, multiplier: 1.5 },
+                        leaderboard: levelConfig.leaderboard || { limit: 10 }
+                    },
+                    karma: {
+                        dailyBonus: karmaConfig.dailyBonus || 5,
+                        messageReward: karmaConfig.messageReward || 1,
+                        confessionReward: karmaConfig.confessionReward || 10,
+                        maxKarma: karmaConfig.maxKarma || 1000,
+                        discounts: karmaConfig.discounts || []
+                    },
+                    confessions: {
+                        channelId: confessionConfig.channelId || null,
+                        moderationEnabled: confessionConfig.moderationEnabled !== false,
+                        autoDelete: confessionConfig.autoDelete || false,
+                        minLength: confessionConfig.minLength || 10,
+                        maxLength: confessionConfig.maxLength || 2000
+                    },
+                    moderation: {
+                        autoMod: true,
+                        warnLimit: 3,
+                        muteTime: 600,
+                        banTime: 86400
+                    }
+                };
+
+                res.json({ success: true, data: configs });
+            } catch (error) {
+                console.error('Erreur chargement configs:', error);
+                // Retourner des configurations par défaut en cas d'erreur
+                res.json({ 
+                    success: false, 
+                    error: error.message,
+                    data: {
+                        economy: {
+                            dailyReward: 100,
+                            workReward: { min: 50, max: 200 },
+                            crimeReward: { min: 100, max: 500 },
+                            crimeFail: { min: 20, max: 100 },
+                            betLimit: 1000,
+                            interestRate: 0.02
+                        },
+                        levels: {
+                            textXP: { min: 5, max: 15, cooldown: 60000 },
+                            voiceXP: { amount: 10, interval: 60000, perMinute: 10 },
+                            notifications: { enabled: true, channelId: null, cardStyle: 'futuristic' },
+                            roleRewards: [],
+                            levelFormula: { baseXP: 100, multiplier: 1.5 },
+                            leaderboard: { limit: 10 }
+                        },
+                        karma: {
+                            dailyBonus: 5,
+                            messageReward: 1,
+                            confessionReward: 10,
+                            maxKarma: 1000,
+                            discounts: []
+                        },
+                        confessions: {
+                            channelId: null,
+                            moderationEnabled: true,
+                            autoDelete: false,
+                            minLength: 10,
+                            maxLength: 2000
+                        },
+                        moderation: {
+                            autoMod: true,
+                            warnLimit: 3,
+                            muteTime: 600,
+                            banTime: 86400
+                        }
+                    }
                 });
             }
         });

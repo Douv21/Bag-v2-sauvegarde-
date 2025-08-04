@@ -417,5 +417,16 @@
     "updatedAt": "2025-08-02T18:27:39.891Z",
     "money": 1000,
     "level": 1
+  },
+  "test123_guild456": {
+    "balance": 1000,
+    "goodKarma": 0,
+    "badKarma": 0,
+    "dailyStreak": 0,
+    "lastDaily": null,
+    "messageCount": 0,
+    "xp": 25,
+    "inventory": [],
+    "updatedAt": "2025-08-04T14:37:34.500Z"
   }
 }
