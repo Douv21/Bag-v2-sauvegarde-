@@ -190,6 +190,7 @@ class MongoBackupManager {
                         else if (item.includes('staff')) collection = 'staff_config';
                         else if (item.includes('cooldown')) collection = 'cooldowns';
                         else if (item.includes('config')) collection = 'main_config';
+                        else if (item.includes('level_users')) collection = 'level_users';
                         
                         allFiles[relativePath] = collection;
                     }
