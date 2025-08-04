@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Confession Bot - Status</title>
+    <title>BAG Discord Bot - Dashboard Premium</title>
     <style>
         * {
             margin: 0;
@@ -13,81 +13,147 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Effet de fond animé */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(229, 62, 62, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(229, 62, 62, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(229, 62, 62, 0.06) 0%, transparent 50%);
+            z-index: -1;
+            animation: backgroundPulse 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes backgroundPulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
         }
         
         .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(229, 62, 62, 0.3);
             border-radius: 20px;
             padding: 3rem;
             text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
             max-width: 600px;
             width: 90%;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 2rem;
+            animation: logoGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes logoGlow {
+            0% { filter: drop-shadow(0 0 20px rgba(229, 62, 62, 0.6)); }
+            100% { filter: drop-shadow(0 0 30px rgba(229, 62, 62, 1)); }
         }
         
         h1 {
-            font-size: 2.5rem;
+            font-size: 3rem;
             margin-bottom: 1rem;
-            background: linear-gradient(45deg, #fff, #e0e0e0);
+            background: linear-gradient(135deg, #ffffff 0%, #ffeeee 50%, #ffffff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            font-weight: 800;
         }
         
         .status {
             font-size: 1.2rem;
             margin-bottom: 2rem;
             opacity: 0.9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
         }
         
         .features {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
-            margin-top: 2rem;
+            margin: 2rem 0;
         }
         
         .feature {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             padding: 1.5rem;
             border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(229, 62, 62, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(229, 62, 62, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(229, 62, 62, 0.15);
         }
         
         .feature h3 {
             margin-bottom: 0.5rem;
-            color: #fff;
+            color: #ff6666;
+            font-size: 1.1rem;
         }
         
         .feature p {
             opacity: 0.8;
             font-size: 0.9rem;
+            line-height: 1.4;
         }
         
-        .discord-link {
+        .dashboard-link {
             display: inline-block;
-            background: #5865F2;
+            background: linear-gradient(135deg, #e53e3e 0%, #9b2c2c 100%);
             color: white;
-            padding: 12px 24px;
+            padding: 15px 30px;
             border-radius: 25px;
             text-decoration: none;
             margin-top: 2rem;
             transition: all 0.3s ease;
             font-weight: 600;
+            font-size: 1.1rem;
+            border: 2px solid transparent;
+            box-shadow: 0 8px 25px rgba(229, 62, 62, 0.3);
         }
         
-        .discord-link:hover {
-            background: #4752C4;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3);
+        .dashboard-link:hover {
+            background: linear-gradient(135deg, #ff6666 0%, #e53e3e 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(229, 62, 62, 0.5);
+            border-color: rgba(255, 255, 255, 0.2);
         }
         
         .status-indicator {
@@ -101,79 +167,174 @@
         }
         
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+        }
+
+        .info-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(229, 62, 62, 0.3);
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .info-section p {
+            margin: 0.5rem 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🤖 Discord Confession Bot</h1>
+        <!-- Logo BAG -->
+        <div class="logo">
+            <svg width="100" height="100" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="outerGlow" cx="50%" cy="50%" r="60%">
+                        <stop offset="0%" style="stop-color:#ff4444;stop-opacity:0.8"/>
+                        <stop offset="40%" style="stop-color:#e53e3e;stop-opacity:0.6"/>
+                        <stop offset="70%" style="stop-color:#cc2222;stop-opacity:0.3"/>
+                        <stop offset="100%" style="stop-color:#aa1111;stop-opacity:0"/>
+                    </radialGradient>
+                    <radialGradient id="mainCircle" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" style="stop-color:#2a2a2a;stop-opacity:1"/>
+                        <stop offset="100%" style="stop-color:#0f0f0f;stop-opacity:1"/>
+                    </radialGradient>
+                    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ff6666;stop-opacity:1"/>
+                        <stop offset="50%" style="stop-color:#e53e3e;stop-opacity:1"/>
+                        <stop offset="100%" style="stop-color:#cc2222;stop-opacity:1"/>
+                    </linearGradient>
+                    <linearGradient id="textGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
+                        <stop offset="30%" style="stop-color:#ffeeee;stop-opacity:1"/>
+                        <stop offset="70%" style="stop-color:#ffdddd;stop-opacity:1"/>
+                        <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.9"/>
+                    </linearGradient>
+                    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                        <feMerge> 
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <circle cx="100" cy="100" r="95" fill="url(#outerGlow)" opacity="0.7"/>
+                <circle cx="100" cy="100" r="85" fill="none" stroke="url(#accentGradient)" stroke-width="3" filter="url(#glow)"/>
+                <circle cx="100" cy="100" r="82" fill="url(#mainCircle)"/>
+                <g transform="translate(100,70)">
+                    <path d="M-20,-15 Q-25,-20 -20,-25 Q-15,-30 -8,-25 Q-5,-20 -8,-15 Q-12,-8 -15,-2 Q-18,5 -20,12 Q-22,18 -18,22 Q-15,25 -12,22 Q-10,18 -12,15" fill="url(#accentGradient)" opacity="0.8"/>
+                    <path d="M8,-15 Q3,-20 8,-25 Q13,-30 20,-25 Q25,-20 20,-15 Q16,-8 13,-2 Q10,5 8,12 Q6,18 10,22 Q13,25 16,22 Q18,18 16,15" fill="#444" opacity="0.9"/>
+                    <g transform="translate(0,5)">
+                        <path d="M-6,-8 Q-10,-12 -14,-8 Q-14,-4 -10,0 L0,10 L10,0 Q14,-4 14,-8 Q10,-12 6,-8 Q3,-5 0,-6 Q-3,-5 -6,-8 Z" fill="url(#accentGradient)" opacity="0.9" filter="url(#glow)"/>
+                    </g>
+                </g>
+                <g stroke="url(#accentGradient)" stroke-width="2.5" fill="none" opacity="0.7">
+                    <path d="M25,75 Q18,68 25,60 Q32,52 40,60 Q48,68 40,75 Q35,80 30,75"/>
+                    <path d="M20,125 Q13,118 20,110 Q27,102 35,110 Q43,118 35,125 Q30,130 25,125"/>
+                    <path d="M175,75 Q182,68 175,60 Q168,52 160,60 Q152,68 160,75 Q165,80 170,75"/>
+                    <path d="M180,125 Q187,118 180,110 Q173,102 165,110 Q157,118 165,125 Q170,130 175,125"/>
+                    <path d="M100,25 Q108,18 115,25 Q122,32 115,40 Q108,48 100,40 Q92,32 100,25"/>
+                    <path d="M100,175 Q108,182 115,175 Q122,168 115,160 Q108,152 100,160 Q92,168 100,175"/>
+                </g>
+                <text x="100" y="155" text-anchor="middle" font-family="serif" font-size="48" font-weight="bold" fill="url(#textGradient)" letter-spacing="4px" filter="url(#glow)">BAG</text>
+                <text x="100" y="175" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="300" fill="url(#accentGradient)" opacity="0.8" letter-spacing="2px">PREMIUM</text>
+            </svg>
+        </div>
+
+        <h1>BAG Discord Bot</h1>
         <div class="status">
             <span class="status-indicator"></span>
             Bot en ligne et opérationnel
         </div>
         
-        <p>Système de confessions anonymes avec économie basée sur le karma</p>
+        <p style="margin-bottom: 2rem; font-size: 1.1rem; opacity: 0.9;">
+            Système de confessions anonymes avec économie basée sur le karma
+        </p>
         
         <div class="features">
             <div class="feature">
                 <h3>💬 Confessions Anonymes</h3>
-                <p>Système sécurisé de confessions avec logs d'audit</p>
+                <p>Système sécurisé de confessions avec logs d'audit complets</p>
             </div>
             <div class="feature">
                 <h3>💰 Système Économique</h3>
-                <p>Économie complète avec karma et récompenses</p>
+                <p>Économie complète avec karma, argent et récompenses</p>
             </div>
             <div class="feature">
-                <h3>⚙️ Configuration Avancée</h3>
-                <p>Panel web et commandes de configuration</p>
+                <h3>⚙️ Dashboard Premium</h3>
+                <p>Interface web moderne pour la configuration complète</p>
             </div>
             <div class="feature">
                 <h3>🛡️ Multi-Serveurs</h3>
-                <p>Support de plusieurs serveurs Discord</p>
+                <p>Support avancé de plusieurs serveurs Discord</p>
             </div>
         </div>
         
-        <a href="#" class="discord-link" onclick="copyInviteLink()">
-            📋 Copier le lien d'invitation
+        <a href="/public/dashboard.html" class="dashboard-link">
+            🚀 Accéder au Dashboard Premium
         </a>
         
-        <div style="margin-top: 2rem; opacity: 0.7; font-size: 0.9rem;">
-            <p>Version 2.0 | Hébergé sur Replit</p>
-            <p>Support: Système de logs et monitoring intégré</p>
+        <div class="info-section">
+            <p><strong>Version 3.0 Premium</strong> | Hébergé sur Render</p>
+            <p>Dashboard avec gestion complète des configurations</p>
+            <p>Support: Système de logs et monitoring en temps réel</p>
         </div>
     </div>
     
     <script>
-        function copyInviteLink() {
-            // Placeholder for Discord bot invite link
-            const inviteText = "Contactez l'administrateur pour obtenir le lien d'invitation du bot";
-            navigator.clipboard.writeText(inviteText).then(() => {
-                alert("Information copiée dans le presse-papiers!");
-            }).catch(() => {
-                alert("Veuillez contacter l'administrateur pour le lien d'invitation");
-            });
-        }
-        
-        // Simple health check display
+        // Vérification du statut du bot
         async function checkBotStatus() {
             try {
                 const response = await fetch('/health');
+                const statusIndicator = document.querySelector('.status-indicator');
+                
                 if (response.ok) {
-                    document.querySelector('.status-indicator').style.background = '#00ff88';
+                    statusIndicator.style.background = '#00ff88';
                 } else {
-                    document.querySelector('.status-indicator').style.background = '#ff6b6b';
+                    statusIndicator.style.background = '#ff6b6b';
                 }
             } catch (error) {
-                // If health endpoint doesn't exist, assume bot is running since page loads
+                // Si l'endpoint n'existe pas, on assume que le bot fonctionne
                 document.querySelector('.status-indicator').style.background = '#00ff88';
             }
         }
         
-        // Check status every 30 seconds
+        // Vérifier le statut au chargement et toutes les 30 secondes
         checkBotStatus();
         setInterval(checkBotStatus, 30000);
+
+        // Animation de typing pour le titre
+        const title = document.querySelector('h1');
+        const originalText = title.textContent;
+        title.textContent = '';
+        
+        let i = 0;
+        const typeWriter = () => {
+            if (i < originalText.length) {
+                title.textContent += originalText.charAt(i);
+                i++;
+                setTimeout(typeWriter, 100);
+            }
+        };
+        
+        setTimeout(typeWriter, 500);
     </script>
 </body>
 </html>

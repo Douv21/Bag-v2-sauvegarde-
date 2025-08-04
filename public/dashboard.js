@@ -1,41 +1,86 @@
 /**
- * BAG Dashboard - JavaScript
- * Interface administrative moderne et élégante
+ * BAG Dashboard Premium - JavaScript
+ * Interface administrative complète avec gestion de configurations
+ * @version 3.0
  */
 
-class DashboardManager {
+class BAGDashboard {
     constructor() {
         this.currentSection = 'overview';
         this.data = {
             stats: {},
-            config: {},
+            configs: {},
+            servers: [],
+            users: [],
             lastUpdate: null
         };
+        this.updateInterval = null;
+        this.notifications = [];
         
-        // S'assurer que le DOM est prêt avant d'initialiser
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.init());
-        } else {
-            this.init();
-        }
+        // Configuration par défaut
+        this.defaultConfigs = {
+            economy: {
+                dailyReward: 100,
+                workReward: { min: 50, max: 200 },
+                crimeReward: { min: 100, max: 500 },
+                crimeFail: { min: 20, max: 100 },
+                betLimit: 1000,
+                interestRate: 0.02
+            },
+            levels: {
+                textXP: { min: 5, max: 15, cooldown: 60000 },
+                voiceXP: { amount: 10, interval: 60000, perMinute: 10 },
+                notifications: { enabled: true, channelId: null, cardStyle: 'futuristic' },
+                roleRewards: [],
+                levelFormula: { baseXP: 100, multiplier: 1.5 }
+            },
+            karma: {
+                dailyBonus: 5,
+                messageReward: 1,
+                confessionReward: 10,
+                maxKarma: 1000,
+                discounts: []
+            },
+            confessions: {
+                channelId: null,
+                moderationEnabled: true,
+                autoDelete: false,
+                minLength: 10,
+                maxLength: 2000
+            },
+            moderation: {
+                autoMod: true,
+                warnLimit: 3,
+                muteTime: 600,
+                banTime: 86400
+            }
+        };
+        
+        this.init();
     }
 
-    init() {
-        this.setupEventListeners();
-        this.loadInitialData();
-        this.startStatusUpdates();
+    async init() {
+        console.log('🚀 Initialisation du BAG Dashboard Premium...');
         
-        // Fallback pour le logo si l'image ne charge pas
-        const logoImg = document.getElementById('logoImg');
-        if (logoImg) {
-            logoImg.onerror = () => {
-                if (logoImg && logoImg.style) {
-                    logoImg.style.display = 'none';
-                }
-                if (logoImg && logoImg.parentElement) {
-                    logoImg.parentElement.innerHTML += '<i class="fas fa-heart" style="font-size: 2rem; color: white;"></i>';
-                }
-            };
+        try {
+            // Attendre que le DOM soit prêt
+            if (document.readyState === 'loading') {
+                await new Promise(resolve => {
+                    document.addEventListener('DOMContentLoaded', resolve);
+                });
+            }
+
+            this.setupEventListeners();
+            await this.loadInitialData();
+            this.startRealTimeUpdates();
+            this.showOverviewSection();
+            
+            this.showNotification('Dashboard initialisé avec succès!', 'success');
+            console.log('✅ Dashboard prêt!');
+            
+        } catch (error) {
+            console.error('❌ Erreur d\'initialisation:', error);
+            this.showNotification('Erreur d\'initialisation du dashboard', 'error');
         }
     }
 
@@ -45,31 +90,39 @@ class DashboardManager {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const section = link.dataset.section;
-                if (section) {
+                if (section && section !== this.currentSection) {
                     this.switchSection(section);
                 }
             });
         });
 
-        // Action buttons
-        document.querySelectorAll('.action-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+        // Boutons d'action
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.action-btn') || e.target.closest('.action-btn')) {
                 e.preventDefault();
+                const btn = e.target.matches('.action-btn') ? e.target : e.target.closest('.action-btn');
                 const section = btn.dataset.section;
                 if (section) {
                     this.switchSection(section);
                 }
-            });
+            }
         });
 
-        // Refresh data on focus
+        // Refresh sur focus de la fenêtre
         window.addEventListener('focus', () => {
             this.loadInitialData();
+        });
+
+        // Gestion du responsive
+        window.addEventListener('resize', () => {
+            this.handleResize();
         });
     }
 
     switchSection(section) {
-        // Update navigation
+        console.log(`🔄 Changement de section: ${this.currentSection} → ${section}`);
+        
+        // Mettre à jour la navigation
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
             if (link.dataset.section === section) {
@@ -77,18 +130,20 @@ class DashboardManager {
             }
         });
 
-        // Update content
+        // Mettre à jour le contenu
         this.currentSection = section;
         this.loadSectionContent(section);
     }
 
     async loadSectionContent(section) {
         const container = document.getElementById('content-container');
+        const header = document.querySelector('.content-header');
         
-        // Show loading state only if container exists
-        if (container) {
-            this.showLoading(container);
-        }
+        // Mise à jour du header
+        this.updateContentHeader(section);
+        
+        // Afficher l'état de chargement
+        this.showLoading(container);
 
         try {
             switch (section) {
@@ -98,17 +153,20 @@ class DashboardManager {
                 case 'economy':
                     await this.showEconomySection();
                     break;
-                case 'confessions':
-                    await this.showConfessionsSection();
-                    break;
                 case 'levels':
                     await this.showLevelsSection();
                     break;
-                case 'counting':
-                    await this.showCountingSection();
+                case 'karma':
+                    await this.showKarmaSection();
                     break;
-                case 'autothread':
-                    await this.showAutothreadSection();
+                case 'confessions':
+                    await this.showConfessionsSection();
+                    break;
+                case 'moderation':
+                    await this.showModerationSection();
+                    break;
+                case 'backup':
+                    await this.showBackupSection();
                     break;
                 case 'settings':
                     await this.showSettingsSection();
@@ -117,691 +175,967 @@ class DashboardManager {
                     this.showOverviewSection();
             }
         } catch (error) {
-            this.showError('Erreur lors du chargement de la section: ' + error.message);
+            console.error(`❌ Erreur lors du chargement de la section ${section}:`, error);
+            this.showError(container, `Erreur lors du chargement de la section ${section}`);
         }
+    }
+
+    updateContentHeader(section) {
+        const title = document.querySelector('.content-title');
+        const subtitle = document.querySelector('.content-subtitle');
+        
+        const headers = {
+            overview: {
+                title: 'Vue d\'ensemble',
+                subtitle: 'Tableau de bord principal et statistiques en temps réel'
+            },
+            economy: {
+                title: 'Système Économique',
+                subtitle: 'Configuration et gestion de l\'économie du serveur'
+            },
+            levels: {
+                title: 'Système de Niveaux',
+                subtitle: 'Configuration XP, récompenses et progression des membres'
+            },
+            karma: {
+                title: 'Système Karma',
+                subtitle: 'Gestion des points karma et récompenses'
+            },
+            confessions: {
+                title: 'Confessions Anonymes',
+                subtitle: 'Configuration des canaux et modération des confessions'
+            },
+            moderation: {
+                title: 'Modération Automatique',
+                subtitle: 'Outils et paramètres de modération du serveur'
+            },
+            backup: {
+                title: 'Sauvegardes & Données',
+                subtitle: 'Gestion des sauvegardes et intégrité des données'
+            },
+            settings: {
+                title: 'Paramètres Généraux',
+                subtitle: 'Configuration globale du bot et du dashboard'
+            }
+        };
+
+        const header = headers[section] || headers.overview;
+        if (title) title.textContent = header.title;
+        if (subtitle) subtitle.textContent = header.subtitle;
     }
 
     showOverviewSection() {
-        const overviewSection = document.getElementById('overview-section');
-        const dynamicContent = document.getElementById('dynamic-content');
+        const container = document.getElementById('content-container');
         
-        if (overviewSection) {
-            overviewSection.style.display = 'block';
-        }
-        if (dynamicContent) {
-            dynamicContent.style.display = 'none';
-        }
-    }
-
-    async showEconomySection() {
-        const content = `
-            <div class="content-header">
-                <h1 class="content-title">Configuration Économique</h1>
-                <p class="content-subtitle">Gérer le système économique du serveur</p>
-            </div>
-
-            <div class="dashboard-grid">
+        container.innerHTML = `
+            <div class="dashboard-grid fade-in">
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3 class="card-title">Paramètres généraux</h3>
+                        <h3 class="card-title">Statistiques Générales</h3>
                         <div class="card-icon">
-                            <i class="fas fa-cog"></i>
+                            <i class="fas fa-chart-bar"></i>
                         </div>
                     </div>
-                    <div class="config-form">
-                        <div class="form-group">
-                            <label>Récompense par message</label>
-                            <input type="number" id="messageReward" value="10" min="1" max="1000">
+                    <div class="card-content">
+                        <p>Aperçu global de l'activité du serveur</p>
+                    </div>
+                    <div class="card-stats">
+                        <div class="stat">
+                            <span class="stat-value" id="activeMembers">-</span>
+                            <span class="stat-label">Membres actifs</span>
                         </div>
-                        <div class="form-group">
-                            <label>Cooldown (secondes)</label>
-                            <input type="number" id="economyCooldown" value="60" min="10" max="3600">
+                        <div class="stat">
+                            <span class="stat-value" id="todayMessages">-</span>
+                            <span class="stat-label">Messages/jour</span>
                         </div>
-                        <div class="form-group">
-                            <label>Bonus quotidien</label>
-                            <input type="number" id="dailyBonus" value="500" min="100" max="10000">
+                        <div class="stat">
+                            <span class="stat-value" id="commandsUsed">-</span>
+                            <span class="stat-label">Commandes</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3 class="card-title">Boutique</h3>
+                        <h3 class="card-title">Économie</h3>
                         <div class="card-icon">
-                            <i class="fas fa-shopping-cart"></i>
+                            <i class="fas fa-coins"></i>
                         </div>
                     </div>
-                    <div class="shop-items">
-                        <div class="shop-item">
-                            <span>Rôle VIP - 5000 💰</span>
-                            <button class="btn-secondary">Modifier</button>
+                    <div class="card-content">
+                        <p>Système économique et transactions</p>
+                    </div>
+                    <div class="card-stats">
+                        <div class="stat">
+                            <span class="stat-value" id="totalMoney">-</span>
+                            <span class="stat-label">Total en circulation</span>
                         </div>
-                        <div class="shop-item">
-                            <span>Couleur custom - 2000 💰</span>
-                            <button class="btn-secondary">Modifier</button>
+                        <div class="stat">
+                            <span class="stat-value" id="todayTransactions">-</span>
+                            <span class="stat-label">Transactions/jour</span>
                         </div>
-                        <button class="btn-primary">Ajouter un article</button>
+                        <div class="stat">
+                            <span class="stat-value" id="richestUser">-</span>
+                            <span class="stat-label">Plus riche</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="action-buttons">
-                <button class="btn-primary" onclick="dashboard.saveEconomyConfig()">
-                    <i class="fas fa-save"></i> Sauvegarder les modifications
-                </button>
-                <button class="btn-secondary" onclick="dashboard.resetEconomyConfig()">
-                    <i class="fas fa-undo"></i> Réinitialiser
-                </button>
-            </div>
-        `;
-        this.showDynamicContent(content);
-    }
-
-    async showConfessionsSection() {
-        const content = `
-            <div class="content-header">
-                <h1 class="content-title">Gestion des Confessions</h1>
-                <p class="content-subtitle">Configuration des canaux et modération</p>
-            </div>
-
-            <div class="dashboard-grid">
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3 class="card-title">Canaux de confession</h3>
+                        <h3 class="card-title">Confessions</h3>
                         <div class="card-icon">
                             <i class="fas fa-comment-dots"></i>
                         </div>
                     </div>
-                    <div class="config-form">
-                        <div class="form-group">
-                            <label>Canal principal</label>
-                            <select id="confessionChannel">
-                                <option value="">Sélectionner un canal...</option>
-                            </select>
+                    <div class="card-content">
+                        <p>Système de confessions anonymes</p>
+                    </div>
+                    <div class="card-stats">
+                        <div class="stat">
+                            <span class="stat-value" id="totalConfessions">-</span>
+                            <span class="stat-label">Total confessions</span>
                         </div>
-                        <div class="form-group">
-                            <label>Canal de logs</label>
-                            <select id="confessionLogsChannel">
-                                <option value="">Sélectionner un canal...</option>
-                            </select>
+                        <div class="stat">
+                            <span class="stat-value" id="weekConfessions">-</span>
+                            <span class="stat-label">Cette semaine</span>
                         </div>
-                        <div class="form-group">
-                            <label>Auto-thread</label>
-                            <input type="checkbox" id="confessionAutoThread">
-                            <span>Créer automatiquement des threads</span>
+                        <div class="stat">
+                            <span class="stat-value" id="avgConfessions">-</span>
+                            <span class="stat-label">Moyenne/jour</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3 class="card-title">Modération</h3>
-                        <div class="card-icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                    </div>
-                    <div class="config-form">
-                        <div class="form-group">
-                            <label>Filtre automatique</label>
-                            <input type="checkbox" id="autoFilter" checked>
-                            <span>Filtrer les contenus inappropriés</span>
-                        </div>
-                        <div class="form-group">
-                            <label>Longueur minimale</label>
-                            <input type="number" id="minLength" value="10" min="1" max="500">
-                        </div>
-                        <div class="form-group">
-                            <label>Cooldown (minutes)</label>
-                            <input type="number" id="confessionCooldown" value="5" min="1" max="60">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="recent-confessions">
-                <h3>Confessions récentes</h3>
-                <div class="confession-list">
-                    <div class="confession-item">
-                        <div class="confession-content">Confession #1247 - Il y a 2 heures</div>
-                        <div class="confession-actions">
-                            <button class="btn-danger">Supprimer</button>
-                            <button class="btn-secondary">Voir les logs</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        this.showDynamicContent(content);
-    }
-
-    async showLevelsSection() {
-        const content = `
-            <div class="content-header">
-                <h1 class="content-title">Système de Niveaux</h1>
-                <p class="content-subtitle">Configuration de l'XP et des récompenses</p>
-            </div>
-
-            <div class="dashboard-grid">
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Paramètres XP</h3>
-                        <div class="card-icon">
-                            <i class="fas fa-star"></i>
-                        </div>
-                    </div>
-                    <div class="config-form">
-                        <div class="form-group">
-                            <label>XP par message</label>
-                            <input type="number" id="xpPerMessage" value="15" min="1" max="100">
-                        </div>
-                        <div class="form-group">
-                            <label>XP bonus vocal (par minute)</label>
-                            <input type="number" id="xpVoice" value="5" min="1" max="50">
-                        </div>
-                        <div class="form-group">
-                            <label>Multiplicateur weekend</label>
-                            <input type="number" step="0.1" id="weekendMultiplier" value="1.5" min="1" max="3">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Récompenses automatiques</h3>
-                        <div class="card-icon">
-                            <i class="fas fa-gift"></i>
-                        </div>
-                    </div>
-                    <div class="rewards-list">
-                        <div class="reward-item">
-                            <span>Niveau 10 - Rôle "Actif" + 1000 💰</span>
-                            <button class="btn-secondary">Modifier</button>
-                        </div>
-                        <div class="reward-item">
-                            <span>Niveau 25 - Rôle "Vétéran" + 5000 💰</span>
-                            <button class="btn-secondary">Modifier</button>
-                        </div>
-                        <button class="btn-primary">Ajouter une récompense</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="leaderboard-section">
-                <h3>Top 10 du serveur</h3>
-                <div class="leaderboard">
-                    <div class="leaderboard-item">
-                        <span class="rank">#1</span>
-                        <span class="user">Utilisateur#1234</span>
-                        <span class="level">Niveau 47</span>
-                        <span class="xp">156,780 XP</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        this.showDynamicContent(content);
-    }
-
-    async showCountingSection() {
-        const content = `
-            <div class="content-header">
-                <h1 class="content-title">Système de Comptage</h1>
-                <p class="content-subtitle">Configuration du jeu de comptage</p>
-            </div>
-
-            <div class="dashboard-grid">
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Configuration</h3>
-                        <div class="card-icon">
-                            <i class="fas fa-calculator"></i>
-                        </div>
-                    </div>
-                    <div class="config-form">
-                        <div class="form-group">
-                            <label>Canal de comptage</label>
-                            <select id="countingChannel">
-                                <option value="">Sélectionner un canal...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Mode mathématique</label>
-                            <input type="checkbox" id="mathMode">
-                            <span>Permettre les opérations (+, -, *, /)</span>
-                        </div>
-                        <div class="form-group">
-                            <label>Récompense par nombre</label>
-                            <input type="number" id="countingReward" value="5" min="1" max="100">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Statistiques actuelles</h3>
+                        <h3 class="card-title">Niveaux & XP</h3>
                         <div class="card-icon">
                             <i class="fas fa-chart-line"></i>
                         </div>
                     </div>
+                    <div class="card-content">
+                        <p>Système de progression et récompenses</p>
+                    </div>
                     <div class="card-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">Nombre actuel</span>
-                            <span class="stat-value highlight">1,247</span>
+                        <div class="stat">
+                            <span class="stat-value" id="highestLevel">-</span>
+                            <span class="stat-label">Plus haut niveau</span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Record du serveur</span>
-                            <span class="stat-value">2,891</span>
+                        <div class="stat">
+                            <span class="stat-value" id="totalXP">-</span>
+                            <span class="stat-label">XP total distribué</span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Dernière erreur</span>
-                            <span class="stat-value">Il y a 3h</span>
+                        <div class="stat">
+                            <span class="stat-value" id="rewardsGiven">-</span>
+                            <span class="stat-label">Récompenses</span>
                         </div>
                     </div>
                 </div>
             </div>
-        `;
-        this.showDynamicContent(content);
-    }
 
-    async showAutothreadSection() {
-        const content = `
-            <div class="content-header">
-                <h1 class="content-title">Auto-Thread</h1>
-                <p class="content-subtitle">Configuration des threads automatiques</p>
-            </div>
-
-            <div class="dashboard-grid">
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Paramètres généraux</h3>
-                        <div class="card-icon">
-                            <i class="fas fa-comments"></i>
-                        </div>
-                    </div>
-                    <div class="config-form">
-                        <div class="form-group">
-                            <label>Activer l'auto-thread</label>
-                            <input type="checkbox" id="autothreadEnabled">
-                        </div>
-                        <div class="form-group">
-                            <label>Nom du thread</label>
-                            <input type="text" id="threadName" value="Discussion - {user}" placeholder="{user}, {channel}, {date}">
-                        </div>
-                        <div class="form-group">
-                            <label>Durée d'archivage</label>
-                            <select id="archiveTime">
-                                <option value="60">1 heure</option>
-                                <option value="1440">24 heures</option>
-                                <option value="4320">3 jours</option>
-                                <option value="10080">1 semaine</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Canaux configurés</h3>
-                        <div class="card-icon">
-                            <i class="fas fa-list"></i>
-                        </div>
-                    </div>
-                    <div class="channels-list">
-                        <div class="channel-item">
-                            <span>#général</span>
-                            <button class="btn-danger">Retirer</button>
-                        </div>
-                        <div class="channel-item">
-                            <span>#discussions</span>
-                            <button class="btn-danger">Retirer</button>
-                        </div>
-                        <button class="btn-primary">Ajouter un canal</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        this.showDynamicContent(content);
-    }
-
-    async showSettingsSection() {
-        const content = `
-            <div class="content-header">
-                <h1 class="content-title">Paramètres Généraux</h1>
-                <p class="content-subtitle">Configuration globale du bot</p>
-            </div>
-
-            <div class="dashboard-grid">
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Paramètres du bot</h3>
-                        <div class="card-icon">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                    </div>
-                    <div class="config-form">
-                        <div class="form-group">
-                            <label>Préfixe (legacy)</label>
-                            <input type="text" id="botPrefix" value="!" maxlength="3">
-                        </div>
-                        <div class="form-group">
-                            <label>Langue</label>
-                            <select id="botLanguage">
-                                <option value="fr">Français</option>
-                                <option value="en">English</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Logs activés</label>
-                            <input type="checkbox" id="logsEnabled" checked>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Sauvegarde & Export</h3>
-                        <div class="card-icon">
-                            <i class="fas fa-download"></i>
-                        </div>
-                    </div>
-                    <div class="backup-actions">
-                        <button class="btn-primary" onclick="dashboard.exportData()">
-                            <i class="fas fa-download"></i> Exporter les données
-                        </button>
-                        <button class="btn-secondary" onclick="dashboard.backupConfig()">
-                            <i class="fas fa-save"></i> Sauvegarder la config
-                        </button>
-                        <button class="btn-danger" onclick="dashboard.resetAllData()">
-                            <i class="fas fa-trash"></i> Réinitialiser tout
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="danger-zone">
-                <h3 style="color: #ef4444;">⚠️ Zone dangereuse</h3>
-                <p>Ces actions sont irréversibles. Soyez certain de vos choix.</p>
-                <button class="btn-danger" onclick="dashboard.confirmReset()">
-                    Réinitialiser toutes les données du serveur
+            <div class="action-buttons fade-in">
+                <button class="btn btn-primary" data-section="economy">
+                    <i class="fas fa-coins"></i>
+                    Configurer l'Économie
+                </button>
+                <button class="btn btn-primary" data-section="levels">
+                    <i class="fas fa-chart-line"></i>
+                    Gérer les Niveaux
+                </button>
+                <button class="btn btn-primary" data-section="confessions">
+                    <i class="fas fa-comment-dots"></i>
+                    Paramétrer les Confessions
+                </button>
+                <button class="btn btn-secondary" data-section="backup">
+                    <i class="fas fa-database"></i>
+                    Sauvegardes
                 </button>
             </div>
         `;
-        this.showDynamicContent(content);
+
+        // Charger les statistiques
+        this.loadOverviewStats();
     }
 
-    showDynamicContent(content) {
-        const overviewSection = document.getElementById('overview-section');
-        const dynamicContent = document.getElementById('dynamic-content');
+    async showEconomySection() {
+        const container = document.getElementById('content-container');
+        const config = this.data.configs.economy || this.defaultConfigs.economy;
         
-        if (overviewSection) {
-            overviewSection.style.display = 'none';
-        }
-        
-        if (dynamicContent) {
-            dynamicContent.innerHTML = content;
-            dynamicContent.style.display = 'block';
-        }
-        
-        // Add dynamic styles
-        this.addDynamicStyles();
-    }
-
-    addDynamicStyles() {
-        if (document.getElementById('dynamic-dashboard-styles')) return;
-
-        const styles = `
-            <style id="dynamic-dashboard-styles">
-                .config-form { display: flex; flex-direction: column; gap: 1rem; }
-                .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-                .form-group label { font-weight: 500; color: var(--text-primary); }
-                .form-group input, .form-group select { 
-                    padding: 0.75rem; 
-                    background: var(--bg-secondary); 
-                    border: 1px solid var(--border-color); 
-                    border-radius: 8px; 
-                    color: var(--text-primary); 
-                    font-size: 0.9rem;
-                }
-                .form-group input:focus, .form-group select:focus {
-                    outline: none;
-                    border-color: var(--primary-red);
-                    box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.1);
-                }
-                .btn-primary, .btn-secondary, .btn-danger {
-                    padding: 0.75rem 1.5rem;
-                    border: none;
-                    border-radius: 8px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                    text-decoration: none;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                }
-                .btn-primary {
-                    background: var(--gradient-primary);
-                    color: white;
-                }
-                .btn-secondary {
-                    background: var(--bg-secondary);
-                    color: var(--text-primary);
-                    border: 1px solid var(--border-color);
-                }
-                .btn-danger {
-                    background: #dc2626;
-                    color: white;
-                }
-                .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-primary); }
-                .btn-secondary:hover { border-color: var(--primary-red); }
-                .btn-danger:hover { background: #b91c1c; }
-                .action-buttons {
-                    display: flex;
-                    gap: 1rem;
-                    margin-top: 2rem;
-                    flex-wrap: wrap;
-                }
-                .shop-items, .rewards-list, .channels-list, .backup-actions {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1rem;
-                }
-                .shop-item, .reward-item, .channel-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 1rem;
-                    background: var(--bg-secondary);
-                    border-radius: 8px;
-                    border: 1px solid var(--border-color);
-                }
-                .leaderboard { display: flex; flex-direction: column; gap: 0.5rem; }
-                .leaderboard-item {
-                    display: grid;
-                    grid-template-columns: 50px 1fr 100px 120px;
-                    gap: 1rem;
-                    padding: 1rem;
-                    background: var(--bg-secondary);
-                    border-radius: 8px;
-                    align-items: center;
-                }
-                .rank { font-weight: 700; color: var(--primary-red); }
-                .danger-zone {
-                    margin-top: 2rem;
-                    padding: 2rem;
-                    background: rgba(220, 38, 38, 0.1);
-                    border: 1px solid rgba(220, 38, 38, 0.3);
-                    border-radius: 12px;
-                }
-                .recent-confessions, .leaderboard-section { margin-top: 2rem; }
-                .confession-list { display: flex; flex-direction: column; gap: 1rem; }
-                .confession-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 1rem;
-                    background: var(--bg-secondary);
-                    border-radius: 8px;
-                    border: 1px solid var(--border-color);
-                }
-                .confession-actions { display: flex; gap: 0.5rem; }
-            </style>
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title">
+                        <i class="fas fa-coins"></i>
+                        Configuration Économique
+                    </h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Récompense quotidienne</label>
+                        <input type="number" class="config-input" id="dailyReward" value="${config.dailyReward}" min="1" max="10000">
+                        <p class="config-description">Montant reçu avec la commande /daily</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Travail - Récompense min</label>
+                        <input type="number" class="config-input" id="workRewardMin" value="${config.workReward.min}" min="1" max="1000">
+                        <p class="config-description">Montant minimum pour /travailler</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Travail - Récompense max</label>
+                        <input type="number" class="config-input" id="workRewardMax" value="${config.workReward.max}" min="1" max="1000">
+                        <p class="config-description">Montant maximum pour /travailler</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Crime - Récompense min</label>
+                        <input type="number" class="config-input" id="crimeRewardMin" value="${config.crimeReward.min}" min="1" max="1000">
+                        <p class="config-description">Gain minimum pour /crime</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Crime - Récompense max</label>
+                        <input type="number" class="config-input" id="crimeRewardMax" value="${config.crimeReward.max}" min="1" max="1000">
+                        <p class="config-description">Gain maximum pour /crime</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Limite de pari</label>
+                        <input type="number" class="config-input" id="betLimit" value="${config.betLimit}" min="100" max="100000">
+                        <p class="config-description">Montant maximum pour /parier</p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveEconomyConfig()">
+                        <i class="fas fa-save"></i>
+                        Sauvegarder
+                    </button>
+                    <button class="btn btn-secondary" onclick="dashboard.resetEconomyConfig()">
+                        <i class="fas fa-undo"></i>
+                        Réinitialiser
+                    </button>
+                </div>
+            </div>
         `;
-        document.head.insertAdjacentHTML('beforeend', styles);
     }
 
-    showLoading(container) {
-        if (container) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 4rem;">
-                    <div class="loading"></div>
-                    <p style="margin-top: 1rem; color: var(--text-secondary);">Chargement...</p>
-                </div>
-            `;
-        }
-    }
-
-    showError(message) {
+    async showLevelsSection() {
         const container = document.getElementById('content-container');
-        if (container) {
-            container.innerHTML = `
-                <div class="message error">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    ${message}
-                </div>
-            `;
-        }
-    }
-
-    showSuccess(message) {
-        const container = document.getElementById('content-container');
-        const messageEl = document.createElement('div');
-        messageEl.className = 'message success';
-        messageEl.innerHTML = `<i class="fas fa-check"></i> ${message}`;
-        container.insertBefore(messageEl, container.firstChild);
+        const config = this.data.configs.levels || this.defaultConfigs.levels;
         
-        setTimeout(() => messageEl.remove(), 5000);
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title">
+                        <i class="fas fa-chart-line"></i>
+                        Configuration Système de Niveaux
+                    </h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">XP Messages - Minimum</label>
+                        <input type="number" class="config-input" id="textXPMin" value="${config.textXP.min}" min="1" max="50">
+                        <p class="config-description">XP minimum par message</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">XP Messages - Maximum</label>
+                        <input type="number" class="config-input" id="textXPMax" value="${config.textXP.max}" min="1" max="50">
+                        <p class="config-description">XP maximum par message</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Cooldown XP (secondes)</label>
+                        <input type="number" class="config-input" id="textXPCooldown" value="${config.textXP.cooldown / 1000}" min="1" max="300">
+                        <p class="config-description">Délai entre deux gains d'XP</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">XP Vocal par minute</label>
+                        <input type="number" class="config-input" id="voiceXPAmount" value="${config.voiceXP.perMinute || config.voiceXP.amount}" min="1" max="100">
+                        <p class="config-description">XP gagné par minute en vocal</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">XP Base pour level up</label>
+                        <input type="number" class="config-input" id="baseXP" value="${config.levelFormula.baseXP}" min="50" max="1000">
+                        <p class="config-description">XP de base pour monter de niveau</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Multiplicateur XP</label>
+                        <input type="number" class="config-input" id="xpMultiplier" value="${config.levelFormula.multiplier}" min="1" max="3" step="0.1">
+                        <p class="config-description">Multiplicateur de difficulté</p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveLevelsConfig()">
+                        <i class="fas fa-save"></i>
+                        Sauvegarder
+                    </button>
+                    <button class="btn btn-secondary" onclick="dashboard.resetLevelsConfig()">
+                        <i class="fas fa-undo"></i>
+                        Réinitialiser
+                    </button>
+                </div>
+            </div>
+        `;
     }
 
+    async showKarmaSection() {
+        const container = document.getElementById('content-container');
+        const config = this.data.configs.karma || this.defaultConfigs.karma;
+        
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title">
+                        <i class="fas fa-heart"></i>
+                        Configuration Système Karma
+                    </h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Bonus quotidien</label>
+                        <input type="number" class="config-input" id="karmaDaily" value="${config.dailyBonus}" min="1" max="50">
+                        <p class="config-description">Karma gratuit par jour</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Karma par message</label>
+                        <input type="number" class="config-input" id="karmaMessage" value="${config.messageReward}" min="0" max="10">
+                        <p class="config-description">Karma gagné par message</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Karma par confession</label>
+                        <input type="number" class="config-input" id="karmaConfession" value="${config.confessionReward}" min="1" max="100">
+                        <p class="config-description">Karma pour envoyer une confession</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Karma maximum</label>
+                        <input type="number" class="config-input" id="karmaMax" value="${config.maxKarma}" min="100" max="10000">
+                        <p class="config-description">Limite maximale de karma</p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveKarmaConfig()">
+                        <i class="fas fa-save"></i>
+                        Sauvegarder
+                    </button>
+                    <button class="btn btn-secondary" onclick="dashboard.resetKarmaConfig()">
+                        <i class="fas fa-undo"></i>
+                        Réinitialiser
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    async showConfessionsSection() {
+        const container = document.getElementById('content-container');
+        const config = this.data.configs.confessions || this.defaultConfigs.confessions;
+        
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title">
+                        <i class="fas fa-comment-dots"></i>
+                        Configuration Confessions
+                    </h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Canal des confessions</label>
+                        <input type="text" class="config-input" id="confessionChannel" value="${config.channelId || ''}" placeholder="ID du canal">
+                        <p class="config-description">ID du canal où publier les confessions</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Longueur minimale</label>
+                        <input type="number" class="config-input" id="minLength" value="${config.minLength}" min="1" max="100">
+                        <p class="config-description">Nombre minimum de caractères</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Longueur maximale</label>
+                        <input type="number" class="config-input" id="maxLength" value="${config.maxLength}" min="100" max="4000">
+                        <p class="config-description">Nombre maximum de caractères</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Modération activée</label>
+                        <select class="config-input" id="moderationEnabled">
+                            <option value="true" ${config.moderationEnabled ? 'selected' : ''}>Activée</option>
+                            <option value="false" ${!config.moderationEnabled ? 'selected' : ''}>Désactivée</option>
+                        </select>
+                        <p class="config-description">Modération automatique des confessions</p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveConfessionsConfig()">
+                        <i class="fas fa-save"></i>
+                        Sauvegarder
+                    </button>
+                    <button class="btn btn-secondary" onclick="dashboard.resetConfessionsConfig()">
+                        <i class="fas fa-undo"></i>
+                        Réinitialiser
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    async showModerationSection() {
+        const container = document.getElementById('content-container');
+        
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Outils de Modération
+                    </h3>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Actions Rapides</h3>
+                            <div class="card-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="action-buttons">
+                                <button class="btn btn-secondary" onclick="dashboard.clearTestObjects()">
+                                    <i class="fas fa-trash"></i>
+                                    Nettoyer objets de test
+                                </button>
+                                <button class="btn btn-secondary" onclick="dashboard.resetCommands()">
+                                    <i class="fas fa-sync"></i>
+                                    Réinitialiser commandes
+                                </button>
+                                <button class="btn btn-secondary" onclick="dashboard.forceBackup()">
+                                    <i class="fas fa-save"></i>
+                                    Forcer sauvegarde
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async showBackupSection() {
+        const container = document.getElementById('content-container');
+        
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title">
+                        <i class="fas fa-database"></i>
+                        Gestion des Sauvegardes
+                    </h3>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Statut des Sauvegardes</h3>
+                            <div class="card-icon">
+                                <i class="fas fa-hdd"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p>Système de sauvegarde automatique actif</p>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat">
+                                <span class="stat-value" id="backupCount">-</span>
+                                <span class="stat-label">Sauvegardes</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="lastBackup">-</span>
+                                <span class="stat-label">Dernière</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Intégrité des Données</h3>
+                            <div class="card-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="dashboard.checkDataIntegrity()">
+                                    <i class="fas fa-search"></i>
+                                    Vérifier intégrité
+                                </button>
+                                <button class="btn btn-secondary" onclick="dashboard.runDiagnostic()">
+                                    <i class="fas fa-stethoscope"></i>
+                                    Diagnostic complet
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async showSettingsSection() {
+        const container = document.getElementById('content-container');
+        
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title">
+                        <i class="fas fa-cog"></i>
+                        Paramètres Généraux
+                    </h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Langue du bot</label>
+                        <select class="config-input" id="botLanguage">
+                            <option value="fr">Français</option>
+                            <option value="en">English</option>
+                        </select>
+                        <p class="config-description">Langue des messages du bot</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Préfixe des commandes</label>
+                        <input type="text" class="config-input" id="commandPrefix" value="/" readonly>
+                        <p class="config-description">Utilise les slash commands</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Mode debug</label>
+                        <select class="config-input" id="debugMode">
+                            <option value="false">Désactivé</option>
+                            <option value="true">Activé</option>
+                        </select>
+                        <p class="config-description">Logs détaillés pour le débogage</p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveGeneralSettings()">
+                        <i class="fas fa-save"></i>
+                        Sauvegarder
+                    </button>
+                    <button class="btn btn-secondary" onclick="dashboard.restartBot()">
+                        <i class="fas fa-restart"></i>
+                        Redémarrer le bot
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Méthodes de sauvegarde des configurations
+    async saveEconomyConfig() {
+        try {
+            const config = {
+                dailyReward: parseInt(document.getElementById('dailyReward').value),
+                workReward: {
+                    min: parseInt(document.getElementById('workRewardMin').value),
+                    max: parseInt(document.getElementById('workRewardMax').value)
+                },
+                crimeReward: {
+                    min: parseInt(document.getElementById('crimeRewardMin').value),
+                    max: parseInt(document.getElementById('crimeRewardMax').value)
+                },
+                betLimit: parseInt(document.getElementById('betLimit').value)
+            };
+
+            const response = await this.apiCall('/api/config/economy', 'POST', config);
+            if (response.success) {
+                this.data.configs.economy = config;
+                this.showNotification('Configuration économique sauvegardée!', 'success');
+            } else {
+                throw new Error(response.error || 'Erreur inconnue');
+            }
+        } catch (error) {
+            console.error('Erreur sauvegarde économie:', error);
+            this.showNotification('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    async saveLevelsConfig() {
+        try {
+            const config = {
+                textXP: {
+                    min: parseInt(document.getElementById('textXPMin').value),
+                    max: parseInt(document.getElementById('textXPMax').value),
+                    cooldown: parseInt(document.getElementById('textXPCooldown').value) * 1000
+                },
+                voiceXP: {
+                    perMinute: parseInt(document.getElementById('voiceXPAmount').value),
+                    amount: parseInt(document.getElementById('voiceXPAmount').value),
+                    interval: 60000
+                },
+                levelFormula: {
+                    baseXP: parseInt(document.getElementById('baseXP').value),
+                    multiplier: parseFloat(document.getElementById('xpMultiplier').value)
+                }
+            };
+
+            const response = await this.apiCall('/api/config/levels', 'POST', config);
+            if (response.success) {
+                this.data.configs.levels = { ...this.data.configs.levels, ...config };
+                this.showNotification('Configuration des niveaux sauvegardée!', 'success');
+            } else {
+                throw new Error(response.error || 'Erreur inconnue');
+            }
+        } catch (error) {
+            console.error('Erreur sauvegarde niveaux:', error);
+            this.showNotification('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    async saveKarmaConfig() {
+        try {
+            const config = {
+                dailyBonus: parseInt(document.getElementById('karmaDaily').value),
+                messageReward: parseInt(document.getElementById('karmaMessage').value),
+                confessionReward: parseInt(document.getElementById('karmaConfession').value),
+                maxKarma: parseInt(document.getElementById('karmaMax').value)
+            };
+
+            const response = await this.apiCall('/api/config/karma', 'POST', config);
+            if (response.success) {
+                this.data.configs.karma = config;
+                this.showNotification('Configuration karma sauvegardée!', 'success');
+            } else {
+                throw new Error(response.error || 'Erreur inconnue');
+            }
+        } catch (error) {
+            console.error('Erreur sauvegarde karma:', error);
+            this.showNotification('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    async saveConfessionsConfig() {
+        try {
+            const config = {
+                channelId: document.getElementById('confessionChannel').value,
+                minLength: parseInt(document.getElementById('minLength').value),
+                maxLength: parseInt(document.getElementById('maxLength').value),
+                moderationEnabled: document.getElementById('moderationEnabled').value === 'true'
+            };
+
+            const response = await this.apiCall('/api/config/confessions', 'POST', config);
+            if (response.success) {
+                this.data.configs.confessions = config;
+                this.showNotification('Configuration confessions sauvegardée!', 'success');
+            } else {
+                throw new Error(response.error || 'Erreur inconnue');
+            }
+        } catch (error) {
+            console.error('Erreur sauvegarde confessions:', error);
+            this.showNotification('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    // Méthodes utilitaires
     async loadInitialData() {
         try {
-            // Charger les statistiques
-            const statsResponse = await fetch('/api/stats');
-            if (statsResponse.ok) {
-                const stats = await statsResponse.json();
-                this.updateStats(stats);
+            console.log('📊 Chargement des données initiales...');
+            
+            // Charger en parallèle
+            const [statsResponse, configsResponse] = await Promise.allSettled([
+                this.apiCall('/api/stats'),
+                this.apiCall('/api/configs')
+            ]);
+
+            if (statsResponse.status === 'fulfilled' && statsResponse.value.success) {
+                this.data.stats = statsResponse.value.data;
             }
 
-            // Vérifier le statut du bot
-            const healthResponse = await fetch('/health');
-            if (healthResponse.ok) {
-                const health = await healthResponse.json();
-                this.updateBotStatus(health);
+            if (configsResponse.status === 'fulfilled' && configsResponse.value.success) {
+                this.data.configs = { ...this.defaultConfigs, ...configsResponse.value.data };
+            } else {
+                this.data.configs = this.defaultConfigs;
             }
 
+            this.data.lastUpdate = new Date();
+            this.updateHeaderStats();
+            
+            console.log('✅ Données chargées');
+            
         } catch (error) {
-            console.warn('Erreur lors du chargement des données:', error);
-            // Utiliser des données fictives en cas d'erreur
-            this.updateStats({
-                activeMembers: 42,
-                todayMessages: 234,
-                commandsUsed: 156,
-                totalMoney: '45,230 💰',
-                todayTransactions: 23,
-                richestUser: 'Membre#1234',
-                totalConfessions: 89,
-                weekConfessions: 12,
-                avgConfessions: '1.7',
-                highestLevel: 47,
-                totalXP: '1,234,567',
-                rewardsGiven: 89
-            });
+            console.error('❌ Erreur chargement données:', error);
+            this.data.configs = this.defaultConfigs;
         }
     }
 
-    updateStats(stats) {
-        const elements = {
-            'activeMembers': stats.activeMembers || '-',
-            'todayMessages': stats.todayMessages || '-',
-            'commandsUsed': stats.commandsUsed || '-',
-            'totalMoney': stats.totalMoney || '-',
-            'todayTransactions': stats.todayTransactions || '-',
-            'richestUser': stats.richestUser || '-',
-            'totalConfessions': stats.totalConfessions || '-',
-            'weekConfessions': stats.weekConfessions || '-',
-            'avgConfessions': stats.avgConfessions || '-',
-            'highestLevel': stats.highestLevel || '-',
-            'totalXP': stats.totalXP || '-',
-            'rewardsGiven': stats.rewardsGiven || '-'
-        };
-
-        Object.entries(elements).forEach(([id, value]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = value;
+    async loadOverviewStats() {
+        try {
+            const response = await this.apiCall('/api/stats');
+            if (response.success) {
+                const stats = response.data;
+                
+                // Mettre à jour les éléments de l'overview
+                this.updateElement('activeMembers', stats.activeMembers || 0);
+                this.updateElement('todayMessages', stats.todayMessages || 0);
+                this.updateElement('commandsUsed', stats.commandsUsed || 0);
+                this.updateElement('totalMoney', this.formatNumber(stats.totalMoney || 0));
+                this.updateElement('todayTransactions', stats.todayTransactions || 0);
+                this.updateElement('richestUser', stats.richestUser || 'N/A');
+                this.updateElement('totalConfessions', stats.totalConfessions || 0);
+                this.updateElement('weekConfessions', stats.weekConfessions || 0);
+                this.updateElement('avgConfessions', stats.avgConfessions || 0);
+                this.updateElement('highestLevel', stats.highestLevel || 0);
+                this.updateElement('totalXP', this.formatNumber(stats.totalXP || 0));
+                this.updateElement('rewardsGiven', stats.rewardsGiven || 0);
             }
-        });
-    }
-
-    updateBotStatus(health) {
-        const statusElement = document.getElementById('botStatus');
-        const statusDot = document.querySelector('.status-dot');
-        
-        if (health.discord === 'connected') {
-            if (statusElement) {
-                statusElement.textContent = 'Bot en ligne';
-            }
-            if (statusDot && statusDot.style) {
-                statusDot.style.background = '#22c55e';
-            }
-        } else {
-            if (statusElement) {
-                statusElement.textContent = 'Bot déconnecté';
-            }
-            if (statusDot && statusDot.style) {
-                statusDot.style.background = '#ef4444';
-            }
+        } catch (error) {
+            console.error('Erreur chargement stats overview:', error);
         }
     }
 
-    startStatusUpdates() {
+    updateHeaderStats() {
+        this.updateElement('server-count', `${this.data.stats.serverCount || 0} serveurs`);
+        this.updateElement('user-count', `${this.formatNumber(this.data.stats.userCount || 0)} utilisateurs`);
+    }
+
+    startRealTimeUpdates() {
         // Mise à jour toutes les 30 secondes
-        setInterval(() => {
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+        }
+        
+        this.updateInterval = setInterval(() => {
             this.loadInitialData();
+            if (this.currentSection === 'overview') {
+                this.loadOverviewStats();
+            }
         }, 30000);
     }
 
-    // Méthodes pour les actions spécifiques
-    async saveEconomyConfig() {
-        this.showSuccess('Configuration économique sauvegardée !');
+    async apiCall(endpoint, method = 'GET', data = null) {
+        try {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+
+            if (data && method !== 'GET') {
+                options.body = JSON.stringify(data);
+            }
+
+            const response = await fetch(endpoint, options);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error(`Erreur API ${endpoint}:`, error);
+            return { success: false, error: error.message };
+        }
     }
 
-    async resetEconomyConfig() {
+    // Actions rapides
+    async clearTestObjects() {
+        try {
+            const response = await this.apiCall('/api/admin/clear-test-objects', 'POST');
+            if (response.success) {
+                this.showNotification('Objets de test supprimés!', 'success');
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            this.showNotification('Erreur lors du nettoyage', 'error');
+        }
+    }
+
+    async resetCommands() {
+        try {
+            const response = await this.apiCall('/api/admin/reset-commands', 'POST');
+            if (response.success) {
+                this.showNotification('Commandes réinitialisées!', 'success');
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            this.showNotification('Erreur lors de la réinitialisation', 'error');
+        }
+    }
+
+    async forceBackup() {
+        try {
+            const response = await this.apiCall('/api/admin/force-backup', 'POST');
+            if (response.success) {
+                this.showNotification('Sauvegarde forcée effectuée!', 'success');
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            this.showNotification('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    // Interface utilitaires
+    showLoading(container) {
+        if (container) {
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <span>Chargement...</span>
+                </div>
+            `;
+        }
+    }
+
+    showError(container, message) {
+        if (container) {
+            container.innerHTML = `
+                <div class="config-section">
+                    <div style="text-align: center; padding: 2rem; color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <h3>Erreur</h3>
+                        <p>${message}</p>
+                        <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 1rem;">
+                            <i class="fas fa-refresh"></i>
+                            Recharger
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        const container = document.getElementById('notification-container');
+        if (!container) return;
+
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-${this.getNotificationIcon(type)}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+
+        container.appendChild(notification);
+
+        // Afficher l'animation
+        setTimeout(() => notification.classList.add('show'), 100);
+
+        // Supprimer automatiquement après 5 secondes
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 5000);
+    }
+
+    getNotificationIcon(type) {
+        const icons = {
+            success: 'check-circle',
+            error: 'exclamation-circle',
+            warning: 'exclamation-triangle',
+            info: 'info-circle'
+        };
+        return icons[type] || 'info-circle';
+    }
+
+    updateElement(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    formatNumber(num) {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toString();
+    }
+
+    handleResize() {
+        // Gérer le responsive si nécessaire
+        if (window.innerWidth <= 968) {
+            // Mode mobile
+        } else {
+            // Mode desktop
+        }
+    }
+
+    // Méthodes de réinitialisation
+    resetEconomyConfig() {
         if (confirm('Êtes-vous sûr de vouloir réinitialiser la configuration économique ?')) {
-            this.showSuccess('Configuration réinitialisée !');
+            const config = this.defaultConfigs.economy;
+            document.getElementById('dailyReward').value = config.dailyReward;
+            document.getElementById('workRewardMin').value = config.workReward.min;
+            document.getElementById('workRewardMax').value = config.workReward.max;
+            document.getElementById('crimeRewardMin').value = config.crimeReward.min;
+            document.getElementById('crimeRewardMax').value = config.crimeReward.max;
+            document.getElementById('betLimit').value = config.betLimit;
+            this.showNotification('Configuration réinitialisée', 'info');
         }
     }
 
-    async exportData() {
-        this.showSuccess('Export des données lancé !');
-    }
-
-    async backupConfig() {
-        this.showSuccess('Sauvegarde de la configuration effectuée !');
-    }
-
-    async resetAllData() {
-        if (confirm('ATTENTION: Cette action supprimera TOUTES les données du serveur. Êtes-vous absolument certain ?')) {
-            this.showSuccess('Réinitialisation effectuée !');
+    resetLevelsConfig() {
+        if (confirm('Êtes-vous sûr de vouloir réinitialiser la configuration des niveaux ?')) {
+            const config = this.defaultConfigs.levels;
+            document.getElementById('textXPMin').value = config.textXP.min;
+            document.getElementById('textXPMax').value = config.textXP.max;
+            document.getElementById('textXPCooldown').value = config.textXP.cooldown / 1000;
+            document.getElementById('voiceXPAmount').value = config.voiceXP.perMinute || config.voiceXP.amount;
+            document.getElementById('baseXP').value = config.levelFormula.baseXP;
+            document.getElementById('xpMultiplier').value = config.levelFormula.multiplier;
+            this.showNotification('Configuration réinitialisée', 'info');
         }
     }
 
-    confirmReset() {
-        const confirmation = prompt('Tapez "RESET" en majuscules pour confirmer la réinitialisation complète:');
-        if (confirmation === 'RESET') {
-            this.resetAllData();
+    resetKarmaConfig() {
+        if (confirm('Êtes-vous sûr de vouloir réinitialiser la configuration karma ?')) {
+            const config = this.defaultConfigs.karma;
+            document.getElementById('karmaDaily').value = config.dailyBonus;
+            document.getElementById('karmaMessage').value = config.messageReward;
+            document.getElementById('karmaConfession').value = config.confessionReward;
+            document.getElementById('karmaMax').value = config.maxKarma;
+            this.showNotification('Configuration réinitialisée', 'info');
+        }
+    }
+
+    resetConfessionsConfig() {
+        if (confirm('Êtes-vous sûr de vouloir réinitialiser la configuration des confessions ?')) {
+            const config = this.defaultConfigs.confessions;
+            document.getElementById('confessionChannel').value = config.channelId || '';
+            document.getElementById('minLength').value = config.minLength;
+            document.getElementById('maxLength').value = config.maxLength;
+            document.getElementById('moderationEnabled').value = config.moderationEnabled;
+            this.showNotification('Configuration réinitialisée', 'info');
+        }
+    }
+
+    // Nettoyage
+    destroy() {
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
         }
     }
 }
 
-// Initialiser le dashboard quand la page est chargée
-const dashboard = new DashboardManager();
+// Initialisation globale
+let dashboard;
+
+// Initialiser quand le DOM est prêt
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        dashboard = new BAGDashboard();
+    });
+} else {
+    dashboard = new BAGDashboard();
+}
+
+// Nettoyage en cas de fermeture
+window.addEventListener('beforeunload', () => {
+    if (dashboard) {
+        dashboard.destroy();
+    }
+});
+
+// Export pour usage global
+window.dashboard = dashboard;
