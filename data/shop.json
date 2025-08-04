@@ -10,6 +10,24 @@
       "createdBy": "943487722738311219"
     },
     {
+      "id": "1753566340743",
+      "name": "Rôle: nouveau rôletest",
+      "price": 50000,
+      "duration": 6,
+      "roleId": "1396547788384374884",
+      "type": "temp_role",
+      "createdAt": "2025-07-26T21:45:40.743Z",
+      "createdBy": "943487722738311219"
+    },
+    {
+      "id": 1753602834934,
+      "name": "Test",
+      "price": 594939,
+      "description": "Objet personnalisé",
+      "type": "custom",
+      "createdAt": "2025-07-27T07:53:54.934Z"
+    },
+    {
       "id": "1753606461399",
       "type": "custom",
       "name": "Fouet",

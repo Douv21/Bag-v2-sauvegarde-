@@ -139,8 +139,7 @@
     "dailyStreak": 0,
     "lastDaily": null,
     "messageCount": 29,
-    "inventory": [],
-    "xp": 0
+    "inventory": []
   },
   "karma": {
     "autoReset": true,
