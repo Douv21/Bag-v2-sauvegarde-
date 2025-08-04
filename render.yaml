@@ -1,29 +1,16 @@
 services:
   - type: web
-    name: bag-bot-v2
+    name: bagbot-v2
     env: node
     plan: free
-    nodeVersion: 18
     buildCommand: npm install
     startCommand: node index.render-final.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: RENDER_EXTERNAL_URL
-        fromService:
-          type: web
-          name: bag-bot-v2
-          property: host
       - key: MONGODB_USERNAME
-        value: douvdouv21
+        value: YOUR_MONGODB_USERNAME
       - key: MONGODB_PASSWORD
-        value: bagv2
+        value: YOUR_MONGODB_PASSWORD  
       - key: MONGODB_CLUSTER_URL
-        value: cluster0.yir9dvo.mongodb.net
-      - key: DEBUG_BACKUP
-        value: "true"
-    healthCheckPath: /health
-    region: oregon
-    scaling:
-      minInstances: 1
-      maxInstances: 1
+        value: YOUR_CLUSTER_URL
