@@ -117,6 +117,9 @@ class BAGDashboard {
         window.addEventListener('resize', () => {
             this.handleResize();
         });
+
+        // Menu mobile
+        this.setupMobileMenu();
     }
 
     switchSection(section) {
@@ -830,21 +833,22 @@ class BAGDashboard {
         try {
             console.log('📊 Chargement des données initiales...');
             
-            // Charger en parallèle
-            const [statsResponse, configsResponse] = await Promise.allSettled([
-                this.apiCall('/api/stats'),
-                this.apiCall('/api/configs')
-            ]);
-
-            if (statsResponse.status === 'fulfilled' && statsResponse.value.success) {
-                this.data.stats = statsResponse.value.data;
+            // Charger les données du dashboard
+            const overviewResponse = await fetch('/api/dashboard/overview');
+            if (overviewResponse.ok) {
+                const overview = await overviewResponse.json();
+                this.updateDashboardData(overview);
             }
-
-            if (configsResponse.status === 'fulfilled' && configsResponse.value.success) {
-                this.data.configs = { ...this.defaultConfigs, ...configsResponse.value.data };
-            } else {
-                this.data.configs = this.defaultConfigs;
+            
+            // Charger les serveurs
+            const serversResponse = await fetch('/api/dashboard/servers');
+            if (serversResponse.ok) {
+                this.data.servers = await serversResponse.json();
+                this.updateServerCount();
             }
+            
+            // Charger les configurations par défaut
+            this.data.configs = { ...this.defaultConfigs };
 
             this.data.lastUpdate = new Date();
             this.updateHeaderStats();
@@ -855,6 +859,188 @@ class BAGDashboard {
             console.error('❌ Erreur chargement données:', error);
             this.data.configs = this.defaultConfigs;
         }
+    }
+
+    updateDashboardData(overview) {
+        // Mettre à jour le statut du bot
+        const botStatusEl = document.getElementById('bot-status');
+        if (botStatusEl) {
+            const isOnline = overview.bot.status === 'online';
+            botStatusEl.innerHTML = `<i class="fas fa-circle"></i> ${isOnline ? 'En ligne' : 'Hors ligne'}`;
+            botStatusEl.className = isOnline ? 'status-online' : 'status-offline';
+        }
+
+        // Mettre à jour l'uptime
+        const uptimeEl = document.getElementById('bot-uptime');
+        if (uptimeEl && overview.bot.uptime) {
+            const hours = Math.floor(overview.bot.uptime / 3600);
+            const minutes = Math.floor((overview.bot.uptime % 3600) / 60);
+            uptimeEl.textContent = `${hours}h ${minutes}m`;
+        }
+
+        // Mettre à jour les serveurs
+        const serversEl = document.getElementById('total-servers');
+        if (serversEl) {
+            serversEl.textContent = overview.servers.total || 0;
+        }
+
+        // Mettre à jour les utilisateurs
+        const usersEl = document.getElementById('total-users');
+        if (usersEl) {
+            usersEl.textContent = overview.servers.members || 0;
+        }
+
+        // Mettre à jour l'économie
+        if (overview.economy) {
+            const totalMoneyEl = document.getElementById('total-money');
+            if (totalMoneyEl) {
+                totalMoneyEl.textContent = `${overview.economy.totalMoney.toLocaleString()} 💰`;
+            }
+
+            const dailyTransactionsEl = document.getElementById('daily-transactions');
+            if (dailyTransactionsEl) {
+                dailyTransactionsEl.textContent = overview.economy.dailyTransactions;
+            }
+
+            const richestUserEl = document.getElementById('richest-user');
+            if (richestUserEl && overview.economy.richestUser) {
+                richestUserEl.textContent = `${overview.economy.richestUser.amount.toLocaleString()} 💰`;
+            }
+        }
+
+        // Mettre à jour les confessions
+        if (overview.confessions) {
+            const totalConfessionsEl = document.getElementById('total-confessions');
+            if (totalConfessionsEl) {
+                totalConfessionsEl.textContent = overview.confessions.total;
+            }
+
+            const dailyConfessionsEl = document.getElementById('daily-confessions');
+            if (dailyConfessionsEl) {
+                dailyConfessionsEl.textContent = overview.confessions.daily;
+            }
+
+            const pendingConfessionsEl = document.getElementById('pending-confessions');
+            if (pendingConfessionsEl) {
+                pendingConfessionsEl.textContent = overview.confessions.pending;
+            }
+        }
+
+        // Mettre à jour le karma
+        if (overview.karma) {
+            const totalKarmaEl = document.getElementById('total-karma');
+            if (totalKarmaEl) {
+                totalKarmaEl.textContent = `${overview.karma.total} ❤️`;
+            }
+
+            const karmaUsersEl = document.getElementById('karma-users');
+            if (karmaUsersEl) {
+                karmaUsersEl.textContent = overview.karma.activeUsers;
+            }
+
+            const topKarmaUserEl = document.getElementById('top-karma-user');
+            if (topKarmaUserEl && overview.karma.topUser) {
+                topKarmaUserEl.textContent = `${overview.karma.topUser.karma} ❤️`;
+            }
+        }
+
+        // Mettre à jour l'activité récente
+        if (overview.activity) {
+            this.updateRecentActivity(overview.activity);
+        }
+
+        // Mettre à jour les compteurs du header
+        this.updateHeaderStatsWithData(overview);
+    }
+
+    updateServerCount() {
+        const serverCountEl = document.getElementById('server-count');
+        if (serverCountEl && this.data.servers) {
+            serverCountEl.textContent = `${this.data.servers.length} serveurs`;
+        }
+
+        const userCountEl = document.getElementById('user-count');
+        if (userCountEl && this.data.servers) {
+            const totalUsers = this.data.servers.reduce((sum, server) => sum + server.memberCount, 0);
+            userCountEl.textContent = `${totalUsers.toLocaleString()} utilisateurs`;
+        }
+    }
+
+    updateRecentActivity(activities) {
+        const activityContainer = document.getElementById('recent-activity');
+        if (!activityContainer || !activities.length) return;
+
+        activityContainer.innerHTML = activities.map(activity => `
+            <div class="activity-item">
+                <i class="${activity.icon}"></i>
+                <span class="activity-message">${activity.message}</span>
+                <span class="activity-time">${this.formatTimeAgo(new Date(activity.timestamp))}</span>
+            </div>
+        `).join('');
+    }
+
+    updateHeaderStatsWithData(overview) {
+        // Mettre à jour le statut dans le header si nécessaire
+        const headerStatus = document.querySelector('.header .status-indicator');
+        if (headerStatus && overview.bot) {
+            headerStatus.style.background = overview.bot.status === 'online' ? '#00ff88' : '#ff6b6b';
+        }
+    }
+
+    formatTimeAgo(date) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) return 'Il y a quelques secondes';
+        if (diffInSeconds < 3600) return `Il y a ${Math.floor(diffInSeconds / 60)} min`;
+        if (diffInSeconds < 86400) return `Il y a ${Math.floor(diffInSeconds / 3600)} h`;
+        return `Il y a ${Math.floor(diffInSeconds / 86400)} jour(s)`;
+    }
+
+    setupMobileMenu() {
+        const toggleBtn = document.getElementById('mobile-menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        if (!toggleBtn || !sidebar || !overlay) return;
+
+        const openMenu = () => {
+            sidebar.classList.add('open');
+            overlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        };
+
+        const closeMenu = () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        };
+
+        toggleBtn.addEventListener('click', () => {
+            if (sidebar.classList.contains('open')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+        });
+
+        overlay.addEventListener('click', closeMenu);
+
+        // Fermer le menu lors du redimensionnement sur desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                closeMenu();
+            }
+        });
+
+        // Fermer le menu lors de la navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    closeMenu();
+                }
+            });
+        });
     }
 
     async loadOverviewStats() {
