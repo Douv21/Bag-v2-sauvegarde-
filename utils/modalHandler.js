@@ -19,7 +19,11 @@ class ModalHandler {
             'create_negative_reward_modal',
             'custom_message_modal',
             'edit_item_modal',
-            'modify_reward_modal'
+            'modify_reward_modal',
+            // Modals du système de niveaux
+            'text_xp_modal',
+            'voice_xp_modal',
+            'level_for_role'
         ]);
 
         // Liste des modals prévues mais non implémentées
@@ -41,6 +45,12 @@ class ModalHandler {
     isModalImplemented(customId) {
         // Extraire le nom de base du modal (sans paramètres)
         const baseCustomId = customId.split('_').slice(0, 3).join('_');
+        
+        // Cas spéciaux pour les modals dynamiques de niveau
+        if (customId.startsWith('level_for_role_')) {
+            return this.implementedModals.has('level_for_role');
+        }
+        
         return this.implementedModals.has(baseCustomId);
     }
 
