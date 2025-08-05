@@ -185,7 +185,6 @@ class LevelManager {
         
         // Formula: baseXP * (level - 1) ^ multiplier
         return Math.floor(baseXP * Math.pow(level - 1, multiplier));
-    }
 
     calculateLevelFromXP(xp) {
         let level = 1;
