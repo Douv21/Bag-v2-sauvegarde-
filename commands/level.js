@@ -73,6 +73,9 @@ module.exports = {
                 const userRank = guildUsers.findIndex(user => user.userId === targetUser.id) + 1;
                 const totalUsers = guildUsers.length;
                 
+                // Récupérer le dernier rôle récompense obtenu
+                const lastRoleReward = levelManager.getRoleForLevel(userLevel.level, interaction.guild);
+                
                 const progressData = {
                     currentXP: xpProgress,
                     totalNeeded: xpNeeded,
@@ -82,7 +85,8 @@ module.exports = {
                     totalMessages: economyUser.messageCount || userLevel.totalMessages || 0,
                     totalVoiceTime: Math.floor((userLevel.totalVoiceTime || 0) / 60000),
                     rank: userRank,
-                    totalUsers: totalUsers
+                    totalUsers: totalUsers,
+                    lastRoleReward: lastRoleReward
                 };
                 
                 // Récupérer l'avatar avec priorité serveur > global et forcer le format PNG

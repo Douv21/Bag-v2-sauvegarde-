@@ -253,6 +253,14 @@ class LevelCardGenerator {
             <text x="670" y="370" text-anchor="middle" fill="#ff00ff" font-family="Arial Black" font-size="16" font-weight="bold">sur ${progressData.totalUsers} membres</text>
             ` : ''}
             
+            <!-- Dernier rôle récompense obtenu en bas de la carte -->
+            ${progressData && progressData.lastRoleReward && progressData.lastRoleReward.roleName ? `
+            <rect x="30" y="300" width="500" height="80" fill="rgba(255,0,255,0.15)" rx="15" stroke="#ff00ff" stroke-width="3" filter="url(#holoGlow)"/>
+            <text x="280" y="325" text-anchor="middle" fill="#ff00ff" font-family="Arial Black" font-size="18" font-weight="bold" filter="url(#holoGlow)">&#127942; DERNIER RÔLE OBTENU</text>
+            <text x="280" y="350" text-anchor="middle" fill="#ffffff" font-family="Arial Black" font-size="24" font-weight="bold">${progressData.lastRoleReward.roleName}</text>
+            <text x="280" y="370" text-anchor="middle" fill="#00ffff" font-family="Arial Black" font-size="16" font-weight="bold">Niveau ${progressData.lastRoleReward.level}</text>
+            ` : ''}
+            
             <!-- Effets holographiques -->
             <line x1="0" y1="100" x2="800" y2="100" stroke="#00ffff" stroke-width="1" opacity="0.3"/>
             <line x1="0" y1="200" x2="800" y2="200" stroke="#ff00ff" stroke-width="1" opacity="0.3"/>
