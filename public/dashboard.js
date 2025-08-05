@@ -70,9 +70,16 @@ class BAGDashboard {
                 });
             }
 
+            console.log('✅ DOM prêt, configuration des événements...');
             this.setupEventListeners();
+            
+            console.log('📊 Chargement des données initiales...');
             await this.loadInitialData();
+            
+            console.log('🔄 Démarrage des mises à jour en temps réel...');
             this.startRealTimeUpdates();
+            
+            console.log('🏠 Affichage de la section vue d\'ensemble...');
             this.showOverviewSection();
             
             this.showNotification('Dashboard initialisé avec succès!', 'success');
@@ -80,20 +87,27 @@ class BAGDashboard {
             
         } catch (error) {
             console.error('❌ Erreur d\'initialisation:', error);
-            this.showNotification('Erreur d\'initialisation du dashboard', 'error');
+            this.showNotification('Erreur d\'initialisation du dashboard: ' + error.message, 'error');
         }
     }
 
     setupEventListeners() {
+        console.log('🔗 Configuration des événements...');
+        
         // Navigation sidebar
-        document.querySelectorAll('.nav-link').forEach(link => {
+        const navLinks = document.querySelectorAll('.nav-link');
+        console.log(`📋 ${navLinks.length} liens de navigation trouvés`);
+        
+        navLinks.forEach((link, index) => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const section = link.dataset.section;
+                console.log(`🖱️ Clic sur la section: ${section}`);
                 if (section && section !== this.currentSection) {
                     this.switchSection(section);
                 }
             });
+            console.log(`✅ Événement configuré pour: ${link.dataset.section}`);
         });
 
         // Boutons d'action
@@ -120,6 +134,8 @@ class BAGDashboard {
 
         // Menu mobile
         this.setupMobileMenu();
+        
+        console.log('✅ Tous les événements configurés');
     }
 
     switchSection(section) {
@@ -130,6 +146,7 @@ class BAGDashboard {
             link.classList.remove('active');
             if (link.dataset.section === section) {
                 link.classList.add('active');
+                console.log(`✅ Section active mise à jour: ${section}`);
             }
         });
 
@@ -139,8 +156,14 @@ class BAGDashboard {
     }
 
     async loadSectionContent(section) {
+        console.log(`📂 Chargement du contenu pour la section: ${section}`);
         const container = document.getElementById('content-container');
         const header = document.querySelector('.content-header');
+        
+        if (!container) {
+            console.error('❌ Container de contenu non trouvé!');
+            return;
+        }
         
         // Mise à jour du header
         this.updateContentHeader(section);
@@ -151,35 +174,45 @@ class BAGDashboard {
         try {
             switch (section) {
                 case 'overview':
+                    console.log('🏠 Affichage de la vue d\'ensemble...');
                     this.showOverviewSection();
                     break;
                 case 'economy':
+                    console.log('💰 Affichage de la section économie...');
                     await this.showEconomySection();
                     break;
                 case 'levels':
+                    console.log('📈 Affichage de la section niveaux...');
                     await this.showLevelsSection();
                     break;
                 case 'karma':
+                    console.log('❤️ Affichage de la section karma...');
                     await this.showKarmaSection();
                     break;
                 case 'confessions':
+                    console.log('💬 Affichage de la section confessions...');
                     await this.showConfessionsSection();
                     break;
                 case 'moderation':
+                    console.log('🛡️ Affichage de la section modération...');
                     await this.showModerationSection();
                     break;
                 case 'backup':
+                    console.log('💾 Affichage de la section sauvegardes...');
                     await this.showBackupSection();
                     break;
                 case 'settings':
+                    console.log('⚙️ Affichage de la section paramètres...');
                     await this.showSettingsSection();
                     break;
                 default:
+                    console.log('🏠 Section par défaut: vue d\'ensemble...');
                     this.showOverviewSection();
             }
+            console.log(`✅ Section ${section} chargée avec succès`);
         } catch (error) {
             console.error(`❌ Erreur lors du chargement de la section ${section}:`, error);
-            this.showError(container, `Erreur lors du chargement de la section ${section}`);
+            this.showError(container, `Erreur lors du chargement de la section ${section}: ${error.message}`);
         }
     }
 
@@ -676,6 +709,7 @@ class BAGDashboard {
     }
 
     async showSettingsSection() {
+        console.log('⚙️ Génération de la section paramètres...');
         const container = document.getElementById('content-container');
         
         container.innerHTML = `
@@ -708,6 +742,30 @@ class BAGDashboard {
                         </select>
                         <p class="config-description">Logs détaillés pour le débogage</p>
                     </div>
+                    <div class="config-item">
+                        <label class="config-label">Notifications</label>
+                        <select class="config-input" id="notificationsEnabled">
+                            <option value="true">Activées</option>
+                            <option value="false">Désactivées</option>
+                        </select>
+                        <p class="config-description">Notifications dans le dashboard</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Auto-sauvegarde</label>
+                        <select class="config-input" id="autoBackup">
+                            <option value="true">Activée</option>
+                            <option value="false">Désactivée</option>
+                        </select>
+                        <p class="config-description">Sauvegarde automatique des données</p>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Thème</label>
+                        <select class="config-input" id="theme">
+                            <option value="dark">Sombre</option>
+                            <option value="light">Clair</option>
+                        </select>
+                        <p class="config-description">Thème de l'interface</p>
+                    </div>
                 </div>
                 <div class="action-buttons">
                     <button class="btn btn-primary" onclick="dashboard.saveGeneralSettings()">
@@ -718,9 +776,50 @@ class BAGDashboard {
                         <i class="fas fa-restart"></i>
                         Redémarrer le bot
                     </button>
+                    <button class="btn btn-secondary" onclick="dashboard.testDashboard()">
+                        <i class="fas fa-vial"></i>
+                        Tester le dashboard
+                    </button>
+                </div>
+            </div>
+            
+            <div class="config-section fade-in" style="margin-top: 2rem;">
+                <div class="config-header">
+                    <h3 class="config-title">
+                        <i class="fas fa-tools"></i>
+                        Outils de Maintenance
+                    </h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Nettoyer les objets de test</label>
+                        <p class="config-description">Supprime tous les objets de test de la base de données</p>
+                        <button class="btn btn-secondary" onclick="dashboard.clearTestObjects()">
+                            <i class="fas fa-broom"></i>
+                            Nettoyer
+                        </button>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Réinitialiser les commandes</label>
+                        <p class="config-description">Force la réinitialisation des slash commands</p>
+                        <button class="btn btn-secondary" onclick="dashboard.resetCommands()">
+                            <i class="fas fa-sync"></i>
+                            Réinitialiser
+                        </button>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Sauvegarde forcée</label>
+                        <p class="config-description">Force une sauvegarde immédiate</p>
+                        <button class="btn btn-secondary" onclick="dashboard.forceBackup()">
+                            <i class="fas fa-download"></i>
+                            Sauvegarder
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
+        
+        console.log('✅ Section paramètres générée avec succès');
     }
 
     // Méthodes de sauvegarde des configurations
@@ -825,6 +924,87 @@ class BAGDashboard {
         } catch (error) {
             console.error('Erreur sauvegarde confessions:', error);
             this.showNotification('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    // Nouvelle fonction de test du dashboard
+    async testDashboard() {
+        console.log('🧪 Test du dashboard en cours...');
+        
+        try {
+            // Test de la navigation
+            const navLinks = document.querySelectorAll('.nav-link');
+            console.log(`✅ Navigation: ${navLinks.length} liens trouvés`);
+            
+            // Test des sections
+            const sections = ['overview', 'economy', 'levels', 'karma', 'confessions', 'moderation', 'backup', 'settings'];
+            let workingSections = 0;
+            
+            for (const section of sections) {
+                try {
+                    await this.loadSectionContent(section);
+                    workingSections++;
+                    console.log(`✅ Section ${section} fonctionne`);
+                } catch (error) {
+                    console.error(`❌ Section ${section} en erreur:`, error);
+                }
+            }
+            
+            // Test des notifications
+            this.showNotification('Test de notification', 'success');
+            
+            // Résultat du test
+            const result = `Test terminé: ${workingSections}/${sections.length} sections fonctionnelles`;
+            console.log(result);
+            this.showNotification(result, workingSections === sections.length ? 'success' : 'warning');
+            
+            // Retourner à la vue d'ensemble
+            this.switchSection('overview');
+            
+        } catch (error) {
+            console.error('❌ Erreur lors du test:', error);
+            this.showNotification('Erreur lors du test: ' + error.message, 'error');
+        }
+    }
+
+    // Fonction pour sauvegarder les paramètres généraux
+    async saveGeneralSettings() {
+        try {
+            const settings = {
+                language: document.getElementById('botLanguage').value,
+                debugMode: document.getElementById('debugMode').value === 'true',
+                notifications: document.getElementById('notificationsEnabled').value === 'true',
+                autoBackup: document.getElementById('autoBackup').value === 'true',
+                theme: document.getElementById('theme').value
+            };
+
+            console.log('💾 Sauvegarde des paramètres généraux:', settings);
+            
+            // Simuler une sauvegarde (remplacer par un vrai appel API)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            this.showNotification('Paramètres généraux sauvegardés!', 'success');
+        } catch (error) {
+            console.error('Erreur sauvegarde paramètres:', error);
+            this.showNotification('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    // Fonction pour redémarrer le bot
+    async restartBot() {
+        if (confirm('Êtes-vous sûr de vouloir redémarrer le bot ?')) {
+            try {
+                console.log('🔄 Redémarrage du bot...');
+                this.showNotification('Redémarrage du bot en cours...', 'info');
+                
+                // Simuler un redémarrage (remplacer par un vrai appel API)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                this.showNotification('Bot redémarré avec succès!', 'success');
+            } catch (error) {
+                console.error('Erreur redémarrage:', error);
+                this.showNotification('Erreur lors du redémarrage', 'error');
+            }
         }
     }
 

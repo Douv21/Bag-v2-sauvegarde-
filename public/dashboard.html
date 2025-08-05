@@ -1429,5 +1429,94 @@
 
     <!-- Script Principal -->
     <script src="dashboard.js"></script>
+    
+    <!-- Script de test et débogage -->
+    <script>
+        // Test de chargement du dashboard
+        console.log('🔍 Test de chargement du dashboard...');
+        
+        // Vérifier que le DOM est chargé
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('✅ DOM chargé, vérification du dashboard...');
+                testDashboardLoading();
+            });
+        } else {
+            console.log('✅ DOM déjà chargé, vérification immédiate...');
+            testDashboardLoading();
+        }
+        
+        function testDashboardLoading() {
+            // Vérifier les éléments essentiels
+            const elements = {
+                'Container principal': document.getElementById('content-container'),
+                'Navigation': document.querySelector('.nav-menu'),
+                'Liens de navigation': document.querySelectorAll('.nav-link'),
+                'Instance dashboard': window.dashboard
+            };
+            
+            console.log('📋 Vérification des éléments:');
+            Object.entries(elements).forEach(([name, element]) => {
+                if (element) {
+                    console.log(`✅ ${name}: OK`);
+                    if (Array.isArray(element) || element.length) {
+                        console.log(`   - Nombre d'éléments: ${element.length || element.length}`);
+                    }
+                } else {
+                    console.log(`❌ ${name}: MANQUANT`);
+                }
+            });
+            
+            // Vérifier les sections disponibles
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = Array.from(navLinks).map(link => link.dataset.section);
+            console.log('📂 Sections disponibles:', sections);
+            
+            // Test de clic sur les liens
+            console.log('🖱️ Test de clic sur les liens de navigation...');
+            navLinks.forEach((link, index) => {
+                setTimeout(() => {
+                    console.log(`🖱️ Test de clic sur: ${link.dataset.section}`);
+                    link.click();
+                }, index * 1000);
+            });
+            
+            // Vérifier l'instance dashboard après 3 secondes
+            setTimeout(() => {
+                if (window.dashboard) {
+                    console.log('✅ Dashboard initialisé avec succès!');
+                    console.log('📊 Instance dashboard:', window.dashboard);
+                    console.log('🔧 Méthodes disponibles:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.dashboard)));
+                } else {
+                    console.error('❌ Dashboard non initialisé!');
+                }
+            }, 3000);
+        }
+        
+        // Fonction globale pour tester manuellement
+        window.testDashboard = function() {
+            console.log('🧪 Test manuel du dashboard...');
+            if (window.dashboard && window.dashboard.testDashboard) {
+                window.dashboard.testDashboard();
+            } else {
+                console.error('❌ Dashboard ou méthode de test non disponible');
+            }
+        };
+        
+        // Fonction pour forcer le changement de section
+        window.switchToSection = function(section) {
+            console.log(`🔄 Changement forcé vers la section: ${section}`);
+            if (window.dashboard && window.dashboard.switchSection) {
+                window.dashboard.switchSection(section);
+            } else {
+                console.error('❌ Dashboard non disponible');
+            }
+        };
+        
+        console.log('🔧 Fonctions de test disponibles:');
+        console.log('  - testDashboard() : Test complet du dashboard');
+        console.log('  - switchToSection("section") : Changer de section');
+        console.log('  - Exemple: switchToSection("settings")');
+    </script>
 </body>
 </html>

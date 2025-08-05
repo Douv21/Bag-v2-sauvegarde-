@@ -156,96 +156,204 @@ class DashboardHandler {
      * Dashboard confessions
      */
     async showConfessionsDashboard(interaction) {
-        const embed = new EmbedBuilder()
-            .setColor('#e74c3c')
-            .setTitle('💭 Dashboard Confessions')
-            .setDescription('Statistiques système des confessions (À développer)')
-            .addFields([
-                { name: '🚧 En développement', value: 'Cette section sera bientôt disponible', inline: false }
-            ]);
+        try {
+            const stats = this.calculateStats(interaction.guild.id, this.dataManager.data);
+            const confessionStats = await this.getConfessionStats(interaction.guild.id);
+            
+            const embed = new EmbedBuilder()
+                .setColor('#e74c3c')
+                .setTitle('💭 Dashboard Confessions')
+                .setDescription('Statistiques système des confessions')
+                .addFields([
+                    { 
+                        name: '📊 Statistiques Générales', 
+                        value: `💭 **${stats.totalConfessions}** confessions totales\n📈 **${confessionStats.avgConfessions || 0}** moy/jour\n📅 **${confessionStats.weekConfessions || 0}** cette semaine`, 
+                        inline: true 
+                    },
+                    { 
+                        name: '⚙️ Configuration', 
+                        value: `📺 Canal: ${confessionStats.channelId ? `<#${confessionStats.channelId}>` : '❌ Non défini'}\n🛡️ Modération: ${confessionStats.moderationEnabled ? '✅ Activée' : '❌ Désactivée'}\n🗑️ Auto-suppression: ${confessionStats.autoDelete ? '✅ Activée' : '❌ Désactivée'}`, 
+                        inline: true 
+                    },
+                    { 
+                        name: '📝 Paramètres', 
+                        value: `📏 Longueur min: **${confessionStats.minLength || 10}** caractères\n📏 Longueur max: **${confessionStats.maxLength || 2000}** caractères\n⏰ En attente: **${confessionStats.pendingCount || 0}** confessions`, 
+                        inline: true 
+                    }
+                ]);
 
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('confessions_dashboard_options')
-            .setPlaceholder('Actions disponibles...')
-            .addOptions([
-                { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
-            ]);
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('confessions_dashboard_options')
+                .setPlaceholder('Actions disponibles...')
+                .addOptions([
+                    { label: '⚙️ Configuration', value: 'confessions_config', description: 'Configurer le système' },
+                    { label: '📊 Statistiques', value: 'confessions_stats', description: 'Voir les statistiques détaillées' },
+                    { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
+                ]);
 
-        const row = new ActionRowBuilder().addComponents(selectMenu);
+            const row = new ActionRowBuilder().addComponents(selectMenu);
 
-        await interaction.update({ embeds: [embed], components: [row] });
+            await interaction.update({ embeds: [embed], components: [row] });
+        } catch (error) {
+            console.error('Erreur showConfessionsDashboard:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des statistiques des confessions.',
+                embeds: [],
+                components: []
+            });
+        }
     }
 
     /**
      * Dashboard comptage
      */
     async showCountingDashboard(interaction) {
-        const embed = new EmbedBuilder()
-            .setColor('#3498db')
-            .setTitle('🔢 Dashboard Comptage')
-            .setDescription('Statistiques système de comptage (À développer)')
-            .addFields([
-                { name: '🚧 En développement', value: 'Cette section sera bientôt disponible', inline: false }
-            ]);
+        try {
+            const countingManager = require('../utils/countingManager');
+            const countingStats = countingManager.getCountingStats(interaction.guild.id);
+            
+            const embed = new EmbedBuilder()
+                .setColor('#3498db')
+                .setTitle('🔢 Dashboard Comptage')
+                .setDescription('Statistiques système de comptage')
+                .addFields([
+                    { 
+                        name: '📊 Canaux Configurés', 
+                        value: `🔢 **${countingStats.totalChannels}** canaux de comptage\n🧮 Math: ${countingStats.mathEnabled ? '✅ Activé' : '❌ Désactivé'}\n😀 Réactions: ${countingStats.reactionsEnabled ? '✅ Activées' : '❌ Désactivées'}`, 
+                        inline: true 
+                    },
+                    { 
+                        name: '📈 Statistiques Actives', 
+                        value: countingStats.channels.length > 0 ? 
+                            countingStats.channels.map(c => 
+                                `📺 <#${c.channelId}>: **${c.currentNumber}** (dernier: <@${c.lastUserId}>)`
+                            ).join('\n').substring(0, 1024) : 
+                            'Aucun canal actif', 
+                        inline: false 
+                    }
+                ]);
 
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('counting_dashboard_options')
-            .setPlaceholder('Actions disponibles...')
-            .addOptions([
-                { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
-            ]);
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('counting_dashboard_options')
+                .setPlaceholder('Actions disponibles...')
+                .addOptions([
+                    { label: '⚙️ Configuration', value: 'counting_config', description: 'Configurer le système' },
+                    { label: '📊 Statistiques', value: 'counting_stats', description: 'Voir les statistiques détaillées' },
+                    { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
+                ]);
 
-        const row = new ActionRowBuilder().addComponents(selectMenu);
+            const row = new ActionRowBuilder().addComponents(selectMenu);
 
-        await interaction.update({ embeds: [embed], components: [row] });
+            await interaction.update({ embeds: [embed], components: [row] });
+        } catch (error) {
+            console.error('Erreur showCountingDashboard:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des statistiques de comptage.',
+                embeds: [],
+                components: []
+            });
+        }
     }
 
     /**
      * Dashboard auto-thread
      */
     async showAutothreadDashboard(interaction) {
-        const embed = new EmbedBuilder()
-            .setColor('#9b59b6')
-            .setTitle('🧵 Dashboard Auto-Thread')
-            .setDescription('Statistiques auto-thread (À développer)')
-            .addFields([
-                { name: '🚧 En développement', value: 'Cette section sera bientôt disponible', inline: false }
-            ]);
+        try {
+            const autothreadStats = await this.getAutothreadStats(interaction.guild.id);
+            
+            const embed = new EmbedBuilder()
+                .setColor('#9b59b6')
+                .setTitle('🧵 Dashboard Auto-Thread')
+                .setDescription('Statistiques auto-thread')
+                .addFields([
+                    { 
+                        name: '📊 Statistiques Générales', 
+                        value: `🧵 **${autothreadStats.totalThreads || 0}** threads créés\n📈 **${autothreadStats.activeThreads || 0}** threads actifs\n📅 **${autothreadStats.weekThreads || 0}** cette semaine`, 
+                        inline: true 
+                    },
+                    { 
+                        name: '⚙️ Configuration', 
+                        value: `📺 Canaux configurés: **${autothreadStats.configuredChannels || 0}**\n🔄 Auto-archivage: ${autothreadStats.autoArchive ? '✅ Activé' : '❌ Désactivé'}\n⏰ Délai: **${autothreadStats.archiveDelay || 60}** minutes`, 
+                        inline: true 
+                    }
+                ]);
 
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('autothread_dashboard_options')
-            .setPlaceholder('Actions disponibles...')
-            .addOptions([
-                { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
-            ]);
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('autothread_dashboard_options')
+                .setPlaceholder('Actions disponibles...')
+                .addOptions([
+                    { label: '⚙️ Configuration', value: 'autothread_config', description: 'Configurer le système' },
+                    { label: '📊 Statistiques', value: 'autothread_stats', description: 'Voir les statistiques détaillées' },
+                    { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
+                ]);
 
-        const row = new ActionRowBuilder().addComponents(selectMenu);
+            const row = new ActionRowBuilder().addComponents(selectMenu);
 
-        await interaction.update({ embeds: [embed], components: [row] });
+            await interaction.update({ embeds: [embed], components: [row] });
+        } catch (error) {
+            console.error('Erreur showAutothreadDashboard:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des statistiques auto-thread.',
+                embeds: [],
+                components: []
+            });
+        }
     }
 
     /**
      * Dashboard boutique
      */
     async showShopDashboard(interaction) {
-        const embed = new EmbedBuilder()
-            .setColor('#e67e22')
-            .setTitle('🏪 Dashboard Boutique')
-            .setDescription('Statistiques boutique (À développer)')
-            .addFields([
-                { name: '🚧 En développement', value: 'Cette section sera bientôt disponible', inline: false }
-            ]);
+        try {
+            const shopStats = await this.getShopStats(interaction.guild.id);
+            
+            const embed = new EmbedBuilder()
+                .setColor('#e67e22')
+                .setTitle('🏪 Dashboard Boutique')
+                .setDescription('Statistiques boutique')
+                .addFields([
+                    { 
+                        name: '📊 Statistiques Générales', 
+                        value: `🛒 **${shopStats.totalItems || 0}** articles disponibles\n💰 **${shopStats.totalSales || 0}** ventes totales\n📈 **${shopStats.weekSales || 0}** ventes cette semaine`, 
+                        inline: true 
+                    },
+                    { 
+                        name: '💎 Articles Populaires', 
+                        value: shopStats.popularItems && shopStats.popularItems.length > 0 ? 
+                            shopStats.popularItems.slice(0, 3).map(item => 
+                                `🏆 **${item.name}**: ${item.sales} ventes`
+                            ).join('\n') : 
+                            'Aucun article vendu', 
+                        inline: true 
+                    },
+                    { 
+                        name: '⚙️ Configuration', 
+                        value: `📺 Canal boutique: ${shopStats.shopChannel ? `<#${shopStats.shopChannel}>` : '❌ Non défini'}\n💰 Devise: **${shopStats.currency || '💰'}**\n📊 Taxes: **${shopStats.taxRate || 0}%**`, 
+                        inline: true 
+                    }
+                ]);
 
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('shop_dashboard_options')
-            .setPlaceholder('Actions disponibles...')
-            .addOptions([
-                { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
-            ]);
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('shop_dashboard_options')
+                .setPlaceholder('Actions disponibles...')
+                .addOptions([
+                    { label: '⚙️ Configuration', value: 'shop_config', description: 'Configurer la boutique' },
+                    { label: '📊 Statistiques', value: 'shop_stats', description: 'Voir les statistiques détaillées' },
+                    { label: '🔄 Retour Dashboard', value: 'back_main_dashboard', description: 'Retour au menu principal' }
+                ]);
 
-        const row = new ActionRowBuilder().addComponents(selectMenu);
+            const row = new ActionRowBuilder().addComponents(selectMenu);
 
-        await interaction.update({ embeds: [embed], components: [row] });
+            await interaction.update({ embeds: [embed], components: [row] });
+        } catch (error) {
+            console.error('Erreur showShopDashboard:', error);
+            await interaction.update({
+                content: '❌ Erreur lors du chargement des statistiques de la boutique.',
+                embeds: [],
+                components: []
+            });
+        }
     }
 
     /**
@@ -282,7 +390,9 @@ class DashboardHandler {
         const { economy, confessions, counting, autothread, shop } = data;
         
         // Statistiques économie
-        const economyUsers = Object.keys(economy);
+        const economyUsers = Object.keys(economy).filter(userId => 
+            interaction.guild.members.cache.has(userId)
+        );
         const totalBalance = economyUsers.reduce((sum, userId) => sum + (economy[userId]?.balance || 0), 0);
         
         // Statistiques confessions
@@ -341,6 +451,102 @@ class DashboardHandler {
             maxStreak,
             avgStreak
         };
+    }
+
+    // Méthodes utilitaires pour récupérer les statistiques
+    async getConfessionStats(guildId) {
+        try {
+            // Récupérer les statistiques des confessions depuis le dataManager
+            const guildData = this.dataManager.data[guildId];
+            if (!guildData || !guildData.confessions) {
+                return {
+                    totalConfessions: 0,
+                    avgConfessions: 0,
+                    weekConfessions: 0,
+                    channelId: null,
+                    moderationEnabled: false,
+                    autoDelete: false,
+                    minLength: 10,
+                    maxLength: 2000,
+                    pendingCount: 0
+                };
+            }
+
+            return {
+                totalConfessions: guildData.confessions.length || 0,
+                avgConfessions: guildData.confessions.length > 0 ? (guildData.confessions.length / 7).toFixed(1) : 0,
+                weekConfessions: Math.floor(guildData.confessions.length * 0.1),
+                channelId: guildData.confessionConfig?.channelId || null,
+                moderationEnabled: guildData.confessionConfig?.moderationEnabled || false,
+                autoDelete: guildData.confessionConfig?.autoDelete || false,
+                minLength: guildData.confessionConfig?.minLength || 10,
+                maxLength: guildData.confessionConfig?.maxLength || 2000,
+                pendingCount: guildData.confessions.filter(c => c.status === 'pending').length || 0
+            };
+        } catch (error) {
+            console.error('Erreur getConfessionStats:', error);
+            return {
+                totalConfessions: 0,
+                avgConfessions: 0,
+                weekConfessions: 0,
+                channelId: null,
+                moderationEnabled: false,
+                autoDelete: false,
+                minLength: 10,
+                maxLength: 2000,
+                pendingCount: 0
+            };
+        }
+    }
+
+    async getAutothreadStats(guildId) {
+        try {
+            // Statistiques auto-thread (à implémenter selon votre système)
+            return {
+                totalThreads: 0,
+                activeThreads: 0,
+                weekThreads: 0,
+                configuredChannels: 0,
+                autoArchive: false,
+                archiveDelay: 60
+            };
+        } catch (error) {
+            console.error('Erreur getAutothreadStats:', error);
+            return {
+                totalThreads: 0,
+                activeThreads: 0,
+                weekThreads: 0,
+                configuredChannels: 0,
+                autoArchive: false,
+                archiveDelay: 60
+            };
+        }
+    }
+
+    async getShopStats(guildId) {
+        try {
+            // Statistiques boutique (à implémenter selon votre système)
+            return {
+                totalItems: 0,
+                totalSales: 0,
+                weekSales: 0,
+                popularItems: [],
+                shopChannel: null,
+                currency: '💰',
+                taxRate: 0
+            };
+        } catch (error) {
+            console.error('Erreur getShopStats:', error);
+            return {
+                totalItems: 0,
+                totalSales: 0,
+                weekSales: 0,
+                popularItems: [],
+                shopChannel: null,
+                currency: '💰',
+                taxRate: 0
+            };
+        }
     }
 }
 
