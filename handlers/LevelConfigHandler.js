@@ -528,6 +528,180 @@ class LevelConfigHandler {
 
         await interaction.update({ embeds: [embed], components: [] });
     }
+
+    // Nouvelles méthodes pour gérer les modals de formule de niveau
+    async handleBaseXPModal(interaction) {
+        try {
+            const baseXP = parseInt(interaction.fields.getTextInputValue('base_xp'));
+            
+            if (isNaN(baseXP) || baseXP < 1) {
+                return await interaction.reply({
+                    content: '❌ L\'XP de base doit être un nombre entier positif.',
+                    flags: 64
+                });
+            }
+            
+            const config = levelManager.loadConfig();
+            config.levelFormula.baseXP = baseXP;
+            levelManager.saveConfig(config);
+            
+            await interaction.reply({
+                content: `✅ XP de base défini à ${baseXP} XP.`,
+                flags: 64
+            });
+            
+        } catch (error) {
+            console.error('Erreur handleBaseXPModal:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la sauvegarde de l\'XP de base.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleMultiplierModal(interaction) {
+        try {
+            const multiplier = parseFloat(interaction.fields.getTextInputValue('multiplier'));
+            
+            if (isNaN(multiplier) || multiplier <= 1) {
+                return await interaction.reply({
+                    content: '❌ Le multiplicateur doit être un nombre supérieur à 1.',
+                    flags: 64
+                });
+            }
+            
+            const config = levelManager.loadConfig();
+            config.levelFormula.multiplier = multiplier;
+            levelManager.saveConfig(config);
+            
+            await interaction.reply({
+                content: `✅ Multiplicateur défini à ${multiplier}.`,
+                flags: 64
+            });
+            
+        } catch (error) {
+            console.error('Erreur handleMultiplierModal:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de la sauvegarde du multiplicateur.',
+                flags: 64
+            });
+        }
+    }
+
+    async showBaseXPModal(interaction) {
+        try {
+            const config = levelManager.loadConfig();
+            
+            const modal = new ModalBuilder()
+                .setCustomId('base_xp_modal')
+                .setTitle('Modifier l\'XP de base');
+
+            const baseXPInput = new TextInputBuilder()
+                .setCustomId('base_xp')
+                .setLabel('XP requis pour le niveau 1')
+                .setStyle(TextInputStyle.Short)
+                .setValue(config.levelFormula.baseXP.toString())
+                .setPlaceholder('Ex: 100')
+                .setRequired(true)
+                .setMinLength(1)
+                .setMaxLength(6);
+
+            modal.addComponents(new ActionRowBuilder().addComponents(baseXPInput));
+            await interaction.showModal(modal);
+            
+        } catch (error) {
+            console.error('Erreur showBaseXPModal:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de l\'affichage du modal.',
+                flags: 64
+            });
+        }
+    }
+
+    async showMultiplierModal(interaction) {
+        try {
+            const config = levelManager.loadConfig();
+            
+            const modal = new ModalBuilder()
+                .setCustomId('multiplier_modal')
+                .setTitle('Modifier le multiplicateur');
+
+            const multiplierInput = new TextInputBuilder()
+                .setCustomId('multiplier')
+                .setLabel('Multiplicateur de difficulté')
+                .setStyle(TextInputStyle.Short)
+                .setValue(config.levelFormula.multiplier.toString())
+                .setPlaceholder('Ex: 1.5')
+                .setRequired(true)
+                .setMinLength(1)
+                .setMaxLength(5);
+
+            modal.addComponents(new ActionRowBuilder().addComponents(multiplierInput));
+            await interaction.showModal(modal);
+            
+        } catch (error) {
+            console.error('Erreur showMultiplierModal:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors de l\'affichage du modal.',
+                flags: 64
+            });
+        }
+    }
+
+    async handleLevelFormulaConfigAction(interaction, selectedValue) {
+        try {
+            const config = levelManager.loadConfig();
+
+            switch (selectedValue) {
+                case 'base_xp':
+                    await this.showBaseXPModal(interaction);
+                    break;
+
+                case 'multiplier':
+                    await this.showMultiplierModal(interaction);
+                    break;
+
+                case 'reset_formula':
+                    config.levelFormula = { baseXP: 100, multiplier: 1.5 };
+                    levelManager.saveConfig(config);
+                    
+                    await interaction.update({
+                        content: '✅ Formule réinitialisée aux valeurs par défaut (Base: 100 XP, Multiplicateur: 1.5).',
+                        embeds: [],
+                        components: []
+                    });
+                    
+                    // Retour automatique au menu après 3 secondes
+                    setTimeout(async () => {
+                        try {
+                            await this.showLevelFormulaConfig({ 
+                                ...interaction, 
+                                update: (options) => interaction.editReply(options) 
+                            });
+                        } catch (error) {
+                            console.log('Timeout level formula config - interaction expirée');
+                        }
+                    }, 3000);
+                    break;
+
+                case 'back_main':
+                    await this.handleLevelConfigMenu(interaction);
+                    break;
+
+                default:
+                    await interaction.reply({
+                        content: '❌ Action non reconnue.',
+                        flags: 64
+                    });
+            }
+        } catch (error) {
+            console.error('Erreur handleLevelFormulaConfigAction:', error);
+            await interaction.reply({
+                content: '❌ Erreur lors du traitement de l\'action.',
+                flags: 64
+            });
+        }
+    }
 }
 
 module.exports = LevelConfigHandler;

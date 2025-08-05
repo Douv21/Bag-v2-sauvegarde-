@@ -884,44 +884,14 @@ class RenderSolutionBot {
                             });
                             
                         } else if (interaction.customId === 'base_xp_modal') {
-                            const baseXP = parseInt(interaction.fields.getTextInputValue('base_xp'));
-                            
-                            if (isNaN(baseXP) || baseXP < 1) {
-                                await interaction.reply({
-                                    content: '❌ L\'XP de base doit être un nombre entier positif.',
-                                    flags: 64
-                                });
-                                return;
-                            }
-                            
-                            const config = levelManager.loadConfig();
-                            config.levelFormula.baseXP = baseXP;
-                            levelManager.saveConfig(config);
-                            
-                            await interaction.reply({
-                                content: `✅ XP de base défini à ${baseXP} XP.`,
-                                flags: 64
-                            });
+                            const LevelConfigHandler = require('./handlers/LevelConfigHandler');
+                            const levelHandler = new LevelConfigHandler();
+                            await levelHandler.handleBaseXPModal(interaction);
                             
                         } else if (interaction.customId === 'multiplier_modal') {
-                            const multiplier = parseFloat(interaction.fields.getTextInputValue('multiplier'));
-                            
-                            if (isNaN(multiplier) || multiplier <= 1) {
-                                await interaction.reply({
-                                    content: '❌ Le multiplicateur doit être un nombre supérieur à 1.',
-                                    flags: 64
-                                });
-                                return;
-                            }
-                            
-                            const config = levelManager.loadConfig();
-                            config.levelFormula.multiplier = multiplier;
-                            levelManager.saveConfig(config);
-                            
-                            await interaction.reply({
-                                content: `✅ Multiplicateur défini à ${multiplier}.`,
-                                flags: 64
-                            });
+                            const LevelConfigHandler = require('./handlers/LevelConfigHandler');
+                            const levelHandler = new LevelConfigHandler();
+                            await levelHandler.handleMultiplierModal(interaction);
                             
                         } else if (interaction.customId.startsWith('level_for_role_')) {
                             // Modal pour définir le niveau requis pour un rôle
@@ -1845,9 +1815,8 @@ class RenderSolutionBot {
                             } else if (customId === 'role_rewards_config_menu') {
                                 await this.handleRoleRewardsConfigAction(interaction, selectedValue, levelHandler);
                             } else if (customId === 'level_formula_config_menu') {
-                                await this.handleLevelFormulaConfigAction(interaction, selectedValue, levelHandler);
+                                await levelHandler.handleLevelFormulaConfigAction(interaction, selectedValue);
                             }
-                        }
                     } catch (error) {
                         console.error('❌ Erreur sous-menu niveau:', error);
                         if (!interaction.replied && !interaction.deferred) {
@@ -2625,74 +2594,7 @@ class RenderSolutionBot {
         }
     }
 
-    async handleLevelFormulaConfigAction(interaction, selectedValue, levelHandler) {
-        const { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
-        const levelManager = require('./utils/levelManager');
-        const config = levelManager.loadConfig();
 
-        switch (selectedValue) {
-            case 'base_xp':
-                const baseXPModal = new ModalBuilder()
-                    .setCustomId('base_xp_modal')
-                    .setTitle('Modifier l\'XP de base');
-
-                const baseXPInput = new TextInputBuilder()
-                    .setCustomId('base_xp')
-                    .setLabel('XP requis pour le niveau 1')
-                    .setStyle(TextInputStyle.Short)
-                    .setValue(config.levelFormula.baseXP.toString())
-                    .setPlaceholder('Ex: 100')
-                    .setRequired(true);
-
-                baseXPModal.addComponents(new ActionRowBuilder().addComponents(baseXPInput));
-                await interaction.showModal(baseXPModal);
-                break;
-
-            case 'multiplier':
-                const multiplierModal = new ModalBuilder()
-                    .setCustomId('multiplier_modal')
-                    .setTitle('Modifier le multiplicateur');
-
-                const multiplierInput = new TextInputBuilder()
-                    .setCustomId('multiplier')
-                    .setLabel('Multiplicateur de difficulté')
-                    .setStyle(TextInputStyle.Short)
-                    .setValue(config.levelFormula.multiplier.toString())
-                    .setPlaceholder('Ex: 1.5')
-                    .setRequired(true);
-
-                multiplierModal.addComponents(new ActionRowBuilder().addComponents(multiplierInput));
-                await interaction.showModal(multiplierModal);
-                break;
-
-            case 'reset_formula':
-                config.levelFormula = { baseXP: 100, multiplier: 1.5 };
-                levelManager.saveConfig(config);
-                await interaction.update({
-                    content: '✅ Formule réinitialisée aux valeurs par défaut (Base: 100 XP, Multiplicateur: 1.5).',
-                    embeds: [],
-                    components: []
-                });
-                // Retour automatique au menu après 3 secondes
-                setTimeout(async () => {
-                    try {
-                        await levelHandler.showLevelFormulaConfig({ 
-                            ...interaction, 
-                            update: (options) => interaction.editReply(options) 
-                        });
-                    } catch (error) {
-                        console.log('Timeout level formula config - interaction expirée');
-                    }
-                }, 3000);
-                break;
-
-            default:
-                await interaction.reply({
-                    content: '❌ Action non reconnue.',
-                    flags: 64
-                });
-        }
-    }
 }
 
 // Variables globales pour les cooldowns des messages
