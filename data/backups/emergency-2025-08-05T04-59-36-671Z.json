@@ -1,0 +1,941 @@
+{
+  "timestamp": "2025-08-05T04:59:36.671Z",
+  "type": "emergency",
+  "files": {
+    "economy.json": {
+      "463272211269156865_1360897918504271882": {
+        "balance": 3885,
+        "goodKarma": 16,
+        "badKarma": -6,
+        "dailyStreak": 2,
+        "lastDaily": 1753610382237,
+        "messageCount": 92,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "lastWork": 1753620299303,
+        "lastSteal": 1753620316536,
+        "lastFish": 1753620306131,
+        "lastCrime": 1753203303956,
+        "appliedRewards": [
+          1753184033719,
+          1753184120446,
+          1753181391406
+        ],
+        "inventory": [],
+        "xp": 934,
+        "money": 3885,
+        "level": 1
+      },
+      "943487722738311219_1360897918504271882": {
+        "balance": 6120,
+        "goodKarma": 19,
+        "badKarma": -13,
+        "dailyStreak": 1,
+        "lastDaily": 1753471853826,
+        "messageCount": 104,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "lastWork": 1753564675530,
+        "lastFish": 1753565014472,
+        "lastCrime": 1753565193909,
+        "lastBet": 1753549730479,
+        "lastSteal": 1753549756285,
+        "lastDonate": 1753149297896,
+        "appliedRewards": [
+          1753184033719,
+          1753184120446,
+          1753181391406
+        ],
+        "inventory": [
+          {
+            "id": 1753136861543,
+            "name": "Fouet",
+            "description": "Objet personnalisé",
+            "type": "custom",
+            "price": 50,
+            "purchasedAt": "2025-07-22T16:26:37.860Z"
+          },
+          {
+            "id": 1753136861543,
+            "name": "Fouet",
+            "description": "Objet personnalisé",
+            "type": "custom",
+            "price": 50,
+            "purchaseDate": "2025-07-26T20:57:24.399Z",
+            "from": "shop"
+          }
+        ],
+        "xp": 6004,
+        "money": 6120,
+        "level": 1
+      },
+      "1150782046181015582_1360897918504271882": {
+        "balance": 1017,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 6,
+        "inventory": [],
+        "xp": 49,
+        "money": 1017,
+        "level": 1
+      },
+      "actions": {
+        "travailler": {
+          "enabled": true,
+          "minReward": 3,
+          "maxReward": 100,
+          "cooldown": 60000,
+          "goodKarma": 2,
+          "badKarma": 0,
+          "montant": {
+            "minAmount": 3,
+            "maxAmount": 100
+          },
+          "karma": {
+            "goodKarma": 3,
+            "badKarma": 0
+          }
+        },
+        "pecher": {
+          "enabled": true,
+          "minReward": 10,
+          "maxReward": 50,
+          "cooldown": 60000,
+          "goodKarma": 1,
+          "badKarma": 0
+        },
+        "donner": {
+          "goodKarma": 3,
+          "badKarma": 0
+        },
+        "voler": {
+          "goodKarma": 0,
+          "badKarma": -3,
+          "enabled": true
+        },
+        "crime": {
+          "enabled": true,
+          "minReward": 1,
+          "maxReward": 300,
+          "cooldown": 480000,
+          "goodKarma": 0,
+          "badKarma": -5
+        },
+        "parier": {
+          "enabled": true,
+          "minReward": 2,
+          "maxReward": 400,
+          "cooldown": 240000,
+          "goodKarma": 0,
+          "badKarma": -1
+        },
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
+      },
+      "519883409917607937_1360897918504271882": {
+        "balance": 1020,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 1,
+        "inventory": [],
+        "money": 1020,
+        "level": 1,
+        "xp": 0
+      },
+      "1342885031856836629_1360897918504271882": {
+        "balance": 1580,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 29,
+        "inventory": [],
+        "money": 1580,
+        "level": 1,
+        "xp": 0
+      },
+      "karma": {
+        "autoReset": true,
+        "resetDay": "dimanche",
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
+      },
+      "1396872608154386472_1360897918504271882": {
+        "balance": 1020,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 1,
+        "inventory": [],
+        "money": 1020,
+        "level": 1,
+        "xp": 0
+      },
+      "1394407529508900894_1360897918504271882": {
+        "balance": 1020,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 1,
+        "inventory": [],
+        "money": 1020,
+        "level": 1,
+        "xp": 0
+      },
+      "739103557600673792_1360897918504271882": {
+        "balance": 2020,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 83,
+        "inventory": [],
+        "xp": 500,
+        "money": 2020,
+        "level": 1
+      },
+      "daily": {
+        "amount": 50,
+        "enabled": true,
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
+      },
+      "karmaRewards": [
+        {
+          "id": 1753181391406,
+          "name": "Saint",
+          "karmaThreshold": 10,
+          "moneyReward": 500,
+          "roleId": null,
+          "roleDuration": null,
+          "createdAt": "2025-07-22T10:49:51.406Z"
+        },
+        {
+          "id": 1753183175018,
+          "name": "Ange",
+          "karmaThreshold": 50,
+          "roleId": "1396547788384374884",
+          "roleName": "nouveau rôletest",
+          "duration": 24,
+          "moneyReward": 2000,
+          "type": "reward",
+          "isTemporary": true,
+          "createdAt": "2025-07-22T11:19:35.018Z"
+        },
+        {
+          "id": 1753184033719,
+          "name": "Pas de chance",
+          "karmaThreshold": 5,
+          "moneyReward": -50,
+          "roleId": null,
+          "roleDuration": null,
+          "createdAt": "2025-07-22T11:33:53.719Z"
+        },
+        {
+          "id": 1753184120446,
+          "name": "Argent voler",
+          "karmaThreshold": -5,
+          "moneyReward": 50,
+          "roleId": null,
+          "roleDuration": null,
+          "createdAt": "2025-07-22T11:35:20.446Z"
+        }
+      ],
+      "528391525651185667_1360897918504271882": {
+        "balance": 1100,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 6,
+        "inventory": [],
+        "xp": 40,
+        "money": 1100,
+        "level": 1
+      },
+      "messages": {
+        "enabled": false,
+        "amount": 5,
+        "cooldown": 60000,
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
+      },
+      "1108053454519271535_1360897918504271882": {
+        "balance": 1080,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 4,
+        "inventory": [],
+        "xp": 17,
+        "money": 1080,
+        "level": 1
+      },
+      "karmaDiscounts": {
+        "enabled": true,
+        "ranges": [
+          {
+            "id": 1753197642083,
+            "name": "Vip",
+            "minKarma": 10,
+            "discount": 10,
+            "createdAt": "2025-07-22T15:20:42.083Z"
+          },
+          {
+            "id": 1753200685606,
+            "name": "Solde",
+            "minKarma": 50,
+            "discount": 50,
+            "createdAt": "2025-07-22T16:11:25.606Z"
+          }
+        ],
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
+      },
+      "253847407043805185_1360897918504271882": {
+        "balance": 1320,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 16,
+        "inventory": [],
+        "money": 1320,
+        "level": 1,
+        "xp": 0
+      },
+      "1173342775396286521_1360897918504271882": {
+        "balance": 1473,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 62,
+        "inventory": [],
+        "xp": 667,
+        "money": 1473,
+        "level": 1
+      },
+      "266247151355559937_1360897918504271882": {
+        "balance": 1200,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 15,
+        "inventory": [],
+        "xp": 101,
+        "money": 1200,
+        "level": 1
+      },
+      "909739750225772544_1360897918504271882": {
+        "balance": 1160,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": 0,
+        "messageCount": 20,
+        "inventory": [],
+        "xp": 232,
+        "money": 1160,
+        "level": 1
+      },
+      "723788041382264833_1360897918504271882": {
+        "balance": 1040,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": 0,
+        "messageCount": 4,
+        "inventory": [],
+        "xp": 43,
+        "money": 1040,
+        "level": 1
+      },
+      "749851490486714378_1360897918504271882": {
+        "balance": 1020,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": 0,
+        "messageCount": 2,
+        "inventory": [],
+        "xp": 21,
+        "money": 1020,
+        "level": 1
+      },
+      "1296142706149691487_1360897918504271882": {
+        "balance": 1160,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": 0,
+        "messageCount": 19,
+        "inventory": [],
+        "xp": 205,
+        "money": 1160,
+        "level": 1
+      },
+      "560058104113528843_1360897918504271882": {
+        "balance": 1000,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 0,
+        "xp": 0,
+        "inventory": [],
+        "createdAt": "2025-08-02T18:27:39.891Z",
+        "updatedAt": "2025-08-02T18:27:39.891Z",
+        "money": 1000,
+        "level": 1
+      },
+      "test123_guild456": {
+        "balance": 1000,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 0,
+        "xp": 25,
+        "inventory": [],
+        "updatedAt": "2025-08-04T14:37:34.500Z"
+      }
+    },
+    "users.json": {
+      "1360897918504271882_909739750225772544": {
+        "id": "909739750225772544",
+        "guildId": "1360897918504271882",
+        "balance": 1020,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 127,
+        "createdAt": "2025-07-15T21:36:35.062Z",
+        "updatedAt": "2025-07-15T21:36:35.062Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_1108053454519271535": {
+        "id": "1108053454519271535",
+        "guildId": "1360897918504271882",
+        "balance": 200,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 8,
+        "createdAt": "2025-07-15T21:37:36.413Z",
+        "updatedAt": "2025-07-15T21:37:36.413Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_943487722738311219": {
+        "id": "943487722738311219",
+        "guildId": "1360897918504271882",
+        "balance": 50471,
+        "karma_good": 1002,
+        "karma_bad": 1996,
+        "karmaGood": 1002,
+        "karmaBad": 1996,
+        "xp": 13,
+        "createdAt": "2025-07-16T05:26:55.738Z",
+        "updatedAt": "2025-07-17T23:25:32.572Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_1173342775396286521": {
+        "id": "1173342775396286521",
+        "guildId": "1360897918504271882",
+        "balance": 640,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 61,
+        "createdAt": "2025-07-16T11:08:54.151Z",
+        "updatedAt": "2025-07-16T11:08:54.151Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_266247151355559937": {
+        "id": "266247151355559937",
+        "guildId": "1360897918504271882",
+        "balance": 500,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 31,
+        "createdAt": "2025-07-16T11:20:06.792Z",
+        "updatedAt": "2025-07-16T11:20:06.792Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_739103557600673792": {
+        "id": "739103557600673792",
+        "guildId": "1360897918504271882",
+        "balance": 860,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 81,
+        "createdAt": "2025-07-16T13:23:50.459Z",
+        "updatedAt": "2025-07-16T13:23:50.459Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_1368723472393437304": {
+        "id": "1368723472393437304",
+        "guildId": "1360897918504271882",
+        "balance": 140,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 3,
+        "createdAt": "2025-07-16T13:34:30.464Z",
+        "updatedAt": "2025-07-16T13:34:30.464Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_1150782046181015582": {
+        "id": "1150782046181015582",
+        "guildId": "1360897918504271882",
+        "balance": 400,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 29,
+        "createdAt": "2025-07-16T13:35:01.148Z",
+        "updatedAt": "2025-07-16T13:35:01.148Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_463272211269156865": {
+        "id": "463272211269156865",
+        "guildId": "1360897918504271882",
+        "balance": 120,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 1,
+        "createdAt": "2025-07-16T13:40:28.227Z",
+        "updatedAt": "2025-07-16T13:40:28.227Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_800809417103900712": {
+        "id": "800809417103900712",
+        "guildId": "1360897918504271882",
+        "balance": 160,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 4,
+        "createdAt": "2025-07-17T21:49:36.948Z",
+        "updatedAt": "2025-07-17T21:49:36.948Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_253847407043805185": {
+        "id": "253847407043805185",
+        "guildId": "1360897918504271882",
+        "balance": 140,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 6,
+        "createdAt": "2025-07-20T21:04:29.914Z",
+        "updatedAt": "2025-07-20T21:04:29.914Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "1360897918504271882_749851490486714378": {
+        "id": "749851490486714378",
+        "guildId": "1360897918504271882",
+        "balance": 160,
+        "karma_good": 0,
+        "karma_bad": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "xp": 3,
+        "createdAt": "2025-07-20T21:19:50.309Z",
+        "updatedAt": "2025-07-20T21:19:50.309Z",
+        "username": "Utilisateur1360897918504271882",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "943487722738311219_1360897918504271882": {
+        "id": "943487722738311219",
+        "guildId": "1360897918504271882",
+        "balance": 1060,
+        "xp": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 3,
+        "username": "Utilisateur943487722738311219",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      },
+      "909739750225772544_1360897918504271882": {
+        "id": "909739750225772544",
+        "guildId": "1360897918504271882",
+        "balance": 1040,
+        "xp": 0,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 2,
+        "username": "Utilisateur909739750225772544",
+        "discriminator": "0000",
+        "joinedAt": "2025-08-04T13:33:24.220Z",
+        "isActive": true,
+        "lastSeen": "2025-08-04T13:33:24.220Z"
+      }
+    },
+    "level_users.json": {
+      "1360897918504271882_943487722738311219": {
+        "userId": "943487722738311219",
+        "guildId": "1360897918504271882",
+        "xp": 6004,
+        "level": 16,
+        "totalMessages": 105,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753620432825,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_1108053454519271535": {
+        "userId": "1108053454519271535",
+        "guildId": "1360897918504271882",
+        "xp": 17,
+        "level": 1,
+        "totalMessages": 2,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753354199602,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_463272211269156865": {
+        "userId": "463272211269156865",
+        "guildId": "1360897918504271882",
+        "xp": 934,
+        "level": 5,
+        "totalMessages": 109,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753632472182,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_739103557600673792": {
+        "userId": "739103557600673792",
+        "guildId": "1360897918504271882",
+        "xp": 500,
+        "level": 3,
+        "totalMessages": 61,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753620147304,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_528391525651185667": {
+        "userId": "528391525651185667",
+        "guildId": "1360897918504271882",
+        "xp": 40,
+        "level": 1,
+        "totalMessages": 5,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753529613901,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_1173342775396286521": {
+        "userId": "1173342775396286521",
+        "guildId": "1360897918504271882",
+        "xp": 667,
+        "level": 4,
+        "totalMessages": 72,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753632436898,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_909739750225772544": {
+        "userId": "909739750225772544",
+        "guildId": "1360897918504271882",
+        "xp": 232,
+        "level": 2,
+        "totalMessages": 23,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753632622248,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_266247151355559937": {
+        "userId": "266247151355559937",
+        "guildId": "1360897918504271882",
+        "xp": 101,
+        "level": 2,
+        "totalMessages": 10,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753523303224,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_723788041382264833": {
+        "userId": "723788041382264833",
+        "guildId": "1360897918504271882",
+        "xp": 43,
+        "level": 1,
+        "totalMessages": 4,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753628859140,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_749851490486714378": {
+        "userId": "749851490486714378",
+        "guildId": "1360897918504271882",
+        "xp": 21,
+        "level": 1,
+        "totalMessages": 2,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753529421272,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_560058104113528843": {
+        "userId": "560058104113528843",
+        "guildId": "1360897918504271882",
+        "xp": 0,
+        "level": 1,
+        "totalMessages": 0,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 0,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_1150782046181015582": {
+        "userId": "1150782046181015582",
+        "guildId": "1360897918504271882",
+        "xp": 49,
+        "level": 1,
+        "totalMessages": 4,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753618099756,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_1296142706149691487": {
+        "userId": "1296142706149691487",
+        "guildId": "1360897918504271882",
+        "xp": 205,
+        "level": 2,
+        "totalMessages": 21,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753610502122,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_1342885031856836629": {
+        "userId": "1342885031856836629",
+        "guildId": "1360897918504271882",
+        "xp": 0,
+        "level": 1,
+        "totalMessages": 0,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 0,
+        "lastVoiceTime": 0
+      },
+      "guild456_test123": {
+        "userId": "test123",
+        "guildId": "guild456",
+        "xp": 25,
+        "level": 1,
+        "totalMessages": 1,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1754318254500,
+        "lastVoiceTime": 0
+      }
+    },
+    "confessions.json": {
+      "count": 0
+    },
+    "karma_config.json": {
+      "weeklyReset": {
+        "enabled": true,
+        "dayOfWeek": 0,
+        "lastReset": null
+      }
+    },
+    "shop.json": {
+      "1360897918504271882": [
+        {
+          "id": "1753566068434",
+          "name": "Fouet",
+          "price": 50,
+          "description": "Amuse toi  bien",
+          "type": "custom",
+          "createdAt": "2025-07-26T21:41:08.434Z",
+          "createdBy": "943487722738311219"
+        },
+        {
+          "id": "1753566340743",
+          "name": "Rôle: nouveau rôletest",
+          "price": 50000,
+          "duration": 6,
+          "roleId": "1396547788384374884",
+          "type": "temp_role",
+          "createdAt": "2025-07-26T21:45:40.743Z",
+          "createdBy": "943487722738311219"
+        },
+        {
+          "id": 1753602834934,
+          "name": "Test",
+          "price": 594939,
+          "description": "Objet personnalisé",
+          "type": "custom",
+          "createdAt": "2025-07-27T07:53:54.934Z"
+        },
+        {
+          "id": "1753606461399",
+          "type": "custom",
+          "name": "Fouet",
+          "price": 50,
+          "description": "Objet personnalisé",
+          "created": "2025-07-27T08:54:21.399Z"
+        },
+        {
+          "id": "1753607865512",
+          "type": "custom",
+          "name": "Fouet",
+          "price": 500,
+          "description": "Objet personnalisé",
+          "created": "2025-07-27T09:17:45.512Z"
+        }
+      ]
+    },
+    "user_stats.json": {
+      "1360897918504271882": {
+        "909739750225772544": {
+          "messageCount": 169,
+          "lastMessage": 1753046576170
+        },
+        "380035532031393792": {
+          "messageCount": 18,
+          "lastMessage": 1752611122281
+        },
+        "749851490486714378": {
+          "messageCount": 5,
+          "lastMessage": 1753046558581
+        },
+        "1108053454519271535": {
+          "messageCount": 24,
+          "lastMessage": 1753040541429
+        },
+        "266247151355559937": {
+          "messageCount": 45,
+          "lastMessage": 1752675284581
+        },
+        "943487722738311219": {
+          "messageCount": 17,
+          "lastMessage": 1753071893028
+        },
+        "463272211269156865": {
+          "messageCount": 3,
+          "lastMessage": 1752673228245
+        },
+        "1173342775396286521": {
+          "messageCount": 61,
+          "lastMessage": 1753044457164
+        },
+        "739103557600673792": {
+          "messageCount": 81,
+          "lastMessage": 1752789465542
+        },
+        "1368723472393437304": {
+          "messageCount": 3,
+          "lastMessage": 1752673750541
+        },
+        "1150782046181015582": {
+          "messageCount": 29,
+          "lastMessage": 1752675406872
+        },
+        "800809417103900712": {
+          "messageCount": 4,
+          "lastMessage": 1752789405341
+        },
+        "253847407043805185": {
+          "messageCount": 6,
+          "lastMessage": 1753046092343
+        }
+      }
+    }
+  }
+}
