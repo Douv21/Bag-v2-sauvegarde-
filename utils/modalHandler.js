@@ -23,6 +23,9 @@ class ModalHandler {
             // Modals du système de niveaux
             'text_xp_modal',
             'voice_xp_modal',
+            'base_xp_modal',
+            'multiplier_modal',
+            'add_role_reward_modal',
             'level_for_role'
         ]);
 
@@ -43,15 +46,25 @@ class ModalHandler {
 
     // Vérifier si un modal est implémenté
     isModalImplemented(customId) {
-        // Extraire le nom de base du modal (sans paramètres)
-        const baseCustomId = customId.split('_').slice(0, 3).join('_');
-        
         // Cas spéciaux pour les modals dynamiques de niveau
         if (customId.startsWith('level_for_role_')) {
             return this.implementedModals.has('level_for_role');
         }
         
-        return this.implementedModals.has(baseCustomId);
+        // Vérifier d'abord le customId complet
+        if (this.implementedModals.has(customId)) {
+            return true;
+        }
+        
+        // Extraire le nom de base du modal (sans paramètres) - essayer différentes longueurs
+        for (let i = customId.split('_').length; i >= 2; i--) {
+            const baseCustomId = customId.split('_').slice(0, i).join('_');
+            if (this.implementedModals.has(baseCustomId)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     // Obtenir le nom convivial d'un modal

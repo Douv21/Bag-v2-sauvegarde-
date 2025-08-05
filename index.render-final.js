@@ -882,16 +882,18 @@ class RenderSolutionBot {
                                 content: `✅ Récompense ajoutée: Niveau ${level} → <@&${roleId}>`,
                                 flags: 64
                             });
-                            
+                            return;
                         } else if (interaction.customId === 'base_xp_modal') {
                             const LevelConfigHandler = require('./handlers/LevelConfigHandler');
                             const levelHandler = new LevelConfigHandler();
                             await levelHandler.handleBaseXPModal(interaction);
+                            return;
                             
                         } else if (interaction.customId === 'multiplier_modal') {
                             const LevelConfigHandler = require('./handlers/LevelConfigHandler');
                             const levelHandler = new LevelConfigHandler();
                             await levelHandler.handleMultiplierModal(interaction);
+                            return;
                             
                         } else if (interaction.customId.startsWith('level_for_role_')) {
                             // Modal pour définir le niveau requis pour un rôle
