@@ -23,7 +23,9 @@ class ModalHandler {
             // Modals du système de niveaux
             'text_xp_modal',
             'voice_xp_modal',
-            'level_for_role'
+            'level_for_role',
+            'base_xp_modal',
+            'multiplier_modal'
         ]);
 
         // Liste des modals prévues mais non implémentées
