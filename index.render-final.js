@@ -1817,6 +1817,7 @@ class RenderSolutionBot {
                             } else if (customId === 'level_formula_config_menu') {
                                 await levelHandler.handleLevelFormulaConfigAction(interaction, selectedValue);
                             }
+                        }
                     } catch (error) {
                         console.error('❌ Erreur sous-menu niveau:', error);
                         if (!interaction.replied && !interaction.deferred) {
