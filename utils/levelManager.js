@@ -39,7 +39,7 @@ class LevelManager {
                 },
                 roleRewards: [],
                 levelFormula: {
-                    baseXP: 1000,
+                    baseXP: 100,
                     multiplier: 1.5
                 },
                 leaderboard: {
@@ -102,7 +102,7 @@ class LevelManager {
             xpCooldown: 60000,
             notifications: { enabled: true, channelId: null, cardStyle: 'futuristic' },
             roleRewards: [],
-            levelFormula: { baseXP: 1000, multiplier: 1.5 },
+            levelFormula: { baseXP: 100, multiplier: 1.5 },
             leaderboard: { limit: 10 }
         };
     }
