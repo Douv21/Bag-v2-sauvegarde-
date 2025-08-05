@@ -6,36 +6,38 @@ class UnifiedBackupManager {
     constructor() {
         this.mongoAvailable = false;
         this.initialized = false;
-        this.backupStrategy = 'robust'; // 'mongo', 'robust', 'hybrid'
+        this.backupStrategy = 'mongo'; // MongoDB uniquement forcé
         
         this.init();
     }
 
     async init() {
         try {
-            console.log('🔄 Initialisation du système de sauvegarde unifié...');
+            console.log('🔄 Initialisation du système de sauvegarde MongoDB uniquement...');
             
             // Vérifier la disponibilité de MongoDB
             this.mongoAvailable = await this.checkMongoAvailability();
             
-            // Déterminer la stratégie de sauvegarde
+            // Forcer la stratégie MongoDB uniquement
             if (this.mongoAvailable) {
-                this.backupStrategy = 'hybrid'; // MongoDB + Backup local
-                console.log('✅ Stratégie: Hybride (MongoDB + Sauvegarde locale)');
+                this.backupStrategy = 'mongo'; // MongoDB uniquement
+                console.log('✅ Stratégie: MongoDB uniquement (sauvegarde locale désactivée)');
             } else {
-                this.backupStrategy = 'robust'; // Sauvegarde locale uniquement
-                console.log('📁 Stratégie: Sauvegarde locale robuste uniquement');
+                console.log('⚠️ MongoDB temporairement indisponible - tentative de reconnexion lors des sauvegardes');
+                this.backupStrategy = 'mongo'; // Forcer MongoDB même si temporairement indisponible
             }
             
             // Vérifier l'intégrité des données au démarrage
             await this.performStartupCheck();
             
             this.initialized = true;
-            console.log('✅ Système de sauvegarde unifié initialisé');
+            console.log('✅ Système de sauvegarde MongoDB initialisé');
             
         } catch (error) {
-            console.error('❌ Erreur initialisation système de sauvegarde:', error);
-            this.backupStrategy = 'robust'; // Fallback vers sauvegarde locale
+            console.error('❌ Erreur initialisation système de sauvegarde MongoDB:', error);
+            console.error('❌ Vérifiez vos variables d\'environnement MongoDB');
+            // Continuer avec la stratégie MongoDB malgré l'erreur d'initialisation
+            this.backupStrategy = 'mongo';
             this.initialized = true;
         }
     }
@@ -154,32 +156,19 @@ class UnifiedBackupManager {
                 success: false
             };
 
-            switch (this.backupStrategy) {
-                case 'mongo':
-                    results.mongo = await mongoBackup.backupToMongo();
-                    results.success = results.mongo?.success || false;
-                    break;
-                    
-                case 'robust':
-                    results.local = await robustBackup.createFullBackup();
-                    results.success = results.local?.success || false;
-                    break;
-                    
-                case 'hybrid':
-                    // Sauvegarder sur les deux systèmes
-                    results.local = await robustBackup.createFullBackup();
-                    results.mongo = await mongoBackup.backupToMongo();
-                    results.success = results.local?.success || results.mongo?.success || false;
-                    
-                    if (results.local?.success && results.mongo?.success) {
-                        console.log('✅ Sauvegarde hybride complète réussie');
-                    } else if (results.local?.success) {
-                        console.log('✅ Sauvegarde locale réussie (MongoDB échoué)');
-                    } else if (results.mongo?.success) {
-                        console.log('✅ Sauvegarde MongoDB réussie (locale échouée)');
-                    }
-                    break;
-            }
+                         // MongoDB uniquement - pas de sauvegarde locale
+             if (this.backupStrategy === 'mongo') {
+                 results.mongo = await mongoBackup.backupToMongo();
+                 results.success = results.mongo?.success || false;
+                 
+                 if (results.success) {
+                     console.log('✅ Sauvegarde MongoDB réussie');
+                 } else {
+                     console.log('❌ Échec sauvegarde MongoDB');
+                 }
+             } else {
+                 throw new Error(`Stratégie non supportée: ${this.backupStrategy}`);
+             }
 
             if (results.success) {
                 console.log(`✅ Sauvegarde ${this.backupStrategy} terminée`);
@@ -231,30 +220,26 @@ class UnifiedBackupManager {
         }
     }
 
-    // Sauvegarde d'urgence prioritaire
+    // Sauvegarde d'urgence MongoDB uniquement
     async emergencyBackup() {
         try {
-            console.log('🚨 SAUVEGARDE D\'URGENCE DÉCLENCHÉE');
+            console.log('🚨 SAUVEGARDE D\'URGENCE MONGODB');
             
             const results = {
-                emergency: null,
                 mongo: null,
                 success: false
             };
 
-            // 1. Sauvegarde d'urgence locale (rapide)
-            results.emergency = await robustBackup.emergencyBackup();
-            
-            // 2. Tentative MongoDB si disponible (peut être lent)
-            if (this.mongoAvailable) {
-                try {
-                    results.mongo = await mongoBackup.backupToMongo();
-                } catch (error) {
-                    console.log('⚠️ Sauvegarde MongoDB d\'urgence échouée:', error.message);
-                }
+            // Sauvegarde d'urgence MongoDB uniquement - forcer la tentative
+            try {
+                results.mongo = await mongoBackup.backupToMongo();
+                results.success = results.mongo?.success || false;
+            } catch (error) {
+                console.log('❌ Sauvegarde MongoDB d\'urgence échouée:', error.message);
+                results.success = false;
             }
             
-            results.success = results.emergency?.success || results.mongo?.success || false;
+            results.success = results.mongo?.success || false;
             
             if (results.success) {
                 console.log('✅ Sauvegarde d\'urgence réussie');
@@ -283,7 +268,7 @@ class UnifiedBackupManager {
                 },
                 data: await dataValidator.generateHealthReport(),
                 backups: {
-                    local: await robustBackup.listBackups()
+                    mongo: this.mongoAvailable ? 'Disponible' : 'Indisponible'
                 }
             };
             

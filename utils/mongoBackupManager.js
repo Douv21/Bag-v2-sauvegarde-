@@ -30,7 +30,7 @@ class MongoBackupManager {
         }
         
         this.connectionString = password ? 
-            `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${clusterUrl}/bagbot?retryWrites=true&w=majority&authSource=admin` : 
+            `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${clusterUrl}/bagbot?retryWrites=true&w=majority&authSource=admin&readPreference=secondaryPreferred&maxPoolSize=20&serverSelectionTimeoutMS=5000&socketTimeoutMS=45000` : 
             null;
         
         // Debug de connexion
@@ -45,6 +45,48 @@ class MongoBackupManager {
             console.log(`📡 String de connexion: mongodb+srv://${username}:***@${clusterUrl}/bagbot`);
         }
         
+        // Mapping fichier -> collection individuelle pour une séparation claire
+        this.fileCollectionMapping = {
+            // Fichiers utilisateurs - collections séparées
+            'users.json': 'backup_users_profiles',
+            'user_stats.json': 'backup_user_statistics',
+            'level_users.json': 'backup_user_levels',
+            
+            // Fichiers économie - collections séparées
+            'economy.json': 'backup_economy_data',
+            'shop.json': 'backup_shop_items',
+            
+            // Fichiers système - collections séparées
+            'config.json': 'backup_main_config',
+            'level_config.json': 'backup_level_system_config',
+            'karma_config.json': 'backup_karma_system_config',
+            'staff_config.json': 'backup_staff_configuration',
+            
+            // Fichiers fonctionnalités - collections séparées
+            'confessions.json': 'backup_confessions_system',
+            'counting.json': 'backup_counting_game',
+            'autothread.json': 'backup_autothread_config',
+            'actions.json': 'backup_actions_config',
+            
+            // Fichiers temporels - collections séparées
+            'daily.json': 'backup_daily_system',
+            'cooldowns.json': 'backup_cooldowns_data',
+            'daily_cooldowns.json': 'backup_daily_cooldowns',
+            'message_cooldowns.json': 'backup_message_cooldowns',
+            'message_rewards.json': 'backup_message_rewards',
+            
+            // Fichiers logs et erreurs - collections séparées
+            'error_logs.json': 'backup_error_logs',
+            'stability_reports.json': 'backup_stability_reports',
+            'mobile_restart_alert.json': 'backup_mobile_alerts',
+            'mobile_test.json': 'backup_mobile_test_data',
+            
+            // Fichiers objets - collections séparées
+            'gifted_objects.json': 'backup_gifted_objects',
+            'levels.json': 'backup_levels_data'
+        };
+        
+        // Collections génériques (ancienne méthode pour compatibilité)
         this.collections = {
             users: 'users',
             economy: 'economy', 
@@ -173,25 +215,8 @@ class MongoBackupManager {
                         // Scanner sous-dossier (sauf backups et logs)
                         scanDirectory(fullPath, relativePath);
                     } else if (stat.isFile() && item.endsWith('.json')) {
-                        // Déterminer la collection basée sur le type de fichier
-                        let collection = 'general_config';
-                        
-                        if (item.includes('economy')) collection = 'economy';
-                        else if (item.includes('level')) collection = 'level_config';
-                        else if (item.includes('confession')) collection = 'confessions';
-                        else if (item.includes('counting')) collection = 'counting';
-                        else if (item.includes('autothread')) collection = 'autothread';
-                        else if (item.includes('shop')) collection = 'shop';
-                        else if (item.includes('karma')) collection = 'karma';
-                        else if (item.includes('daily')) collection = 'daily_config';
-                        else if (item.includes('message')) collection = 'message_rewards';
-                        else if (item.includes('action')) collection = 'actions_config';
-                        else if (item.includes('user')) collection = 'users';
-                        else if (item.includes('staff')) collection = 'staff_config';
-                        else if (item.includes('cooldown')) collection = 'cooldowns';
-                        else if (item.includes('config')) collection = 'main_config';
-                        else if (item.includes('level_users')) collection = 'level_users';
-                        
+                        // Utiliser le mapping individuel pour chaque fichier
+                        const collection = this.fileCollectionMapping[item] || `backup_generic_${item.replace('.json', '')}`;
                         allFiles[relativePath] = collection;
                     }
                 }
@@ -321,10 +346,24 @@ class MongoBackupManager {
             
             console.log(`📁 Collections MongoDB disponibles: ${availableCollections.join(', ')}`);
 
-            // Restaurer fichier spécifique ou tous les fichiers
-            const filesToRestore = specificFile ? 
-                { [specificFile]: this.localFiles[specificFile] || 'general_config' } : 
-                this.localFiles;
+            // Restaurer fichier spécifique ou tous les fichiers avec mapping individualisé
+            let filesToRestore;
+            if (specificFile) {
+                const collection = this.fileCollectionMapping[specificFile] || 
+                                 this.localFiles[specificFile] || 
+                                 `backup_generic_${specificFile.replace('.json', '')}`;
+                filesToRestore = { [specificFile]: collection };
+            } else {
+                // Utiliser le mapping individualisé en priorité
+                filesToRestore = { ...this.fileCollectionMapping };
+                
+                // Ajouter les fichiers de l'ancien mapping s'ils ne sont pas déjà dans le nouveau
+                for (const [filename, collection] of Object.entries(this.localFiles)) {
+                    if (!filesToRestore[filename]) {
+                        filesToRestore[filename] = collection;
+                    }
+                }
+            }
 
             for (const [filename, collection] of Object.entries(filesToRestore)) {
                 try {
