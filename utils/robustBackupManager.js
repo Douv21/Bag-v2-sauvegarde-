@@ -51,8 +51,17 @@ class RobustBackupManager {
         }
     }
 
-    // Créer une sauvegarde complète avec compression
+    // Créer une sauvegarde complète avec compression - DÉSACTIVÉ (MongoDB uniquement)
     async createFullBackup(label = null) {
+        console.log('⚠️ Sauvegarde locale désactivée - utilisation de MongoDB uniquement');
+        return { 
+            success: false, 
+            error: 'Sauvegarde locale désactivée - MongoDB utilisé à la place',
+            filesBackedUp: 0,
+            compressionRatio: '0%'
+        };
+        
+        /* CODE DÉSACTIVÉ - Sauvegarde locale
         try {
             console.log('🗜️ Création sauvegarde complète...');
             
@@ -131,6 +140,7 @@ class RobustBackupManager {
             console.error('❌ Erreur création sauvegarde:', error);
             return { success: false, error: error.message };
         }
+        */
     }
 
     // Restaurer depuis une sauvegarde
@@ -303,8 +313,16 @@ class RobustBackupManager {
         }
     }
 
-    // Sauvegarde d'urgence des fichiers critiques
+    // Sauvegarde d'urgence des fichiers critiques - DÉSACTIVÉ
     async emergencyBackup() {
+        console.log('⚠️ Sauvegarde d\'urgence locale désactivée - utilisation de MongoDB uniquement');
+        return { 
+            success: false, 
+            error: 'Sauvegarde d\'urgence locale désactivée - MongoDB utilisé à la place',
+            filesSaved: 0
+        };
+        
+        /* CODE DÉSACTIVÉ - Sauvegarde d'urgence locale
         try {
             console.log('🚨 Sauvegarde d\'urgence en cours...');
             
@@ -343,6 +361,7 @@ class RobustBackupManager {
             console.error('❌ Erreur sauvegarde d\'urgence:', error);
             return { success: false, error: error.message };
         }
+        */
     }
 
     // Démarrer la sauvegarde automatique
