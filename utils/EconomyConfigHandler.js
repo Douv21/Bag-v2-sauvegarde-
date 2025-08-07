@@ -164,7 +164,7 @@ class EconomyConfigHandler {
                 { label: '🎨 Objets Personnalisés', value: 'objets', description: 'Créer des objets uniques' },
                 { label: '⌛ Rôles Temporaires', value: 'roles_temp', description: 'Rôles avec durée limitée' },
                 { label: '⭐ Rôles Permanents', value: 'roles_perm', description: 'Rôles définitifs' },
-                { label: '💸 Remises Karma', value: 'remises', description: 'Réductions basées sur karma' },
+                { label: '💸 Remises Réputation', value: 'remises', description: 'Réductions basées sur la réputation' },
                 { label: '🔧 Modifier Objets Existants', value: 'manage_objets', description: 'Gérer objets créés' },
                 { label: '🗑️ Supprimer Articles', value: 'delete_articles', description: 'Supprimer objets/rôles' },
                 { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
@@ -261,14 +261,14 @@ class EconomyConfigHandler {
     async showRemisesMenu(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#27ae60')
-            .setTitle('💸 Remises Karma')
-            .setDescription('Gérer les remises basées sur le karma :');
+            .setTitle('💸 Remises Réputation')
+            .setDescription('Gérer les remises basées sur la réputation :');
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('remises_karma_select')
             .setPlaceholder('Choisissez une action...')
             .addOptions([
-                { label: '➕ Créer Remise', value: 'create', description: 'Créer une nouvelle remise karma' },
+                { label: '➕ Créer Remise', value: 'create', description: 'Créer une nouvelle remise réputation' },
                 { label: '✏️ Modifier Remise', value: 'modify', description: 'Modifier une remise existante' },
                 { label: '🗑️ Supprimer Remise', value: 'delete', description: 'Supprimer une remise' },
                 { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour à la boutique' }
@@ -435,7 +435,7 @@ class EconomyConfigHandler {
     async showRemiseModal(interaction) {
         const modal = new ModalBuilder()
             .setCustomId('remise_karma_modal')
-            .setTitle('Créer une Remise Karma')
+            .setTitle('Créer une Remise Réputation')
             .addComponents(
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
@@ -447,18 +447,18 @@ class EconomyConfigHandler {
                 ),
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
-                        .setCustomId('karma_min')
-                        .setLabel('Karma minimum requis')
+                        .setCustomId('remise_karma')
+                        .setLabel('Réputation minimale requise (-999 à +999)')
                         .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 10')
+                        .setPlaceholder('Ex: 100')
                         .setRequired(true)
                 ),
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
-                        .setCustomId('pourcentage_remise')
-                        .setLabel('Pourcentage de remise (%)')
+                        .setCustomId('remise_pourcentage')
+                        .setLabel('Pourcentage de remise (1-99)')
                         .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 20')
+                        .setPlaceholder('Ex: 10')
                         .setRequired(true)
                 )
             );
@@ -503,14 +503,14 @@ class EconomyConfigHandler {
     async handleRemiseModal(interaction) {
         try {
             const nom = interaction.fields.getTextInputValue('remise_nom');
-            const karmaMin = parseInt(interaction.fields.getTextInputValue('karma_min'));
-            const pourcentage = parseInt(interaction.fields.getTextInputValue('pourcentage_remise'));
+            const karmaMin = parseInt(interaction.fields.getTextInputValue('remise_karma'));
+            const pourcentage = parseInt(interaction.fields.getTextInputValue('remise_pourcentage'));
 
             // Sauvegarder la remise
             await this.saveKarmaDiscount(interaction.guild.id, nom, karmaMin, pourcentage);
 
             await interaction.reply({
-                content: `✅ Remise "${nom}" créée : ${pourcentage}% pour ${karmaMin} karma minimum !`,
+                content: `✅ Remise "${nom}" créée : ${pourcentage}% pour ${karmaMin} de réputation minimum !`,
                 flags: 64
             });
 
@@ -538,7 +538,7 @@ class EconomyConfigHandler {
         
         discountsData[guildId].push(remise);
         await this.dataManager.saveData('karma_discounts', discountsData);
-        console.log(`✅ Remise karma créée:`, remise);
+        console.log(`✅ Remise réputation créée:`, remise);
     }
 
     async handleRoleConfigModal(interaction) {
