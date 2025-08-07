@@ -2,8 +2,8 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('crime')
-        .setDescription('Commettre un crime pour beaucoup d\'argent (Action très négative 😈)'),
+        .setName('coup-de-folie')
+        .setDescription('Faire un coup de folie pour beaucoup de plaisir (Action très pimentée 😈)'),
 
     async execute(interaction, dataManager) {
         try {
@@ -24,7 +24,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /crime est actuellement désactivée.',
+                    content: '❌ La commande /coup-de-folie est actuellement désactivée.',
                     flags: 64
                 });
                 return;

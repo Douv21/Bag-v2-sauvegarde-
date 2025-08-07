@@ -415,27 +415,27 @@ class BAGDashboard {
                     <div class="config-item">
                         <label class="config-label">Travail - Récompense min</label>
                         <input type="number" class="config-input" id="workRewardMin" value="${config.workReward.min}" min="1" max="1000">
-                        <p class="config-description">Montant minimum pour /travailler</p>
+                        <p class="config-description">Montant minimum pour /charmer</p>
                     </div>
                     <div class="config-item">
                         <label class="config-label">Travail - Récompense max</label>
                         <input type="number" class="config-input" id="workRewardMax" value="${config.workReward.max}" min="1" max="1000">
-                        <p class="config-description">Montant maximum pour /travailler</p>
+                        <p class="config-description">Montant maximum pour /charmer</p>
                     </div>
                     <div class="config-item">
                         <label class="config-label">Crime - Récompense min</label>
                         <input type="number" class="config-input" id="crimeRewardMin" value="${config.crimeReward.min}" min="1" max="1000">
-                        <p class="config-description">Gain minimum pour /crime</p>
+                        <p class="config-description">Gain minimum pour /coup-de-folie</p>
                     </div>
                     <div class="config-item">
                         <label class="config-label">Crime - Récompense max</label>
                         <input type="number" class="config-input" id="crimeRewardMax" value="${config.crimeReward.max}" min="1" max="1000">
-                        <p class="config-description">Gain maximum pour /crime</p>
+                        <p class="config-description">Gain maximum pour /coup-de-folie</p>
                     </div>
                     <div class="config-item">
                         <label class="config-label">Limite de pari</label>
                         <input type="number" class="config-input" id="betLimit" value="${config.betLimit}" min="100" max="100000">
-                        <p class="config-description">Montant maximum pour /parier</p>
+                        <p class="config-description">Montant maximum pour /oser</p>
                     </div>
                 </div>
                 <div class="action-buttons">

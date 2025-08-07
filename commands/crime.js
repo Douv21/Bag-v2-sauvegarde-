@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('crime')
+        .setName('coup-de-folie')
         .setDescription('Faire un coup de folie pour beaucoup de plaisir (Action très pimentée 😈)'),
 
     async execute(interaction, dataManager) {
@@ -12,7 +12,8 @@ module.exports = {
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const actionConfig = economyConfig.actions?.crime || {
+            const actions = economyConfig.actions || {};
+            const actionConfig = (actions['coup-de-folie'] || actions.coup_de_folie || actions.crime) || {
                 enabled: true,
                 minReward: 200,
                 maxReward: 600,
@@ -156,7 +157,7 @@ module.exports = {
             }
             
         } catch (error) {
-            console.error('❌ Erreur crime:', error);
+            console.error('❌ Erreur coup-de-folie:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64

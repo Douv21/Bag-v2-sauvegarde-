@@ -2,8 +2,8 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('pecher')
-        .setDescription('Aller à la pêche pour gagner de l\'argent (Action positive 😇)'),
+        .setName('flirter')
+        .setDescription('Flirter pour gagner du plaisir (Action positive 😇)'),
 
     async execute(interaction, dataManager) {
         try {
@@ -24,7 +24,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /pecher est actuellement désactivée.',
+                    content: '❌ La commande /flirter est actuellement désactivée.',
                     flags: 64
                 });
                 return;

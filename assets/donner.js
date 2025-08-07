@@ -2,15 +2,15 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('donner')
-        .setDescription('Donner de l\'argent à un membre (Action très positive 😇)')
+        .setName('offrir')
+        .setDescription('Offrir du plaisir à un membre (Action très positive 😇)')
         .addUserOption(option =>
             option.setName('membre')
-                .setDescription('Membre à qui donner de l\'argent')
+                .setDescription('Membre à qui offrir du plaisir')
                 .setRequired(true))
         .addIntegerOption(option =>
             option.setName('montant')
-                .setDescription('Montant à donner (minimum 10€)')
+                .setDescription('Montant à offrir (minimum 10💋)')
                 .setRequired(true)
                 .setMinValue(10)),
 
@@ -23,14 +23,14 @@ module.exports = {
             
             if (targetUser.id === userId) {
                 return await interaction.reply({
-                    content: '❌ Vous ne pouvez pas vous donner de l\'argent à vous-même !',
+                    content: '❌ Vous ne pouvez pas vous offrir de l\'argent à vous-même !',
                     flags: 64
                 });
             }
             
             if (targetUser.bot) {
                 return await interaction.reply({
-                    content: '❌ Vous ne pouvez pas donner d\'argent à un bot !',
+                    content: '❌ Vous ne pouvez pas offrir d\'argent à un bot !',
                     flags: 64
                 });
             }
@@ -47,7 +47,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /donner est actuellement désactivée.',
+                    content: '❌ La commande /offrir est actuellement désactivée.',
                     flags: 64
                 });
                 return;

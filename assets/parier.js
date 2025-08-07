@@ -2,11 +2,11 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('parier')
-        .setDescription('Parier de l\'argent (Action négative 😈)')
+        .setName('oser')
+        .setDescription('Oser pour gagner du plaisir (Action pimentée 😈)')
         .addIntegerOption(option =>
             option.setName('montant')
-                .setDescription('Montant à parier (minimum 10€)')
+                .setDescription('Montant à oser (minimum 10💋)')
                 .setRequired(true)
                 .setMinValue(10)),
 
@@ -29,7 +29,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /parier est actuellement désactivée.',
+                    content: '❌ La commande /oser est actuellement désactivée.',
                     flags: 64
                 });
                 return;

@@ -47,12 +47,12 @@ BAG v2 est un bot Discord complet en français offrant un système de confession
 
 #### 💰 Économie
 - `/economie [utilisateur]` - Voir le profil économique (balance, karma, streak)
-- `/travailler` - Travailler pour gagner de l'argent (Action positive 😇)
-- `/pecher` - Aller à la pêche pour gagner de l'argent (Action positive 😇)
-- `/donner <membre> <montant>` - Donner de l'argent à un membre (Action très positive 😇)
-- `/voler [membre]` - Tenter de voler de l'argent (Action négative 😈)
-- `/crime` - Commettre un crime pour beaucoup d'argent (Action très négative 😈)
-- `/parier <montant>` - Parier de l'argent (Action négative 😈)
+- `/charmer` - Charmer pour gagner du plaisir (Action positive 😇)
+- `/flirter` - Flirter pour gagner du plaisir (Action positive 😇)
+- `/offrir <membre> <montant>` - Offrir du plaisir à un membre (Action très positive 😇)
+- `/seduire [membre]` - Tenter de séduire (Action négative 😈)
+- `/coup-de-folie` - Faire un coup de folie (Action très négative 😈)
+- `/oser <montant>` - Oser pour tenter sa chance (Action négative 😈)
 - `/daily` - Récupérer sa récompense quotidienne avec streak
 
 #### 🛒 Boutique & Objets

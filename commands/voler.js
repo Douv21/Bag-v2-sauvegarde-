@@ -2,11 +2,11 @@ const { SlashCommandBuilder, EmbedBuilder, UserSelectMenuBuilder, ActionRowBuild
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('voler')
+        .setName('seduire')
         .setDescription('Tenter de séduire (Action pimentée)')
         .addUserOption(option =>
             option.setName('cible')
-                .setDescription('Utilisateur à voler (optionnel - aléatoire si non spécifié)')
+                .setDescription('Utilisateur à séduire (optionnel - aléatoire si non spécifié)')
                 .setRequired(false)),
 
     async execute(interaction, dataManager) {
@@ -17,7 +17,7 @@ module.exports = {
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const actionConfig = economyConfig.actions?.voler || {
+            const actionConfig = (economyConfig.actions?.seduire || economyConfig.actions?.voler) || {
                 enabled: true,
                 successChance: 0.7,
                 minSteal: 10,
@@ -30,7 +30,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /voler est actuellement désactivée.',
+                    content: '❌ La commande /seduire est actuellement désactivée.',
                     flags: 64
                 });
                 return;
@@ -45,7 +45,7 @@ module.exports = {
             if (userData.lastSteal && (now - userData.lastSteal) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastSteal)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir voler à nouveau.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir séduire à nouveau.`,
                     flags: 64
                 });
             }
@@ -208,7 +208,7 @@ module.exports = {
             }
             
         } catch (error) {
-            console.error('❌ Erreur voler:', error);
+            console.error('❌ Erreur seduire:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64

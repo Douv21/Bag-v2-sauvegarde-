@@ -2,11 +2,11 @@ const { SlashCommandBuilder, EmbedBuilder, UserSelectMenuBuilder, ActionRowBuild
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('voler')
-        .setDescription('Tenter de voler de l\'argent (Action négative)')
+        .setName('seduire')
+        .setDescription('Tenter de séduire (Action pimentée)')
         .addUserOption(option =>
             option.setName('cible')
-                .setDescription('Utilisateur à voler (optionnel - aléatoire si non spécifié)')
+                .setDescription('Utilisateur à séduire (optionnel - aléatoire si non spécifié)')
                 .setRequired(false)),
 
     async execute(interaction, dataManager) {
@@ -30,7 +30,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /voler est actuellement désactivée.',
+                    content: '❌ La commande /seduire est actuellement désactivée.',
                     flags: 64
                 });
                 return;

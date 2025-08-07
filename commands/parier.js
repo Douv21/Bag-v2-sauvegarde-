@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('parier')
+        .setName('oser')
         .setDescription('Oser pour gagner du plaisir (Action pimentée 😈)')
         .addIntegerOption(option =>
             option.setName('montant')
@@ -18,7 +18,7 @@ module.exports = {
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const actionConfig = economyConfig.actions?.parier || {
+            const actionConfig = (economyConfig.actions?.oser || economyConfig.actions?.parier) || {
                 enabled: true,
                 winChance: 0.45,
                 cooldown: 1800000, // 30 minutes
@@ -29,7 +29,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /parier est actuellement désactivée.',
+                    content: '❌ La commande /oser est actuellement désactivée.',
                     flags: 64
                 });
                 return;
@@ -44,7 +44,7 @@ module.exports = {
             if (userData.lastBet && (now - userData.lastBet) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastBet)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir parier à nouveau.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir oser à nouveau.`,
                     flags: 64
                 });
             }
@@ -176,7 +176,7 @@ module.exports = {
             }
             
         } catch (error) {
-            console.error('❌ Erreur parier:', error);
+            console.error('❌ Erreur oser:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64
