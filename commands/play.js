@@ -30,7 +30,17 @@ module.exports = {
 
     const query = interaction.options.getString('query', true);
 
-    await interaction.deferReply();
+    let deferred = false;
+    try {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      deferred = true;
+    } catch (deferErr) {
+      // Si on ne peut pas accuser réception, on arrête proprement
+      try {
+        await interaction.reply({ content: '❌ Impossible d\'accuser réception de la commande (permissions ou latence).', flags: MessageFlags.Ephemeral });
+      } catch {}
+      return;
+    }
 
     const client = interaction.client;
     const distube = getMusic(client);
@@ -49,12 +59,18 @@ module.exports = {
         new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_MUSIC_PLAY')), timeoutMs))
       ]);
 
-      await interaction.editReply({ content: `🔥 Je lance: ${query}` });
+      if (deferred) {
+        await interaction.editReply({ content: `🔥 Je lance: ${query}` });
+      }
     } catch (err) {
       const msg = err && err.message === 'TIMEOUT_MUSIC_PLAY'
         ? '⏳ La connexion vocale ou la récupération de la musique est trop lente. Réessaie dans un instant et vérifie mes permissions/latence.'
         : `❌ Impossible de jouer: ${String(err.message || err)}`;
-      await interaction.editReply({ content: msg }).catch(() => {});
+      if (deferred) {
+        await interaction.editReply({ content: msg }).catch(() => {});
+      } else {
+        await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => {});
+      }
     }
   }
 };
