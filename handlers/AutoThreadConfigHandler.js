@@ -37,7 +37,7 @@ class AutoThreadConfigHandler {
                 },
                 { 
                     name: '🏷️ Nom des Threads', 
-                    value: `\`${guildConfig.threadName || 'Thread automatique'}\``, 
+                    value: `\`${guildConfig.threadName === '__RANDOM_NSFW_BG__' ? 'Aléatoire NSFW (Boys & Girls)' : (guildConfig.threadName || 'Thread automatique')}\``, 
                     inline: true 
                 },
                 { 
@@ -343,6 +343,12 @@ class AutoThreadConfigHandler {
                     description: 'Ouvrir un modal pour saisir un nom custom',
                     value: 'custom_modal',
                     emoji: '✏️'
+                },
+                {
+                    label: 'Nom aléatoire (NSFW 18+)',
+                    description: 'Thème « Boys & Girls » 18+ (≈10 noms aléatoires)',
+                    value: 'random_nsfw_bg',
+                    emoji: '🔞'
                 }
             ]);
 
@@ -378,8 +384,26 @@ class AutoThreadConfigHandler {
 
             await interaction.showModal(modal);
         } else {
+            if (selectedValue === 'random_nsfw_bg') {
+                config[guildId].threadName = '__RANDOM_NSFW_BG__';
+                config[guildId].nsfw = true;
+                await this.dataManager.saveData('autothread.json', config);
+
+                const embed = new EmbedBuilder()
+                    .setColor('#00ff00')
+                    .setTitle('✅ Mode aléatoire NSFW activé')
+                    .setDescription('Les threads auront un nom aléatoire (thème 18+). Utilisez cela dans des canaux NSFW uniquement.');
+
+                await interaction.update({ embeds: [embed], components: [] });
+                
+                setTimeout(() => {
+                    this.handleMainConfig(interaction).catch(console.error);
+                }, 2000);
+                return;
+            }
             // Utiliser la valeur sélectionnée directement
             config[guildId].threadName = selectedValue;
+            config[guildId].nsfw = false;
             await this.dataManager.saveData('autothread.json', config);
 
             const embed = new EmbedBuilder()
@@ -416,6 +440,7 @@ class AutoThreadConfigHandler {
         }
         
         config[guildId].threadName = threadName;
+        config[guildId].nsfw = false;
         await this.dataManager.saveData('autothread.json', config);
 
         const embed = new EmbedBuilder()
@@ -532,7 +557,7 @@ class AutoThreadConfigHandler {
             .addFields([
                 { name: '⚡ Statut', value: guildConfig.enabled ? '✅ Activé' : '❌ Désactivé', inline: true },
                 { name: '📝 Canaux', value: `${guildConfig.channels.length}`, inline: true },
-                { name: '🏷️ Nom Thread', value: guildConfig.threadName, inline: true },
+                { name: '🏷️ Nom Thread', value: (guildConfig.threadName === '__RANDOM_NSFW_BG__' ? 'Aléatoire NSFW (Boys & Girls)' : guildConfig.threadName), inline: true },
                 { name: '🗃️ Archivage', value: `${guildConfig.archiveTime} min`, inline: true },
                 { name: '🐌 Slow Mode', value: guildConfig.slowMode === 0 ? 'Désactivé' : `${guildConfig.slowMode}s`, inline: true }
             ]);

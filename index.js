@@ -449,20 +449,48 @@ class BagBotRender {
             // Vérifier que c'est un canal texte et pas déjà un thread
             if (message.channel.isThread() || message.channel.type !== 0) return;
             
-            // Créer le nom du thread en remplaçant les variables
-            let threadName = autoThreadConfig.threadName || 'Discussion - {user}';
-            threadName = threadName
-                .replace('{user}', message.author.displayName || message.author.username)
+            // Charger éventuellement une configuration dédiée autothread.json
+            const autoThreadFile = await this.dataManager.loadData('autothread.json', {});
+            const mergedAutoThread = autoThreadFile[guildId] || autoThreadConfig;
+            if (!mergedAutoThread || !mergedAutoThread.enabled) return;
+
+            // Si mode NSFW activé et canal non NSFW, on évite de créer le thread
+            if (mergedAutoThread.nsfw === true && message.channel.nsfw !== true) {
+                return;
+            }
+
+            // Générer le nom du thread
+            let threadNameTemplate = mergedAutoThread.threadName || 'Discussion - {user}';
+            if (threadNameTemplate === '__RANDOM_NSFW_BG__') {
+                const randomNames = [
+                    'Boys & Girls 18+ - {user}',
+                    'BG Lounge 18+ - {channel}',
+                    'Boys x Girls After Dark 18+',
+                    'Spicy Boys & Girls 18+ - {user}',
+                    'Late Night B&G 18+ - {channel}',
+                    'Private B&G Lounge 18+',
+                    'Red Room B&G 18+ - {user}',
+                    'Forbidden B&G Talk 18+ - {channel}',
+                    'Nocturne B&G 18+ - {user}',
+                    'Heatwave B&G 18+'
+                ];
+                threadNameTemplate = randomNames[Math.floor(Math.random() * randomNames.length)];
+            }
+
+            // Remplacer les variables
+            let threadName = threadNameTemplate
+                .replace('{user}', message.member?.displayName || message.author.username)
                 .replace('{channel}', message.channel.name)
-                .replace('{date}', new Date().toLocaleDateString('fr-FR'));
-            
+                .replace('{date}', new Date().toLocaleDateString('fr-FR'))
+                .replace('{time}', new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+
             // Limiter le nom à 100 caractères (limite Discord)
             threadName = threadName.substring(0, 100);
             
             // Créer le thread
             const thread = await message.startThread({
                 name: threadName,
-                autoArchiveDuration: autoThreadConfig.archiveTime || 60,
+                autoArchiveDuration: mergedAutoThread.archiveTime || 60,
                 reason: `Auto-thread créé par ${message.author.tag}`
             });
             

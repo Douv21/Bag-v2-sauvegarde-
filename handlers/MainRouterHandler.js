@@ -586,7 +586,12 @@ class MainRouterHandler {
                 console.log('Appel autothread handleThreadNameSelection...');
                 await handler.handleThreadNameSelection(interaction);
                 return true;
-                
+            
+            case 'autothread_name_modal':
+                console.log('Appel autothread handleThreadNameModal...');
+                await handler.handleThreadNameModal(interaction);
+                return true;
+             
             case 'autothread_archive':
                 console.log('Appel autothread handleArchive...');
                 await handler.handleArchive(interaction);
