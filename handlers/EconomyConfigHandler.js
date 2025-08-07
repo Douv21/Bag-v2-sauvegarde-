@@ -72,6 +72,49 @@ class EconomyConfigHandler {
             .setTitle(`⚙️ Configuration - ${action.charAt(0).toUpperCase() + action.slice(1)}`)
             .setDescription('Choisissez le paramètre à modifier :');
 
+        // Charger et afficher les valeurs actuelles si disponibles
+        try {
+            const economyConfig = await this.dataManager.loadData('economy.json', {});
+            const actionConfig = (economyConfig.actions && economyConfig.actions[action]) || {};
+
+            const minAmount = (actionConfig.montant && actionConfig.montant.minAmount) ?? actionConfig.minReward;
+            const maxAmount = (actionConfig.montant && actionConfig.montant.maxAmount) ?? actionConfig.maxReward;
+
+            let cooldownValue = actionConfig.cooldown;
+            if (cooldownValue && typeof cooldownValue === 'object') {
+                cooldownValue = cooldownValue.cooldown;
+            }
+            if (typeof cooldownValue === 'number' && cooldownValue > 10000) {
+                cooldownValue = Math.round(cooldownValue / 1000); // convertir ms -> s
+            }
+
+            const goodKarma = (actionConfig.karma && actionConfig.karma.goodKarma) ?? actionConfig.goodKarma;
+            const badKarma = (actionConfig.karma && actionConfig.karma.badKarma) ?? actionConfig.badKarma;
+
+            const fields = [];
+            fields.push({
+                name: '💰 Montant',
+                value: (typeof minAmount === 'number' && typeof maxAmount === 'number') ? `${minAmount}💋 - ${maxAmount}💋` : 'Non défini',
+                inline: true
+            });
+            fields.push({
+                name: '⏰ Cooldown (sec)',
+                value: (typeof cooldownValue === 'number') ? `${cooldownValue}s` : 'Non défini',
+                inline: true
+            });
+            fields.push({
+                name: '⚖️ Karma (😇/😈)',
+                value: (typeof goodKarma === 'number' || typeof badKarma === 'number') ? `${goodKarma ?? 0} / ${badKarma ?? 0}` : 'Non défini',
+                inline: true
+            });
+
+            if (fields.length > 0) {
+                embed.addFields(fields);
+            }
+        } catch (e) {
+            // silencieux: pas de champs si erreur
+        }
+
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId(`economy_action_config_${action}`)
             .setPlaceholder('Paramètre à configurer...')
@@ -107,58 +150,82 @@ class EconomyConfigHandler {
     }
 
     async showActionConfigModal(interaction, action, configType) {
+        // Préparer valeurs existantes pour pré-remplissage
+        let existing = {};
+        try {
+            const economyConfig = await this.dataManager.loadData('economy.json', {});
+            const actionConfig = (economyConfig.actions && economyConfig.actions[action]) || {};
+            existing = {
+                minAmount: (actionConfig.montant && actionConfig.montant.minAmount) ?? actionConfig.minReward,
+                maxAmount: (actionConfig.montant && actionConfig.montant.maxAmount) ?? actionConfig.maxReward,
+                cooldown: (() => {
+                    let c = actionConfig.cooldown;
+                    if (c && typeof c === 'object') c = c.cooldown;
+                    if (typeof c === 'number' && c > 10000) return Math.round(c / 1000); // ms -> s
+                    return c;
+                })(),
+                goodKarma: (actionConfig.karma && actionConfig.karma.goodKarma) ?? actionConfig.goodKarma,
+                badKarma: (actionConfig.karma && actionConfig.karma.badKarma) ?? actionConfig.badKarma
+            };
+        } catch (e) {
+            // ignore
+        }
+
         const modal = new ModalBuilder()
             .setCustomId(`action_config_modal_${action}_${configType}`)
             .setTitle(`Configuration ${action} - ${configType}`);
 
         if (configType === 'montant') {
+            const minInput = new TextInputBuilder()
+                .setCustomId('min_amount')
+                .setLabel('Montant minimum (💋)')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('Ex: 10')
+                .setRequired(true);
+            if (typeof existing.minAmount === 'number') minInput.setValue(String(existing.minAmount));
+
+            const maxInput = new TextInputBuilder()
+                .setCustomId('max_amount')
+                .setLabel('Montant maximum (💋)')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('Ex: 50')
+                .setRequired(true);
+            if (typeof existing.maxAmount === 'number') maxInput.setValue(String(existing.maxAmount));
+
             modal.addComponents(
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('min_amount')
-                        .setLabel('Montant minimum (💋)')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 10')
-                        .setRequired(true)
-                ),
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('max_amount')
-                        .setLabel('Montant maximum (💋)')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 50')
-                        .setRequired(true)
-                )
+                new ActionRowBuilder().addComponents(minInput),
+                new ActionRowBuilder().addComponents(maxInput)
             );
         } else if (configType === 'cooldown') {
-            modal.addComponents(
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('cooldown_seconds')
-                        .setLabel('Cooldown en secondes')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 3600 (1 heure)')
-                        .setRequired(true)
-                )
-            );
+            const cdInput = new TextInputBuilder()
+                .setCustomId('cooldown_seconds')
+                .setLabel('Cooldown en secondes')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('Ex: 3600 (1 heure)')
+                .setRequired(true);
+            if (typeof existing.cooldown === 'number') cdInput.setValue(String(existing.cooldown));
+
+            modal.addComponents(new ActionRowBuilder().addComponents(cdInput));
         } else if (configType === 'karma') {
+            const goodInput = new TextInputBuilder()
+                .setCustomId('good_karma')
+                .setLabel('Karma positif (😇)')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('Ex: 1')
+                .setRequired(true);
+            if (typeof existing.goodKarma === 'number') goodInput.setValue(String(existing.goodKarma));
+
+            const badInput = new TextInputBuilder()
+                .setCustomId('bad_karma')
+                .setLabel('Karma négatif (😈)')
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder('Ex: -1')
+                .setRequired(true);
+            if (typeof existing.badKarma === 'number') badInput.setValue(String(existing.badKarma));
+
             modal.addComponents(
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('good_karma')
-                        .setLabel('Karma positif (😇)')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 1')
-                        .setRequired(true)
-                ),
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('bad_karma')
-                        .setLabel('Karma négatif (😈)')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: -1')
-                        .setRequired(true)
-                )
+                new ActionRowBuilder().addComponents(goodInput),
+                new ActionRowBuilder().addComponents(badInput)
             );
         }
 
