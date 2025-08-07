@@ -616,6 +616,18 @@ class RenderSolutionBot {
                 console.warn('⚠️ Échec initialisation musique:', e?.message || e);
             }
 
+            // Suites privées: scan et items boutique par défaut
+            try {
+                const { scanAndRepairSuites, ensurePrivateSuiteShopItems } = require('./utils/privateSuiteManager');
+                await scanAndRepairSuites(this.client);
+                for (const guild of this.client.guilds.cache.values()) {
+                    await ensurePrivateSuiteShopItems(guild);
+                }
+                console.log('🔒 Suites privées prêtes');
+            } catch (e) {
+                console.warn('⚠️ Suites privées init:', e?.message || e);
+            }
+
             this.commands.forEach(command => {
                 console.log(`  - ${command.data.name}`);
             });
@@ -2657,20 +2669,18 @@ async function handleShopPurchase(interaction, dataManager) {
         // Charger les données
         const userData = await dataManager.getUser(userId, guildId);
         const shopData = await dataManager.loadData('shop.json', {});
-                    const karmaDiscountsData = await dataManager.loadData('karma_discounts', {});
+        const karmaDiscountsData = await dataManager.loadData('karma_discounts', {});
         const shopItems = shopData[guildId] || [];
 
         // Trouver l'objet sélectionné
         let item;
         if (itemId.startsWith('shop_item_')) {
-            // Handle new generated identifiers - extract index
             const indexMatch = itemId.match(/shop_item_(\d+)_/);
             if (indexMatch) {
                 const itemIndex = parseInt(indexMatch[1]);
                 item = shopItems[itemIndex];
             }
         } else {
-            // Handle original item IDs or direct index
             item = shopItems.find(i => (i.id || shopItems.indexOf(i)).toString() === itemId);
         }
         
@@ -2698,24 +2708,21 @@ async function handleShopPurchase(interaction, dataManager) {
         const finalPrice = discountPercent > 0 ? 
             Math.floor(originalPrice * (100 - discountPercent) / 100) : originalPrice;
 
-        // Vérifier si l'utilisateur a assez d'argent
+        // Vérifier solde
         if (userData.balance < finalPrice) {
             const missingAmount = finalPrice - userData.balance;
             return await interaction.reply({
-                content: `❌ **Solde insuffisant !**\n\n💰 Prix: ${finalPrice}€ ${discountPercent > 0 ? `(remise ${discountPercent}% appliquée)` : ''}\n💳 Votre solde: ${userData.balance}€\n❌ Manque: ${missingAmount}€`,
+                content: `❌ **Solde insuffisant !**\n\n💰 Prix: ${finalPrice}💋 ${discountPercent > 0 ? `(remise ${discountPercent}% appliquée)` : ''}\n💳 Votre solde: ${userData.balance}💋\n❌ Manque: ${missingAmount}💋`,
                 flags: 64
             });
         }
 
-        // Déduire l'argent
+        // Déduire
         userData.balance -= finalPrice;
 
-        // Ajouter l'objet à l'inventaire
+        // Ajouter inventaire
         if (!userData.inventory) userData.inventory = [];
-        
-        // Generate a truly unique ID
         const uniqueId = item.id || `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${userId.slice(-4)}`;
-        
         const inventoryItem = {
             id: uniqueId,
             name: item.name,
@@ -2726,6 +2733,7 @@ async function handleShopPurchase(interaction, dataManager) {
             from: 'shop'
         };
 
+        // Gestion rôles boutique existants
         if ((item.type === 'temporary_role' || item.type === 'temp_role') && item.roleId && item.duration) {
             inventoryItem.roleId = item.roleId;
             inventoryItem.duration = item.duration;
@@ -2734,9 +2742,31 @@ async function handleShopPurchase(interaction, dataManager) {
             inventoryItem.roleId = item.roleId;
         }
 
+        // Gestion nouvelles suites privées
+        const member = await interaction.guild.members.fetch(userId);
+        const { createPrivateSuite, scheduleExpiry } = require('./utils/privateSuiteManager');
+        if (item.type === 'private_24h') {
+            const rec = await createPrivateSuite(interaction, member, { durationDays: 1 });
+            scheduleExpiry(interaction.client, rec);
+            inventoryItem.privateSuiteId = rec.id;
+            inventoryItem.type = 'private_suite';
+            inventoryItem.expiresAt = rec.expiresAt;
+        } else if (item.type === 'private_monthly') {
+            const rec = await createPrivateSuite(interaction, member, { durationDays: 30 });
+            scheduleExpiry(interaction.client, rec);
+            inventoryItem.privateSuiteId = rec.id;
+            inventoryItem.type = 'private_suite';
+            inventoryItem.expiresAt = rec.expiresAt;
+        } else if (item.type === 'private_permanent') {
+            const rec = await createPrivateSuite(interaction, member, { durationDays: null });
+            inventoryItem.privateSuiteId = rec.id;
+            inventoryItem.type = 'private_suite_permanent';
+        }
+
         userData.inventory.push(inventoryItem);
         await dataManager.updateUser(userId, guildId, userData);
 
+        // Effets visibles
         let effectMessage = '';
         if ((item.type === 'temporary_role' || item.type === 'temp_role') && item.roleId) {
             try {
@@ -2744,17 +2774,14 @@ async function handleShopPurchase(interaction, dataManager) {
                 if (role) {
                     await interaction.member.roles.add(role);
                     effectMessage = `\n👤 Rôle **${role.name}** attribué pour ${item.duration} jour${item.duration > 1 ? 's' : ''} !`;
-                    
-                    // Programmer la suppression du rôle sans utiliser l'interaction
+                    // Programmer la suppression avec le client
                     setTimeout(async () => {
                         try {
-                            const guild = this.client.guilds.cache.get(interaction.guild.id);
-                            const member = await guild.members.fetch(interaction.user.id);
-                            await member.roles.remove(role);
-                            console.log(`🕰️ Rôle temporaire ${role.name} retiré de ${member.user.tag}`);
-                        } catch (error) {
-                            console.error('Erreur suppression rôle temporaire:', error);
-                        }
+                            const client = interaction.client;
+                            const guild = client.guilds.cache.get(interaction.guild.id) || await client.guilds.fetch(interaction.guild.id);
+                            const memberToUpdate = await guild.members.fetch(userId);
+                            await memberToUpdate.roles.remove(role, 'Expiration rôle temporaire (boutique)');
+                        } catch (_) {}
                     }, item.duration * 24 * 60 * 60 * 1000);
                 } else {
                     effectMessage = '\n⚠️ Rôle introuvable.';
@@ -2774,35 +2801,32 @@ async function handleShopPurchase(interaction, dataManager) {
             } catch (error) {
                 effectMessage = '\n⚠️ Erreur lors de l\'attribution du rôle.';
             }
+        } else if (item.type === 'private_24h' || item.type === 'private_monthly' || item.type === 'private_permanent') {
+            effectMessage = '\n🔒 Suite privée créée: 1 rôle + 2 salons (🔞 texte NSFW + 🎙️ vocal)';
         } else if (item.type === 'custom_object' || item.type === 'custom') {
             effectMessage = '\n🎁 Objet personnalisé acheté !';
         } else {
             effectMessage = '\n📦 Objet ajouté à votre inventaire !';
         }
 
-        // Message de confirmation avec détails de la remise
-        let confirmMessage = `✅ **Achat réussi !**\n\n🛒 **${item.name}**\n💰 Prix payé: **${finalPrice}€**`;
-        
+        // Confirmation
+        let confirmMessage = `✅ **Achat réussi !**\n\n🛒 **${item.name}**\n💰 Prix payé: **${finalPrice}💋**`;
         if (discountPercent > 0) {
             const savedAmount = originalPrice - finalPrice;
-            confirmMessage += `\n💸 Prix original: ~~${originalPrice}€~~\n🎯 Remise réputation (${discountPercent}%): **-${savedAmount}€**\n⚖️ Votre réputation 🥵: ${userKarmaNet}`;
+            confirmMessage += `\n💸 Prix original: ~~${originalPrice}💋~~\n🎯 Remise réputation (${discountPercent}%): **-${savedAmount}💋**\n⚖️ Votre réputation 🥵: ${userKarmaNet}`;
         }
-        
-        confirmMessage += `\n💳 Nouveau solde: **${userData.balance}€**${effectMessage}`;
+        confirmMessage += `\n💳 Nouveau solde: **${userData.balance}💋**${effectMessage}`;
 
-        await interaction.reply({
-            content: confirmMessage,
-            flags: 64
-        });
-
-        console.log(`🛒 ${interaction.user.tag} a acheté "${item.name}" pour ${finalPrice}€ (remise: ${discountPercent}%)`);
+        await interaction.reply({ content: confirmMessage, flags: 64 });
+        console.log(`🛒 ${interaction.user.tag} a acheté "${item.name}" pour ${finalPrice} (remise: ${discountPercent}%)`);
 
     } catch (error) {
         console.error('❌ Erreur handleShopPurchase:', error);
-        await interaction.reply({
-            content: '❌ Erreur lors de l\'achat.',
-            flags: 64
-        });
+        try {
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ Erreur lors de l\'achat.', flags: 64 });
+          }
+        } catch {}
     }
 }
 

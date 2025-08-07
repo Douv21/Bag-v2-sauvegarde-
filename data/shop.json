@@ -42,6 +42,33 @@
       "price": 500,
       "description": "Objet personnalisé",
       "created": "2025-07-27T09:17:45.512Z"
+    },
+    {
+      "id": "private_24h_1754603842113",
+      "type": "private_24h",
+      "name": "Suite Privée 24h",
+      "price": 5000,
+      "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) pour 24h.",
+      "createdAt": "2025-08-07T21:57:22.113Z",
+      "createdBy": "system"
+    },
+    {
+      "id": "private_monthly_1754603842114",
+      "type": "private_monthly",
+      "name": "Suite Privée Mensuelle",
+      "price": 15000,
+      "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) pour 30 jours.",
+      "createdAt": "2025-08-07T21:57:22.114Z",
+      "createdBy": "system"
+    },
+    {
+      "id": "private_permanent_1754603842114",
+      "type": "private_permanent",
+      "name": "Suite Privée Permanente",
+      "price": 50000,
+      "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) sans expiration.",
+      "createdAt": "2025-08-07T21:57:22.114Z",
+      "createdBy": "system"
     }
   ]
 }

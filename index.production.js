@@ -208,6 +208,15 @@ class ProductionBot {
             console.log(`✅ ${this.client.user.tag} connecté`);
             console.log(`🏰 ${this.client.guilds.cache.size} serveur(s) connecté(s)`);
             
+            // Suites privées (production léger): scan existant
+            try {
+                const { scanAndRepairSuites } = require('./utils/privateSuiteManager');
+                await scanAndRepairSuites(this.client);
+                console.log('🔒 Suites privées prêtes (production)');
+            } catch (e) {
+                console.warn('⚠️ Suites privées init (production):', e?.message || e);
+            }
+            
             // Enregistrement des commandes avec délai
             setTimeout(() => this.registerCommands(), 3000);
         });

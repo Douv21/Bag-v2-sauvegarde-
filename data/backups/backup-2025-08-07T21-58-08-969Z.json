@@ -1,0 +1,1080 @@
+{
+  "timestamp": "2025-08-07T21:58:08.970Z",
+  "deployment": "local",
+  "files": {
+    "economy.json": {
+      "463272211269156865_1360897918504271882": {
+        "balance": 3885,
+        "goodKarma": 16,
+        "badKarma": -6,
+        "dailyStreak": 2,
+        "lastDaily": 1753610382237,
+        "messageCount": 92,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "lastWork": 1753620299303,
+        "lastSteal": 1753620316536,
+        "lastFish": 1753620306131,
+        "lastCrime": 1753203303956,
+        "appliedRewards": [
+          1753184033719,
+          1753184120446,
+          1753181391406
+        ],
+        "inventory": [],
+        "xp": 934,
+        "money": 3885,
+        "level": 1
+      },
+      "943487722738311219_1360897918504271882": {
+        "balance": 6120,
+        "goodKarma": 19,
+        "badKarma": -13,
+        "dailyStreak": 1,
+        "lastDaily": 1753471853826,
+        "messageCount": 104,
+        "karmaGood": 0,
+        "karmaBad": 0,
+        "lastWork": 1753564675530,
+        "lastFish": 1753565014472,
+        "lastCrime": 1753565193909,
+        "lastBet": 1753549730479,
+        "lastSteal": 1753549756285,
+        "lastDonate": 1753149297896,
+        "appliedRewards": [
+          1753184033719,
+          1753184120446,
+          1753181391406
+        ],
+        "inventory": [
+          {
+            "id": 1753136861543,
+            "name": "Fouet",
+            "description": "Objet personnalisé",
+            "type": "custom",
+            "price": 50,
+            "purchasedAt": "2025-07-22T16:26:37.860Z"
+          },
+          {
+            "id": 1753136861543,
+            "name": "Fouet",
+            "description": "Objet personnalisé",
+            "type": "custom",
+            "price": 50,
+            "purchaseDate": "2025-07-26T20:57:24.399Z",
+            "from": "shop"
+          }
+        ],
+        "xp": 6004,
+        "money": 6120,
+        "level": 1
+      },
+      "1150782046181015582_1360897918504271882": {
+        "balance": 1017,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 6,
+        "inventory": [],
+        "xp": 49,
+        "money": 1017,
+        "level": 1
+      },
+      "actions": {
+        "travailler": {
+          "enabled": true,
+          "minReward": 3,
+          "maxReward": 100,
+          "cooldown": 60000,
+          "goodKarma": 2,
+          "badKarma": 0,
+          "montant": {
+            "minAmount": 3,
+            "maxAmount": 100
+          },
+          "karma": {
+            "goodKarma": 3,
+            "badKarma": 0
+          }
+        },
+        "charmer": {
+          "enabled": true,
+          "minReward": 3,
+          "maxReward": 100,
+          "cooldown": 60000,
+          "goodKarma": 2,
+          "badKarma": 0,
+          "montant": {
+            "minAmount": 3,
+            "maxAmount": 100
+          },
+          "karma": {
+            "goodKarma": 3,
+            "badKarma": 0
+          }
+        },
+        "pecher": {
+          "enabled": true,
+          "minReward": 10,
+          "maxReward": 50,
+          "cooldown": 60000,
+          "goodKarma": 1,
+          "badKarma": 0
+        },
+        "flirter": {
+          "enabled": true,
+          "minReward": 10,
+          "maxReward": 50,
+          "cooldown": 60000,
+          "goodKarma": 1,
+          "badKarma": 0
+        },
+        "donner": {
+          "goodKarma": 3,
+          "badKarma": 0
+        },
+        "offrir": {
+          "goodKarma": 3,
+          "badKarma": 0
+        },
+        "voler": {
+          "goodKarma": 0,
+          "badKarma": -3,
+          "enabled": true
+        },
+        "seduire": {
+          "goodKarma": 0,
+          "badKarma": -3,
+          "enabled": true
+        },
+        "crime": {
+          "enabled": true,
+          "minReward": 1,
+          "maxReward": 300,
+          "cooldown": 480000,
+          "goodKarma": 0,
+          "badKarma": -5
+        },
+        "coup-de-folie": {
+          "enabled": true,
+          "minReward": 1,
+          "maxReward": 300,
+          "cooldown": 480000,
+          "goodKarma": 0,
+          "badKarma": -5
+        },
+        "parier": {
+          "enabled": true,
+          "minReward": 2,
+          "maxReward": 400,
+          "cooldown": 240000,
+          "goodKarma": 0,
+          "badKarma": -1
+        },
+        "oser": {
+          "enabled": true,
+          "minReward": 2,
+          "maxReward": 400,
+          "cooldown": 240000,
+          "goodKarma": 0,
+          "badKarma": -1
+        },
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
+      },
+      "519883409917607937_1360897918504271882": {
+        "balance": 1020,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 1,
+        "inventory": [],
+        "money": 1020,
+        "level": 1,
+        "xp": 0
+      },
+      "1342885031856836629_1360897918504271882": {
+        "balance": 1580,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 29,
+        "inventory": [],
+        "money": 1580,
+        "level": 1,
+        "xp": 0
+      },
+      "karma": {
+        "autoReset": true,
+        "resetDay": "dimanche",
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
+      },
+      "1396872608154386472_1360897918504271882": {
+        "balance": 1020,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 1,
+        "inventory": [],
+        "money": 1020,
+        "level": 1,
+        "xp": 0
+      },
+      "1394407529508900894_1360897918504271882": {
+        "balance": 1020,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 1,
+        "inventory": [],
+        "money": 1020,
+        "level": 1,
+        "xp": 0
+      },
+      "739103557600673792_1360897918504271882": {
+        "balance": 2020,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 83,
+        "inventory": [],
+        "xp": 500,
+        "money": 2020,
+        "level": 1
+      },
+      "daily": {
+        "amount": 50,
+        "enabled": true,
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
+      },
+      "karmaRewards": [
+        {
+          "id": 1753181391406,
+          "name": "Saint",
+          "karmaThreshold": 10,
+          "moneyReward": 500,
+          "roleId": null,
+          "roleDuration": null,
+          "createdAt": "2025-07-22T10:49:51.406Z"
+        },
+        {
+          "id": 1753183175018,
+          "name": "Ange",
+          "karmaThreshold": 50,
+          "roleId": "1396547788384374884",
+          "roleName": "nouveau rôletest",
+          "duration": 24,
+          "moneyReward": 2000,
+          "type": "reward",
+          "isTemporary": true,
+          "createdAt": "2025-07-22T11:19:35.018Z"
+        },
+        {
+          "id": 1753184033719,
+          "name": "Pas de chance",
+          "karmaThreshold": 5,
+          "moneyReward": -50,
+          "roleId": null,
+          "roleDuration": null,
+          "createdAt": "2025-07-22T11:33:53.719Z"
+        },
+        {
+          "id": 1753184120446,
+          "name": "Argent voler",
+          "karmaThreshold": -5,
+          "moneyReward": 50,
+          "roleId": null,
+          "roleDuration": null,
+          "createdAt": "2025-07-22T11:35:20.446Z"
+        }
+      ],
+      "528391525651185667_1360897918504271882": {
+        "balance": 1100,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 6,
+        "inventory": [],
+        "xp": 40,
+        "money": 1100,
+        "level": 1
+      },
+      "messages": {
+        "enabled": false,
+        "amount": 5,
+        "cooldown": 60000,
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
+      },
+      "1108053454519271535_1360897918504271882": {
+        "balance": 1080,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 4,
+        "inventory": [],
+        "xp": 17,
+        "money": 1080,
+        "level": 1
+      },
+      "karmaDiscounts": {
+        "enabled": true,
+        "ranges": [
+          {
+            "id": 1753197642083,
+            "name": "Vip",
+            "minKarma": 10,
+            "discount": 10,
+            "createdAt": "2025-07-22T15:20:42.083Z"
+          },
+          {
+            "id": 1753200685606,
+            "name": "Solde",
+            "minKarma": 50,
+            "discount": 50,
+            "createdAt": "2025-07-22T16:11:25.606Z"
+          }
+        ],
+        "inventory": [],
+        "money": 0,
+        "level": 1,
+        "xp": 0,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "messageCount": 0
+      },
+      "253847407043805185_1360897918504271882": {
+        "balance": 1320,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 16,
+        "inventory": [],
+        "money": 1320,
+        "level": 1,
+        "xp": 0
+      },
+      "1173342775396286521_1360897918504271882": {
+        "balance": 1473,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 62,
+        "inventory": [],
+        "xp": 667,
+        "money": 1473,
+        "level": 1
+      },
+      "266247151355559937_1360897918504271882": {
+        "balance": 1200,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 15,
+        "inventory": [],
+        "xp": 101,
+        "money": 1200,
+        "level": 1
+      },
+      "909739750225772544_1360897918504271882": {
+        "balance": 1160,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": 0,
+        "messageCount": 20,
+        "inventory": [],
+        "xp": 232,
+        "money": 1160,
+        "level": 1
+      },
+      "723788041382264833_1360897918504271882": {
+        "balance": 1040,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": 0,
+        "messageCount": 4,
+        "inventory": [],
+        "xp": 43,
+        "money": 1040,
+        "level": 1
+      },
+      "749851490486714378_1360897918504271882": {
+        "balance": 1020,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": 0,
+        "messageCount": 2,
+        "inventory": [],
+        "xp": 21,
+        "money": 1020,
+        "level": 1
+      },
+      "1296142706149691487_1360897918504271882": {
+        "balance": 1160,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": 0,
+        "messageCount": 19,
+        "inventory": [],
+        "xp": 205,
+        "money": 1160,
+        "level": 1
+      },
+      "560058104113528843_1360897918504271882": {
+        "balance": 1000,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 0,
+        "xp": 0,
+        "inventory": [],
+        "createdAt": "2025-08-02T18:27:39.891Z",
+        "updatedAt": "2025-08-02T18:27:39.891Z",
+        "money": 1000,
+        "level": 1
+      },
+      "test123_guild456": {
+        "balance": 1000,
+        "goodKarma": 0,
+        "badKarma": 0,
+        "dailyStreak": 0,
+        "lastDaily": null,
+        "messageCount": 0,
+        "xp": 25,
+        "inventory": [],
+        "updatedAt": "2025-08-04T14:37:34.500Z"
+      }
+    },
+    "level_users.json": {
+      "1360897918504271882_943487722738311219": {
+        "userId": "943487722738311219",
+        "guildId": "1360897918504271882",
+        "xp": 6004,
+        "level": 16,
+        "totalMessages": 105,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753620432825,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_1108053454519271535": {
+        "userId": "1108053454519271535",
+        "guildId": "1360897918504271882",
+        "xp": 17,
+        "level": 1,
+        "totalMessages": 2,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753354199602,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_463272211269156865": {
+        "userId": "463272211269156865",
+        "guildId": "1360897918504271882",
+        "xp": 934,
+        "level": 5,
+        "totalMessages": 109,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753632472182,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_739103557600673792": {
+        "userId": "739103557600673792",
+        "guildId": "1360897918504271882",
+        "xp": 500,
+        "level": 3,
+        "totalMessages": 61,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753620147304,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_528391525651185667": {
+        "userId": "528391525651185667",
+        "guildId": "1360897918504271882",
+        "xp": 40,
+        "level": 1,
+        "totalMessages": 5,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753529613901,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_1173342775396286521": {
+        "userId": "1173342775396286521",
+        "guildId": "1360897918504271882",
+        "xp": 667,
+        "level": 4,
+        "totalMessages": 72,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753632436898,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_909739750225772544": {
+        "userId": "909739750225772544",
+        "guildId": "1360897918504271882",
+        "xp": 232,
+        "level": 2,
+        "totalMessages": 23,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753632622248,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_266247151355559937": {
+        "userId": "266247151355559937",
+        "guildId": "1360897918504271882",
+        "xp": 101,
+        "level": 2,
+        "totalMessages": 10,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753523303224,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_723788041382264833": {
+        "userId": "723788041382264833",
+        "guildId": "1360897918504271882",
+        "xp": 43,
+        "level": 1,
+        "totalMessages": 4,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753628859140,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_749851490486714378": {
+        "userId": "749851490486714378",
+        "guildId": "1360897918504271882",
+        "xp": 21,
+        "level": 1,
+        "totalMessages": 2,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753529421272,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_560058104113528843": {
+        "userId": "560058104113528843",
+        "guildId": "1360897918504271882",
+        "xp": 0,
+        "level": 1,
+        "totalMessages": 0,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 0,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_1150782046181015582": {
+        "userId": "1150782046181015582",
+        "guildId": "1360897918504271882",
+        "xp": 49,
+        "level": 1,
+        "totalMessages": 4,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753618099756,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_1296142706149691487": {
+        "userId": "1296142706149691487",
+        "guildId": "1360897918504271882",
+        "xp": 205,
+        "level": 2,
+        "totalMessages": 21,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1753610502122,
+        "lastVoiceTime": 0
+      },
+      "1360897918504271882_1342885031856836629": {
+        "userId": "1342885031856836629",
+        "guildId": "1360897918504271882",
+        "xp": 0,
+        "level": 1,
+        "totalMessages": 0,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 0,
+        "lastVoiceTime": 0
+      },
+      "guild456_test123": {
+        "userId": "test123",
+        "guildId": "guild456",
+        "xp": 25,
+        "level": 1,
+        "totalMessages": 1,
+        "totalVoiceTime": 0,
+        "lastMessageTime": 1754318254500,
+        "lastVoiceTime": 0
+      }
+    },
+    "level_config.json": {
+      "textXP": {
+        "min": 15,
+        "max": 25,
+        "cooldown": 10000
+      },
+      "voiceXP": {
+        "amount": 150,
+        "interval": 60000
+      },
+      "xpCooldown": 10000,
+      "notifications": {
+        "enabled": true,
+        "channelId": "1360897919204720722",
+        "cardStyle": "holographic",
+        "channel": "1360897919204720722"
+      },
+      "roleRewards": {
+        "5": "1396547788384374884"
+      },
+      "levelFormula": {
+        "baseXP": 100,
+        "multiplier": 1.5
+      }
+    },
+    "confessions.json": {
+      "count": 0
+    },
+    "counting.json": {
+      "1360897918504271882": {
+        "channels": [
+          {
+            "channelId": "1397267526957666428",
+            "enabled": true,
+            "current": 0,
+            "record": 1,
+            "lastUser": null,
+            "lastNumber": 0,
+            "currentNumber": 0,
+            "lastUserId": null,
+            "totalCounts": 3,
+            "lastMessageId": null,
+            "lastTimestamp": "2025-07-24T11:05:41.346Z"
+          },
+          {
+            "channelId": "1366452734709989457",
+            "enabled": true,
+            "current": 0,
+            "record": 1,
+            "lastUser": null,
+            "lastNumber": 0,
+            "currentNumber": 1,
+            "lastUserId": "943487722738311219",
+            "lastMessageId": "1398664132391207145",
+            "lastTimestamp": "2025-07-26T13:49:10.421Z",
+            "recordDate": "2025-07-26T13:48:54.526Z",
+            "recordUserId": "943487722738311219"
+          }
+        ],
+        "mathEnabled": true,
+        "reactionsEnabled": true
+      },
+      "global": {
+        "autoReset": true,
+        "allowCalculations": true,
+        "resetOnError": true,
+        "maxNumber": 999999999
+      }
+    },
+    "autothread.json": {
+      "1360897918504271882": {
+        "enabled": true,
+        "channels": [
+          "1360897919548522606"
+        ],
+        "threadName": "{user} | {date}",
+        "archiveTime": 10080,
+        "stats": {
+          "threadsCreated": 13,
+          "lastCreated": "2025-07-22T21:25:41.566Z"
+        }
+      }
+    },
+    "shop.json": {
+      "1360897918504271882": [
+        {
+          "id": "1753566068434",
+          "name": "Fouet",
+          "price": 50,
+          "description": "Amuse toi  bien",
+          "type": "custom",
+          "createdAt": "2025-07-26T21:41:08.434Z",
+          "createdBy": "943487722738311219"
+        },
+        {
+          "id": "1753566340743",
+          "name": "Rôle: nouveau rôletest",
+          "price": 50000,
+          "duration": 6,
+          "roleId": "1396547788384374884",
+          "type": "temp_role",
+          "createdAt": "2025-07-26T21:45:40.743Z",
+          "createdBy": "943487722738311219"
+        },
+        {
+          "id": 1753602834934,
+          "name": "Test",
+          "price": 594939,
+          "description": "Objet personnalisé",
+          "type": "custom",
+          "createdAt": "2025-07-27T07:53:54.934Z"
+        },
+        {
+          "id": "1753606461399",
+          "type": "custom",
+          "name": "Fouet",
+          "price": 50,
+          "description": "Objet personnalisé",
+          "created": "2025-07-27T08:54:21.399Z"
+        },
+        {
+          "id": "1753607865512",
+          "type": "custom",
+          "name": "Fouet",
+          "price": 500,
+          "description": "Objet personnalisé",
+          "created": "2025-07-27T09:17:45.512Z"
+        },
+        {
+          "id": "private_24h_1754603842113",
+          "type": "private_24h",
+          "name": "Suite Privée 24h",
+          "price": 5000,
+          "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) pour 24h.",
+          "createdAt": "2025-08-07T21:57:22.113Z",
+          "createdBy": "system"
+        },
+        {
+          "id": "private_monthly_1754603842114",
+          "type": "private_monthly",
+          "name": "Suite Privée Mensuelle",
+          "price": 15000,
+          "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) pour 30 jours.",
+          "createdAt": "2025-08-07T21:57:22.114Z",
+          "createdBy": "system"
+        },
+        {
+          "id": "private_permanent_1754603842114",
+          "type": "private_permanent",
+          "name": "Suite Privée Permanente",
+          "price": 50000,
+          "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) sans expiration.",
+          "createdAt": "2025-08-07T21:57:22.114Z",
+          "createdBy": "system"
+        }
+      ]
+    },
+    "karma_config.json": {
+      "weeklyReset": {
+        "enabled": true,
+        "dayOfWeek": 4,
+        "lastReset": 1754596396758
+      },
+      "rewards": {
+        "saint": {
+          "money": 500,
+          "dailyBonus": 1.5,
+          "cooldownReduction": 0.7
+        },
+        "good": {
+          "money": 200,
+          "dailyBonus": 1.2,
+          "cooldownReduction": 0.9
+        },
+        "neutral": {
+          "money": 0,
+          "dailyBonus": 1,
+          "cooldownReduction": 1
+        },
+        "bad": {
+          "money": -100,
+          "dailyBonus": 0.8,
+          "cooldownReduction": 1.2
+        },
+        "evil": {
+          "money": -300,
+          "dailyBonus": 0.5,
+          "cooldownReduction": 1.5
+        }
+      },
+      "actions": {
+        "work": {
+          "karmaGood": 1,
+          "karmaBad": -1,
+          "enabled": true
+        },
+        "fish": {
+          "karmaGood": 1,
+          "karmaBad": -1,
+          "enabled": true
+        },
+        "donate": {
+          "karmaGood": 3,
+          "karmaBad": -2,
+          "enabled": true
+        },
+        "steal": {
+          "karmaGood": -1,
+          "karmaBad": 1,
+          "enabled": true
+        },
+        "crime": {
+          "karmaGood": -3,
+          "karmaBad": 3,
+          "enabled": true
+        },
+        "bet": {
+          "karmaGood": -1,
+          "karmaBad": 1,
+          "enabled": true
+        }
+      }
+    },
+    "karma_discounts.json": {
+      "1360897918504271882": [
+        {
+          "id": "1753700000001",
+          "name": "Remise Saint",
+          "karmaMin": 10,
+          "percentage": 20,
+          "created": "2025-07-27T15:00:00.000Z"
+        },
+        {
+          "id": "1753700000002",
+          "name": "Remise Bon",
+          "karmaMin": 5,
+          "percentage": 10,
+          "created": "2025-07-27T15:00:00.000Z"
+        },
+        {
+          "id": "1753700000003",
+          "name": "Remise VIP",
+          "karmaMin": 25,
+          "percentage": 35,
+          "created": "2025-07-27T15:00:00.000Z"
+        }
+      ]
+    },
+    "message_rewards.json": {
+      "1360897918504271882": {
+        "enabled": true,
+        "amount": 20,
+        "cooldown": 60,
+        "minGain": 2,
+        "maxGain": 10
+      }
+    },
+    "daily.json": {
+      "1335563294714495006": {
+        "amount": 400,
+        "enabled": true
+      },
+      "1360897918504271882": {
+        "minAmount": 50,
+        "maxAmount": 100,
+        "streakMultiplier": 1.1,
+        "maxStreakDays": 30
+      }
+    },
+    "actions.json": {
+      "1335563294714495006_work": {
+        "id": "work",
+        "name": "💋 Charmer",
+        "description": "Faites chavirer les cœurs pour gagner du plaisir",
+        "actionType": "good",
+        "baseReward": 50,
+        "cooldown": 3600,
+        "karmaGoodChange": 1,
+        "karmaBadChange": -1,
+        "guildId": "1335563294714495006",
+        "enabled": true
+      },
+      "1335563294714495006_fish": {
+        "id": "fish",
+        "name": "🍑 Flirter",
+        "description": "Flirtez gentiment pour accumuler du plaisir",
+        "actionType": "good",
+        "baseReward": 30,
+        "cooldown": 1800,
+        "karmaGoodChange": 1,
+        "karmaBadChange": 0,
+        "guildId": "1335563294714495006",
+        "enabled": true
+      },
+      "1335563294714495006_donate": {
+        "id": "donate",
+        "name": "🎁 Offrir",
+        "description": "Offrez un peu de plaisir à la communauté",
+        "actionType": "good",
+        "baseReward": -20,
+        "cooldown": 7200,
+        "karmaGoodChange": 2,
+        "karmaBadChange": -1,
+        "guildId": "1335563294714495006"
+      },
+      "1335563294714495006_steal": {
+        "id": "steal",
+        "name": "😈 Séduire",
+        "description": "Jouez avec le feu (action risquée)",
+        "actionType": "bad",
+        "baseReward": 80,
+        "cooldown": 5400,
+        "karmaGoodChange": -1,
+        "karmaBadChange": 1,
+        "guildId": "1335563294714495006"
+      },
+      "1335563294714495006_crime": {
+        "id": "crime",
+        "name": "🔥 Coup de folie",
+        "description": "Osez tout pour un maximum de plaisir",
+        "actionType": "bad",
+        "baseReward": 120,
+        "cooldown": 7200,
+        "karmaGoodChange": -2,
+        "karmaBadChange": 2,
+        "guildId": "1335563294714495006"
+      },
+      "1335563294714495006_gamble": {
+        "id": "gamble",
+        "name": "🎲 Oser",
+        "description": "Tentez votre chance (très risqué)",
+        "actionType": "bad",
+        "baseReward": 100,
+        "cooldown": 3600,
+        "karmaGoodChange": -1,
+        "karmaBadChange": 1,
+        "guildId": "1335563294714495006"
+      },
+      "1360897918504271882_work": {
+        "id": "work",
+        "name": "💋 Charmer",
+        "description": "Faites chavirer les cœurs pour gagner du plaisir",
+        "actionType": "good",
+        "baseReward": 50,
+        "cooldown": 3600,
+        "karmaGoodChange": 1,
+        "karmaBadChange": -2,
+        "guildId": "1360897918504271882"
+      },
+      "1360897918504271882_fish": {
+        "id": "fish",
+        "name": "🍑 Flirter",
+        "description": "Flirtez gentiment pour accumuler du plaisir",
+        "actionType": "good",
+        "baseReward": 30,
+        "cooldown": 1800,
+        "karmaGoodChange": 1,
+        "karmaBadChange": 0,
+        "guildId": "1360897918504271882"
+      },
+      "1360897918504271882_donate": {
+        "id": "donate",
+        "name": "🎁 Offrir",
+        "description": "Offrez un peu de plaisir à la communauté",
+        "actionType": "good",
+        "baseReward": -20,
+        "cooldown": 7200,
+        "karmaGoodChange": 2,
+        "karmaBadChange": -1,
+        "guildId": "1360897918504271882"
+      },
+      "1360897918504271882_steal": {
+        "id": "steal",
+        "name": "😈 Séduire",
+        "description": "Jouez avec le feu (action risquée)",
+        "actionType": "bad",
+        "baseReward": 80,
+        "cooldown": 5400,
+        "karmaGoodChange": -1,
+        "karmaBadChange": 1,
+        "guildId": "1360897918504271882"
+      },
+      "1360897918504271882_crime": {
+        "id": "crime",
+        "name": "🔥 Coup de folie",
+        "description": "Osez tout pour un maximum de plaisir",
+        "actionType": "bad",
+        "baseReward": 120,
+        "cooldown": 7200,
+        "karmaGoodChange": -2,
+        "karmaBadChange": 2,
+        "guildId": "1360897918504271882"
+      },
+      "1360897918504271882_gamble": {
+        "id": "gamble",
+        "name": "🎲 Oser",
+        "description": "Tentez votre chance (très risqué)",
+        "actionType": "bad",
+        "baseReward": 100,
+        "cooldown": 3600,
+        "karmaGoodChange": -1,
+        "karmaBadChange": 1,
+        "guildId": "1360897918504271882"
+      }
+    },
+    "config.json": {
+      "confessionChannels": [],
+      "adminLogChannel": null,
+      "autoThread": {
+        "1360897918504271882": {
+          "enabled": true,
+          "channels": [],
+          "threadName": "Discussion - {user}",
+          "archiveTime": 60,
+          "slowMode": 0
+        }
+      },
+      "confessions": {
+        "1360897918504271882": {
+          "channels": [
+            "1366452734709989457",
+            "1368572151979970630",
+            "1392916303840280597"
+          ],
+          "logChannel": "1360897920466948159",
+          "autoThread": true,
+          "threadName": "Confession Anonyme #{number}",
+          "archiveTime": 10080,
+          "threadCounter": 12,
+          "logLevel": "full",
+          "logImages": true,
+          "confessionPingRoles": [
+            "1360897918558797909"
+          ]
+        }
+      },
+      "prefix": "!",
+      "botName": "BagBot",
+      "version": "2.0.0",
+      "maintenance": false
+    }
+  }
+}

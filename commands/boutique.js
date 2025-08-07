@@ -3,7 +3,8 @@ const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBui
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('boutique')
-        .setDescription('Accéder à la boutique du serveur'),
+        .setDescription('Accéder à la boutique du serveur (version NSFW)')
+        .setDMPermission(false),
 
     async execute(interaction, dataManager) {
         try {
@@ -14,25 +15,16 @@ module.exports = {
             const shopData = await dataManager.loadData('shop.json', {});
             const karmaDiscountsData = await dataManager.loadData('karma_discounts', {});
             const allShopItems = shopData[guildId] || [];
-            // Afficher tous les types d'objets (custom_object, temporary_role, permanent_role)
             const shopItems = allShopItems;
 
-            // Calculer le karma net de l'utilisateur (goodKarma - badKarma, badKarma est déjà négatif)
             const userKarmaNet = (userData.goodKarma || 0) - (userData.badKarma || 0);
             
-            // Fonction pour calculer la remise basée sur le karma net depuis karma_discounts.json
             const calculateKarmaDiscount = (userKarmaNet, karmaDiscountsData, guildId) => {
                 const guildDiscounts = karmaDiscountsData[guildId] || [];
-                
-                if (guildDiscounts.length === 0) {
-                    return 0;
-                }
-                
-                // Trier les tranches par karma descendant et trouver la meilleure applicable
+                if (guildDiscounts.length === 0) return 0;
                 const applicableDiscount = guildDiscounts
                     .filter(discount => userKarmaNet >= discount.karmaMin)
                     .sort((a, b) => b.karmaMin - a.karmaMin)[0];
-                
                 return applicableDiscount ? applicableDiscount.percentage : 0;
             };
 
@@ -52,12 +44,11 @@ module.exports = {
             descriptionText += '\n\n🛒 Articles disponibles :';
 
             const embed = new EmbedBuilder()
-                .setColor('#00AAFF')
-                .setTitle('🛒 Boutique du Serveur')
+                .setColor('#d35400')
+                .setTitle('🔞 Boutique NSFW - Boys & Girls')
                 .setDescription(descriptionText)
-                .setFooter({ text: 'Sélectionnez un objet pour l\'acheter' });
+                .setFooter({ text: 'Sélectionnez un objet à acheter (salons privés inclus)' });
 
-            // Afficher les objets disponibles
             const itemsText = shopItems.slice(0, 10).map((item, index) => {
                 let typeIcon = '🏆';
                 let typeText = 'Objet virtuel';
@@ -71,6 +62,15 @@ module.exports = {
                 } else if (item.type === 'custom_object' || item.type === 'custom') {
                     typeIcon = '🎨';
                     typeText = 'Objet personnalisé';
+                } else if (item.type === 'private_24h') {
+                    typeIcon = '🔒';
+                    typeText = 'Suite privée 24h (texte NSFW + vocal)';
+                } else if (item.type === 'private_monthly') {
+                    typeIcon = '🗓️';
+                    typeText = 'Suite privée 30j (texte NSFW + vocal)';
+                } else if (item.type === 'private_permanent') {
+                    typeIcon = '♾️';
+                    typeText = 'Suite privée permanente (texte NSFW + vocal)';
                 }
                 
                 let priceText = `${item.price}💋`;
@@ -88,7 +88,6 @@ module.exports = {
                 inline: false
             }]);
 
-            // Menu de sélection si des objets existent
             const components = [];
             if (shopItems.length > 0) {
                 const selectMenu = new StringSelectMenuBuilder()
@@ -100,13 +99,15 @@ module.exports = {
                             if (item.type === 'temporary_role' || item.type === 'temp_role') emoji = '⌛';
                             else if (item.type === 'permanent_role') emoji = '⭐';
                             else if (item.type === 'custom_object' || item.type === 'custom') emoji = '🎨';
+                            else if (item.type === 'private_24h') emoji = '🔒';
+                            else if (item.type === 'private_monthly') emoji = '🗓️';
+                            else if (item.type === 'private_permanent') emoji = '♾️';
                             
                             const finalPrice = karmaDiscountPercent > 0 ? 
                                 Math.floor(item.price * (100 - karmaDiscountPercent) / 100) : item.price;
                             const priceDisplay = karmaDiscountPercent > 0 ? 
                                 `${finalPrice}💋 (était ${item.price}💋)` : `${item.price}💋`;
 
-                            // Ensure unique value - use item.id if available, otherwise create unique identifier
                             const uniqueValue = item.id ? item.id.toString() : `shop_item_${index}_${Date.now().toString(36)}`;
 
                             return {
