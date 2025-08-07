@@ -44,10 +44,10 @@ function getMusic(client) {
     nsfw: true,
     emitAddSongWhenCreatingQueue: false,
     plugins: [
-      new SpotifyPlugin({ parallel: true, emitEventsAfterFetching: true }),
+      new SpotifyPlugin(),
       new SoundCloudPlugin(),
       new DeezerPlugin(),
-      new YtDlpPlugin({ update: true })
+      new YtDlpPlugin({ update: false })
     ]
   });
 
