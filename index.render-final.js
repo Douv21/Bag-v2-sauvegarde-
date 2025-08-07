@@ -1,3 +1,38 @@
+const ensureFileAndBlobPolyfills = () => {
+  try {
+    if (typeof globalThis.Blob === 'undefined') {
+      const { Blob } = require('buffer');
+      globalThis.Blob = Blob;
+    }
+  } catch {}
+
+  try {
+    if (typeof globalThis.File === 'undefined') {
+      try {
+        const { File } = require('undici');
+        if (File) {
+          globalThis.File = File;
+          return;
+        }
+      } catch {}
+      // Minimal File polyfill compatible with Node 18
+      const BlobImpl = globalThis.Blob || require('buffer').Blob;
+      globalThis.File = class File extends BlobImpl {
+        constructor(parts = [], name = 'file', options = {}) {
+          super(parts, options);
+          this.name = String(name);
+          this.lastModified = options.lastModified ?? Date.now();
+        }
+        get [Symbol.toStringTag]() {
+          return 'File';
+        }
+      };
+    }
+  } catch {}
+};
+
+ensureFileAndBlobPolyfills();
+
 const { Client, Collection, GatewayIntentBits, Routes, REST, EmbedBuilder } = require('discord.js');
 const fs = require('fs').promises;
 const path = require('path');
