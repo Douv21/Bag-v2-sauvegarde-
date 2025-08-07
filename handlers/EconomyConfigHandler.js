@@ -46,7 +46,7 @@ class EconomyConfigHandler {
                 { label: '😉 Aguicher', value: 'aguicher', description: 'NSFW: gains modérés, faible cooldown' },
                 { label: '🔥 Défi Osé', value: 'defier', description: 'NSFW: gains ou pertes variables' },
                 { label: '💃 Séduire (Masse)', value: 'seduire_mass', description: 'NSFW: très risqué, gros gains/pénalités' },
-                { label: '🌙 After Dark', value: 'after_dark', description: 'NSFW: bonus selon l'heure' },
+                { label: '🌙 After Dark', value: 'after_dark', description: 'NSFW: bonus selon l\'heure' },
                 { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
             ]);
 
