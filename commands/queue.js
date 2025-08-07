@@ -34,6 +34,11 @@ module.exports = {
       .setDescription(desc)
       .setFooter({ text: THEME.footer });
 
-    await interaction.reply({ embeds: [embed] });
+    try {
+      await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+    } catch {
+      // dernier recours
+      await interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral }).catch(() => {});
+    }
   }
 };

@@ -27,13 +27,21 @@ module.exports = {
     const queue = distube.getQueue(interaction.guildId);
     if (!queue) return interaction.reply({ content: '😴 Pas de lecture en cours.', flags: MessageFlags.Ephemeral });
 
-    await interaction.deferReply();
+    let deferred = false;
+    try {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      deferred = true;
+    } catch {
+      try { await interaction.reply({ content: '❌ Impossible d\'accuser réception de la commande (latence/permissions).', flags: MessageFlags.Ephemeral }); } catch {}
+      return;
+    }
+
     try {
       queue.resume();
-      await interaction.editReply({ content: '▶️ Et c’est reparti !' });
+      if (deferred) await interaction.editReply({ content: '▶️ Et c’est reparti !' });
     } catch (err) {
       const msg = `❌ Oups: ${String(err.message || err)}`;
-      if (interaction.deferred || interaction.replied) {
+      if (deferred) {
         await interaction.editReply({ content: msg }).catch(() => {});
       } else {
         await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => {});

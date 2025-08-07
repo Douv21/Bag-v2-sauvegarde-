@@ -29,7 +29,15 @@ module.exports = {
 
     const url = interaction.options.getString('url', true);
 
-    await interaction.deferReply();
+    let deferred = false;
+    try {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      deferred = true;
+    } catch {
+      try { await interaction.reply({ content: '❌ Impossible d\'accuser réception de la commande (permissions ou latence).', flags: MessageFlags.Ephemeral }); } catch {}
+      return;
+    }
+
     const distube = getMusic(interaction.client);
 
     try {
@@ -41,12 +49,18 @@ module.exports = {
         new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_MUSIC_PLAY')), timeoutMs))
       ]);
 
-      await interaction.editReply({ content: `📻 Radio lancée: ${url} • Bonne écoute 😈` });
+      if (deferred) {
+        await interaction.editReply({ content: `📻 Radio lancée: ${url} • Bonne écoute 😈` });
+      }
     } catch (err) {
       const msg = err && err.message === 'TIMEOUT_MUSIC_PLAY'
         ? '⏳ La connexion vocale ou la récupération du flux est trop lente. Réessaie dans un instant et vérifie mes permissions/latence.'
         : `❌ Impossible de lire le flux: ${String(err.message || err)}`;
-      await interaction.editReply({ content: msg }).catch(() => {});
+      if (deferred) {
+        await interaction.editReply({ content: msg }).catch(() => {});
+      } else {
+        await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => {});
+      }
     }
   }
 };
