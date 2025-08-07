@@ -37,7 +37,7 @@ const ensureFileAndBlobPolyfills = () => {
 
 ensureFileAndBlobPolyfills();
 
-const { Client, Collection, GatewayIntentBits, Partials, REST, Routes } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, Partials, REST, Routes, MessageFlags } = require('discord.js');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -372,7 +372,7 @@ class BagBotRender {
                         if (!interaction.replied && !interaction.deferred) {
                             await interaction.reply({
                                 content: '❌ Cette interaction n\'est pas encore implémentée.',
-                                ephemeral: true
+                                flags: MessageFlags.Ephemeral
                             });
                         }
                     }
@@ -386,7 +386,7 @@ class BagBotRender {
                     try {
                         await interaction.reply({ 
                             content: 'Une erreur est survenue lors du traitement de cette interaction.', 
-                            ephemeral: true 
+                            flags: MessageFlags.Ephemeral 
                         });
                     } catch (replyError) {
                         console.error('❌ Erreur lors de la réponse d\'erreur:', replyError);

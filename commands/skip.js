@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, ChannelType, MessageFlags } = require('discord.js');
 const { getMusic } = require('../managers/MusicManager');
 
 module.exports = {
@@ -14,12 +14,12 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '👂 Rejoins un salon vocal pour skipper, coquin(e)!', ephemeral: true });
+      return interaction.reply({ content: '👂 Rejoins un salon vocal pour skipper, coquin(e)!', flags: MessageFlags.Ephemeral });
     }
 
     const distube = getMusic(interaction.client);
     const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply({ content: '😴 Rien à skipper…', ephemeral: true });
+    if (!queue) return interaction.reply({ content: '😴 Rien à skipper…', flags: MessageFlags.Ephemeral });
 
     await interaction.deferReply();
     try {

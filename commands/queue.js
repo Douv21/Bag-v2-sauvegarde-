@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getMusic, THEME } = require('../managers/MusicManager');
 
 module.exports = {
@@ -14,13 +14,13 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '👀 La file ? Rejoins un vocal pour jeter un œil.', ephemeral: true });
+      return interaction.reply({ content: '👀 La file ? Rejoins un vocal pour jeter un œil.', flags: MessageFlags.Ephemeral });
     }
 
     const distube = getMusic(interaction.client);
     const queue = distube.getQueue(interaction.guildId);
     if (!queue || !queue.songs.length) {
-      return interaction.reply({ content: '😴 La file est vide.', ephemeral: true });
+      return interaction.reply({ content: '😴 La file est vide.', flags: MessageFlags.Ephemeral });
     }
 
     const desc = queue.songs
