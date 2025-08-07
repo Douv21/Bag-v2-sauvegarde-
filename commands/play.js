@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, ChannelType, PermissionsBitField } = require('discord.js');
 const { getMusic } = require('../managers/MusicManager');
 
 module.exports = {
@@ -18,6 +18,16 @@ module.exports = {
       return interaction.reply({ content: '💋 Rejoins un salon vocal pour que je te fasse vibrer…', ephemeral: true });
     }
 
+    // Vérification des permissions du bot dans le salon vocal
+    const me = interaction.guild.members.me || interaction.guild.members.cache.get(interaction.client.user.id);
+    const permissions = voiceChannel.permissionsFor(me);
+    if (!permissions?.has(PermissionsBitField.Flags.Connect)) {
+      return interaction.reply({ content: '❌ Je ne peux pas me connecter à ce salon vocal. Vérifie mes permissions (Connect).', ephemeral: true });
+    }
+    if (!permissions?.has(PermissionsBitField.Flags.Speak)) {
+      return interaction.reply({ content: '❌ Je ne peux pas parler dans ce salon vocal. Vérifie mes permissions (Speak).', ephemeral: true });
+    }
+
     const query = interaction.options.getString('query', true);
 
     await interaction.deferReply();
@@ -26,14 +36,25 @@ module.exports = {
     const distube = getMusic(client);
 
     try {
-      await distube.play(voiceChannel, query, {
+      // Timeout de sécurité pour éviter un blocage éternel
+      const timeoutMs = 15000;
+      const playPromise = distube.play(voiceChannel, query, {
         member,
         textChannel: interaction.channel,
         interaction
       });
+
+      await Promise.race([
+        playPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_MUSIC_PLAY')), timeoutMs))
+      ]);
+
       await interaction.editReply({ content: `🔥 Je lance: ${query}` });
     } catch (err) {
-      await interaction.editReply({ content: `❌ Impossible de jouer: ${String(err.message || err)}` });
+      const msg = err && err.message === 'TIMEOUT_MUSIC_PLAY'
+        ? '⏳ La connexion vocale ou la récupération de la musique est trop lente. Réessaie dans un instant et vérifie mes permissions/latence.'
+        : `❌ Impossible de jouer: ${String(err.message || err)}`;
+      await interaction.editReply({ content: msg }).catch(() => {});
     }
   }
 };
