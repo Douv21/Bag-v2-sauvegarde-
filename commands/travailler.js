@@ -93,7 +93,7 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '⚖️ Karma Net',
+                        name: '⚖️ Réputation 🥵',
                         value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
                         inline: true
                     }

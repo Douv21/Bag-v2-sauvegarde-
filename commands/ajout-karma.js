@@ -107,8 +107,8 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '⚖️ Karma Net',
-                        value: `${karmaNet} (${economy[userKey].goodKarma}😇 + ${economy[userKey].badKarma}😈)`,
+                        name: '⚖️ Réputation 🥵',
+                        value: `${karmaNet} (${economy[userKey].goodKarma}🫦 + ${economy[userKey].badKarma}😈)`,
                         inline: true
                     },
                     {

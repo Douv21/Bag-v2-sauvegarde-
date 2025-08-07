@@ -106,8 +106,8 @@ module.exports = {
             
             const embed = new EmbedBuilder()
                 .setColor('#9932cc')
-                .setTitle('⚖️ Classement Karma du Serveur')
-                .setDescription('Classement des membres par **karma bon** et **karma mauvais**\n*Actions bonnes 😇 vs actions mauvaises 😈*')
+                .setTitle('⚖️ Classement Réputation du Serveur')
+                .setDescription('Classement des membres par **charme 🫦** et **perversion 😈**\n*Actions séduisantes 🫦 vs actions coquines 😈*')
                 .setTimestamp();
             
             // Classement karma bon
@@ -124,7 +124,7 @@ module.exports = {
                     
                     const karmaNet = user.goodKarma - user.badKarma;
                     goodLeaderboard += `${medal} **${user.displayName}**\n`;
-                    goodLeaderboard += `   └ **${user.goodKarma}** karma bon 😇 (Net: ${karmaNet})\n\n`;
+                    goodLeaderboard += `   └ **${user.goodKarma}** charme 🫦 (Réputation: ${karmaNet})\n\n`;
                 });
             } else {
                 goodLeaderboard = '*Aucune action positive détectée*\n\n💡 Essayez `/travailler`, `/pecher` ou `/donner` !';
@@ -144,7 +144,7 @@ module.exports = {
                     
                     const karmaNet = user.goodKarma - user.badKarma;
                     badLeaderboard += `${medal} **${user.displayName}**\n`;
-                    badLeaderboard += `   └ **${user.badKarma}** karma mauvais 😈 (Net: ${karmaNet})\n\n`;
+                    badLeaderboard += `   └ **${user.badKarma}** perversion 😈 (Réputation: ${karmaNet})\n\n`;
                 });
             } else {
                 badLeaderboard = '*Aucune action négative détectée*\n\n🎉 Serveur exemplaire !';
@@ -152,12 +152,12 @@ module.exports = {
             
             embed.addFields([
                 {
-                    name: '😇 Top Karma Positif',
+                    name: '🫦 Top Charme',
                     value: goodLeaderboard,
                     inline: true
                 },
                 {
-                    name: '😈 Top Karma Négatif',
+                    name: '😈 Top Perversion',
                     value: badLeaderboard,
                     inline: true
                 }

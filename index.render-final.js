@@ -34,7 +34,7 @@ async function handleKarmaResetComplete(interaction) {
         
         if (!interaction.replied && !interaction.deferred) {
             await interaction.update({
-                content: `✅ **Reset karma complet terminé !**\n\n🧹 ${resetCount} membre(s) affecté(s)\n⚖️ Karma bon et mauvais remis à zéro`,
+                content: `✅ **Reset réputation complet terminé !**\n\n🧹 ${resetCount} membre(s) affecté(s)\n⚖️ Charme et perversion remis à zéro`,
                 embeds: [],
                 components: []
             });
@@ -87,7 +87,7 @@ async function handleKarmaResetGood(interaction) {
         try {
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.update({
-                    content: '❌ Erreur lors du reset karma positif.',
+                    content: '❌ Erreur lors du reset du charme.',
                     embeds: [],
                     components: []
                 });
@@ -130,7 +130,7 @@ async function handleKarmaResetBad(interaction) {
         try {
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.update({
-                    content: '❌ Erreur lors du reset karma négatif.',
+                    content: '❌ Erreur lors du reset de la perversion.',
                     embeds: [],
                     components: []
                 });
@@ -1292,7 +1292,7 @@ class RenderSolutionBot {
                         // Validation
                         if (isNaN(karmaNet) || karmaNet < -999 || karmaNet > 999) {
                             await interaction.reply({
-                                content: '❌ Le karma net doit être un nombre entre -999 et 999.',
+                                content: '❌ La réputation doit être un nombre entre -999 et 999.',
                                 flags: 64
                             });
                             return;
@@ -1321,7 +1321,7 @@ class RenderSolutionBot {
                         dataManager.saveData('economy', economyData);
                         
                         await interaction.reply({
-                            content: `✅ Niveau karma **${name}** créé avec succès (${karmaNet} karma net → ${reward}€).`,
+                            content: `✅ Niveau de réputation **${name}** créé avec succès (${karmaNet} réputation 🥵 → ${reward}€).`,
                             flags: 64
                         });
                         return;
@@ -2637,7 +2637,7 @@ async function handleShopPurchase(interaction, dataManager) {
             });
         }
 
-        // Calculer le karma net et la remise (karma bon - karma mauvais)
+        // Calculer la réputation (karma net = charme - perversion)
         const userKarmaNet = (userData.goodKarma || 0) - Math.abs(userData.badKarma || 0);
         let discountPercent = 0;
         
@@ -2741,7 +2741,7 @@ async function handleShopPurchase(interaction, dataManager) {
         
         if (discountPercent > 0) {
             const savedAmount = originalPrice - finalPrice;
-            confirmMessage += `\n💸 Prix original: ~~${originalPrice}€~~\n🎯 Remise karma (${discountPercent}%): **-${savedAmount}€**\n⚖️ Votre karma net: ${userKarmaNet}`;
+            confirmMessage += `\n💸 Prix original: ~~${originalPrice}€~~\n🎯 Remise réputation (${discountPercent}%): **-${savedAmount}€**\n⚖️ Votre réputation 🥵: ${userKarmaNet}`;
         }
         
         confirmMessage += `\n💳 Nouveau solde: **${userData.balance}€**${effectMessage}`;

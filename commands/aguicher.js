@@ -63,7 +63,7 @@ module.exports = {
           { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
           { name: '😇 Karma Positif', value: `+${params.goodKarma || 0} (${userData.goodKarma})`, inline: true },
           { name: '😈 Karma Négatif', value: `${(params.badKarma || 0) >= 0 ? '+' : ''}${params.badKarma || 0} (${userData.badKarma})`, inline: true },
-          { name: '⚖️ Karma Net', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
+          { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
           { name: '⏰ Cooldown', value: `${Math.floor(params.cooldown / 60000)} min`, inline: true }
         )
         .setFooter({ text: 'Revenez aguicher un peu plus tard...' });

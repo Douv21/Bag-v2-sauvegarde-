@@ -1120,8 +1120,8 @@ class EconomyConfigHandler {
                     { label: '🎁 Configurer Récompenses', value: 'karma_rewards', description: 'Récompenses automatiques par niveau karma' },
                     { label: '⚙️ Niveaux Karma', value: 'karma_levels', description: 'Configurer les seuils de niveaux' },
                     { label: '🔄 Reset Karma Complet', value: 'karma_reset', description: 'Remettre à zéro tout le karma' },
-                    { label: '😇 Reset Karma Bon', value: 'karma_reset_good', description: 'Remettre à zéro karma positif uniquement' },
-                    { label: '😈 Reset Karma Mauvais', value: 'karma_reset_bad', description: 'Remettre à zéro karma négatif uniquement' },
+                    { label: '🫦 Reset Charme', value: 'karma_reset_good', description: 'Remettre à zéro le charme uniquement' },
+                    { label: '😈 Reset Perversion', value: 'karma_reset_bad', description: 'Remettre à zéro la perversion uniquement' },
                     { label: '📅 Jour Reset Hebdo', value: 'karma_weekly_day', description: 'Configurer jour de reset hebdomadaire' },
                     { label: '📊 Voir Statistiques', value: 'karma_stats', description: 'Statistiques karma du serveur' },
                     { label: '🔛 Activer/Désactiver', value: 'karma_toggle', description: 'Enable/disable système karma' },
@@ -1277,20 +1277,20 @@ class EconomyConfigHandler {
     async showKarmaResetGoodConfirm(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#27ae60')
-            .setTitle('😇 Reset Karma Bon - Confirmation')
-            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement le karma positif de tous les membres.')
+            .setTitle('🫦 Reset Charme - Confirmation')
+            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement le charme de tous les membres.')
             .addFields([
-                { name: '🗑️ Action', value: 'Reset karma positif uniquement', inline: false },
-                { name: '👥 Membres affectés', value: 'Tous les membres avec karma positif', inline: false },
-                { name: '✅ Préservé', value: 'Le karma négatif reste intact', inline: false },
+                { name: '🗑️ Action', value: 'Reset du charme uniquement', inline: false },
+                { name: '👥 Membres affectés', value: 'Tous les membres avec du charme', inline: false },
+                { name: '✅ Préservé', value: 'La perversion reste intacte', inline: false },
                 { name: '❗ Irréversible', value: 'Cette action ne peut pas être annulée', inline: false }
             ]);
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('karma_reset_good_confirm')
-            .setPlaceholder('Confirmer le reset karma positif...')
+            .setPlaceholder('Confirmer le reset du charme...')
             .addOptions([
-                { label: '✅ Confirmer Reset Positif', value: 'confirm_reset_good', description: 'RESET karma positif uniquement' },
+                { label: '✅ Confirmer Reset Charme', value: 'confirm_reset_good', description: 'RESET du charme uniquement' },
                 { label: '❌ Annuler', value: 'cancel_reset', description: 'Annuler l\'opération' }
             ]);
 
@@ -1301,20 +1301,20 @@ class EconomyConfigHandler {
     async showKarmaResetBadConfirm(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#e74c3c')
-            .setTitle('😈 Reset Karma Mauvais - Confirmation')
-            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement le karma négatif de tous les membres.')
+            .setTitle('😈 Reset Perversion - Confirmation')
+            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement la perversion de tous les membres.')
             .addFields([
-                { name: '🗑️ Action', value: 'Reset karma négatif uniquement', inline: false },
-                { name: '👥 Membres affectés', value: 'Tous les membres avec karma négatif', inline: false },
-                { name: '✅ Préservé', value: 'Le karma positif reste intact', inline: false },
+                { name: '🗑️ Action', value: 'Reset de la perversion uniquement', inline: false },
+                { name: '👥 Membres affectés', value: 'Tous les membres avec de la perversion', inline: false },
+                { name: '✅ Préservé', value: 'Le charme reste intact', inline: false },
                 { name: '❗ Irréversible', value: 'Cette action ne peut pas être annulée', inline: false }
             ]);
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('karma_reset_bad_confirm')
-            .setPlaceholder('Confirmer le reset karma négatif...')
+            .setPlaceholder('Confirmer le reset de la perversion...')
             .addOptions([
-                { label: '✅ Confirmer Reset Négatif', value: 'confirm_reset_bad', description: 'RESET karma négatif uniquement' },
+                { label: '✅ Confirmer Reset Perversion', value: 'confirm_reset_bad', description: 'RESET de la perversion uniquement' },
                 { label: '❌ Annuler', value: 'cancel_reset', description: 'Annuler l\'opération' }
             ]);
 

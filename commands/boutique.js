@@ -45,9 +45,9 @@ module.exports = {
                 });
             }
 
-            let descriptionText = `**Votre plaisir:** ${userData.balance}💋\n**Karma net:** ${userKarmaNet}`;
+            let descriptionText = `**Votre plaisir:** ${userData.balance}💋\n**Réputation 🥵:** ${userKarmaNet}`;
             if (karmaDiscountPercent > 0) {
-                descriptionText += `\n💸 **Remise karma:** -${karmaDiscountPercent}% sur tous les achats !`;
+                descriptionText += `\n💸 **Remise réputation:** -${karmaDiscountPercent}% sur tous les achats !`;
             }
             descriptionText += '\n\n🛒 Articles disponibles :';
 
