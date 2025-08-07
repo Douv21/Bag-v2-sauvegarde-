@@ -67,7 +67,7 @@ module.exports = {
           { name: '🕒 Tranche', value: isPeak ? 'Peak 22h-3h' : 'Standard', inline: true },
           { name: '📈 Multiplicateur', value: `${multiplier}x`, inline: true },
           { name: '💋 Plaisir', value: `${userData.balance}💋`, inline: true },
-          { name: '⚖️ Karma Net', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true }
+          { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true }
         )
         .setFooter({ text: `Cooldown: ${Math.floor((actionConfig.cooldown || 0) / 60000)} min` });
 

@@ -12,12 +12,49 @@ class KarmaManager {
         try {
             const configPath = path.join(__dirname, '../data/karma_config.json');
             const data = await fs.readFile(configPath, 'utf8');
-            this.karmaConfig = JSON.parse(data);
-        } catch (error) {
-            // Configuration par défaut
+            const fileConfig = JSON.parse(data);
+
+            // Normaliser la configuration pour supporter l'ancien et le nouveau schéma
+            const defaultRewards = {
+                saint: { money: 500, dailyBonus: 1.5, cooldownReduction: 0.7 },
+                good: { money: 200, dailyBonus: 1.2, cooldownReduction: 0.9 },
+                neutral: { money: 0, dailyBonus: 1.0, cooldownReduction: 1.0 },
+                bad: { money: -100, dailyBonus: 0.8, cooldownReduction: 1.2 },
+                evil: { money: -300, dailyBonus: 0.5, cooldownReduction: 1.5 }
+            };
+
+            const defaultActions = {
+                work: { karmaGood: 1, karmaBad: -1, enabled: true },
+                fish: { karmaGood: 1, karmaBad: -1, enabled: true },
+                donate: { karmaGood: 3, karmaBad: -2, enabled: true },
+                steal: { karmaGood: -1, karmaBad: 1, enabled: true },
+                crime: { karmaGood: -3, karmaBad: 3, enabled: true },
+                bet: { karmaGood: -1, karmaBad: 1, enabled: true }
+            };
+
+            // Construire l'objet config en gardant le schéma weeklyReset
+            const weeklyReset = fileConfig.weeklyReset || {
+                enabled: true,
+                dayOfWeek: (typeof fileConfig.resetDay === 'number' ? fileConfig.resetDay : 1),
+                lastReset: (typeof fileConfig.lastReset === 'number' ? fileConfig.lastReset : null)
+            };
+
             this.karmaConfig = {
-                resetDay: 1, // Lundi (0=Dimanche, 1=Lundi, etc.)
-                lastReset: Date.now(),
+                weeklyReset,
+                rewards: fileConfig.rewards || defaultRewards,
+                actions: fileConfig.actions || defaultActions
+            };
+
+            // Persister la normalisation si nécessaire
+            await this.saveKarmaConfig();
+        } catch (error) {
+            // Configuration par défaut (aucun fichier ou fichier invalide)
+            this.karmaConfig = {
+                weeklyReset: {
+                    enabled: true,
+                    dayOfWeek: 1, // Lundi (0=Dimanche, 1=Lundi, etc.)
+                    lastReset: null
+                },
                 rewards: {
                     saint: { // +10 karma et plus
                         money: 500,
@@ -62,7 +99,15 @@ class KarmaManager {
         try {
             const configPath = path.join(__dirname, '../data/karma_config.json');
             await fs.mkdir(path.dirname(configPath), { recursive: true });
-            await fs.writeFile(configPath, JSON.stringify(this.karmaConfig, null, 2));
+
+            // Toujours sauvegarder au format weeklyReset pour cohérence avec le reste de l'app
+            const toSave = {
+                weeklyReset: this.karmaConfig.weeklyReset,
+                rewards: this.karmaConfig.rewards,
+                actions: this.karmaConfig.actions
+            };
+
+            await fs.writeFile(configPath, JSON.stringify(toSave, null, 2));
         } catch (error) {
             console.error('❌ Erreur sauvegarde karma config:', error);
         }
@@ -70,16 +115,19 @@ class KarmaManager {
 
     async checkWeeklyReset() {
         const now = new Date();
-        const lastReset = new Date(this.karmaConfig.lastReset);
-        
-        // Calculer les jours depuis le dernier reset
-        const daysSinceReset = Math.floor((now - lastReset) / (1000 * 60 * 60 * 24));
-        
-        // Vérifier si c'est le bon jour de la semaine
+        const weekly = this.karmaConfig.weeklyReset || { enabled: false };
+
+        if (!weekly.enabled) {
+            return false;
+        }
+
+        const lastResetDate = weekly.lastReset ? new Date(weekly.lastReset) : null;
         const currentDay = now.getDay();
-        const resetDay = this.karmaConfig.resetDay;
-        
-        if (daysSinceReset >= 7 && currentDay === resetDay) {
+        const resetDay = typeof weekly.dayOfWeek === 'number' ? weekly.dayOfWeek : 1;
+
+        // Réinitialiser une fois le jour sélectionné, en évitant les doublons le même jour
+        const alreadyResetToday = lastResetDate && lastResetDate.toDateString() === now.toDateString();
+        if (currentDay === resetDay && !alreadyResetToday) {
             await this.performWeeklyReset();
             return true;
         }
@@ -88,26 +136,29 @@ class KarmaManager {
 
     async performWeeklyReset() {
         console.log('🔄 Réinitialisation hebdomadaire du karma...');
-        
+
         const users = await this.dataManager.getData('users');
         let resetCount = 0;
-        
+
         for (const userKey in users) {
             if (users[userKey].karmaGood || users[userKey].karmaBad) {
                 // Distribuer les récompenses/sanctions avant reset
                 await this.applyWeeklyRewards(userKey, users[userKey]);
-                
+
                 // Reset karma
                 users[userKey].karmaGood = 0;
                 users[userKey].karmaBad = 0;
                 resetCount++;
             }
         }
-        
+
         await this.dataManager.saveData('users', users);
-        this.karmaConfig.lastReset = Date.now();
+        this.karmaConfig.weeklyReset = {
+            ...(this.karmaConfig.weeklyReset || {}),
+            lastReset: Date.now()
+        };
         await this.saveKarmaConfig();
-        
+
         console.log(`✅ Karma reset pour ${resetCount} utilisateurs`);
     }
 
@@ -115,7 +166,7 @@ class KarmaManager {
         const netKarma = (userData.karmaGood || 0) - (userData.karmaBad || 0);
         const level = this.getKarmaLevel(netKarma);
         const rewards = this.karmaConfig.rewards[level];
-        
+
         if (rewards.money !== 0) {
             userData.balance = (userData.balance || 0) + rewards.money;
             console.log(`💰 ${userKey}: ${rewards.money > 0 ? '+' : ''}${rewards.money}€ (karma ${level})`);
@@ -164,7 +215,11 @@ class KarmaManager {
     }
 
     async setResetDay(day) {
-        this.karmaConfig.resetDay = day;
+        this.karmaConfig.weeklyReset = {
+            ...(this.karmaConfig.weeklyReset || {}),
+            dayOfWeek: day,
+            enabled: true
+        };
         await this.saveKarmaConfig();
     }
 
@@ -172,7 +227,7 @@ class KarmaManager {
         if (!this.karmaConfig.actions[action]) {
             this.karmaConfig.actions[action] = { enabled: true };
         }
-        
+
         this.karmaConfig.actions[action].karmaGood = karmaGood;
         this.karmaConfig.actions[action].karmaBad = karmaBad;
         await this.saveKarmaConfig();

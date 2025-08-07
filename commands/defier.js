@@ -59,7 +59,7 @@ module.exports = {
         .addFields(
           { name: '💋 Plaisir', value: `${userData.balance}💋`, inline: true },
           { name: '😈 Risque', value: `${Math.round((actionConfig.winChance || 0.5) * 100)}% de succès`, inline: true },
-          { name: '⚖️ Karma Net', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
+          { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
           { name: '⏰ Cooldown', value: `${Math.floor((actionConfig.cooldown || 0) / 60000)} min`, inline: true }
         );
 

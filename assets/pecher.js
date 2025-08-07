@@ -103,10 +103,10 @@ module.exports = {
                             inline: true
                         },
                         {
-                            name: '⚖️ Karma Net',
-                            value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
-                            inline: true
-                        },
+                             name: '⚖️ Réputation 🥵',
+                             value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
+                             inline: true
+                         },
                         {
                             name: '🌊 Sagesse',
                             value: 'La patience est la clé de la pêche',
@@ -140,10 +140,10 @@ module.exports = {
                             inline: true
                         },
                         {
-                            name: '⚖️ Karma Net',
-                            value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
-                            inline: true
-                        }
+                             name: '⚖️ Réputation 🥵',
+                             value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
+                             inline: true
+                         }
                     ]);
             }
             

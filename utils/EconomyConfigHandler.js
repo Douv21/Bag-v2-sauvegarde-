@@ -164,7 +164,7 @@ class EconomyConfigHandler {
                 { label: '🎨 Objets Personnalisés', value: 'objets', description: 'Créer des objets uniques' },
                 { label: '⌛ Rôles Temporaires', value: 'roles_temp', description: 'Rôles avec durée limitée' },
                 { label: '⭐ Rôles Permanents', value: 'roles_perm', description: 'Rôles définitifs' },
-                { label: '💸 Remises Karma', value: 'remises', description: 'Réductions basées sur karma' },
+                { label: '💸 Remises Réputation', value: 'remises', description: 'Réductions basées sur la réputation' },
                 { label: '🔧 Modifier Objets Existants', value: 'manage_objets', description: 'Gérer objets créés' },
                 { label: '🗑️ Supprimer Articles', value: 'delete_articles', description: 'Supprimer objets/rôles' },
                 { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
@@ -261,14 +261,14 @@ class EconomyConfigHandler {
     async showRemisesMenu(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#27ae60')
-            .setTitle('💸 Remises Karma')
-            .setDescription('Gérer les remises basées sur le karma :');
+            .setTitle('💸 Remises Réputation')
+            .setDescription('Gérer les remises basées sur la réputation :');
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('remises_karma_select')
             .setPlaceholder('Choisissez une action...')
             .addOptions([
-                { label: '➕ Créer Remise', value: 'create', description: 'Créer une nouvelle remise karma' },
+                { label: '➕ Créer Remise', value: 'create', description: 'Créer une nouvelle remise réputation' },
                 { label: '✏️ Modifier Remise', value: 'modify', description: 'Modifier une remise existante' },
                 { label: '🗑️ Supprimer Remise', value: 'delete', description: 'Supprimer une remise' },
                 { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour à la boutique' }
@@ -435,7 +435,7 @@ class EconomyConfigHandler {
     async showRemiseModal(interaction) {
         const modal = new ModalBuilder()
             .setCustomId('remise_karma_modal')
-            .setTitle('Créer une Remise Karma')
+            .setTitle('Créer une Remise Réputation')
             .addComponents(
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
@@ -447,18 +447,18 @@ class EconomyConfigHandler {
                 ),
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
-                        .setCustomId('karma_min')
-                        .setLabel('Karma minimum requis')
+                        .setCustomId('remise_karma')
+                        .setLabel('Réputation minimale requise (-999 à +999)')
                         .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 10')
+                        .setPlaceholder('Ex: 100')
                         .setRequired(true)
                 ),
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
-                        .setCustomId('pourcentage_remise')
-                        .setLabel('Pourcentage de remise (%)')
+                        .setCustomId('remise_pourcentage')
+                        .setLabel('Pourcentage de remise (1-99)')
                         .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 20')
+                        .setPlaceholder('Ex: 10')
                         .setRequired(true)
                 )
             );
@@ -503,14 +503,14 @@ class EconomyConfigHandler {
     async handleRemiseModal(interaction) {
         try {
             const nom = interaction.fields.getTextInputValue('remise_nom');
-            const karmaMin = parseInt(interaction.fields.getTextInputValue('karma_min'));
-            const pourcentage = parseInt(interaction.fields.getTextInputValue('pourcentage_remise'));
+            const karmaMin = parseInt(interaction.fields.getTextInputValue('remise_karma'));
+            const pourcentage = parseInt(interaction.fields.getTextInputValue('remise_pourcentage'));
 
             // Sauvegarder la remise
             await this.saveKarmaDiscount(interaction.guild.id, nom, karmaMin, pourcentage);
 
             await interaction.reply({
-                content: `✅ Remise "${nom}" créée : ${pourcentage}% pour ${karmaMin} karma minimum !`,
+                content: `✅ Remise "${nom}" créée : ${pourcentage}% pour ${karmaMin} de réputation minimum !`,
                 flags: 64
             });
 
@@ -538,7 +538,7 @@ class EconomyConfigHandler {
         
         discountsData[guildId].push(remise);
         await this.dataManager.saveData('karma_discounts', discountsData);
-        console.log(`✅ Remise karma créée:`, remise);
+        console.log(`✅ Remise réputation créée:`, remise);
     }
 
     async handleRoleConfigModal(interaction) {
@@ -1120,8 +1120,8 @@ class EconomyConfigHandler {
                     { label: '🎁 Configurer Récompenses', value: 'karma_rewards', description: 'Récompenses automatiques par niveau karma' },
                     { label: '⚙️ Niveaux Karma', value: 'karma_levels', description: 'Configurer les seuils de niveaux' },
                     { label: '🔄 Reset Karma Complet', value: 'karma_reset', description: 'Remettre à zéro tout le karma' },
-                    { label: '😇 Reset Karma Bon', value: 'karma_reset_good', description: 'Remettre à zéro karma positif uniquement' },
-                    { label: '😈 Reset Karma Mauvais', value: 'karma_reset_bad', description: 'Remettre à zéro karma négatif uniquement' },
+                    { label: '🫦 Reset Charme', value: 'karma_reset_good', description: 'Remettre à zéro le charme uniquement' },
+                    { label: '😈 Reset Perversion', value: 'karma_reset_bad', description: 'Remettre à zéro la perversion uniquement' },
                     { label: '📅 Jour Reset Hebdo', value: 'karma_weekly_day', description: 'Configurer jour de reset hebdomadaire' },
                     { label: '📊 Voir Statistiques', value: 'karma_stats', description: 'Statistiques karma du serveur' },
                     { label: '🔛 Activer/Désactiver', value: 'karma_toggle', description: 'Enable/disable système karma' },
@@ -1277,20 +1277,20 @@ class EconomyConfigHandler {
     async showKarmaResetGoodConfirm(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#27ae60')
-            .setTitle('😇 Reset Karma Bon - Confirmation')
-            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement le karma positif de tous les membres.')
+            .setTitle('🫦 Reset Charme - Confirmation')
+            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement le charme de tous les membres.')
             .addFields([
-                { name: '🗑️ Action', value: 'Reset karma positif uniquement', inline: false },
-                { name: '👥 Membres affectés', value: 'Tous les membres avec karma positif', inline: false },
-                { name: '✅ Préservé', value: 'Le karma négatif reste intact', inline: false },
+                { name: '🗑️ Action', value: 'Reset du charme uniquement', inline: false },
+                { name: '👥 Membres affectés', value: 'Tous les membres avec du charme', inline: false },
+                { name: '✅ Préservé', value: 'La perversion reste intacte', inline: false },
                 { name: '❗ Irréversible', value: 'Cette action ne peut pas être annulée', inline: false }
             ]);
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('karma_reset_good_confirm')
-            .setPlaceholder('Confirmer le reset karma positif...')
+            .setPlaceholder('Confirmer le reset du charme...')
             .addOptions([
-                { label: '✅ Confirmer Reset Positif', value: 'confirm_reset_good', description: 'RESET karma positif uniquement' },
+                { label: '✅ Confirmer Reset Charme', value: 'confirm_reset_good', description: 'RESET du charme uniquement' },
                 { label: '❌ Annuler', value: 'cancel_reset', description: 'Annuler l\'opération' }
             ]);
 
@@ -1301,20 +1301,20 @@ class EconomyConfigHandler {
     async showKarmaResetBadConfirm(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#e74c3c')
-            .setTitle('😈 Reset Karma Mauvais - Confirmation')
-            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement le karma négatif de tous les membres.')
+            .setTitle('😈 Reset Perversion - Confirmation')
+            .setDescription('⚠️ **ATTENTION** : Cette action va remettre à zéro uniquement la perversion de tous les membres.')
             .addFields([
-                { name: '🗑️ Action', value: 'Reset karma négatif uniquement', inline: false },
-                { name: '👥 Membres affectés', value: 'Tous les membres avec karma négatif', inline: false },
-                { name: '✅ Préservé', value: 'Le karma positif reste intact', inline: false },
+                { name: '🗑️ Action', value: 'Reset de la perversion uniquement', inline: false },
+                { name: '👥 Membres affectés', value: 'Tous les membres avec de la perversion', inline: false },
+                { name: '✅ Préservé', value: 'Le charme reste intact', inline: false },
                 { name: '❗ Irréversible', value: 'Cette action ne peut pas être annulée', inline: false }
             ]);
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('karma_reset_bad_confirm')
-            .setPlaceholder('Confirmer le reset karma négatif...')
+            .setPlaceholder('Confirmer le reset de la perversion...')
             .addOptions([
-                { label: '✅ Confirmer Reset Négatif', value: 'confirm_reset_bad', description: 'RESET karma négatif uniquement' },
+                { label: '✅ Confirmer Reset Perversion', value: 'confirm_reset_bad', description: 'RESET de la perversion uniquement' },
                 { label: '❌ Annuler', value: 'cancel_reset', description: 'Annuler l\'opération' }
             ]);
 

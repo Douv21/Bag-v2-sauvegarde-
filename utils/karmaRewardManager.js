@@ -142,8 +142,8 @@ class KarmaRewardManager {
             .setDescription(`<@${user.id}> a atteint le niveau **${reward.name}** !`)
             .addFields(
                 {
-                    name: '⚖️ Seuil Karma',
-                    value: `${Math.abs(reward.karmaThreshold)} ${reward.karmaThreshold > 0 ? 'karma bon 😇' : 'karma mauvais 😈'}`,
+                    name: '⚖️ Seuil Réputation',
+                    value: `${Math.abs(reward.karmaThreshold)} ${reward.karmaThreshold > 0 ? 'charme 🫦' : 'perversion 😈'}`,
                     inline: true
                 },
                 {
