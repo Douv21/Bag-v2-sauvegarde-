@@ -30,7 +30,7 @@ module.exports = {
             
             // Calculer récompense
             const baseReward = 200;
-            const streakBonus = Math.min(newStreak * 10, 100); // Max 100€ bonus
+            const streakBonus = Math.min(newStreak * 10, 100); // Max 100💋 bonus
             const karmaBonus = Math.max(0, (userData.goodKarma || 0) - (userData.badKarma || 0)) * 5;
             const totalReward = baseReward + streakBonus + karmaBonus;
             
@@ -44,26 +44,26 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor('#ffd700')
                 .setTitle('🎁 Récompense Quotidienne !')
-                .setDescription(`Vous avez récupéré **${totalReward}€** !`)
+                .setDescription(`Vous avez récupéré **${totalReward}💋** !`)
                 .addFields([
                     {
-                        name: '💰 Récompense de Base',
-                        value: `${baseReward}€`,
+                        name: '💋 Plaisir de Base',
+                        value: `${baseReward}💋`,
                         inline: true
                     },
                     {
                         name: '🔥 Bonus Streak',
-                        value: `${streakBonus}€ (Jour ${newStreak})`,
+                        value: `${streakBonus}💋 (Jour ${newStreak})`,
                         inline: true
                     },
                     {
                         name: '⚖️ Bonus Karma',
-                        value: `${karmaBonus}€`,
+                        value: `${karmaBonus}💋`,
                         inline: true
                     },
                     {
-                        name: '💳 Nouveau Solde',
-                        value: `${userData.balance}€`,
+                        name: '💋 Nouveau Plaisir',
+                        value: `${userData.balance}💋`,
                         inline: false
                     }
                 ])

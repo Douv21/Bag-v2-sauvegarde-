@@ -45,7 +45,7 @@ module.exports = {
                 });
             }
 
-            let descriptionText = `**Votre solde:** ${userData.balance}€\n**Karma net:** ${userKarmaNet}`;
+            let descriptionText = `**Votre plaisir:** ${userData.balance}💋\n**Karma net:** ${userKarmaNet}`;
             if (karmaDiscountPercent > 0) {
                 descriptionText += `\n💸 **Remise karma:** -${karmaDiscountPercent}% sur tous les achats !`;
             }
@@ -73,10 +73,10 @@ module.exports = {
                     typeText = 'Objet personnalisé';
                 }
                 
-                let priceText = `${item.price}€`;
+                let priceText = `${item.price}💋`;
                 if (karmaDiscountPercent > 0) {
                     const discountedPrice = Math.floor(item.price * (100 - karmaDiscountPercent) / 100);
-                    priceText = `~~${item.price}€~~ **${discountedPrice}€** (-${karmaDiscountPercent}%)`;
+                    priceText = `~~${item.price}💋~~ **${discountedPrice}💋** (-${karmaDiscountPercent}%)`;
                 }
                 
                 return `${typeIcon} **${item.name}** - ${priceText}\n${typeText}\n*${item.description || 'Aucune description'}*`;
@@ -104,7 +104,7 @@ module.exports = {
                             const finalPrice = karmaDiscountPercent > 0 ? 
                                 Math.floor(item.price * (100 - karmaDiscountPercent) / 100) : item.price;
                             const priceDisplay = karmaDiscountPercent > 0 ? 
-                                `${finalPrice}€ (était ${item.price}€)` : `${item.price}€`;
+                                `${finalPrice}💋 (était ${item.price}💋)` : `${item.price}💋`;
 
                             // Ensure unique value - use item.id if available, otherwise create unique identifier
                             const uniqueValue = item.id ? item.id.toString() : `shop_item_${index}_${Date.now().toString(36)}`;

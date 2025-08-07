@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder, UserSelectMenuBuilder, ActionRowBuild
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('voler')
-        .setDescription('Tenter de voler de l\'argent (Action négative)')
+        .setDescription('Tenter de séduire (Action pimentée)')
         .addUserOption(option =>
             option.setName('cible')
                 .setDescription('Utilisateur à voler (optionnel - aléatoire si non spécifié)')
@@ -86,7 +86,7 @@ module.exports = {
 
             if (targetData.balance < 10) {
                 return await interaction.reply({
-                    content: `❌ ${target.username} n'a pas assez d'argent à voler (minimum 10€).`,
+                    content: `❌ ${target.username} n'a pas assez de plaisir à prendre (minimum 10💋).`,
                     flags: 64
                 });
             }
@@ -117,12 +117,12 @@ module.exports = {
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')
-                    .setTitle('💸 Vol Réussi !')
-                    .setDescription(`Vous avez volé **${stolenAmount}€** à ${target.username} !`)
+                    .setTitle('😈 Séduction Réussie !')
+                    .setDescription(`Vous avez arraché **${stolenAmount}💋** à ${target.username} !`)
                     .addFields([
                         {
-                            name: '💰 Nouveau Solde',
-                            value: `${userData.balance}€`,
+                            name: '💋 Nouveau Plaisir',
+                            value: `${userData.balance}💋`,
                             inline: true
                         },
                         {
@@ -156,7 +156,7 @@ module.exports = {
                 
             } else {
                 // Vol échoué
-                const penalty = Math.floor(Math.random() * 50) + 25; // 25-75€
+                const penalty = Math.floor(Math.random() * 50) + 25; // 25-75💋
                 userData.balance = Math.max(0, (userData.balance || 1000) - penalty);
                 userData.badKarma = (userData.badKarma || 0) + actionConfig.badKarma;
                 userData.goodKarma = (userData.goodKarma || 0) + actionConfig.goodKarma;
@@ -169,12 +169,12 @@ module.exports = {
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff4444')
-                    .setTitle('❌ Vol Échoué !')
-                    .setDescription(`Vous avez été attrapé ! Amende de **${penalty}€**.`)
+                    .setTitle('❌ Séduction Échouée !')
+                    .setDescription(`Repéré(e) ! Pénalité de **${penalty}💋**.`)
                     .addFields([
                         {
-                            name: '💰 Nouveau Solde',
-                            value: `${userData.balance}€`,
+                            name: '💋 Nouveau Plaisir',
+                            value: `${userData.balance}💋`,
                             inline: true
                         },
                         {

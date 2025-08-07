@@ -222,7 +222,7 @@ module.exports = {
   
   <!-- Informations décalées plus à droite avec couleurs améliorées -->
   <!-- Colonne gauche -->
-  <text x="360" y="130" text-anchor="middle" fill="#ffff00" font-size="16" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">💰 Solde: ${balance}€</text>
+  <text x="360" y="130" text-anchor="middle" fill="#ffff00" font-size="16" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">💋 Plaisir: ${balance}💋</text>
   <text x="360" y="155" text-anchor="middle" fill="#00ffaa" font-size="16" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">📊 Niveau: ${level}</text>
   <text x="360" y="180" text-anchor="middle" fill="#ffaa00" font-size="16" font-family="Arial Black" font-weight="bold" filter="url(#textGlow)">💬 Messages: ${messageCount}</text>
   

@@ -3,10 +3,10 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('parier')
-        .setDescription('Parier de l\'argent (Action négative 😈)')
+        .setDescription('Oser pour gagner du plaisir (Action pimentée 😈)')
         .addIntegerOption(option =>
             option.setName('montant')
-                .setDescription('Montant à parier (minimum 10€)')
+                .setDescription('Montant à oser (minimum 10💋)')
                 .setRequired(true)
                 .setMinValue(10)),
 
@@ -51,7 +51,7 @@ module.exports = {
             
             if (userData.balance < betAmount) {
                 return await interaction.reply({
-                    content: `❌ Vous n'avez pas assez d'argent ! Votre solde : **${userData.balance}€**`,
+                    content: `❌ Vous n'avez pas assez de plaisir ! Votre solde : **${userData.balance}💋**`,
                     flags: 64
                 });
             }
@@ -74,17 +74,17 @@ module.exports = {
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ffd700')
-                    .setTitle('🎰 Pari Gagné !')
+                    .setTitle('🎲 Ose Réussi !')
                     .setDescription(`Félicitations ! Vous avez doublé votre mise !`)
                     .addFields([
                         {
-                            name: '💰 Gain',
-                            value: `+${betAmount}€`,
+                            name: '💋 Plaisir Gagné',
+                            value: `+${betAmount}💋`,
                             inline: true
                         },
                         {
-                            name: '💳 Nouveau Solde',
-                            value: `${userData.balance}€`,
+                            name: '💋 Nouveau Plaisir',
+                            value: `${userData.balance}💋`,
                             inline: true
                         },
                         {
@@ -131,17 +131,17 @@ module.exports = {
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')
-                    .setTitle('🎰 Pari Perdu !')
+                    .setTitle('🎲 Ose Perdu !')
                     .setDescription(`Dommage ! Vous avez perdu votre mise.`)
                     .addFields([
                         {
-                            name: '💸 Perte',
-                            value: `-${betAmount}€`,
+                            name: '💋 Plaisir Perdu',
+                            value: `-${betAmount}💋`,
                             inline: true
                         },
                         {
-                            name: '💳 Nouveau Solde',
-                            value: `${userData.balance}€`,
+                            name: '💋 Nouveau Plaisir',
+                            value: `${userData.balance}💋`,
                             inline: true
                         },
                         {

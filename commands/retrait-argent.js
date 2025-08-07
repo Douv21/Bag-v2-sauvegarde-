@@ -3,14 +3,14 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('retrait-argent')
-        .setDescription('💸 Retirer de l\'argent à un membre (Admin uniquement)')
+        .setDescription('💋 Retirer du plaisir à un membre (Admin uniquement)')
         .addUserOption(option =>
             option.setName('membre')
                 .setDescription('Le membre à qui retirer de l\'argent')
                 .setRequired(true))
         .addIntegerOption(option =>
             option.setName('montant')
-                .setDescription('Montant à retirer (1-999999€)')
+                .setDescription('Montant à retirer (1-999999💋)')
                 .setRequired(true)
                 .setMinValue(1)
                 .setMaxValue(999999)),
@@ -46,7 +46,7 @@ module.exports = {
             // Vérifier si l'utilisateur a assez d'argent
             if (oldBalance < amount) {
                 return await interaction.reply({
-                    content: `❌ ${targetMember} n'a que ${oldBalance}€, impossible de retirer ${amount}€.`,
+                    content: `❌ ${targetMember} n'a que ${oldBalance}💋, impossible de retirer ${amount}💋.`,
                     flags: 64
                 });
             }
@@ -61,8 +61,8 @@ module.exports = {
             // Créer l'embed de confirmation
             const embed = new EmbedBuilder()
                 .setColor('#FF6B6B')
-                .setTitle('💸 Argent Retiré')
-                .setDescription(`**${amount}€** retiré(s) du compte de ${targetMember}`)
+                .setTitle('💋 Plaisir Retiré')
+                .setDescription(`**${amount}💋** retiré(s) du compte de ${targetMember}`)
                 .addFields([
                     {
                         name: '👤 Membre',
@@ -70,18 +70,18 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '💰 Ancien Solde',
-                        value: `${oldBalance}€`,
+                        name: '💋 Ancien Plaisir',
+                        value: `${oldBalance}💋`,
                         inline: true
                     },
                     {
-                        name: '💰 Nouveau Solde',
-                        value: `${newBalance}€`,
+                        name: '💋 Nouveau Plaisir',
+                        value: `${newBalance}💋`,
                         inline: true
                     },
                     {
-                        name: '📉 Montant Retiré',
-                        value: `-${amount}€`,
+                        name: '📉 Plaisir Retiré',
+                        value: `-${amount}💋`,
                         inline: true
                     },
                     {

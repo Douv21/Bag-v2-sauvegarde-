@@ -30,19 +30,19 @@ class EconomyConfigHandler {
     async showActionsMenu(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#3498db')
-            .setTitle('🎯 Configuration Actions Économiques')
+            .setTitle('😈 Configuration Actions Sexy')
             .setDescription('Sélectionnez l\'action à configurer :');
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('economy_actions_select')
             .setPlaceholder('Choisissez une action...')
             .addOptions([
-                { label: '💼 Travailler', value: 'travailler', description: 'Action positive - Gains et karma' },
-                { label: '🎣 Pêcher', value: 'pecher', description: 'Action positive - Gains et karma' },
-                { label: '💰 Donner', value: 'donner', description: 'Action très positive - Transfert et karma' },
-                { label: '🔫 Voler', value: 'voler', description: 'Action négative - Risque et karma mauvais' },
-                { label: '🎰 Parier', value: 'parier', description: 'Action négative - Gambling et karma' },
-                { label: '💣 Crime', value: 'crime', description: 'Action très négative - Gros gains/risques' },
+                { label: '💋 Charmer', value: 'travailler', description: 'Action positive - Gains et karma' },
+                { label: '🍑 Flirter', value: 'pecher', description: 'Action positive - Gains et karma' },
+                { label: '🎁 Offrir', value: 'donner', description: 'Action très positive - Transfert et karma' },
+                { label: '😈 Séduire', value: 'voler', description: 'Action négative - Risque et karma mauvais' },
+                { label: '🎲 Oser', value: 'parier', description: 'Action négative - Gambling et karma' },
+                { label: '🔥 Coup de folie', value: 'crime', description: 'Action très négative - Gros gains/risques' },
                 { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
             ]);
 
@@ -99,7 +99,7 @@ class EconomyConfigHandler {
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
                         .setCustomId('min_amount')
-                        .setLabel('Montant minimum (€)')
+                        .setLabel('Montant minimum (💋)')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: 10')
                         .setRequired(true)
@@ -107,7 +107,7 @@ class EconomyConfigHandler {
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
                         .setCustomId('max_amount')
-                        .setLabel('Montant maximum (€)')
+                        .setLabel('Montant maximum (💋)')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: 50')
                         .setRequired(true)
@@ -154,7 +154,7 @@ class EconomyConfigHandler {
     async showBoutiqueMenu(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#9b59b6')
-            .setTitle('🏪 Configuration Boutique')
+            .setTitle('🏪 Boutique Coquine')
             .setDescription('Choisissez l\'élément à configurer :');
 
         const selectMenu = new StringSelectMenuBuilder()
@@ -199,7 +199,7 @@ class EconomyConfigHandler {
     async showObjetPersonnaliseModal(interaction) {
         const modal = new ModalBuilder()
             .setCustomId('objet_perso_modal')
-            .setTitle('Créer un Objet Personnalisé')
+            .setTitle('Créer un Objet Coquin')
             .addComponents(
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
@@ -212,7 +212,7 @@ class EconomyConfigHandler {
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
                         .setCustomId('objet_prix')
-                        .setLabel('Prix (€)')
+                        .setLabel('Prix (💋)')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: 100')
                         .setRequired(true)
@@ -281,11 +281,11 @@ class EconomyConfigHandler {
     async showMainMenu(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#e74c3c')
-            .setTitle('⚙️ Configuration Système Économique')
+            .setTitle('💋 Configuration du Jeu Coquin')
             .setDescription('Choisissez la section à configurer :')
             .addFields([
-                { name: '🎯 Actions Économiques', value: 'Configurer les 6 actions (montant, cooldown, karma)', inline: true },
-                { name: '🏪 Boutique', value: 'Objets personnalisés, rôles, remises karma', inline: true },
+                { name: '🎯 Actions Sexy', value: 'Configurer les 6 actions (montant, cooldown, karma)', inline: true },
+                { name: '🏪 Boutique Coquine', value: 'Objets personnalisés, rôles, remises karma', inline: true },
                 { name: '📅 Daily/Quotidien', value: 'Configuration des récompenses quotidiennes', inline: true },
                 { name: '💬 Messages', value: 'Configuration des gains par message', inline: true },
                 { name: '⚖️ Karma', value: 'Système karma et récompenses automatiques', inline: true }
@@ -296,12 +296,12 @@ class EconomyConfigHandler {
             .setPlaceholder('🔧 Choisissez une section...')
             .addOptions([
                 {
-                    label: '🎯 Actions Économiques',
+                    label: '🎯 Actions Sexy',
                     value: 'actions',
-                    description: 'Configurer travailler, pêcher, voler, donner, parier, crime'
+                    description: 'Configurer charmer, flirter, séduire, offrir, oser, coup de folie'
                 },
                 {
-                    label: '🏪 Boutique',
+                    label: '🏪 Boutique Coquine',
                     value: 'boutique',
                     description: 'Objets, rôles temporaires/permanents, remises karma'
                 },
@@ -374,7 +374,7 @@ class EconomyConfigHandler {
             await this.saveCustomObject(interaction.guild.id, nom, prix, description);
 
             await interaction.reply({
-                content: `✅ Objet "${nom}" créé avec succès pour ${prix}€ !`,
+                content: `✅ Objet "${nom}" créé avec succès pour ${prix}💋 !`,
                 flags: 64
             });
 
@@ -399,7 +399,7 @@ class EconomyConfigHandler {
             new ActionRowBuilder().addComponents(
                 new TextInputBuilder()
                     .setCustomId('role_price')
-                    .setLabel('Prix (€)')
+                    .setLabel('Prix (💋)')
                     .setStyle(TextInputStyle.Short)
                     .setPlaceholder('Ex: 500')
                     .setRequired(true)
@@ -748,7 +748,7 @@ class EconomyConfigHandler {
             const roleName = role ? role.name : 'Rôle inconnu';
 
             await interaction.reply({
-                content: `✅ Rôle "${roleName}" ajouté à la boutique pour ${prix}€${type === 'temp' ? ` (${duree}h)` : ' (permanent)'} !`,
+                content: `✅ Rôle "${roleName}" ajouté à la boutique pour ${prix}💋${type === 'temp' ? ` (${duree}h)` : ' (permanent)'} !`,
                 flags: 64
             });
 
@@ -805,7 +805,7 @@ class EconomyConfigHandler {
                 .addFields(
                     customObjects.slice(0, 5).map(obj => ({
                         name: `🎨 ${obj.name}`,
-                        value: `Prix: ${obj.price}€\n${obj.description || 'Pas de description'}`,
+                        value: `Prix: ${obj.price}💋\n${obj.description || 'Pas de description'}`,
                         inline: true
                     }))
                 );
@@ -816,7 +816,7 @@ class EconomyConfigHandler {
                 .addOptions(
                     customObjects.slice(0, 20).map(obj => ({
                         label: obj.name,
-                        description: `${obj.price}€ - Créé le ${new Date(obj.created).toLocaleDateString()}`,
+                        description: `${obj.price}💋 - Créé le ${new Date(obj.created).toLocaleDateString()}`,
                         value: obj.id
                     }))
                 );
@@ -878,7 +878,7 @@ class EconomyConfigHandler {
 
                         return {
                             name: `${typeIcon} ${item.name || `Rôle <@&${item.roleId}>`}`,
-                            value: `${typeName} - ${item.price}€${item.duration ? ` (${item.duration}h)` : ''}`,
+                            value: `${typeName} - ${item.price}💋${item.duration ? ` (${item.duration}h)` : ''}`,
                             inline: true
                         };
                     })
@@ -896,7 +896,7 @@ class EconomyConfigHandler {
                         
                         return {
                             label: `${typeIcon} ${label}`,
-                            description: `${item.price}€ - Supprimer cet article`,
+                            description: `${item.price}💋 - Supprimer cet article`,
                             value: item.id
                         };
                     })
@@ -958,7 +958,7 @@ class EconomyConfigHandler {
 
                         return {
                             name: `${typeIcon} ${item.name || `Rôle <@&${item.roleId}>`}`,
-                            value: `${typeName} - ${item.price}€${item.duration ? ` (${item.duration}h)` : ''}`,
+                            value: `${typeName} - ${item.price}💋${item.duration ? ` (${item.duration}h)` : ''}`,
                             inline: true
                         };
                     })
@@ -976,7 +976,7 @@ class EconomyConfigHandler {
                         
                         return {
                             label: `${typeIcon} ${label}`,
-                            description: `${item.price}€ - Modifier cet article`,
+                            description: `${item.price}💋 - Modifier cet article`,
                             value: item.id
                         };
                     })
@@ -1042,7 +1042,7 @@ class EconomyConfigHandler {
             // Champ prix (toujours présent)
             const priceInput = new TextInputBuilder()
                 .setCustomId('item_price')
-                .setLabel('💰 Prix (1-999,999€)')
+                .setLabel('💰 Prix (1-999,999💋)')
                 .setStyle(TextInputStyle.Short)
                 .setValue(item.price.toString())
                 .setRequired(true);
@@ -1245,7 +1245,7 @@ class EconomyConfigHandler {
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
                         .setCustomId('daily_min_amount')
-                        .setLabel('Montant minimum (€)')
+                        .setLabel('Montant minimum (💋)')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: 50')
                         .setRequired(true)
@@ -1253,7 +1253,7 @@ class EconomyConfigHandler {
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
                         .setCustomId('daily_max_amount')
-                        .setLabel('Montant maximum (€)')
+                        .setLabel('Montant maximum (💋)')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: 100')
                         .setRequired(true)
@@ -1362,7 +1362,7 @@ class EconomyConfigHandler {
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
                         .setCustomId('message_min_gain')
-                        .setLabel('Gain minimum par message (€)')
+                        .setLabel('Gain minimum par message (💋)')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: 1')
                         .setRequired(true)
@@ -1370,7 +1370,7 @@ class EconomyConfigHandler {
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
                         .setCustomId('message_max_gain')
-                        .setLabel('Gain maximum par message (€)')
+                        .setLabel('Gain maximum par message (💋)')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: 5')
                         .setRequired(true)
@@ -1718,7 +1718,7 @@ class EconomyConfigHandler {
             await this.saveDailyConfig(interaction.guild.id, { minAmount, maxAmount });
             
             await interaction.reply({
-                content: `✅ Montants daily configurés: ${minAmount}€ - ${maxAmount}€`,
+                content: `✅ Montants daily configurés: ${minAmount}💋 - ${maxAmount}💋`,
                 flags: 64
             });
 
@@ -1776,7 +1776,7 @@ class EconomyConfigHandler {
             await this.saveMessageConfig(interaction.guild.id, { minGain, maxGain });
             
             await interaction.reply({
-                content: `✅ Gains par message configurés: ${minGain}€ - ${maxGain}€`,
+                content: `✅ Gains par message configurés: ${minGain}💋 - ${maxGain}💋`,
                 flags: 64
             });
 
@@ -2083,7 +2083,7 @@ class EconomyConfigHandler {
                 
                 embed.addFields({
                     name: `${icon} ${item.name}`,
-                    value: `**Type:** ${typeText}\n**Prix:** ${item.price}€\n**ID:** ${item.id}`,
+                    value: `**Type:** ${typeText}\n**Prix:** ${item.price}💋\n**ID:** ${item.id}`,
                     inline: true
                 });
             });
@@ -2098,7 +2098,7 @@ class EconomyConfigHandler {
                            (item.type === 'permanent_role' || item.type === 'perm_role') ? '⭐' : '🎨';
                 selectMenuOptions.push({
                     label: `${icon} ${item.name || `Rôle ${item.roleId}`}`,
-                    description: `${item.price}€ - Modifier cet objet`,
+                    description: `${item.price}💋 - Modifier cet objet`,
                     value: item.id.toString()
                 });
             });
@@ -2151,7 +2151,7 @@ class EconomyConfigHandler {
                 
                 embed.addFields({
                     name: `${icon} ${item.name || `Rôle ${item.roleId}`}`,
-                    value: `**Type:** ${typeText}\n**Prix:** ${item.price}€\n**ID:** ${item.id}`,
+                    value: `**Type:** ${typeText}\n**Prix:** ${item.price}💋\n**ID:** ${item.id}`,
                     inline: true
                 });
             });
@@ -2166,7 +2166,7 @@ class EconomyConfigHandler {
                            (item.type === 'permanent_role' || item.type === 'perm_role') ? '⭐' : '🎨';
                 selectMenuOptions.push({
                     label: `${icon} ${item.name || `Rôle ${item.roleId}`}`,
-                    description: `${item.price}€ - Supprimer définitivement`,
+                    description: `${item.price}💋 - Supprimer définitivement`,
                     value: item.id.toString()
                 });
             });
@@ -2245,7 +2245,7 @@ class EconomyConfigHandler {
                 
                 embed.addFields({
                     name: `${icon} ${reward.name || level.charAt(0).toUpperCase() + level.slice(1)}`,
-                    value: `**Type:** ${type}\n**Argent:** ${reward.money}€\n**Bonus Daily:** x${reward.dailyBonus}\n**Cooldown:** x${reward.cooldownReduction}`,
+                    value: `**Type:** ${type}\n**Argent:** ${reward.money}💋\n**Bonus Daily:** x${reward.dailyBonus}\n**Cooldown:** x${reward.cooldownReduction}`,
                     inline: true
                 });
             });
@@ -2257,7 +2257,7 @@ class EconomyConfigHandler {
                 
                 embed.addFields({
                     name: `${icon} ${reward.name} (Personnalisé)`,
-                    value: `**Type:** ${type}\n**Seuil:** ${reward.threshold}\n**Argent:** ${reward.money}€`,
+                    value: `**Type:** ${type}\n**Seuil:** ${reward.threshold}\n**Argent:** ${reward.money}💋`,
                     inline: true
                 });
             });
@@ -2332,7 +2332,7 @@ class EconomyConfigHandler {
                 
                 embed.addFields({
                     name: `${icon} ${reward.name}`,
-                    value: `**Type:** ${type}\n**Seuil:** ${reward.threshold}\n**Argent:** ${reward.money}€`,
+                    value: `**Type:** ${type}\n**Seuil:** ${reward.threshold}\n**Argent:** ${reward.money}💋`,
                     inline: true
                 });
             });
@@ -2422,7 +2422,7 @@ class EconomyConfigHandler {
 
             const moneyInput = new TextInputBuilder()
                 .setCustomId('reward_money')
-                .setLabel('Montant d\'argent (€)')
+                .setLabel('Montant d\'argent (💋)')
                 .setStyle(TextInputStyle.Short)
                 .setValue(reward.money.toString())
                 .setRequired(true)
@@ -2473,7 +2473,7 @@ class EconomyConfigHandler {
                 .setDescription(`Êtes-vous sûr de vouloir supprimer cette récompense ?`)
                 .addFields({
                     name: `${rewardToDelete.threshold > 0 ? '😇' : '😈'} ${rewardToDelete.name}`,
-                    value: `**Seuil:** ${rewardToDelete.threshold > 0 ? '+' : ''}${rewardToDelete.threshold} karma\n**Argent:** ${rewardToDelete.money}€`,
+                    value: `**Seuil:** ${rewardToDelete.threshold > 0 ? '+' : ''}${rewardToDelete.threshold} karma\n**Argent:** ${rewardToDelete.money}💋`,
                     inline: false
                 })
                 .setFooter({ text: '⚠️ Cette action est irréversible !' });
@@ -2540,7 +2540,7 @@ class EconomyConfigHandler {
                 await this.dataManager.saveData('karma_config.json', karmaData);
 
                 await interaction.update({
-                    content: `✅ **Récompense supprimée avec succès !**\n\n🗑️ **"${deletedReward.name}"** a été supprimée définitivement.\n**Seuil:** ${deletedReward.threshold > 0 ? '+' : ''}${deletedReward.threshold} karma\n**Argent:** ${deletedReward.money}€`,
+                    content: `✅ **Récompense supprimée avec succès !**\n\n🗑️ **"${deletedReward.name}"** a été supprimée définitivement.\n**Seuil:** ${deletedReward.threshold > 0 ? '+' : ''}${deletedReward.threshold} karma\n**Argent:** ${deletedReward.money}💋`,
                     embeds: [],
                     components: [
                         new ActionRowBuilder().addComponents(
@@ -2589,7 +2589,7 @@ class EconomyConfigHandler {
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
                         .setCustomId('money_reward')
-                        .setLabel('Argent bonus (€)')
+                        .setLabel('Argent bonus (💋)')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: 500')
                         .setRequired(true)
@@ -2623,7 +2623,7 @@ class EconomyConfigHandler {
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
                         .setCustomId('money_penalty')
-                        .setLabel('Argent retiré (€)')
+                        .setLabel('Argent retiré (💋)')
                         .setStyle(TextInputStyle.Short)
                         .setPlaceholder('Ex: -200')
                         .setRequired(true)
