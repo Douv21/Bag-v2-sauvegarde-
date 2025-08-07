@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('pecher')
+        .setName('flirter')
         .setDescription('Flirter pour gagner du plaisir (Action positive 😇)'),
 
     async execute(interaction, dataManager) {
@@ -12,7 +12,7 @@ module.exports = {
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const actionConfig = economyConfig.actions?.pecher || {
+            const actionConfig = (economyConfig.actions?.flirter || economyConfig.actions?.pecher) || {
                 enabled: true,
                 minReward: 50,
                 maxReward: 150,
@@ -129,7 +129,7 @@ module.exports = {
             }
             
         } catch (error) {
-            console.error('❌ Erreur pecher:', error);
+            console.error('❌ Erreur flirter:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64

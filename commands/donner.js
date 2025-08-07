@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('donner')
+        .setName('offrir')
         .setDescription('Offrir du plaisir à un membre (Action très positive 😇)')
         .addUserOption(option =>
             option.setName('membre')
@@ -37,7 +37,7 @@ module.exports = {
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const actionConfig = economyConfig.actions?.donner || {
+            const actionConfig = (economyConfig.actions?.offrir || economyConfig.actions?.donner) || {
                 enabled: true,
                 cooldown: 3600000, // 1 heure
                 goodKarma: 3,
@@ -47,7 +47,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /donner est actuellement désactivée.',
+                    content: '❌ La commande /offrir est actuellement désactivée.',
                     flags: 64
                 });
                 return;
@@ -160,7 +160,7 @@ module.exports = {
             }
             
         } catch (error) {
-            console.error('❌ Erreur donner:', error);
+            console.error('❌ Erreur offrir:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64

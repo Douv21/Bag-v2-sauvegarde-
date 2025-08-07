@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('travailler')
+        .setName('charmer')
         .setDescription('Charmer pour gagner du plaisir (Action positive)'),
 
     async execute(interaction, dataManager) {
@@ -12,9 +12,9 @@ module.exports = {
             
             // Charger la configuration économique avec debug
             const economyConfig = await dataManager.loadData('economy.json', {});
-            console.log('🔍 Travailler - Config économique:', JSON.stringify(economyConfig.actions, null, 2));
+            console.log('🔍 Charmer - Config économique:', JSON.stringify(economyConfig.actions, null, 2));
             
-            const actionConfig = economyConfig.actions?.travailler || {
+            const actionConfig = (economyConfig.actions?.charmer || economyConfig.actions?.travailler) || {
                 enabled: true,
                 minReward: 100,
                 maxReward: 150,
@@ -23,12 +23,12 @@ module.exports = {
                 badKarma: -1
             };
             
-            console.log('🔍 Travailler - Config action:', JSON.stringify(actionConfig, null, 2));
+            console.log('🔍 Charmer - Config action:', JSON.stringify(actionConfig, null, 2));
 
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /travailler est actuellement désactivée.',
+                    content: '❌ La commande /charmer est actuellement désactivée.',
                     flags: 64
                 });
                 return;
@@ -43,7 +43,7 @@ module.exports = {
             if (userData.lastWork && (now - userData.lastWork) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastWork)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir retravailler.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir recharmer.`,
                     flags: 64
                 });
             }
@@ -52,7 +52,8 @@ module.exports = {
             const totalReward = Math.floor(Math.random() * (actionConfig.maxReward - actionConfig.minReward + 1)) + actionConfig.minReward;
             
             // Mettre à jour utilisateur avec dataManager
-            userData.balance = (userData.balance || 1000) + totalReward;
+            const previousBalance = userData.balance || 1000;
+            userData.balance = previousBalance + totalReward;
             userData.goodKarma = (userData.goodKarma || 0) + actionConfig.goodKarma;
             userData.badKarma = (userData.badKarma || 0) + actionConfig.badKarma;
             userData.lastWork = now;
@@ -64,7 +65,7 @@ module.exports = {
                 'Vous avez envoyé un clin d’œil ravageur',
                 'Vous avez lancé un compliment coquin',
                 'Vous avez esquissé un sourire mystérieux',
-                'Vous avezfait monter la température'
+                'Vous avez fait monter la température'
             ];
             
             const action = workActions[Math.floor(Math.random() * workActions.length)];
@@ -112,7 +113,7 @@ module.exports = {
             }
             
         } catch (error) {
-            console.error('❌ Erreur travailler:', error);
+            console.error('❌ Erreur charmer:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64

@@ -127,7 +127,7 @@ module.exports = {
                     goodLeaderboard += `   └ **${user.goodKarma}** charme 🫦 (Réputation: ${karmaNet})\n\n`;
                 });
             } else {
-                goodLeaderboard = '*Aucune action positive détectée*\n\n💡 Essayez `/travailler`, `/pecher` ou `/donner` !';
+                goodLeaderboard = '*Aucune action positive détectée*\n\n💡 Essayez `/charmer`, `/flirter` ou `/offrir` !';
             }
             
             // Classement karma mauvais
