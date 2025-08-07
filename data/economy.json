@@ -94,7 +94,31 @@
         "badKarma": 0
       }
     },
+    "charmer": {
+      "enabled": true,
+      "minReward": 3,
+      "maxReward": 100,
+      "cooldown": 60000,
+      "goodKarma": 2,
+      "badKarma": 0,
+      "montant": {
+        "minAmount": 3,
+        "maxAmount": 100
+      },
+      "karma": {
+        "goodKarma": 3,
+        "badKarma": 0
+      }
+    },
     "pecher": {
+      "enabled": true,
+      "minReward": 10,
+      "maxReward": 50,
+      "cooldown": 60000,
+      "goodKarma": 1,
+      "badKarma": 0
+    },
+    "flirter": {
       "enabled": true,
       "minReward": 10,
       "maxReward": 50,
@@ -106,7 +130,16 @@
       "goodKarma": 3,
       "badKarma": 0
     },
+    "offrir": {
+      "goodKarma": 3,
+      "badKarma": 0
+    },
     "voler": {
+      "goodKarma": 0,
+      "badKarma": -3,
+      "enabled": true
+    },
+    "seduire": {
       "goodKarma": 0,
       "badKarma": -3,
       "enabled": true
@@ -119,7 +152,23 @@
       "goodKarma": 0,
       "badKarma": -5
     },
+    "coup-de-folie": {
+      "enabled": true,
+      "minReward": 1,
+      "maxReward": 300,
+      "cooldown": 480000,
+      "goodKarma": 0,
+      "badKarma": -5
+    },
     "parier": {
+      "enabled": true,
+      "minReward": 2,
+      "maxReward": 400,
+      "cooldown": 240000,
+      "goodKarma": 0,
+      "badKarma": -1
+    },
+    "oser": {
       "enabled": true,
       "minReward": 2,
       "maxReward": 400,
