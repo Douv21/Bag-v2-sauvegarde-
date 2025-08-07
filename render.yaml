@@ -21,3 +21,7 @@ services:
         value: cluster0.yir9dvo.mongodb.net
       - key: DEBUG_BACKUP
         value: "true"
+      - key: YTDLP_DISABLE_DOWNLOAD
+        value: "true"
+      - key: YTDLP_UPDATE
+        value: "false"
