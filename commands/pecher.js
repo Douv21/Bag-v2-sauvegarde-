@@ -1,5 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
+function asNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('flirter')
@@ -12,17 +17,17 @@ module.exports = {
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const actionConfig = (economyConfig.actions?.flirter || economyConfig.actions?.pecher) || {
-                enabled: true,
-                minReward: 50,
-                maxReward: 150,
-                cooldown: 5400000, // 1h30
-                goodKarma: 1,
-                badKarma: -1
-            };
+            const rawCfg = (economyConfig.actions?.flirter || economyConfig.actions?.pecher) || {};
+            
+            const enabled = rawCfg.enabled !== false;
+            const minReward = asNumber(rawCfg.minReward, 50);
+            const maxReward = asNumber(rawCfg.maxReward, Math.max(50, 150));
+            const cooldown = asNumber(rawCfg.cooldown, 5400000);
+            const deltaGood = asNumber(rawCfg.goodKarma, 1);
+            const deltaBad = asNumber(rawCfg.badKarma, -1);
 
             // Vérifier si l'action est activée
-            if (!actionConfig.enabled) {
+            if (!enabled) {
                 await interaction.reply({
                     content: '❌ La commande /flirter est actuellement désactivée.',
                     flags: 64
@@ -34,7 +39,7 @@ module.exports = {
             const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
-            const cooldownTime = actionConfig.cooldown;
+            const cooldownTime = cooldown;
             
             if (userData.lastFish && (now - userData.lastFish) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastFish)) / 60000);
@@ -45,11 +50,9 @@ module.exports = {
             }
             
             // Calculer le gain aléatoire selon la configuration
-            const minReward = actionConfig.minReward;
-            const maxReward = actionConfig.maxReward;
-            const gainAmount = Math.floor(Math.random() * (maxReward - minReward + 1)) + minReward;
+            const gainAmount = Math.floor(Math.random() * (Math.max(0, maxReward - minReward) + 1)) + minReward;
             
-            // Types de poissons avec valeurs basées sur le gain calculé
+            // Types de "poissons" avec valeurs basées sur le gain calculé
             const fishTypes = [
                 { name: 'un clin d’œil', emoji: '😉', multiplier: 0.6 },
                 { name: 'un compliment', emoji: '💬', multiplier: 0.8 },
@@ -64,56 +67,28 @@ module.exports = {
             const actualGain = Math.floor(gainAmount * selectedFish.multiplier);
             
             // Mettre à jour utilisateur avec dataManager selon configuration
-            userData.balance = (userData.balance || 1000) + actualGain;
-            userData.goodKarma = (userData.goodKarma || 0) + actionConfig.goodKarma;
-            userData.badKarma = (userData.badKarma || 0) + actionConfig.badKarma;
+            userData.balance = asNumber(userData.balance, 1000) + actualGain;
+            userData.goodKarma = asNumber(userData.goodKarma, 0) + deltaGood;
+            userData.badKarma = asNumber(userData.badKarma, 0) + deltaBad;
             userData.lastFish = now;
             
             await dataManager.updateUser(userId, guildId, userData);
             
             // Calculer karma net après mise à jour
-            const karmaNet = userData.goodKarma - userData.badKarma;
+            const karmaNet = (asNumber(userData.goodKarma, 0)) - (asNumber(userData.badKarma, 0));
             
             const embed = new EmbedBuilder()
                 .setColor('#FF69B4')
                 .setTitle('🍑 Flirt Réussi !')
                 .setDescription(`Vous avez décroché ${selectedFish.name} ${selectedFish.emoji}`)
                 .addFields([
-                    {
-                        name: '💋 Plaisir Gagné',
-                        value: `${actualGain}💋`,
-                        inline: true
-                    },
-                    {
-                        name: '😇 Karma Positif',
-                        value: `+${actionConfig.goodKarma} (${userData.goodKarma})`,
-                        inline: true
-                    },
-                    {
-                        name: '😈 Karma Négatif',
-                        value: `${actionConfig.badKarma} (${userData.badKarma})`,
-                        inline: true
-                    },
-                    {
-                        name: '⚖️ Réputation 🥵',
-                        value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
-                        inline: true
-                    },
-                    {
-                        name: '⏰ Cooldown',
-                        value: `${Math.floor(cooldownTime / 60000)} minutes`,
-                        inline: true
-                    },
-                    {
-                        name: '💋 Plaisir Total',
-                        value: `${userData.balance}💋`,
-                        inline: true
-                    },
-                    {
-                        name: '🎯 Configuration',
-                        value: `Gains: ${minReward}💋-${maxReward}💋`,
-                        inline: false
-                    }
+                    { name: '💋 Plaisir Gagné', value: `${actualGain}💋`, inline: true },
+                    { name: '😇 Karma Positif', value: `+${deltaGood} (${userData.goodKarma})`, inline: true },
+                    { name: '😈 Karma Négatif', value: `${deltaBad} (${userData.badKarma})`, inline: true },
+                    { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
+                    { name: '⏰ Cooldown', value: `${Math.floor(cooldownTime / 60000)} minutes`, inline: true },
+                    { name: '💋 Plaisir Total', value: `${userData.balance}💋`, inline: true },
+                    { name: '🎯 Configuration', value: `Gains: ${minReward}💋-${maxReward}💋`, inline: false }
                 ])
                 .setFooter({ text: 'Prochain flirt dans 1h30' });
             

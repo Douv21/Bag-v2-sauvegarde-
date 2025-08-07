@@ -1,5 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder, UserSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
 
+function asNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('seduire')
@@ -17,18 +22,18 @@ module.exports = {
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const actionConfig = (economyConfig.actions?.seduire || economyConfig.actions?.voler) || {
-                enabled: true,
-                successChance: 0.7,
-                minSteal: 10,
-                maxSteal: 100,
-                cooldown: 7200000, // 2 heures
-                goodKarma: -1,
-                badKarma: 1
-            };
+            const rawCfg = (economyConfig.actions?.seduire || economyConfig.actions?.voler) || {};
+
+            const enabled = rawCfg.enabled !== false;
+            const successChance = asNumber(rawCfg.successChance, 0.7);
+            const minSteal = asNumber(rawCfg.minSteal, 10);
+            const maxSteal = asNumber(rawCfg.maxSteal, Math.max(10, minSteal));
+            const cooldown = asNumber(rawCfg.cooldown, 7200000);
+            const deltaGood = asNumber(rawCfg.goodKarma, -1);
+            const deltaBad = asNumber(rawCfg.badKarma, 1);
 
             // Vérifier si l'action est activée
-            if (!actionConfig.enabled) {
+            if (!enabled) {
                 await interaction.reply({
                     content: '❌ La commande /seduire est actuellement désactivée.',
                     flags: 64
@@ -40,7 +45,7 @@ module.exports = {
             const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
-            const cooldownTime = actionConfig.cooldown;
+            const cooldownTime = cooldown;
             
             if (userData.lastSteal && (now - userData.lastSteal) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastSteal)) / 60000);
@@ -61,7 +66,7 @@ module.exports = {
                 const validTargets = members.filter(member => 
                     !member.user.bot && 
                     member.user.id !== userId &&
-                    allUsers.some(u => u.userId === member.user.id && (u.balance || 1000) > 10)
+                    allUsers.some(u => u.userId === member.user.id && (asNumber(u.balance, 1000)) > 10)
                 );
                 
                 if (validTargets.size === 0) {
@@ -76,6 +81,7 @@ module.exports = {
             }
 
             const targetData = await dataManager.getUser(target.id, guildId);
+            const targetBalance = asNumber(targetData.balance, 0);
 
             if (target.id === userId) {
                 return await interaction.reply({
@@ -84,7 +90,7 @@ module.exports = {
                 });
             }
 
-            if (targetData.balance < 10) {
+            if (targetBalance < 10) {
                 return await interaction.reply({
                     content: `❌ ${target.username} n'a pas assez de plaisir à prendre (minimum 10💋).`,
                     flags: 64
@@ -92,56 +98,41 @@ module.exports = {
             }
 
             // Probabilité de succès selon configuration
-            const success = Math.random() < actionConfig.successChance;
+            const success = Math.random() < successChance;
+            const userBalance = asNumber(userData.balance, 1000);
             
             if (success) {
                 // Vol réussi selon configuration
-                const maxSteal = Math.min(
-                    Math.floor(Math.random() * (actionConfig.maxSteal - actionConfig.minSteal + 1)) + actionConfig.minSteal,
-                    Math.floor(targetData.balance * 0.3) // Maximum 30% du solde de la cible
+                const computedMax = Math.min(
+                    Math.floor(Math.random() * (Math.max(0, maxSteal - minSteal) + 1)) + minSteal,
+                    Math.floor(targetBalance * 0.3) // Maximum 30% du solde de la cible
                 );
-                const stolenAmount = Math.max(actionConfig.minSteal, maxSteal);
+                const stolenAmount = Math.max(minSteal, computedMax);
                 
-                userData.balance = (userData.balance || 1000) + stolenAmount;
-                userData.badKarma = (userData.badKarma || 0) + actionConfig.badKarma;
-                userData.goodKarma = (userData.goodKarma || 0) + actionConfig.goodKarma;
+                userData.balance = userBalance + stolenAmount;
+                userData.badKarma = (asNumber(userData.badKarma, 0)) + deltaBad;
+                userData.goodKarma = (asNumber(userData.goodKarma, 0)) + deltaGood;
                 userData.lastSteal = now;
                 
-                targetData.balance -= stolenAmount;
+                targetData.balance = Math.max(0, targetBalance - stolenAmount);
                 
                 await dataManager.updateUser(userId, guildId, userData);
                 await dataManager.updateUser(target.id, guildId, targetData);
                 
                 // Calculer karma net après mise à jour (somme des valeurs absolues)
-                const karmaNet = userData.goodKarma - userData.badKarma;
+                const karmaNet = (asNumber(userData.goodKarma, 0)) - (asNumber(userData.badKarma, 0));
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')
                     .setTitle('😈 Séduction Réussie !')
                     .setDescription(`Vous avez arraché **${stolenAmount}💋** à ${target.username} !`)
                     .addFields([
-                        {
-                            name: '💋 Nouveau Plaisir',
-                            value: `${userData.balance}💋`,
-                            inline: true
-                        },
-                        {
-                            name: '😈 Karma Négatif',
-                            value: `${actionConfig.badKarma >= 0 ? '+' : ''}${actionConfig.badKarma} (${userData.badKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '😇 Karma Positif',
-                            value: `${actionConfig.goodKarma >= 0 ? '+' : ''}${actionConfig.goodKarma} (${userData.goodKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '⚖️ Réputation 🥵',
-                            value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
-                            inline: true
-                        }
+                        { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
+                        { name: '😈 Karma Négatif', value: `${deltaBad >= 0 ? '+' : ''}${deltaBad} (${userData.badKarma})`, inline: true },
+                        { name: '😇 Karma Positif', value: `${deltaGood >= 0 ? '+' : ''}${deltaGood} (${userData.goodKarma})`, inline: true },
+                        { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true }
                     ])
-                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(actionConfig.cooldown / 60000)} minutes` });
+                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 60000)} minutes` });
                     
                 await interaction.reply({ embeds: [embed] });
 
@@ -157,43 +148,27 @@ module.exports = {
             } else {
                 // Vol échoué
                 const penalty = Math.floor(Math.random() * 50) + 25; // 25-75💋
-                userData.balance = Math.max(0, (userData.balance || 1000) - penalty);
-                userData.badKarma = (userData.badKarma || 0) + actionConfig.badKarma;
-                userData.goodKarma = (userData.goodKarma || 0) + actionConfig.goodKarma;
+                userData.balance = Math.max(0, userBalance - penalty);
+                userData.badKarma = (asNumber(userData.badKarma, 0)) + deltaBad;
+                userData.goodKarma = (asNumber(userData.goodKarma, 0)) + deltaGood;
                 userData.lastSteal = now;
                 
                 await dataManager.updateUser(userId, guildId, userData);
                 
                 // Calculer karma net après échec (somme des valeurs absolues)
-                const karmaNet = userData.goodKarma - userData.badKarma;
+                const karmaNet = (asNumber(userData.goodKarma, 0)) - (asNumber(userData.badKarma, 0));
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff4444')
                     .setTitle('❌ Séduction Échouée !')
                     .setDescription(`Repéré(e) ! Pénalité de **${penalty}💋**.`)
                     .addFields([
-                        {
-                            name: '💋 Nouveau Plaisir',
-                            value: `${userData.balance}💋`,
-                            inline: true
-                        },
-                        {
-                            name: '😈 Karma Négatif',
-                            value: `${actionConfig.badKarma >= 0 ? '+' : ''}${actionConfig.badKarma} (${userData.badKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '😇 Karma Positif',
-                            value: `${actionConfig.goodKarma >= 0 ? '+' : ''}${actionConfig.goodKarma} (${userData.goodKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '⚖️ Réputation 🥵',
-                            value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
-                            inline: true
-                        }
+                        { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
+                        { name: '😈 Karma Négatif', value: `${deltaBad >= 0 ? '+' : ''}${deltaBad} (${userData.badKarma})`, inline: true },
+                        { name: '😇 Karma Positif', value: `${deltaGood >= 0 ? '+' : ''}${deltaGood} (${userData.goodKarma})`, inline: true },
+                        { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true }
                     ])
-                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(actionConfig.cooldown / 60000)} minutes` });
+                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 60000)} minutes` });
                     
                 await interaction.reply({ embeds: [embed] });
 
@@ -208,7 +183,7 @@ module.exports = {
             }
             
         } catch (error) {
-            console.error('❌ Erreur seduire:', error);
+            console.error('❌ Erreur séduire:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64

@@ -1,5 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
+function asNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('coup-de-folie')
@@ -13,17 +18,18 @@ module.exports = {
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
             const actions = economyConfig.actions || {};
-            const actionConfig = (actions['coup-de-folie'] || actions.coup_de_folie || actions.crime) || {
-                enabled: true,
-                minReward: 200,
-                maxReward: 600,
-                cooldown: 14400000, // 4 heures
-                goodKarma: -2,
-                badKarma: 3
-            };
+            const rawCfg = (actions['coup-de-folie'] || actions.coup_de_folie || actions.crime) || {};
+
+            // Normaliser les paramètres numériques
+            const enabled = rawCfg.enabled !== false;
+            const minReward = asNumber(rawCfg.minReward, 200);
+            const maxReward = asNumber(rawCfg.maxReward, Math.max(200, minReward));
+            const cooldown = asNumber(rawCfg.cooldown, 14400000); // 4h défaut
+            const deltaGood = asNumber(rawCfg.goodKarma, -2);
+            const deltaBad = asNumber(rawCfg.badKarma, 3);
 
             // Vérifier si l'action est activée
-            if (!actionConfig.enabled) {
+            if (!enabled) {
                 await interaction.reply({
                     content: '❌ La commande /coup-de-folie est actuellement désactivée.',
                     flags: 64
@@ -35,7 +41,7 @@ module.exports = {
             const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
-            const cooldownTime = actionConfig.cooldown;
+            const cooldownTime = cooldown;
             
             if (userData.lastCrime && (now - userData.lastCrime) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastCrime)) / 60000);
@@ -57,102 +63,67 @@ module.exports = {
             ];
             
             const crime = crimes[Math.floor(Math.random() * crimes.length)];
+
+            const safeBalance = asNumber(userData.balance, 1000);
+            const safeGood = asNumber(userData.goodKarma, 0);
+            const safeBad = asNumber(userData.badKarma, 0);
             
             if (success) {
                 // Crime réussi - gains selon configuration
-                const earnings = Math.floor(Math.random() * (actionConfig.maxReward - actionConfig.minReward + 1)) + actionConfig.minReward;
+                const range = Math.max(0, maxReward - minReward);
+                const earnings = Math.floor(Math.random() * (range + 1)) + minReward;
                 
-                userData.balance = (userData.balance || 1000) + earnings;
-                userData.badKarma = (userData.badKarma || 0) + actionConfig.badKarma;
-                userData.goodKarma = (userData.goodKarma || 0) + actionConfig.goodKarma;
+                userData.balance = safeBalance + earnings;
+                userData.badKarma = safeBad + deltaBad;
+                userData.goodKarma = safeGood + deltaGood;
                 userData.lastCrime = now;
                 
                 await dataManager.updateUser(userId, guildId, userData);
                 
                 // Calculer karma net après mise à jour
-                const karmaNet = userData.goodKarma - userData.badKarma;
+                const karmaNet = (Number(userData.goodKarma) || 0) - (Number(userData.badKarma) || 0);
                 
                 const embed = new EmbedBuilder()
                     .setColor('#8b0000')
                     .setTitle('🔥 Coup de Folie Réussi !')
                     .setDescription(`${crime} et avez gagné **${earnings}💋** !`)
                     .addFields([
-                        {
-                            name: '💋 Nouveau Plaisir',
-                            value: `${userData.balance}💋`,
-                            inline: true
-                        },
-                        {
-                            name: '😈 Karma Négatif',
-                            value: `${actionConfig.badKarma >= 0 ? '+' : ''}${actionConfig.badKarma} (${userData.badKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '😇 Karma Positif',
-                            value: `${actionConfig.goodKarma >= 0 ? '+' : ''}${actionConfig.goodKarma} (${userData.goodKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '⚖️ Réputation 🥵',
-                            value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
-                            inline: true
-                        },
-                        {
-                            name: '⚠️ Attention',
-                            value: 'Vos actions ont des conséquences morales',
-                            inline: false
-                        }
+                        { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
+                        { name: '😈 Karma Négatif', value: `${deltaBad >= 0 ? '+' : ''}${deltaBad} (${userData.badKarma})`, inline: true },
+                        { name: '😇 Karma Positif', value: `${deltaGood >= 0 ? '+' : ''}${deltaGood} (${userData.goodKarma})`, inline: true },
+                        { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
+                        { name: '⚠️ Attention', value: 'Vos actions ont des conséquences morales', inline: false }
                     ])
-                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(actionConfig.cooldown / 3600000)} heures` });
-                    
+                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 3600000)} heures` });
+                
                 await interaction.reply({ embeds: [embed] });
                 
             } else {
                 // Crime échoué - amende selon configuration
-                const penalty = Math.floor(actionConfig.minReward / 2);
-                userData.balance = Math.max(0, (userData.balance || 1000) - penalty);
-                userData.badKarma = (userData.badKarma || 0) + Math.floor(actionConfig.badKarma / 2);
-                userData.goodKarma = (userData.goodKarma || 0) + Math.floor(actionConfig.goodKarma / 2);
+                const penalty = Math.floor(minReward / 2) || 0;
+                userData.balance = Math.max(0, safeBalance - penalty);
+                userData.badKarma = safeBad + Math.floor(deltaBad / 2);
+                userData.goodKarma = safeGood + Math.floor(deltaGood / 2);
                 userData.lastCrime = now;
                 
                 await dataManager.updateUser(userId, guildId, userData);
                 
                 // Calculer karma net après mise à jour
-                const karmaNet = userData.goodKarma - userData.badKarma;
+                const karmaNet = (Number(userData.goodKarma) || 0) - (Number(userData.badKarma) || 0);
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')
                     .setTitle('❌ Coup de Folie Échoué !')
                     .setDescription(`Ça n'a pas pris... Pénalité de **${penalty}💋**.`)
                     .addFields([
-                        {
-                            name: '💋 Nouveau Plaisir',
-                            value: `${userData.balance}💋`,
-                            inline: true
-                        },
-                        {
-                            name: '😈 Karma Négatif',
-                            value: `${Math.floor(actionConfig.badKarma / 2) >= 0 ? '+' : ''}${Math.floor(actionConfig.badKarma / 2)} (${userData.badKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '😇 Karma Positif',
-                            value: `${Math.floor(actionConfig.goodKarma / 2) >= 0 ? '+' : ''}${Math.floor(actionConfig.goodKarma / 2)} (${userData.goodKarma})`,
-                            inline: true
-                        },
-                        {
-                            name: '⚖️ Réputation 🥵',
-                            value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`,
-                            inline: true
-                        },
-                        {
-                            name: '⚖️ Justice',
-                            value: 'Le crime ne paie pas toujours',
-                            inline: false
-                        }
+                        { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
+                        { name: '😈 Karma Négatif', value: `${Math.floor(deltaBad / 2) >= 0 ? '+' : ''}${Math.floor(deltaBad / 2)} (${userData.badKarma})`, inline: true },
+                        { name: '😇 Karma Positif', value: `${Math.floor(deltaGood / 2) >= 0 ? '+' : ''}${Math.floor(deltaGood / 2)} (${userData.goodKarma})`, inline: true },
+                        { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
+                        { name: '⚖️ Justice', value: 'Le crime ne paie pas toujours', inline: false }
                     ])
-                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(actionConfig.cooldown / 3600000)} heures` });
-                    
+                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 3600000)} heures` });
+                
                 await interaction.reply({ embeds: [embed] });
             }
             
