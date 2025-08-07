@@ -145,15 +145,6 @@ async function createPrivateSuite(interaction, member, options) {
     permissionOverwrites: buildOverwrites(guild, role.id, staffRoles)
   });
 
-  // Create voice channel
-  const voiceChannel = await guild.channels.create({
-    name: humanizeName('🎙️-suite', member),
-    type: ChannelType.GuildVoice,
-    parent: category.id,
-    userLimit: 0,
-    permissionOverwrites: buildVoiceOverwrites(guild, role.id, staffRoles)
-  });
-
   // Persist record
   const suites = loadJSON('private_suites.json');
   if (!suites[guildId]) suites[guildId] = {};
@@ -168,7 +159,6 @@ async function createPrivateSuite(interaction, member, options) {
     userId,
     roleId: role.id,
     textChannelId: textChannel.id,
-    voiceChannelId: voiceChannel.id,
     createdAt: new Date(now).toISOString(),
     expiresAt,
     durationDays
@@ -176,7 +166,7 @@ async function createPrivateSuite(interaction, member, options) {
 
   saveJSON('private_suites.json', suites);
 
-  // Send management menus in channels
+  // Send management menus in channel
   try {
     const inviteMenu = new UserSelectMenuBuilder()
       .setCustomId('suite_invite')
@@ -199,16 +189,6 @@ async function createPrivateSuite(interaction, member, options) {
       content: '🔒 Gestion de votre suite: utilisez ces menus pour inviter ou expulser des membres. Seul le propriétaire peut gérer les accès.',
       components: rows
     });
-
-    // Attempt to send in voice channel if supported (may fail on some servers)
-    try {
-      await voiceChannel.send({
-        content: '🔒 Gestion de votre suite (vocal): utilisez ces menus pour inviter ou expulser des membres. Seul le propriétaire peut gérer les accès.',
-        components: rows
-      });
-    } catch (_) {
-      // Voice channels may not support messages; ignore
-    }
   } catch (_) {}
 
   return suites[guildId][recordId];

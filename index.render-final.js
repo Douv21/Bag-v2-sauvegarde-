@@ -1724,7 +1724,7 @@ class RenderSolutionBot {
                             ? JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'data', 'private_suites.json'), 'utf8'))
                             : {};
                         const guildSuites = suites[guild.id] || {};
-                        const suiteRecord = Object.values(guildSuites).find(r => r.textChannelId === channel.id || r.voiceChannelId === channel.id);
+                        const suiteRecord = Object.values(guildSuites).find(r => r.textChannelId === channel.id || (r.voiceChannelId && r.voiceChannelId === channel.id));
                         if (!suiteRecord) {
                             await interaction.reply({ content: '❌ Cette action n\'est pas disponible ici.', flags: 64 });
                             return;
@@ -1735,7 +1735,7 @@ class RenderSolutionBot {
                         }
                         const targetIds = values; // array of user IDs
                         const textChannel = await guild.channels.fetch(suiteRecord.textChannelId).catch(() => null);
-                        const voiceChannel = await guild.channels.fetch(suiteRecord.voiceChannelId).catch(() => null);
+                        const voiceChannel = suiteRecord.voiceChannelId ? await guild.channels.fetch(suiteRecord.voiceChannelId).catch(() => null) : null;
                         const updates = [];
                         if (customId === 'suite_invite') {
                             for (const uid of targetIds) {
