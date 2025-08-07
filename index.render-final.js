@@ -572,6 +572,15 @@ class RenderSolutionBot {
             console.log(`🏰 ${this.client.guilds.cache.size} serveur(s)`);
             console.log(`📋 Commandes disponibles: ${this.commands.size}`);
             
+            // Initialiser le moteur musique (DisTube)
+            try {
+                const { getMusic } = require('./managers/MusicManager');
+                getMusic(this.client);
+                console.log('🎵 Système musique initialisé');
+            } catch (e) {
+                console.warn('⚠️ Échec initialisation musique:', e?.message || e);
+            }
+
             this.commands.forEach(command => {
                 console.log(`  - ${command.data.name}`);
             });
