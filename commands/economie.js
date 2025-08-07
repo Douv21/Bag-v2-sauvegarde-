@@ -4,10 +4,10 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('economie')
-        .setDescription('Voir votre profil économique')
+        .setDescription('Voir votre profil Boys & Girls')
         .addUserOption(option =>
             option.setName('utilisateur')
-                .setDescription('Utilisateur dont afficher le profil économique (optionnel)')
+                .setDescription('Utilisateur dont afficher le profil Boys & Girls (optionnel)')
                 .setRequired(false)
         ),
 
@@ -48,12 +48,12 @@ module.exports = {
 
             const embed = new EmbedBuilder()
                 .setColor('#4CAF50')
-                .setTitle(`💼 Profil Économique - ${targetUser.displayName}`)
+                .setTitle(`💋 Profil Boys & Girls - ${targetUser.displayName}`)
                 .setThumbnail(targetUser.displayAvatarURL())
                 .addFields([
                     {
-                        name: '💰 Solde',
-                        value: `${user.balance || 1000}€`,
+                        name: '💋 Plaisir',
+                        value: `${user.balance || 1000}💋`,
                         inline: true
                     },
                     {
@@ -67,12 +67,12 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '😇 Karma Bon',
+                        name: '😇 Karma Doux',
                         value: `${goodKarma}`,
                         inline: true
                     },
                     {
-                        name: '😈 Karma Mauvais',
+                        name: '😈 Karma Pimenté',
                         value: `${badKarma}`,
                         inline: true
                     },
@@ -82,7 +82,7 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '🏆 Niveau Karma',
+                        name: '🏆 Vibe',
                         value: `${karmaLevel}`,
                         inline: true
                     },
@@ -92,7 +92,7 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '🎁 Streak Daily',
+                        name: '🎁 Streak Coquin',
                         value: `${user.dailyStreak || 0} jours`,
                         inline: true
                     }

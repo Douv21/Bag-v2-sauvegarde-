@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('pecher')
-        .setDescription('Aller à la pêche pour gagner de l\'argent (Action positive 😇)'),
+        .setDescription('Flirter pour gagner du plaisir (Action positive 😇)'),
 
     async execute(interaction, dataManager) {
         try {
@@ -24,7 +24,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /pecher est actuellement désactivée.',
+                    content: '❌ La commande /flirter est actuellement désactivée.',
                     flags: 64
                 });
                 return;
@@ -39,7 +39,7 @@ module.exports = {
             if (userData.lastFish && (now - userData.lastFish) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastFish)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir pêcher à nouveau.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir flirter à nouveau.`,
                     flags: 64
                 });
             }
@@ -51,12 +51,12 @@ module.exports = {
             
             // Types de poissons avec valeurs basées sur le gain calculé
             const fishTypes = [
-                { name: 'des sardines', emoji: '🐟', multiplier: 0.6 },
-                { name: 'une truite', emoji: '🐠', multiplier: 0.8 },
-                { name: 'un saumon', emoji: '🍣', multiplier: 1.0 },
-                { name: 'un thon', emoji: '🐟', multiplier: 1.2 },
-                { name: 'un poisson rare', emoji: '🐠', multiplier: 1.5 },
-                { name: 'un trésor sous-marin', emoji: '💎', multiplier: 2.0 }
+                { name: 'un clin d’œil', emoji: '😉', multiplier: 0.6 },
+                { name: 'un compliment', emoji: '💬', multiplier: 0.8 },
+                { name: 'un sourire', emoji: '😊', multiplier: 1.0 },
+                { name: 'un regard appuyé', emoji: '👀', multiplier: 1.2 },
+                { name: 'une vibe irrésistible', emoji: '🔥', multiplier: 1.5 },
+                { name: 'une alchimie parfaite', emoji: '💞', multiplier: 2.0 }
             ];
             
             // Sélectionner un type de poisson aléatoire
@@ -75,13 +75,13 @@ module.exports = {
             const karmaNet = userData.goodKarma - userData.badKarma;
             
             const embed = new EmbedBuilder()
-                .setColor('#00ff7f')
-                .setTitle('🎣 Belle Pêche !')
-                .setDescription(`Vous avez attrapé ${selectedFish.name} ! ${selectedFish.emoji}`)
+                .setColor('#FF69B4')
+                .setTitle('🍑 Flirt Réussi !')
+                .setDescription(`Vous avez décroché ${selectedFish.name} ${selectedFish.emoji}`)
                 .addFields([
                     {
-                        name: '💰 Gain',
-                        value: `${actualGain}€`,
+                        name: '💋 Plaisir Gagné',
+                        value: `${actualGain}💋`,
                         inline: true
                     },
                     {
@@ -105,17 +105,17 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '💰 Solde Total',
-                        value: `${userData.balance}€`,
+                        name: '💋 Plaisir Total',
+                        value: `${userData.balance}💋`,
                         inline: true
                     },
                     {
                         name: '🎯 Configuration',
-                        value: `Gains: ${minReward}€-${maxReward}€`,
+                        value: `Gains: ${minReward}💋-${maxReward}💋`,
                         inline: false
                     }
                 ])
-                .setFooter({ text: 'Prochaine pêche dans 1h30' });
+                .setFooter({ text: 'Prochain flirt dans 1h30' });
             
             await interaction.reply({ embeds: [embed] });
 

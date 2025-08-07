@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('travailler')
-        .setDescription('Travailler pour gagner de l\'argent (Action positive)'),
+        .setDescription('Charmer pour gagner du plaisir (Action positive)'),
 
     async execute(interaction, dataManager) {
         try {
@@ -60,11 +60,11 @@ module.exports = {
             await dataManager.updateUser(userId, guildId, userData);
             
             const workActions = [
-                'Vous avez travaillé dans un café',
-                'Vous avez aidé des personnes âgées',
-                'Vous avez fait du bénévolat',
-                'Vous avez livré des colis',
-                'Vous avez fait du jardinage'
+                'Vous avez charmé la galerie',
+                'Vous avez envoyé un clin d’œil ravageur',
+                'Vous avez lancé un compliment coquin',
+                'Vous avez esquissé un sourire mystérieux',
+                'Vous avezfait monter la température'
             ];
             
             const action = workActions[Math.floor(Math.random() * workActions.length)];
@@ -74,12 +74,12 @@ module.exports = {
             
             const embed = new EmbedBuilder()
                 .setColor('#00ff00')
-                .setTitle('💼 Travail Terminé !')
-                .setDescription(`${action} et avez gagné **${totalReward}€** !`)
+                .setTitle('💋 Charme Réussi !')
+                .setDescription(`${action} et avez gagné **${totalReward}💋** !`)
                 .addFields([
                     {
-                        name: '💰 Nouveau Solde',
-                        value: `${userData.balance}€`,
+                        name: '💋 Nouveau Plaisir',
+                        value: `${userData.balance}💋`,
                         inline: true
                     },
                     {

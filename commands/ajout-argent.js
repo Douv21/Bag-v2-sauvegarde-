@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ajout-argent')
-        .setDescription('💰 Ajouter de l\'argent à un membre (Admin uniquement)')
+        .setDescription('💋 Ajouter du plaisir à un membre (Admin uniquement)')
         .addUserOption(option =>
             option.setName('membre')
                 .setDescription('Le membre à qui donner de l\'argent')
@@ -55,9 +55,9 @@ module.exports = {
 
             // Créer l'embed de confirmation
             const embed = new EmbedBuilder()
-                .setColor('#00FF00')
-                .setTitle('💰 Argent Ajouté')
-                .setDescription(`**${amount}€** ajouté(s) au compte de ${targetMember}`)
+                .setColor('#FF1493')
+                .setTitle('💋 Plaisir Ajouté')
+                .setDescription(`**${amount}💋** ajouté(s) au compte de ${targetMember}`)
                 .addFields([
                     {
                         name: '👤 Membre',
@@ -65,18 +65,18 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '💰 Ancien Solde',
-                        value: `${oldBalance}€`,
+                        name: '💋 Ancien Plaisir',
+                        value: `${oldBalance}💋`,
                         inline: true
                     },
                     {
-                        name: '💰 Nouveau Solde',
-                        value: `${newBalance}€`,
+                        name: '💋 Nouveau Plaisir',
+                        value: `${newBalance}💋`,
                         inline: true
                     },
                     {
-                        name: '📈 Montant Ajouté',
-                        value: `+${amount}€`,
+                        name: '📈 Plaisir Ajouté',
+                        value: `+${amount}💋`,
                         inline: true
                     },
                     {

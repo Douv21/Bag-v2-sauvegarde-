@@ -18,11 +18,11 @@ module.exports = {
         try {
             const embed = new EmbedBuilder()
                 .setColor('#e74c3c')
-                .setTitle('⚙️ Configuration Système Économique')
-                .setDescription('Choisissez la section à configurer :')
+                .setTitle('💋 Configuration du Jeu Coquin')
+                .setDescription('Le jeu des boys & girls - Comptez ensemble et atteignez des sommets! 🔥')
                 .addFields([
-                    { name: '🎯 Actions Économiques', value: 'Configurer les 6 actions (montant, cooldown, karma)', inline: true },
-                    { name: '🏪 Boutique', value: 'Objets personnalisés, rôles, remises karma', inline: true },
+                    { name: '🎯 Actions Sexy', value: 'Configurer les 6 actions (montant, cooldown, karma)', inline: true },
+                    { name: '🏪 Boutique Coquine', value: 'Objets personnalisés, rôles, remises karma', inline: true },
                     { name: '📅 Daily/Quotidien', value: 'Configuration des récompenses quotidiennes', inline: true },
                     { name: '💬 Messages', value: 'Configuration des gains par message', inline: true },
                     { name: '⚖️ Karma', value: 'Système karma et récompenses automatiques', inline: true }
@@ -33,12 +33,12 @@ module.exports = {
                 .setPlaceholder('🔧 Choisissez une section...')
                 .addOptions([
                     {
-                        label: '🎯 Actions Économiques',
+                        label: '🎯 Actions Sexy',
                         value: 'actions',
-                        description: 'Configurer travailler, pêcher, voler, donner, parier, crime'
+                        description: 'Configurer charmer, flirter, séduire, offrir, oser, coup de folie'
                     },
                     {
-                        label: '🏪 Boutique',
+                        label: '🏪 Boutique Coquine',
                         value: 'boutique',
                         description: 'Objets, rôles temporaires/permanents, remises karma'
                     },

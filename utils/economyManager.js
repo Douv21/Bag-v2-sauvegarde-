@@ -20,8 +20,8 @@ class EconomyManager {
             // Bonnes actions
             work: {
                 id: 'work',
-                name: '💼 Travailler',
-                description: 'Gagnez de l\'argent en travaillant honnêtement',
+                name: '💋 Charmer',
+                description: 'Faites chavirer les cœurs pour gagner du plaisir',
                 actionType: 'good',
                 baseReward: 50,
                 cooldown: 3600, // 1 heure
@@ -30,8 +30,8 @@ class EconomyManager {
             },
             fish: {
                 id: 'fish',
-                name: '🎣 Pêcher',
-                description: 'Pêchez du poisson pour gagner de l\'argent',
+                name: '🍑 Flirter',
+                description: 'Flirtez gentiment pour accumuler du plaisir',
                 actionType: 'good',
                 baseReward: 30,
                 cooldown: 1800, // 30 minutes
@@ -40,8 +40,8 @@ class EconomyManager {
             },
             donate: {
                 id: 'donate',
-                name: '💝 Faire un don',
-                description: 'Donnez de l\'argent à la communauté',
+                name: '🎁 Offrir',
+                description: 'Offrez un peu de plaisir à la communauté',
                 actionType: 'good',
                 baseReward: -20, // Coûte de l'argent
                 cooldown: 7200, // 2 heures
@@ -51,8 +51,8 @@ class EconomyManager {
             // Mauvaises actions
             steal: {
                 id: 'steal',
-                name: '€ Voler',
-                description: 'Volez de l\'argent (action risquée)',
+                name: '😈 Séduire',
+                description: 'Jouez avec le feu (action risquée)',
                 actionType: 'bad',
                 baseReward: 80,
                 cooldown: 5400, // 1.5 heures
@@ -61,8 +61,8 @@ class EconomyManager {
             },
             crime: {
                 id: 'crime',
-                name: '🔫 Crime',
-                description: 'Commettez un crime pour beaucoup d\'argent',
+                name: '🔥 Coup de folie',
+                description: 'Osez tout pour un maximum de plaisir',
                 actionType: 'bad',
                 baseReward: 120,
                 cooldown: 7200, // 2 heures
@@ -71,8 +71,8 @@ class EconomyManager {
             },
             gamble: {
                 id: 'gamble',
-                name: '🎰 Parier',
-                description: 'Pariez votre argent (très risqué)',
+                name: '🎲 Oser',
+                description: 'Tentez votre chance (très risqué)',
                 actionType: 'bad',
                 baseReward: 100, // Variable selon le résultat
                 cooldown: 3600, // 1 heure

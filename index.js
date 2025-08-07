@@ -285,6 +285,23 @@ class BagBotRender {
             
             // Enregistrement des commandes slash
             await this.registerSlashCommands();
+
+            // Scheduler reset hebdomadaire du karma (vérification horaire)
+            try {
+                // Vérification immédiate au démarrage
+                await this.karmaManager.checkWeeklyReset();
+                // Puis toutes les heures
+                setInterval(async () => {
+                    try {
+                        await this.karmaManager.checkWeeklyReset();
+                    } catch (err) {
+                        console.error('❌ Erreur checkWeeklyReset:', err);
+                    }
+                }, 60 * 60 * 1000);
+                console.log('🕒 Planification du reset hebdomadaire du karma activée (check hourly)');
+            } catch (schedulerError) {
+                console.error('❌ Erreur initialisation scheduler karma:', schedulerError);
+            }
         });
 
         // Gestion des interactions (boutons, menus, modals, commandes slash)

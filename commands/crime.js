@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('crime')
-        .setDescription('Commettre un crime pour beaucoup d\'argent (Action très négative 😈)'),
+        .setDescription('Faire un coup de folie pour beaucoup de plaisir (Action très pimentée 😈)'),
 
     async execute(interaction, dataManager) {
         try {
@@ -24,7 +24,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!actionConfig.enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /crime est actuellement désactivée.',
+                    content: '❌ La commande /coup-de-folie est actuellement désactivée.',
                     flags: 64
                 });
                 return;
@@ -39,7 +39,7 @@ module.exports = {
             if (userData.lastCrime && (now - userData.lastCrime) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastCrime)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir commettre un autre crime.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir refaire un coup de folie.`,
                     flags: 64
                 });
             }
@@ -48,11 +48,11 @@ module.exports = {
             const success = Math.random() < 0.6;
             
             const crimes = [
-                'Vous avez braqué une banque',
-                'Vous avez volé une voiture de luxe',
-                'Vous avez détourné des fonds',
-                'Vous avez fait du trafic illégal',
-                'Vous avez cambriolé une bijouterie'
+                'Vous avez tenté un baiser volé',
+                'Vous avez envoyé un message audacieux',
+                'Vous avez dansé au milieu de la piste',
+                'Vous avez flirté sans retenue',
+                'Vous avez soufflé des compliments torrides'
             ];
             
             const crime = crimes[Math.floor(Math.random() * crimes.length)];
@@ -73,12 +73,12 @@ module.exports = {
                 
                 const embed = new EmbedBuilder()
                     .setColor('#8b0000')
-                    .setTitle('🔫 Crime Réussi !')
-                    .setDescription(`${crime} et avez gagné **${earnings}€** !`)
+                    .setTitle('🔥 Coup de Folie Réussi !')
+                    .setDescription(`${crime} et avez gagné **${earnings}💋** !`)
                     .addFields([
                         {
-                            name: '💰 Nouveau Solde',
-                            value: `${userData.balance}€`,
+                            name: '💋 Nouveau Plaisir',
+                            value: `${userData.balance}💋`,
                             inline: true
                         },
                         {
@@ -121,12 +121,12 @@ module.exports = {
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')
-                    .setTitle('🚔 Crime Échoué !')
-                    .setDescription(`Vous avez été arrêté ! Amende de **${penalty}€**.`)
+                    .setTitle('❌ Coup de Folie Échoué !')
+                    .setDescription(`Ça n'a pas pris... Pénalité de **${penalty}💋**.`)
                     .addFields([
                         {
-                            name: '💰 Nouveau Solde',
-                            value: `${userData.balance}€`,
+                            name: '💋 Nouveau Plaisir',
+                            value: `${userData.balance}💋`,
                             inline: true
                         },
                         {

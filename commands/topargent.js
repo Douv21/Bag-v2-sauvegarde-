@@ -2,8 +2,8 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('topargent')
-        .setDescription('Classement des membres les plus riches'),
+        .setName('topplaisir')
+        .setDescription('Classement des membres avec le plus de plaisir 💋'),
 
     async execute(interaction, dataManager) {
         try {
@@ -33,8 +33,8 @@ module.exports = {
 
             const embed = new EmbedBuilder()
                 .setColor('#FFD700')
-                .setTitle('💰 Top Argent - Classement')
-                .setDescription('Voici les membres les plus riches du serveur :')
+                .setTitle('💋 Top Plaisir - Classement')
+                .setDescription('Voici les membres les plus “Boys & Girls” du serveur :')
                 .setFooter({ text: `${guildUsers.length} membres classés` });
 
             // Créer le classement
@@ -56,9 +56,9 @@ module.exports = {
                     const karmaRatio = user.goodKarma + user.badKarma;
                     const karmaIcon = karmaRatio > 0 ? '😇' : karmaRatio < 0 ? '😈' : '😐';
                     
-                    leaderboardText += `${medal} **${username}** - **${user.balance}€** ${karmaIcon}\n`;
+                    leaderboardText += `${medal} **${username}** - **${user.balance}💋** ${karmaIcon}\n`;
                 } catch (error) {
-                    leaderboardText += `${medal} *Utilisateur inconnu* - **${user.balance}€**\n`;
+                    leaderboardText += `${medal} *Utilisateur inconnu* - **${user.balance}💋**\n`;
                 }
             }
 
@@ -75,7 +75,7 @@ module.exports = {
                 if (userPosition > 0) {
                     embed.addFields([{
                         name: '📍 Votre Position',
-                        value: `Vous êtes **${userPosition}ème** avec **${currentUser.balance}€**`,
+                        value: `Vous êtes **${userPosition}ème** avec **${currentUser.balance}💋**`,
                         inline: false
                     }]);
                 }

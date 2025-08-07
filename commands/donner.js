@@ -3,14 +3,14 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('donner')
-        .setDescription('Donner de l\'argent à un membre (Action très positive 😇)')
+        .setDescription('Offrir du plaisir à un membre (Action très positive 😇)')
         .addUserOption(option =>
             option.setName('membre')
-                .setDescription('Membre à qui donner de l\'argent')
+                .setDescription('Membre à qui offrir du plaisir')
                 .setRequired(true))
         .addIntegerOption(option =>
             option.setName('montant')
-                .setDescription('Montant à donner (minimum 10€)')
+                .setDescription('Montant à offrir (minimum 10💋)')
                 .setRequired(true)
                 .setMinValue(10)),
 
@@ -23,14 +23,14 @@ module.exports = {
             
             if (targetUser.id === userId) {
                 return await interaction.reply({
-                    content: '❌ Vous ne pouvez pas vous donner de l\'argent à vous-même !',
+                    content: '❌ Vous ne pouvez pas vous offrir de l\'argent à vous-même !',
                     flags: 64
                 });
             }
             
             if (targetUser.bot) {
                 return await interaction.reply({
-                    content: '❌ Vous ne pouvez pas donner d\'argent à un bot !',
+                    content: '❌ Vous ne pouvez pas offrir d\'argent à un bot !',
                     flags: 64
                 });
             }
@@ -69,7 +69,7 @@ module.exports = {
             
             if (userData.balance < amount) {
                 return await interaction.reply({
-                    content: `❌ Vous n'avez pas assez d'argent ! Votre solde : **${userData.balance}€**`,
+                    content: `❌ Vous n'avez pas assez de plaisir ! Votre solde : **${userData.balance}💋**`,
                     flags: 64
                 });
             }
@@ -92,17 +92,17 @@ module.exports = {
             
             const embed = new EmbedBuilder()
                 .setColor('#32cd32')
-                .setTitle('💝 Don Effectué !')
-                .setDescription(`Vous avez fait don de **${amount}€** à ${targetUser.username}`)
+                .setTitle('🎁 Cadeau Coquin !')
+                .setDescription(`Vous avez offert **${amount}💋** à ${targetUser.username}`)
                 .addFields([
                     {
-                        name: '💸 Montant Donné',
-                        value: `${amount}€`,
+                        name: '💋 Plaisir Offert',
+                        value: `${amount}💋`,
                         inline: true
                     },
                     {
-                        name: '💳 Votre Nouveau Solde',
-                        value: `${userData.balance}€`,
+                        name: '💋 Votre Nouveau Plaisir',
+                        value: `${userData.balance}💋`,
                         inline: true
                     },
                     {
@@ -122,7 +122,7 @@ module.exports = {
                     },
                     {
                         name: '🎁 Bénéficiaire',
-                        value: `${targetUser.username} a reçu ${amount}€`,
+                        value: `${targetUser.username} a reçu ${amount}💋`,
                         inline: false
                     },
                     {
@@ -139,17 +139,17 @@ module.exports = {
             try {
                 const dmEmbed = new EmbedBuilder()
                     .setColor('#32cd32')
-                    .setTitle('💝 Vous avez reçu un don !')
-                    .setDescription(`${interaction.user.username} vous a fait don de **${amount}€** sur ${interaction.guild.name}`)
+                    .setTitle('🎁 Vous avez reçu un cadeau !')
+                    .setDescription(`${interaction.user.username} vous a offert **${amount}💋** sur ${interaction.guild.name}`)
                     .addFields([
                         {
-                            name: '💰 Montant Reçu',
-                            value: `${amount}€`,
+                            name: '💋 Plaisir Reçu',
+                            value: `${amount}💋`,
                             inline: true
                         },
                         {
-                            name: '💳 Votre Nouveau Solde',
-                            value: `${targetData.balance}€`,
+                            name: '💋 Votre Nouveau Plaisir',
+                            value: `${targetData.balance}💋`,
                             inline: true
                         }
                     ]);
