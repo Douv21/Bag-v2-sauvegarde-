@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const { errorHandler, ErrorLevels } = require('../utils/errorHandler');
 const { modalHandler } = require('../utils/modalHandler');
 
@@ -43,7 +43,7 @@ module.exports = {
                 default:
                     await interaction.reply({
                         content: '❌ Sous-commande non reconnue.',
-                        ephemeral: true
+                        flags: MessageFlags.Ephemeral
                     });
             }
         } catch (error) {
@@ -99,13 +99,13 @@ module.exports = {
                 });
             }
 
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+            await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 
         } catch (error) {
             await errorHandler.logError(ErrorLevels.ERROR, 'Erreur affichage stats erreurs', error);
             await interaction.reply({
                 content: '❌ Erreur lors de la récupération des statistiques.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     },
@@ -142,13 +142,13 @@ module.exports = {
                 .setFooter({ text: 'Les modals non implémentées affichent un formulaire de feedback automatiquement' })
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+            await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 
         } catch (error) {
             await errorHandler.logError(ErrorLevels.ERROR, 'Erreur affichage status modals', error);
             await interaction.reply({
                 content: '❌ Erreur lors de la récupération du statut des modals.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     },
@@ -195,13 +195,13 @@ module.exports = {
                 ])
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+            await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 
         } catch (error) {
             await errorHandler.logError(ErrorLevels.ERROR, 'Erreur affichage info système', error);
             await interaction.reply({
                 content: '❌ Erreur lors de la récupération des informations système.',
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     },

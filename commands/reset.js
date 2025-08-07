@@ -1,5 +1,5 @@
 // commands/admin/reset.js
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { REST, Routes } = require('discord.js');
 // Configuration par défaut si config.json n'existe pas
 const config = {
@@ -22,7 +22,7 @@ module.exports = {
     .setDescription('🔁 Supprime toutes les commandes slash du bot (globales et guild)')
     .setDefaultMemberPermissions(0), // Admin uniquement
   async execute(interaction) {
-    await interaction.reply({ content: '⏳ Suppression des commandes en cours...', ephemeral: true });
+    await interaction.reply({ content: '⏳ Suppression des commandes en cours...', flags: MessageFlags.Ephemeral });
 
     const rest = new REST({ version: '10' }).setToken(config.token);
     const clientId = config.clientId;

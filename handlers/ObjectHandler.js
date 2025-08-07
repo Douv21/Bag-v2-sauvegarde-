@@ -1,4 +1,4 @@
-const { ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, UserSelectMenuBuilder } = require('discord.js');
+const { ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, UserSelectMenuBuilder, MessageFlags } = require('discord.js');
 
 async function handleObjectInteraction(interaction, dataManager) {
     const customId = interaction.customId;
@@ -190,7 +190,7 @@ async function handleObjectInteraction(interaction, dataManager) {
             if (!selectedObject) {
                 return await interaction.reply({ 
                     content: '❌ Objet introuvable ou expiré.', 
-                    ephemeral: true 
+                    flags: MessageFlags.Ephemeral 
                 });
             }
 
@@ -199,7 +199,7 @@ async function handleObjectInteraction(interaction, dataManager) {
             if (!targetId) {
                 return await interaction.reply({ 
                     content: '❌ Erreur: membre cible non trouvé.', 
-                    ephemeral: true 
+                    flags: MessageFlags.Ephemeral 
                 });
             }
 
@@ -223,7 +223,7 @@ async function handleObjectInteraction(interaction, dataManager) {
                 console.error('❌ Erreur lors de l\'interaction personnalisée:', error);
                 await interaction.reply({ 
                     content: '❌ Erreur lors de l\'envoi de l\'interaction personnalisée.',
-                    ephemeral: true 
+                    flags: MessageFlags.Ephemeral 
                 });
             }
         }
@@ -233,7 +233,7 @@ async function handleObjectInteraction(interaction, dataManager) {
     } catch (err) {
         console.error('Erreur dans handleObjectInteraction:', err);
         if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ Une erreur critique est survenue.', ephemeral: true });
+            await interaction.reply({ content: '❌ Une erreur critique est survenue.', flags: MessageFlags.Ephemeral });
         }
     }
 }

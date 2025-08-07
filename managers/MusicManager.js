@@ -38,9 +38,6 @@ function getMusic(client) {
 
   distubeInstance = new DisTube(client, {
     emitNewSongOnly: true,
-    leaveOnStop: true,
-    leaveOnFinish: true,
-    leaveOnEmpty: true,
     nsfw: true,
     emitAddSongWhenCreatingQueue: false,
     plugins: [

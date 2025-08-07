@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ChannelType, PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, ChannelType, PermissionsBitField, MessageFlags } = require('discord.js');
 const { getMusic } = require('../managers/MusicManager');
 
 module.exports = {
@@ -15,16 +15,16 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '📻 Pour la radio, rejoins un salon vocal.', ephemeral: true });
+      return interaction.reply({ content: '📻 Pour la radio, rejoins un salon vocal.', flags: MessageFlags.Ephemeral });
     }
 
     const me = interaction.guild.members.me || interaction.guild.members.cache.get(interaction.client.user.id);
     const permissions = voiceChannel.permissionsFor(me);
     if (!permissions?.has(PermissionsBitField.Flags.Connect)) {
-      return interaction.reply({ content: '❌ Je ne peux pas me connecter à ce salon vocal. Vérifie mes permissions (Connect).', ephemeral: true });
+      return interaction.reply({ content: '❌ Je ne peux pas me connecter à ce salon vocal. Vérifie mes permissions (Connect).', flags: MessageFlags.Ephemeral });
     }
     if (!permissions?.has(PermissionsBitField.Flags.Speak)) {
-      return interaction.reply({ content: '❌ Je ne peux pas parler dans ce salon vocal. Vérifie mes permissions (Speak).', ephemeral: true });
+      return interaction.reply({ content: '❌ Je ne peux pas parler dans ce salon vocal. Vérifie mes permissions (Speak).', flags: MessageFlags.Ephemeral });
     }
 
     const url = interaction.options.getString('url', true);
