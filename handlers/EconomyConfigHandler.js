@@ -47,6 +47,7 @@ class EconomyConfigHandler {
                 { label: '🔥 Défi Osé', value: 'defier', description: 'NSFW: gains ou pertes variables' },
                 { label: '💃 Séduire (Masse)', value: 'seduire_mass', description: 'NSFW: très risqué, gros gains/pénalités' },
                 { label: '🌙 After Dark', value: 'after_dark', description: 'NSFW: bonus selon l\'heure' },
+                { label: '🔄 Activer/Désactiver toutes', value: 'toggle_all', description: 'Basculer l\'état de toutes les actions' },
                 { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
             ]);
 
@@ -61,6 +62,11 @@ class EconomyConfigHandler {
             return await this.showMainMenu(interaction);
         }
 
+        if (action === 'toggle_all') {
+            await this.toggleAllActions(interaction);
+            return;
+        }
+
         const embed = new EmbedBuilder()
             .setColor('#e67e22')
             .setTitle(`⚙️ Configuration - ${action.charAt(0).toUpperCase() + action.slice(1)}`)
@@ -73,6 +79,7 @@ class EconomyConfigHandler {
                 { label: '💰 Montant', value: 'montant', description: 'Configurer les gains min/max' },
                 { label: '⏰ Cooldown', value: 'cooldown', description: 'Temps d\'attente entre utilisations' },
                 { label: '⚖️ Karma', value: 'karma', description: 'Karma positif/négatif accordé' },
+                { label: '🔄 Activer/Désactiver', value: 'toggle', description: 'Basculer l\'état de cette action' },
                 { label: '🔙 Retour Actions', value: 'back_actions', description: 'Retour aux actions' }
             ]);
 
@@ -81,12 +88,18 @@ class EconomyConfigHandler {
     }
 
     async handleActionConfigSelect(interaction) {
-        const customId = interaction.customId;
-        const action = customId.split('_')[3]; // economy_action_config_ACTION
+        const customId = interaction.customId; // economy_action_config_ACTION
+        const parts = customId.split('_');
+        const action = parts[3]; // economy_action_config_ACTION
         const configType = interaction.values[0];
 
         if (configType === 'back_actions') {
             return await this.showActionsMenu(interaction);
+        }
+
+        if (configType === 'toggle') {
+            await this.toggleSingleAction(interaction, action);
+            return;
         }
 
         // Créer le modal selon le type de configuration
@@ -3019,6 +3032,78 @@ class EconomyConfigHandler {
                 content: '❌ Erreur lors de la modification de la remise.',
                 flags: 64
             });
+        }
+    }
+
+    getActionAliasKeys(action) {
+        const map = {
+            travailler: ['travailler', 'charmer'],
+            pecher: ['pecher', 'flirter'],
+            donner: ['donner', 'offrir'],
+            voler: ['voler', 'seduire'],
+            crime: ['crime', 'coup-de-folie'],
+            parier: ['parier', 'oser'],
+            aguicher: ['aguicher'],
+            defier: ['defier'],
+            seduire_mass: ['seduire_mass'],
+            after_dark: ['after_dark']
+        };
+        return map[action] || [action];
+    }
+
+    async toggleSingleAction(interaction, action) {
+        try {
+            const economyConfig = await this.dataManager.loadData('economy.json', {});
+            if (!economyConfig.actions) economyConfig.actions = {};
+
+            const keys = this.getActionAliasKeys(action);
+            // Par défaut, considérer une action "activée" si le champ est absent ou non false
+            const anyEnabled = keys.some(k => (economyConfig.actions[k]?.enabled) !== false);
+            const target = !anyEnabled;
+
+            keys.forEach(k => {
+                economyConfig.actions[k] = { ...(economyConfig.actions[k] || {}), enabled: target };
+            });
+
+            await this.dataManager.saveData('economy.json', economyConfig);
+
+            await interaction.reply({
+                content: `✅ Action "${action}" ${target ? 'activée' : 'désactivée'} (${keys.join(', ')})`,
+                flags: 64
+            });
+        } catch (error) {
+            console.error('Erreur toggleSingleAction:', error);
+            await interaction.reply({ content: '❌ Erreur lors du basculement de l\'action.', flags: 64 });
+        }
+    }
+
+    async toggleAllActions(interaction) {
+        try {
+            const economyConfig = await this.dataManager.loadData('economy.json', {});
+            if (!economyConfig.actions) economyConfig.actions = {};
+
+            const actionKeys = Object.keys(economyConfig.actions);
+            if (actionKeys.length === 0) {
+                await interaction.reply({ content: 'ℹ️ Aucune action trouvée à basculer.', flags: 64 });
+                return;
+            }
+
+            const anyEnabled = actionKeys.some(k => (economyConfig.actions[k]?.enabled) !== false);
+            const target = !anyEnabled;
+
+            actionKeys.forEach(k => {
+                economyConfig.actions[k] = { ...(economyConfig.actions[k] || {}), enabled: target };
+            });
+
+            await this.dataManager.saveData('economy.json', economyConfig);
+
+            await interaction.reply({
+                content: `✅ Toutes les actions ont été ${target ? 'activées' : 'désactivées'} (${actionKeys.length})`,
+                flags: 64
+            });
+        } catch (error) {
+            console.error('Erreur toggleAllActions:', error);
+            await interaction.reply({ content: '❌ Erreur lors du basculement global des actions.', flags: 64 });
         }
     }
 }
