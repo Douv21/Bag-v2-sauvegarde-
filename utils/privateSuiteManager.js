@@ -3,6 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const dataManager = require('./simpleDataManager');
 
+// Add builders for channel menus
+const { ActionRowBuilder, UserSelectMenuBuilder } = require('discord.js');
+
 function loadJSON(file) {
   try {
     const dataDir = path.join(__dirname, '..', 'data');
@@ -173,6 +176,41 @@ async function createPrivateSuite(interaction, member, options) {
 
   saveJSON('private_suites.json', suites);
 
+  // Send management menus in channels
+  try {
+    const inviteMenu = new UserSelectMenuBuilder()
+      .setCustomId('suite_invite')
+      .setPlaceholder('Inviter des membres dans votre suite')
+      .setMinValues(1)
+      .setMaxValues(10);
+
+    const kickMenu = new UserSelectMenuBuilder()
+      .setCustomId('suite_kick')
+      .setPlaceholder('Expulser des membres de votre suite')
+      .setMinValues(1)
+      .setMaxValues(10);
+
+    const rows = [
+      new ActionRowBuilder().addComponents(inviteMenu),
+      new ActionRowBuilder().addComponents(kickMenu)
+    ];
+
+    await textChannel.send({
+      content: '🔒 Gestion de votre suite: utilisez ces menus pour inviter ou expulser des membres. Seul le propriétaire peut gérer les accès.',
+      components: rows
+    });
+
+    // Attempt to send in voice channel if supported (may fail on some servers)
+    try {
+      await voiceChannel.send({
+        content: '🔒 Gestion de votre suite (vocal): utilisez ces menus pour inviter ou expulser des membres. Seul le propriétaire peut gérer les accès.',
+        components: rows
+      });
+    } catch (_) {
+      // Voice channels may not support messages; ignore
+    }
+  } catch (_) {}
+
   return suites[guildId][recordId];
 }
 
@@ -276,6 +314,7 @@ async function ensurePrivateSuiteShopItems(guild) {
         name,
         price,
         description,
+        category: 'VIP 💎',
         createdAt: new Date().toISOString(),
         createdBy: 'system'
       });

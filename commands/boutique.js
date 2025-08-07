@@ -16,6 +16,8 @@ module.exports = {
             const karmaDiscountsData = await dataManager.loadData('karma_discounts', {});
             const allShopItems = shopData[guildId] || [];
             const shopItems = allShopItems;
+            const vipItems = allShopItems.filter(i => (i.category || '').toLowerCase().includes('vip'));
+            const normalItems = allShopItems.filter(i => !((i.category || '').toLowerCase().includes('vip')));
 
             const userKarmaNet = (userData.goodKarma || 0) - (userData.badKarma || 0);
             
@@ -49,7 +51,7 @@ module.exports = {
                 .setDescription(descriptionText)
                 .setFooter({ text: 'Sélectionnez un objet à acheter (salons privés inclus)' });
 
-            const itemsText = shopItems.slice(0, 10).map((item, index) => {
+            const renderLine = (item, index) => {
                 let typeIcon = '🏆';
                 let typeText = 'Objet virtuel';
                 
@@ -80,21 +82,30 @@ module.exports = {
                 }
                 
                 return `${typeIcon} **${item.name}** - ${priceText}\n${typeText}\n*${item.description || 'Aucune description'}*`;
-            }).join('\n\n');
+            };
 
-            embed.addFields([{
-                name: '🛍️ Articles Disponibles',
-                value: itemsText || 'Aucun objet disponible',
-                inline: false
-            }]);
+            const normalText = normalItems.slice(0, 10).map(renderLine).join('\n\n');
+            const vipText = vipItems.slice(0, 10).map(renderLine).join('\n\n');
+
+            const fields = [];
+            if (normalItems.length > 0) {
+                fields.push({ name: '🛍️ Articles Disponibles', value: normalText, inline: false });
+            }
+            if (vipItems.length > 0) {
+                fields.push({ name: '💎 VIP', value: vipText, inline: false });
+            }
+            if (fields.length === 0) {
+                fields.push({ name: '🛍️ Articles Disponibles', value: 'Aucun objet disponible', inline: false });
+            }
+            embed.addFields(fields);
 
             const components = [];
-            if (shopItems.length > 0) {
+            if (normalItems.length > 0) {
                 const selectMenu = new StringSelectMenuBuilder()
                     .setCustomId('shop_purchase')
                     .setPlaceholder('💳 Sélectionner un objet à acheter')
                     .addOptions(
-                        shopItems.slice(0, 25).map((item, index) => {
+                        normalItems.slice(0, 25).map((item, index) => {
                             let emoji = '🎨';
                             if (item.type === 'temporary_role' || item.type === 'temp_role') emoji = '⌛';
                             else if (item.type === 'permanent_role') emoji = '⭐';
@@ -108,7 +119,8 @@ module.exports = {
                             const priceDisplay = karmaDiscountPercent > 0 ? 
                                 `${finalPrice}💋 (était ${item.price}💋)` : `${item.price}💋`;
 
-                            const uniqueValue = item.id ? item.id.toString() : `shop_item_${index}_${Date.now().toString(36)}`;
+                            const fullIndex = allShopItems.findIndex(it => it === item);
+                            const uniqueValue = item.id ? item.id.toString() : `shop_item_${fullIndex}_${Date.now().toString(36)}`;
 
                             return {
                                 label: item.name,
@@ -120,6 +132,35 @@ module.exports = {
                     );
 
                 components.push(new ActionRowBuilder().addComponents(selectMenu));
+            }
+            if (vipItems.length > 0) {
+                const selectMenuVip = new StringSelectMenuBuilder()
+                    .setCustomId('shop_purchase')
+                    .setPlaceholder('💳 Sélectionner un objet VIP 💎 à acheter')
+                    .addOptions(
+                        vipItems.slice(0, 25).map((item, index) => {
+                            let emoji = '💎';
+                            if (item.type === 'private_24h') emoji = '🔒';
+                            else if (item.type === 'private_monthly') emoji = '🗓️';
+                            else if (item.type === 'private_permanent') emoji = '♾️';
+
+                            const finalPrice = karmaDiscountPercent > 0 ? 
+                                Math.floor(item.price * (100 - karmaDiscountPercent) / 100) : item.price;
+                            const priceDisplay = karmaDiscountPercent > 0 ? 
+                                `${finalPrice}💋 (était ${item.price}💋)` : `${item.price}💋`;
+
+                            const fullIndex = allShopItems.findIndex(it => it === item);
+                            const uniqueValue = item.id ? item.id.toString() : `shop_item_${fullIndex}_${Date.now().toString(36)}`;
+
+                            return {
+                                label: item.name,
+                                description: `${priceDisplay} - ${(item.description || 'Aucune description').substring(0, 60)}`,
+                                value: uniqueValue,
+                                emoji: emoji
+                            };
+                        })
+                    );
+                components.push(new ActionRowBuilder().addComponents(selectMenuVip));
             }
 
             await interaction.reply({
