@@ -37,30 +37,12 @@
     "lastBet": 1753549730479,
     "lastSteal": 1753549756285,
     "lastDonate": 1753149297896,
-    "appliedRewards": [
+          "appliedRewards": [
       1753184033719,
       1753184120446,
       1753181391406
     ],
-    "inventory": [
-      {
-        "id": 1753136861543,
-        "name": "Fouet",
-        "description": "Objet personnalisé",
-        "type": "custom",
-        "price": 50,
-        "purchasedAt": "2025-07-22T16:26:37.860Z"
-      },
-      {
-        "id": 1753136861543,
-        "name": "Fouet",
-        "description": "Objet personnalisé",
-        "type": "custom",
-        "price": 50,
-        "purchaseDate": "2025-07-26T20:57:24.399Z",
-        "from": "shop"
-      }
-    ],
+    "inventory": [],
     "xp": 6004,
     "money": 6120,
     "level": 1
