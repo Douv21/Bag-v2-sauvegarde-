@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType, EmbedBuilder } = require('discord.js');
-const { getMusic } = require('../managers/MusicManager');
+const { getMusic, THEME } = require('../managers/MusicManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -23,8 +23,16 @@ module.exports = {
       return interaction.reply({ content: '😴 La file est vide.', flags: 64 });
     }
 
-    const desc = queue.songs.map((s, i) => `${i === 0 ? '▶️' : `${i}.`} ${s.name} — ${s.formattedDuration} • <@${s.user?.id || s.user}>`).slice(0, 10).join('\n');
-    const embed = new EmbedBuilder().setColor('#FF3E8D').setTitle('🔥 File Boys & Girls').setDescription(desc);
+    const desc = queue.songs
+      .map((s, i) => `${i === 0 ? '▶️' : `${i}.`} ${s.name} — ${s.formattedDuration} • <@${s.user?.id || s.user}>`)
+      .slice(0, 10)
+      .join('\n');
+
+    const embed = new EmbedBuilder()
+      .setColor(THEME.colorPrimary)
+      .setTitle('🔥 File Boys & Girls')
+      .setDescription(desc)
+      .setFooter({ text: THEME.footer });
 
     await interaction.reply({ embeds: [embed] });
   }

@@ -14,7 +14,7 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '🧘 Va dans un salon vocal pour mettre en pause.', flags: 64 });
+      return interaction.reply({ content: '🧘 Viens au vocal pour mettre en pause, darling.', flags: 64 });
     }
 
     const distube = getMusic(interaction.client);

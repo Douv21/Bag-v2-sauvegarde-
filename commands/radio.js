@@ -24,12 +24,8 @@ module.exports = {
     const distube = getMusic(interaction.client);
 
     try {
-      await distube.play(voiceChannel, url, {
-        member,
-        textChannel: interaction.channel,
-        interaction
-      });
-      await interaction.editReply({ content: `📻 Radio lancée: ${url}` });
+      await distube.play(voiceChannel, url, { member, textChannel: interaction.channel, interaction });
+      await interaction.editReply({ content: `📻 Radio lancée: ${url} • Bonne écoute 😈` });
     } catch (err) {
       await interaction.editReply({ content: `❌ Impossible de lire le flux: ${String(err.message || err)}` });
     }

@@ -5,25 +5,31 @@ const { SpotifyPlugin } = require('@distube/spotify');
 const { SoundCloudPlugin } = require('@distube/soundcloud');
 const { DeezerPlugin } = require('@distube/deezer');
 
+const THEME = {
+  colorPrimary: '#FF2E88',
+  colorSecondary: '#FF69B4',
+  footer: 'Boys & Girls • NSFW Vibes 💋'
+};
+
 let distubeInstance = null;
 
 function createNowPlayingEmbed(song, queue) {
   const embed = new EmbedBuilder()
-    .setColor('#FF3E8D')
+    .setColor(THEME.colorPrimary)
     .setTitle('💋 Now playing, boys & girls')
-    .setDescription(`**${song.name}** — ${song.formattedDuration}\nDemandé par <@${song.user?.id || song.user}> 😈`)
+    .setDescription(`🔥 **${song.name}**\n⏱️ ${song.formattedDuration} • 😈 Demandé par <@${song.user?.id || song.user}>`)
     .setThumbnail(song.thumbnail || null)
-    .setFooter({ text: `🔥 File: ${queue?.songs?.length || 1} | Volume: ${queue?.volume || 100}%` });
+    .setFooter({ text: THEME.footer });
   return embed;
 }
 
 function createAddedEmbed(song) {
   const embed = new EmbedBuilder()
-    .setColor('#FF69B4')
+    .setColor(THEME.colorSecondary)
     .setTitle('😏 Ajouté à la file')
-    .setDescription(`**${song.name}** — ${song.formattedDuration}`)
+    .setDescription(`🎶 **${song.name}** • ⏱️ ${song.formattedDuration}`)
     .setThumbnail(song.thumbnail || null)
-    .setFooter({ text: 'Boys & Girls vibes 🔥' });
+    .setFooter({ text: THEME.footer });
   return embed;
 }
 
@@ -56,18 +62,30 @@ function getMusic(client) {
     })
     .on('error', (channel, error) => {
       try {
-        const content = `❌ Oups, coquin(e)… Erreur audio: ${'```'}${String(error?.message || error).slice(0, 1800)}${'```'}`;
-        if (channel && typeof channel.send === 'function') channel.send({ content }).catch(() => {});
+        const embed = new EmbedBuilder()
+          .setColor('#FF0044')
+          .setTitle('❌ Oups, coquin(e)… Erreur audio')
+          .setDescription(`\`\`\`${String(error?.message || error).slice(0, 1800)}\`\`\``)
+          .setFooter({ text: THEME.footer });
+        if (channel && typeof channel.send === 'function') channel.send({ embeds: [embed] }).catch(() => {});
       } catch {}
     })
     .on('finish', queue => {
-      queue.textChannel?.send({ content: '💦 File terminée. On se repose un peu ?' }).catch(() => {});
+      const embed = new EmbedBuilder()
+        .setColor(THEME.colorSecondary)
+        .setDescription('💦 File terminée. On se repose un peu ?')
+        .setFooter({ text: THEME.footer });
+      queue.textChannel?.send({ embeds: [embed] }).catch(() => {});
     })
     .on('disconnect', queue => {
-      queue.textChannel?.send({ content: '👋 Déconnecté du salon vocal.' }).catch(() => {});
+      const embed = new EmbedBuilder()
+        .setColor(THEME.colorSecondary)
+        .setDescription('👋 Déconnecté du salon vocal.')
+        .setFooter({ text: THEME.footer });
+      queue.textChannel?.send({ embeds: [embed] }).catch(() => {});
     });
 
   return distubeInstance;
 }
 
-module.exports = { getMusic };
+module.exports = { getMusic, THEME };
