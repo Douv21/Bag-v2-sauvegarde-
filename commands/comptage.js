@@ -3,13 +3,13 @@ const { SlashCommandBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('comptage')
-        .setDescription('🔢 Configurer le système de comptage (Admin uniquement)'),
+        .setDescription('💋 Configurer le jeu coquin des boys & girls (Admin only)'),
 
     async execute(interaction, dataManager) {
         // Vérifier les permissions admin
         if (!interaction.member.permissions.has('ADMINISTRATOR') && !interaction.member.permissions.has('MANAGE_GUILD')) {
             await interaction.reply({
-                content: '❌ Cette commande est réservée aux administrateurs.',
+                content: '❌ Seuls les admins peuvent configurer le jeu coquin! 😈',
                 flags: 64
             });
             return;
@@ -25,7 +25,7 @@ module.exports = {
             
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
-                    content: '❌ Erreur lors de l\'affichage de la configuration comptage.',
+                    content: '❌ Oops! Erreur lors de la configuration du jeu coquin.',
                     flags: 64
                 });
             }
