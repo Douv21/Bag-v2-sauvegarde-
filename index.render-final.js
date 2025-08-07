@@ -1716,8 +1716,73 @@ class RenderSolutionBot {
                 const customId = interaction.customId;
                 console.log(`🔄 MainRouter traite: ${customId}`);
                 
+                // Gestion des menus d'invitation/expulsion pour suites privées
+                if (interaction.isUserSelectMenu() && (customId === 'suite_invite' || customId === 'suite_kick')) {
+                    try {
+                        const { guild, channel, user, values } = interaction;
+                        const suites = require('fs').existsSync(require('path').join(__dirname, 'data', 'private_suites.json'))
+                            ? JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'data', 'private_suites.json'), 'utf8'))
+                            : {};
+                        const guildSuites = suites[guild.id] || {};
+                        const suiteRecord = Object.values(guildSuites).find(r => r.textChannelId === channel.id || r.voiceChannelId === channel.id);
+                        if (!suiteRecord) {
+                            await interaction.reply({ content: '❌ Cette action n\'est pas disponible ici.', flags: 64 });
+                            return;
+                        }
+                        if (suiteRecord.userId !== user.id) {
+                            await interaction.reply({ content: '❌ Seul le propriétaire de la suite peut gérer les accès.', flags: 64 });
+                            return;
+                        }
+                        const targetIds = values; // array of user IDs
+                        const textChannel = await guild.channels.fetch(suiteRecord.textChannelId).catch(() => null);
+                        const voiceChannel = await guild.channels.fetch(suiteRecord.voiceChannelId).catch(() => null);
+                        const updates = [];
+                        if (customId === 'suite_invite') {
+                            for (const uid of targetIds) {
+                                try {
+                                    if (textChannel) {
+                                        await textChannel.permissionOverwrites.edit(uid, {
+                                            ViewChannel: true,
+                                            SendMessages: true,
+                                            ReadMessageHistory: true
+                                        });
+                                    }
+                                    if (voiceChannel) {
+                                        await voiceChannel.permissionOverwrites.edit(uid, {
+                                            ViewChannel: true,
+                                            Connect: true,
+                                            Speak: true
+                                        });
+                                    }
+                                    updates.push(`<@${uid}> ✅`);
+                                } catch (_) {}
+                            }
+                            await interaction.reply({ content: `✅ Invités: ${updates.join(', ')}`, flags: 64 });
+                        } else {
+                            for (const uid of targetIds) {
+                                try {
+                                    if (textChannel) {
+                                        await textChannel.permissionOverwrites.delete(uid).catch(async () => {
+                                            await textChannel.permissionOverwrites.edit(uid, { ViewChannel: false, SendMessages: false });
+                                        });
+                                    }
+                                    if (voiceChannel) {
+                                        await voiceChannel.permissionOverwrites.delete(uid).catch(async () => {
+                                            await voiceChannel.permissionOverwrites.edit(uid, { ViewChannel: false, Connect: false });
+                                        });
+                                    }
+                                    updates.push(`<@${uid}> 🚫`);
+                                } catch (_) {}
+                            }
+                            await interaction.reply({ content: `✅ Expulsés: ${updates.join(', ')}`, flags: 64 });
+                        }
+                        return;
+                    } catch (e) {
+                        try { await interaction.reply({ content: '❌ Erreur lors de la gestion des accès.', flags: 64 }); } catch {}
+                        return;
+                    }
+                }
 
-                
                 // Routage level config menu - priorité haute
                 if (customId === 'level_config_menu') {
                     console.log('🎯 Menu level_config_menu détecté, valeur:', interaction.values[0]);

@@ -50,7 +50,8 @@
       "price": 5000,
       "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) pour 24h.",
       "createdAt": "2025-08-07T21:57:22.113Z",
-      "createdBy": "system"
+      "createdBy": "system",
+      "category": "VIP 💎"
     },
     {
       "id": "private_monthly_1754603842114",
@@ -59,7 +60,8 @@
       "price": 15000,
       "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) pour 30 jours.",
       "createdAt": "2025-08-07T21:57:22.114Z",
-      "createdBy": "system"
+      "createdBy": "system",
+      "category": "VIP 💎"
     },
     {
       "id": "private_permanent_1754603842114",
@@ -68,7 +70,8 @@
       "price": 50000,
       "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) sans expiration.",
       "createdAt": "2025-08-07T21:57:22.114Z",
-      "createdBy": "system"
+      "createdBy": "system",
+      "category": "VIP 💎"
     }
   ]
 }

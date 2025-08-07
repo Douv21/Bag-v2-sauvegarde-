@@ -210,8 +210,11 @@ class ProductionBot {
             
             // Suites privées (production léger): scan existant
             try {
-                const { scanAndRepairSuites } = require('./utils/privateSuiteManager');
+                const { scanAndRepairSuites, ensurePrivateSuiteShopItems } = require('./utils/privateSuiteManager');
                 await scanAndRepairSuites(this.client);
+                for (const guild of this.client.guilds.cache.values()) {
+                    await ensurePrivateSuiteShopItems(guild);
+                }
                 console.log('🔒 Suites privées prêtes (production)');
             } catch (e) {
                 console.warn('⚠️ Suites privées init (production):', e?.message || e);
