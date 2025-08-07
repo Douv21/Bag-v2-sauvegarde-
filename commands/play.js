@@ -15,7 +15,7 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '💋 Rejoins un salon vocal pour que je te fasse vibrer…', flags: 64 });
+      return interaction.reply({ content: '💋 Rejoins un salon vocal pour que je te fasse vibrer…', ephemeral: true });
     }
 
     const query = interaction.options.getString('query', true);

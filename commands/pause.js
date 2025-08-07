@@ -14,12 +14,12 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '🧘 Viens au vocal pour mettre en pause, darling.', flags: 64 });
+      return interaction.reply({ content: '🧘 Viens au vocal pour mettre en pause, darling.', ephemeral: true });
     }
 
     const distube = getMusic(interaction.client);
     const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply({ content: '😴 Pas de lecture en cours.', flags: 64 });
+    if (!queue) return interaction.reply({ content: '😴 Pas de lecture en cours.', ephemeral: true });
 
     await interaction.deferReply();
     try {

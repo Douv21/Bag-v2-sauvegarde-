@@ -14,13 +14,13 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '👀 La file ? Rejoins un vocal pour jeter un œil.', flags: 64 });
+      return interaction.reply({ content: '👀 La file ? Rejoins un vocal pour jeter un œil.', ephemeral: true });
     }
 
     const distube = getMusic(interaction.client);
     const queue = distube.getQueue(interaction.guildId);
     if (!queue || !queue.songs.length) {
-      return interaction.reply({ content: '😴 La file est vide.', flags: 64 });
+      return interaction.reply({ content: '😴 La file est vide.', ephemeral: true });
     }
 
     const desc = queue.songs

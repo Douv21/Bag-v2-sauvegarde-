@@ -14,12 +14,12 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '👂 Rejoins un salon vocal pour skipper, coquin(e)!', flags: 64 });
+      return interaction.reply({ content: '👂 Rejoins un salon vocal pour skipper, coquin(e)!', ephemeral: true });
     }
 
     const distube = getMusic(interaction.client);
     const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply({ content: '😴 Rien à skipper…', flags: 64 });
+    if (!queue) return interaction.reply({ content: '😴 Rien à skipper…', ephemeral: true });
 
     await interaction.deferReply();
     try {

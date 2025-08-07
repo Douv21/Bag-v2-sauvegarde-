@@ -14,12 +14,12 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '🛑 Viens dans un vocal pour arrêter la musique, sexy.', flags: 64 });
+      return interaction.reply({ content: '🛑 Viens dans un vocal pour arrêter la musique, sexy.', ephemeral: true });
     }
 
     const distube = getMusic(interaction.client);
     const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply({ content: '😴 Rien à arrêter.', flags: 64 });
+    if (!queue) return interaction.reply({ content: '😴 Rien à arrêter.', ephemeral: true });
 
     await interaction.deferReply();
     try {

@@ -15,7 +15,7 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '📻 Pour la radio, rejoins un salon vocal.', flags: 64 });
+      return interaction.reply({ content: '📻 Pour la radio, rejoins un salon vocal.', ephemeral: true });
     }
 
     const url = interaction.options.getString('url', true);
