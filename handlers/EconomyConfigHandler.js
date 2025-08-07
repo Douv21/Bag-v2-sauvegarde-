@@ -43,6 +43,10 @@ class EconomyConfigHandler {
                 { label: '😈 Séduire', value: 'voler', description: 'Action négative - Risque et karma mauvais' },
                 { label: '🎲 Oser', value: 'parier', description: 'Action négative - Gambling et karma' },
                 { label: '🔥 Coup de folie', value: 'crime', description: 'Action très négative - Gros gains/risques' },
+                { label: '😉 Aguicher', value: 'aguicher', description: 'NSFW: gains modérés, faible cooldown' },
+                { label: '🔥 Défi Osé', value: 'defier', description: 'NSFW: gains ou pertes variables' },
+                { label: '💃 Séduire (Masse)', value: 'seduire_mass', description: 'NSFW: très risqué, gros gains/pénalités' },
+                { label: '🌙 After Dark', value: 'after_dark', description: 'NSFW: bonus selon l'heure' },
                 { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
             ]);
 
