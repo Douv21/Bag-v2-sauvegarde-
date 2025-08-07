@@ -3,6 +3,40 @@
  * Architecture modulaire pour déploiement Web Service
  */
 
+const ensureFileAndBlobPolyfills = () => {
+  try {
+    if (typeof globalThis.Blob === 'undefined') {
+      const { Blob } = require('buffer');
+      globalThis.Blob = Blob;
+    }
+  } catch {}
+
+  try {
+    if (typeof globalThis.File === 'undefined') {
+      try {
+        const { File } = require('undici');
+        if (File) {
+          globalThis.File = File;
+          return;
+        }
+      } catch {}
+      const BlobImpl = globalThis.Blob || require('buffer').Blob;
+      globalThis.File = class File extends BlobImpl {
+        constructor(parts = [], name = 'file', options = {}) {
+          super(parts, options);
+          this.name = String(name);
+          this.lastModified = options.lastModified ?? Date.now();
+        }
+        get [Symbol.toStringTag]() {
+          return 'File';
+        }
+      };
+    }
+  } catch {}
+};
+
+ensureFileAndBlobPolyfills();
+
 const { Client, Collection, GatewayIntentBits, Partials, REST, Routes } = require('discord.js');
 const express = require('express');
 const path = require('path');
