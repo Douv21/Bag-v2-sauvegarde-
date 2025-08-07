@@ -30,19 +30,10 @@ module.exports = {
         const userId = targetMember.id;
 
         try {
-            // Charger les données économiques
-            const economy = await dataManager.getData('economy');
-            
-            // Vérifier si l'utilisateur existe
-            if (!economy[guildId] || !economy[guildId][userId]) {
-                return await interaction.reply({
-                    content: `❌ ${targetMember} n'a pas de compte économique.`,
-                    flags: 64
-                });
-            }
+            // Charger l'utilisateur depuis users.json
+            const userData = await dataManager.getUser(userId, guildId);
+            const oldBalance = userData.balance || 0;
 
-            const oldBalance = economy[guildId][userId].balance;
-            
             // Vérifier si l'utilisateur a assez d'argent
             if (oldBalance < amount) {
                 return await interaction.reply({
@@ -51,12 +42,10 @@ module.exports = {
                 });
             }
 
-            // Retirer l'argent
-            economy[guildId][userId].balance -= amount;
-            const newBalance = economy[guildId][userId].balance;
+            const newBalance = oldBalance - amount;
 
-            // Sauvegarder
-            await dataManager.saveData('economy', economy);
+            // Sauvegarder via updateUser
+            await dataManager.updateUser(userId, guildId, { balance: newBalance });
 
             // Créer l'embed de confirmation
             const embed = new EmbedBuilder()

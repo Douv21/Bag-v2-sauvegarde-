@@ -30,28 +30,14 @@ module.exports = {
         const userId = targetMember.id;
 
         try {
-            // Charger les données économiques
-            const economy = await dataManager.getData('economy');
-            
-            // Initialiser l'utilisateur s'il n'existe pas
-            if (!economy[guildId]) economy[guildId] = {};
-            if (!economy[guildId][userId]) {
-                economy[guildId][userId] = {
-                    balance: 0,
-                    goodKarma: 0,
-                    badKarma: 0,
-                    dailyStreak: 0,
-                    lastDaily: null
-                };
-            }
+            // Charger ou créer l'utilisateur dans users.json
+            const userData = await dataManager.getUser(userId, guildId);
 
-            // Ajouter l'argent
-            const oldBalance = economy[guildId][userId].balance;
-            economy[guildId][userId].balance += amount;
-            const newBalance = economy[guildId][userId].balance;
+            const oldBalance = userData.balance || 0;
+            const newBalance = oldBalance + amount;
 
-            // Sauvegarder
-            await dataManager.saveData('economy', economy);
+            // Sauvegarder via updateUser (users.json)
+            await dataManager.updateUser(userId, guildId, { balance: newBalance });
 
             // Créer l'embed de confirmation
             const embed = new EmbedBuilder()
