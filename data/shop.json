@@ -1,16 +1,6 @@
 {
   "1360897918504271882": [
     {
-      "id": "1753566068434",
-      "name": "Fouet",
-      "price": 50,
-      "description": "Amuse toi  bien",
-      "type": "custom",
-      "createdAt": "2025-07-26T21:41:08.434Z",
-      "createdBy": "943487722738311219"
-    },
-    {
-      
       "id": "private_24h_1754603842113",
       "type": "private_24h",
       "name": "Suite Privée 24h",

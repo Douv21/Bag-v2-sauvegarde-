@@ -120,6 +120,23 @@ async function createPrivateSuite(interaction, member, options) {
   const userId = member.id;
   const durationDays = options.durationDays || null; // null = permanent
 
+  // Idempotence: si une suite existe déjà et n'est pas expirée, la réutiliser
+  try {
+    const existingSuites = loadJSON('private_suites.json');
+    const guildSuites = existingSuites[guildId] || {};
+    const nowTs = Date.now();
+    const existingRecord = Object.values(guildSuites).find(r => r.userId === userId && (!r.expiresAt || new Date(r.expiresAt).getTime() > nowTs));
+    if (existingRecord) {
+      // Vérifier que le canal texte existe encore
+      try {
+        const existingChannel = await guild.channels.fetch(existingRecord.textChannelId).catch(() => null);
+        if (existingChannel) {
+          return existingRecord;
+        }
+      } catch (_) {}
+    }
+  } catch (_) {}
+
   // Create dedicated role for the suite
   const role = await guild.roles.create({
     name: `Suite ${durationDays ? `${durationDays}j` : 'perma'} — ${member.displayName}`.slice(0, 95),
@@ -136,14 +153,23 @@ async function createPrivateSuite(interaction, member, options) {
 
   const staffRoles = getStaffRoleIds(guildId);
 
-  // Create text channel (NSFW)
-  const textChannel = await guild.channels.create({
-    name: humanizeName('🔞-suite', member),
-    type: ChannelType.GuildText,
-    parent: category.id,
-    nsfw: true,
-    permissionOverwrites: buildOverwrites(guild, role.id, staffRoles)
-  });
+  // Vérifier si un salon texte existe déjà pour cet utilisateur (même nom et catégorie)
+  const desiredName = humanizeName('🔞-suite', member);
+  let textChannel = guild.channels.cache.find(c => c.type === ChannelType.GuildText && c.parentId === category.id && c.name === desiredName) || null;
+
+  // Create text channel (NSFW) si aucun trouvé
+  if (!textChannel) {
+    textChannel = await guild.channels.create({
+      name: desiredName,
+      type: ChannelType.GuildText,
+      parent: category.id,
+      nsfw: true,
+      permissionOverwrites: buildOverwrites(guild, role.id, staffRoles)
+    });
+  } else {
+    // S'assurer que les permissions sont cohérentes
+   try { await textChannel.permissionOverwrites.set(buildOverwrites(guild, role.id, staffRoles)); } catch (_) {}
+  }
 
   // Persist record
   const suites = loadJSON('private_suites.json');
