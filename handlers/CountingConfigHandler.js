@@ -39,50 +39,60 @@ class CountingConfigHandler {
         const activeChannels = validChannels.filter(ch => ch.enabled) || [];
 
         const embed = new EmbedBuilder()
-            .setColor('#f39c12')
-            .setTitle('🔢 Configuration du Comptage')
-            .setDescription('Système de comptage mathématique avec calculs et records')
+            .setColor('#ff1744')
+            .setTitle('💋 Configuration du Jeu Coquin')
+            .setDescription('Le jeu des boys & girls - Comptez ensemble et atteignez des sommets! 🔥')
             .addFields([
                 { 
-                    name: '📊 Canaux actifs', 
-                    value: `${activeChannels.length} canal(aux)`, 
+                    name: '🔥 Salons actifs', 
+                    value: `${activeChannels.length} salon(s) de jeu`, 
                     inline: true 
                 },
                 { 
-                    name: '🏆 Records total', 
-                    value: `${guildConfig.channels?.reduce((sum, ch) => sum + (ch.record || 0), 0) || 0}`, 
+                    name: '🧮 Mode calcul sexy', 
+                    value: guildConfig.mathEnabled ? '✅ Activé' : '❌ Désactivé', 
                     inline: true 
                 },
                 { 
-                    name: '🔢 Calculs supportés', 
-                    value: 'Addition, soustraction, multiplication, division', 
-                    inline: false 
+                    name: '💦 Réactions hot', 
+                    value: guildConfig.reactionsEnabled ? '✅ Activées' : '❌ Désactivées', 
+                    inline: true 
+                },
+                {
+                    name: '🏆 Records totaux',
+                    value: `${guildConfig.channels?.reduce((sum, ch) => sum + (ch.record || 0), 0) || 0} points de plaisir`,
+                    inline: false
                 }
-            ]);
+            ])
+            .setFooter({ text: 'Choisissez une option pour configurer votre jeu 😈' });
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('counting_config_main')
-            .setPlaceholder('Choisissez une option...')
+            .setPlaceholder('Que voulez-vous faire? 😏')
             .addOptions([
                 {
-                    label: '📝 Gérer les Canaux',
+                    label: '➕ Ajouter un salon de jeu',
+                    value: 'add_channel',
+                    description: 'Choisir un nouveau salon pour jouer',
+                    emoji: '🍑'
+                },
+                {
+                    label: '📋 Gérer les salons',
                     value: 'manage_channels',
-                    description: 'Ajouter/configurer canaux de comptage'
+                    description: 'Activer/désactiver vos salons de jeu',
+                    emoji: '💋'
                 },
                 {
-                    label: '⚙️ Paramètres Globaux',
-                    value: 'global_settings',
-                    description: 'Configuration générale du système'
-                },
-                {
-                    label: '🏆 Gestion des Records',
+                    label: '🏆 Voir les champions',
                     value: 'records_management',
-                    description: 'Voir et gérer les records'
+                    description: 'Consulter les records et statistiques hot',
+                    emoji: '🔥'
                 },
                 {
-                    label: '📊 Statistiques',
-                    value: 'counting_stats',
-                    description: 'Données et performances'
+                    label: '⚙️ Options du jeu',
+                    value: 'game_settings',
+                    description: 'Configurer les règles du jeu coquin',
+                    emoji: '😈'
                 }
             ]);
 
@@ -138,56 +148,57 @@ class CountingConfigHandler {
             }
         }
 
-        let channelsList = 'Aucun canal configuré';
+        let channelsList = 'Aucun salon de jeu configuré 😢';
         if (validChannels.length > 0) {
             const channelMentions = [];
             for (const channel of validChannels) {
-                const status = channel.enabled ? '🟢' : '🔴';
+                const status = channel.enabled ? '🔥' : '❄️';
                 const record = channel.record || 0;
-                channelMentions.push(`${status} <#${channel.channelId}> (Record: ${record})`);
+                channelMentions.push(`${status} <#${channel.channelId}> (Record sexy: ${record} 🍑)`);
             }
             channelsList = channelMentions.join('\n');
         }
 
         const embed = new EmbedBuilder()
-            .setColor('#3498db')
-            .setTitle('📝 Gestion des Canaux')
-            .setDescription('Gérez les canaux de comptage de votre serveur')
+            .setColor('#e91e63')
+            .setTitle('💋 Gestion des Salons de Jeu')
+            .setDescription('Choisissez où les boys & girls peuvent s\'amuser ensemble! 😈')
             .addFields([
                 { 
-                    name: '📋 Canaux Configurés', 
+                    name: '🔥 Salons Actuels', 
                     value: channelsList, 
                     inline: false 
                 }
-            ]);
+            ])
+            .setFooter({ text: 'Les salons actifs sont marqués avec 🔥' });
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('counting_channels_menu')
-            .setPlaceholder('Choisissez une action...')
+            .setPlaceholder('Que voulez-vous faire? 😏')
             .addOptions([
                 {
-                    label: '➕ Ajouter Canal',
+                    label: '➕ Ajouter un salon hot',
                     value: 'add_channel',
-                    description: 'Ajouter un nouveau canal de comptage',
-                    emoji: '➕'
+                    description: 'Créer un nouveau terrain de jeu',
+                    emoji: '🍑'
                 },
                 {
-                    label: '⚙️ Configurer Canal',
+                    label: '⚙️ Configurer un salon',
                     value: 'configure_channel',
-                    description: 'Modifier les paramètres d\'un canal',
-                    emoji: '⚙️'
+                    description: 'Ajuster les règles du jeu',
+                    emoji: '💦'
                 },
                 {
-                    label: '🗑️ Retirer Canal',
+                    label: '🗑️ Retirer un salon',
                     value: 'remove_channel',
-                    description: 'Supprimer un canal du système',
-                    emoji: '🗑️'
+                    description: 'Fermer un salon de jeu',
+                    emoji: '🚫'
                 },
                 {
                     label: '🔙 Retour',
                     value: 'back_main',
                     description: 'Retour au menu principal',
-                    emoji: '🔙'
+                    emoji: '😘'
                 }
             ]);
 
@@ -297,65 +308,66 @@ class CountingConfigHandler {
         };
 
         const embed = new EmbedBuilder()
-            .setColor('#9b59b6')
-            .setTitle('⚙️ Paramètres Globaux')
-            .setDescription('Configuration générale du système de comptage')
+            .setColor('#9c27b0')
+            .setTitle('⚙️ Règles du Jeu Coquin')
+            .setDescription('Personnalisez votre expérience boys & girls! 🔥')
             .addFields([
                 { 
-                    name: '🔄 Auto-Reset', 
-                    value: globalConfig.autoReset ? '✅ Activé' : '❌ Désactivé', 
+                    name: '🔄 Punition automatique', 
+                    value: globalConfig.autoReset ? '✅ Les coquins sont punis' : '❌ Mode clément', 
                     inline: true 
                 },
                 { 
-                    name: '🧮 Calculs', 
-                    value: globalConfig.allowCalculations ? '✅ Autorisés' : '❌ Interdits', 
+                    name: '🧮 Calculs sexy', 
+                    value: globalConfig.allowCalculations ? '✅ 69+420 = ? 😏' : '❌ Nombres simples seulement', 
                     inline: true 
                 },
                 { 
-                    name: '🔢 Nombre Max', 
-                    value: (globalConfig.maxNumber || 1000000) === 999999999 ? '♾️ Illimité' : (globalConfig.maxNumber || 1000000).toLocaleString(), 
+                    name: '💋 Limite du plaisir', 
+                    value: (globalConfig.maxNumber || 1000000) === 999999999 ? '♾️ Sans limites! 🥵' : `${(globalConfig.maxNumber || 1000000).toLocaleString()} max`, 
                     inline: true 
                 },
                 { 
-                    name: '⚠️ Reset sur Erreur', 
-                    value: globalConfig.resetOnError ? '✅ Activé' : '❌ Désactivé', 
+                    name: '⚠️ Tolérance zéro', 
+                    value: globalConfig.resetOnError ? '✅ Les erreurs sont punies' : '❌ Mode doux', 
                     inline: true 
                 }
-            ]);
+            ])
+            .setFooter({ text: 'Ajustez les règles pour plus de fun! 😈' });
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('counting_global_options')
-            .setPlaceholder('Choisissez un paramètre à modifier...')
+            .setPlaceholder('Quelle règle modifier? 😏')
             .addOptions([
                 {
-                    label: 'Auto-Reset',
+                    label: 'Punition Auto',
                     value: 'toggle_auto_reset',
-                    description: 'Activer/désactiver le reset automatique',
-                    emoji: '🔄'
+                    description: 'Punir automatiquement les erreurs',
+                    emoji: '🔥'
                 },
                 {
-                    label: 'Calculs Mathématiques',
+                    label: 'Calculs Coquins',
                     value: 'toggle_calculations',
-                    description: 'Autoriser/interdire les calculs',
+                    description: 'Autoriser les maths sexy',
                     emoji: '🧮'
                 },
                 {
-                    label: 'Nombre Maximum',
+                    label: 'Limite Maximum',
                     value: 'set_max_number',
-                    description: 'Définir la limite maximale',
-                    emoji: '🔢'
+                    description: 'Jusqu\'où peuvent-ils aller?',
+                    emoji: '💦'
                 },
                 {
-                    label: 'Reset sur Erreur',
+                    label: 'Mode Strict',
                     value: 'toggle_reset_error',
-                    description: 'Reset automatique en cas d\'erreur',
-                    emoji: '⚠️'
+                    description: 'Punir toutes les erreurs',
+                    emoji: '😈'
                 },
                 {
                     label: '🔙 Retour',
                     value: 'back_main',
                     description: 'Retour au menu principal',
-                    emoji: '🔙'
+                    emoji: '😘'
                 }
             ]);
 
@@ -370,7 +382,7 @@ class CountingConfigHandler {
 
         // Calculer les records
         let totalRecord = 0;
-        let recordsList = 'Aucun record établi';
+        let recordsList = 'Aucun champion encore... Soyez le premier! 🔥';
         
         if (channels.length > 0) {
             const records = [];
@@ -379,11 +391,12 @@ class CountingConfigHandler {
                     try {
                         const discordChannel = await interaction.guild.channels.fetch(channel.channelId);
                         if (discordChannel) {
-                            records.push(`🏆 #${discordChannel.name}: **${channel.record}**`);
+                            const recordUser = channel.recordUserId ? `<@${channel.recordUserId}>` : 'Anonyme';
+                            records.push(`💋 **#${discordChannel.name}**: ${channel.record} points (Champion: ${recordUser})`);
                             totalRecord += channel.record;
                         }
                     } catch (error) {
-                        records.push(`🏆 Canal supprimé: **${channel.record}**`);
+                        records.push(`💔 Salon supprimé: **${channel.record}** points`);
                         totalRecord += channel.record;
                     }
                 }
@@ -394,49 +407,50 @@ class CountingConfigHandler {
         }
 
         const embed = new EmbedBuilder()
-            .setColor('#e67e22')
-            .setTitle('🏆 Gestion des Records')
-            .setDescription('Consultez et gérez les records de comptage')
+            .setColor('#ff006e')
+            .setTitle('🏆 Hall of Fame des Boys & Girls')
+            .setDescription('Les champions du jeu coquin! Qui battra ces records? 😈')
             .addFields([
                 { 
-                    name: '📊 Record Total', 
-                    value: totalRecord.toLocaleString(), 
+                    name: '🔥 Score Total Combiné', 
+                    value: `${totalRecord.toLocaleString()} points de plaisir`, 
                     inline: true 
                 },
                 { 
-                    name: '📈 Records par Canal', 
+                    name: '💋 Records par Salon', 
                     value: recordsList, 
                     inline: false 
                 }
-            ]);
+            ])
+            .setFooter({ text: 'Les vrais champions jouent ensemble! 🍑' });
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('counting_records_options')
-            .setPlaceholder('Choisissez une action...')
+            .setPlaceholder('Gérer les records... 😏')
             .addOptions([
                 {
-                    label: '🗑️ Reset Record Spécifique',
+                    label: '🗑️ Reset un record',
                     value: 'reset_specific_record',
-                    description: 'Remettre à zéro un record de canal',
-                    emoji: '🗑️'
+                    description: 'Effacer le record d\'un salon',
+                    emoji: '💦'
                 },
                 {
-                    label: '🔥 Reset Tous les Records',
+                    label: '🔥 Reset TOUS les records',
                     value: 'reset_all_records',
-                    description: 'Remettre tous les records à zéro',
-                    emoji: '🔥'
+                    description: 'Tout remettre à zéro (danger!)',
+                    emoji: '😱'
                 },
                 {
-                    label: '📋 Exporter Records',
+                    label: '📋 Sauvegarder les champions',
                     value: 'export_records',
-                    description: 'Sauvegarder les records',
-                    emoji: '📋'
+                    description: 'Exporter la liste des records',
+                    emoji: '📸'
                 },
                 {
                     label: '🔙 Retour',
                     value: 'back_main',
                     description: 'Retour au menu principal',
-                    emoji: '🔙'
+                    emoji: '😘'
                 }
             ]);
 

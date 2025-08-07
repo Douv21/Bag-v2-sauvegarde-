@@ -150,6 +150,39 @@ class CountingManager {
                 channelConfig.recordDate = new Date().toISOString();
                 channelConfig.recordUserId = userId;
                 console.log(`🏆 NOUVEAU RECORD: ${validationResult.number} par ${message.author.tag}`);
+                
+                // Message spécial pour nouveau record
+                const { EmbedBuilder } = require('discord.js');
+                const recordEmbed = new EmbedBuilder()
+                    .setTitle('🔥 OH MY! NOUVEAU RECORD! 🔥')
+                    .setDescription(`**${message.author.username}** vient d'atteindre le niveau **${validationResult.number}** ! 🥵`)
+                    .addFields(
+                        { name: '💋 Champion(ne) actuel(le)', value: `<@${userId}>`, inline: true },
+                        { name: '🍑 Score hot', value: `\`${validationResult.number}\``, inline: true },
+                        { name: '📅 Date du plaisir', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
+                    )
+                    .setColor(0xff006e) // Rose vif
+                    .setThumbnail(message.author.displayAvatarURL({ dynamic: true }))
+                    .setFooter({ 
+                        text: 'Qui sera le/la prochain(e) à battre ce score? 😈', 
+                        iconURL: message.guild.iconURL() 
+                    });
+                
+                await message.channel.send({ embeds: [recordEmbed] });
+            }
+            
+            // Messages spéciaux pour certains nombres
+            const specialNumbers = {
+                69: { emoji: '😏', message: 'Nice... très nice! 🔥' },
+                420: { emoji: '🌿', message: 'Blaze it! 💨' },
+                666: { emoji: '😈', message: 'Diabolique! 🔥' },
+                100: { emoji: '💯', message: 'Centenaire sexy! 🎉' },
+                1000: { emoji: '🎆', message: 'MILLE! Quel(le) champion(ne)! 🏆' }
+            };
+            
+            if (specialNumbers[validationResult.number]) {
+                const special = specialNumbers[validationResult.number];
+                await message.channel.send(`${special.emoji} **${special.message}** ${special.emoji}`);
             }
 
             // Mettre à jour la configuration
@@ -209,49 +242,49 @@ class CountingManager {
                 if (validationResult.reason === 'same_user_reset') {
                     // Embed spécial pour double comptage
                     embed = new EmbedBuilder()
-                        .setTitle('⚡ Double Comptage Détecté')
-                        .setDescription(`**${message.author.username}** a tenté de compter deux fois consécutivement`)
+                        .setTitle('💋 Oops! Pas si vite coquin(e)!')
+                        .setDescription(`**${message.author.username}** a essayé de jouer solo... Il faut partager avec les autres! 😏`)
                         .addFields(
-                            { name: '🎯 Nombre Tenté', value: `\`${validationResult.receivedNumber}\``, inline: true },
-                            { name: '🔄 Reset Effectué', value: `Retour à \`0\``, inline: true },
-                            { name: '🏆 Record Serveur', value: `\`${channelConfig.record || 0}\``, inline: true }
+                            { name: '🔥 Tentative', value: `\`${validationResult.receivedNumber}\``, inline: true },
+                            { name: '💦 Punition', value: `Retour à \`0\` 😈`, inline: true },
+                            { name: '🏆 Record du jeu', value: `\`${channelConfig.record || 0}\``, inline: true }
                         )
-                        .setColor(0xff4757) // Rouge moderne
+                        .setColor(0xff1744) // Rouge passion
                         .setTimestamp()
                         .setFooter({ 
-                            text: 'N\'importe qui peut redémarrer à 1', 
+                            text: 'Les boys & girls peuvent recommencer à 1 🍑', 
                             iconURL: message.guild.iconURL() 
                         });
                 } else if (validationResult.reason === 'wrong_number') {
                     // Embed spécial pour mauvais nombre
                     embed = new EmbedBuilder()
-                        .setTitle('🎯 Erreur de Séquence')
-                        .setDescription(`**${message.author.username}** a écrit \`${validationResult.receivedNumber}\` au lieu de \`${validationResult.expectedNumber}\``)
+                        .setTitle('🙈 Oups! Mauvaise position!')
+                        .setDescription(`**${message.author.username}** a proposé \`${validationResult.receivedNumber}\` mais on attendait \`${validationResult.expectedNumber}\` 🍆`)
                         .addFields(
-                            { name: '✅ Attendu', value: `\`${validationResult.expectedNumber}\``, inline: true },
-                            { name: '❌ Reçu', value: `\`${validationResult.receivedNumber}\``, inline: true },
-                            { name: '🏆 Record', value: `\`${channelConfig.record || 0}\``, inline: true }
+                            { name: '✅ Position attendue', value: `\`${validationResult.expectedNumber}\``, inline: true },
+                            { name: '❌ Ta proposition', value: `\`${validationResult.receivedNumber}\``, inline: true },
+                            { name: '🏆 Record atteint', value: `\`${channelConfig.record || 0}\``, inline: true }
                         )
-                        .setColor(0xffa726) // Orange moderne
+                        .setColor(0xe91e63) // Rose hot
                         .setTimestamp()
                         .setFooter({ 
-                            text: 'Comptage remis à zéro - Redémarrer à 1', 
+                            text: 'On recommence à 1... Cette fois, synchronisez-vous! 💕', 
                             iconURL: message.guild.iconURL() 
                         });
                 } else {
                     // Embed générique pour autres erreurs
                     embed = new EmbedBuilder()
-                        .setTitle('🚫 Erreur de Comptage')
+                        .setTitle('🚫 Raté! Pas comme ça!')
                         .setDescription(`**${message.author.username}** : ${validationResult.reason}`)
                         .addFields(
-                            { name: '🔄 Action', value: 'Reset automatique', inline: true },
-                            { name: '🎯 Prochain', value: '`1`', inline: true },
-                            { name: '🏆 Record', value: `\`${channelConfig.record || 0}\``, inline: true }
+                            { name: '🔄 Punition', value: 'On recommence tout! 😮', inline: true },
+                            { name: '🎯 Prochain coup', value: '`1`', inline: true },
+                            { name: '🏆 Meilleur score', value: `\`${channelConfig.record || 0}\``, inline: true }
                         )
-                        .setColor(0xe74c3c) // Rouge classique
+                        .setColor(0x9c27b0) // Violet sensuel
                         .setTimestamp()
                         .setFooter({ 
-                            text: 'Système de comptage automatique', 
+                            text: 'Jeu coquin des boys & girls 🔥', 
                             iconURL: message.guild.iconURL() 
                         });
                 }
