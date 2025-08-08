@@ -8,6 +8,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: DISCORD_TOKEN
+        fromSecret: DISCORD_TOKEN
+      - key: CLIENT_ID
+        fromSecret: DISCORD_CLIENT_ID
       - key: RENDER_EXTERNAL_URL
         fromService:
           type: web
@@ -22,6 +26,6 @@ services:
       - key: DEBUG_BACKUP
         value: "true"
       - key: YTDLP_DISABLE_DOWNLOAD
-        value: "true"
+        value: "false"
       - key: YTDLP_UPDATE
         value: "false"
