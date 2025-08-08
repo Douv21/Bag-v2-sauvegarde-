@@ -63,13 +63,18 @@ module.exports = {
         await interaction.editReply({ content: `🔥 Je lance: ${query}` });
       }
     } catch (err) {
-      const msg = err && err.message === 'TIMEOUT_MUSIC_PLAY'
+      const baseMsg = err && err.message === 'TIMEOUT_MUSIC_PLAY'
         ? '⏳ La connexion vocale ou la récupération de la musique est trop lente. Réessaie dans un instant et vérifie mes permissions/latence.'
         : `❌ Impossible de jouer: ${String(err.message || err)}`;
+
+      // Supprimer les aperçus: on neutralise les URLs et on supprime les embeds auto
+      const sanitized = baseMsg.replace(/https?:\/\/\S+/g, (m) => `<${m}>`);
+      const response = { content: sanitized, flags: MessageFlags.SuppressEmbeds };
+
       if (deferred) {
-        await interaction.editReply({ content: msg }).catch(() => {});
+        await interaction.editReply(response).catch(() => {});
       } else {
-        await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
+        await interaction.reply({ ...response, ephemeral: true }).catch(() => {});
       }
     }
   }
