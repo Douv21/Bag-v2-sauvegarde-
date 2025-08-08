@@ -59,9 +59,6 @@ function getMusic(client) {
   distubeInstance = new DisTube(client, {
     emitNewSongOnly: true,
     nsfw: true,
-    leaveOnEmpty: true,
-    leaveOnStop: true,
-    leaveOnFinish: false, // on garde la co si la file finit, pour relancer vite
     savePreviousSongs: false,
     ffmpeg: { path: ffmpeg || undefined },
     plugins
