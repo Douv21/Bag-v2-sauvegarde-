@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-07T21:58:08.970Z",
+  "timestamp": "2025-08-08T14:17:31.804Z",
   "deployment": "local",
   "files": {
     "economy.json": {
@@ -46,25 +46,7 @@
           1753184120446,
           1753181391406
         ],
-        "inventory": [
-          {
-            "id": 1753136861543,
-            "name": "Fouet",
-            "description": "Objet personnalisé",
-            "type": "custom",
-            "price": 50,
-            "purchasedAt": "2025-07-22T16:26:37.860Z"
-          },
-          {
-            "id": 1753136861543,
-            "name": "Fouet",
-            "description": "Objet personnalisé",
-            "type": "custom",
-            "price": 50,
-            "purchaseDate": "2025-07-26T20:57:24.399Z",
-            "from": "shop"
-          }
-        ],
+        "inventory": [],
         "xp": 6004,
         "money": 6120,
         "level": 1
@@ -721,56 +703,14 @@
     "shop.json": {
       "1360897918504271882": [
         {
-          "id": "1753566068434",
-          "name": "Fouet",
-          "price": 50,
-          "description": "Amuse toi  bien",
-          "type": "custom",
-          "createdAt": "2025-07-26T21:41:08.434Z",
-          "createdBy": "943487722738311219"
-        },
-        {
-          "id": "1753566340743",
-          "name": "Rôle: nouveau rôletest",
-          "price": 50000,
-          "duration": 6,
-          "roleId": "1396547788384374884",
-          "type": "temp_role",
-          "createdAt": "2025-07-26T21:45:40.743Z",
-          "createdBy": "943487722738311219"
-        },
-        {
-          "id": 1753602834934,
-          "name": "Test",
-          "price": 594939,
-          "description": "Objet personnalisé",
-          "type": "custom",
-          "createdAt": "2025-07-27T07:53:54.934Z"
-        },
-        {
-          "id": "1753606461399",
-          "type": "custom",
-          "name": "Fouet",
-          "price": 50,
-          "description": "Objet personnalisé",
-          "created": "2025-07-27T08:54:21.399Z"
-        },
-        {
-          "id": "1753607865512",
-          "type": "custom",
-          "name": "Fouet",
-          "price": 500,
-          "description": "Objet personnalisé",
-          "created": "2025-07-27T09:17:45.512Z"
-        },
-        {
           "id": "private_24h_1754603842113",
           "type": "private_24h",
           "name": "Suite Privée 24h",
           "price": 5000,
           "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) pour 24h.",
           "createdAt": "2025-08-07T21:57:22.113Z",
-          "createdBy": "system"
+          "createdBy": "system",
+          "category": "VIP 💎"
         },
         {
           "id": "private_monthly_1754603842114",
@@ -779,7 +719,8 @@
           "price": 15000,
           "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) pour 30 jours.",
           "createdAt": "2025-08-07T21:57:22.114Z",
-          "createdBy": "system"
+          "createdBy": "system",
+          "category": "VIP 💎"
         },
         {
           "id": "private_permanent_1754603842114",
@@ -788,7 +729,8 @@
           "price": 50000,
           "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) sans expiration.",
           "createdAt": "2025-08-07T21:57:22.114Z",
-          "createdBy": "system"
+          "createdBy": "system",
+          "category": "VIP 💎"
         }
       ]
     },

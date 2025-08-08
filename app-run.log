@@ -1,0 +1,131 @@
+
+> bag-bot-v2-test@2.0.0 start
+> node index.render-final.js
+
+[dotenv@17.2.1] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+🔑 MONGODB_PASSWORD non configuré - sauvegarde locale uniquement
+🎨 LevelCardGenerator initialisé
+--------------------------------------------------
+Core Dependencies
+- @discordjs/voice: 0.17.0
+- prism-media: 1.3.5
+
+Opus Libraries
+- @discordjs/opus: 0.9.0
+- opusscript: 0.0.8
+
+Encryption Libraries
+- sodium-native: not found
+- sodium: not found
+- libsodium-wrappers: 0.7.15
+- tweetnacl: not found
+
+FFmpeg
+- version: 6.0-static https://johnvansickle.com/ffmpeg/ 
+- libopus: yes
+--------------------------------------------------
+🛡️ Configuration du système de sauvegarde d'urgence...
+✅ Système de sauvegarde d'urgence configuré
+🌐 Serveur Web actif sur port 3000
+📊 Status: http://localhost:5000/commands-status
+✅ Port 5000 ouvert pour Render.com
+🛡️ Initialisation du système de sauvegarde MongoDB...
+🎯 Initialisation du déploiement...
+🚀 Nouveau déploiement détecté: local-1754662640728
+📥 Nouveau déploiement - restauration des données...
+📁 Utilisation des fichiers locaux existants
+🆕 Création des fichiers de configuration par défaut...
+⏭️ economy.json existe déjà
+⏭️ confessions.json existe déjà
+⏭️ counting.json existe déjà
+⏭️ autothread.json existe déjà
+⏭️ shop.json existe déjà
+⏭️ karma_config.json existe déjà
+⏭️ karma_discounts.json existe déjà
+⏭️ message_rewards.json existe déjà
+🔍 Vérification intégrité des données locales...
+✅ economy.json valide
+✅ confessions.json valide
+✅ counting.json valide
+✅ autothread.json valide
+✅ shop.json valide
+✅ karma_config.json valide
+✅ karma_discounts.json valide
+✅ message_rewards.json valide
+✅ Toutes les données sont valides
+✅ Restauration complète terminée
+🛡️ Démarrage du système de sauvegarde...
+📁 Mode sauvegarde locale uniquement
+🕐 Sauvegarde automatique simple démarrée (toutes les 30 minutes)
+✅ Système de sauvegarde actif
+📥 Premier déploiement - données restaurées depuis MongoDB
+📂 Chargement des commandes...
+✅ add-level-reward
+✅ adminxp
+✅ after-dark
+✅ aguicher
+✅ ajout-argent
+✅ ajout-karma
+✅ autothread
+✅ backup-status
+✅ boutique
+✅ clear-commands
+✅ comptage
+✅ confess
+✅ config-confession
+✅ config-economie
+✅ config-level
+✅ configeconomie
+✅ coup-de-folie
+✅ daily
+✅ dashboard
+✅ defier
+✅ diagnostics
+✅ offrir
+✅ economie
+✅ force-backup
+✅ karma
+✅ leaderboard
+✅ level
+✅ mongodb-backup
+✅ mongodb-diagnostic
+✅ objet
+✅ parier
+✅ oser
+✅ pause
+✅ flirter
+✅ play
+✅ profil-carte
+✅ profil-utilisateur
+✅ queue
+✅ radio
+✅ reset
+✅ resume
+✅ retrait-argent
+✅ retrait-karma
+✅ seduire-mass
+✅ skip
+✅ stats
+✅ stop
+✅ test-level-notif
+✅ topplaisir
+✅ charmer
+✅ voler
+✅ seduire
+✅ 52 commandes chargées
+❌ Erreur connexion Discord: Error [TokenInvalid]: An invalid token was provided.
+    at Client.login (/workspace/node_modules/discord.js/src/client/Client.js:217:52)
+    at RenderSolutionBot.initializeDiscord (/workspace/index.render-final.js:578:31)
+    at async RenderSolutionBot.initializeSystemsAndDiscord (/workspace/index.render-final.js:559:9) {
+  code: 'TokenInvalid'
+}
+🌐 Le serveur web continue de fonctionner sans Discord
+💾 Démarrage sauvegarde automatique...
+⚠️ Problèmes d'intégrité détectés avant sauvegarde
+   - Inventaires manquants: 1
+   - Incohérences XP: 0
+⚠️ Sauvegarde webhook désactivée - BACKUP_WEBHOOK_URL manquant
+📦 Création sauvegarde locale...
+✅ Sauvegarde locale créée: backup-2025-08-08T14-17-31-804Z.json
+🗑️ Suppression ancienne sauvegarde: backup-2025-08-07T21-57-24-122Z.json
+✅ Sauvegarde terminée
