@@ -84,13 +84,8 @@ function getMusic(client) {
     emitNewSongOnly: true,
     nsfw: true,
     emitAddSongWhenCreatingQueue: false,
-    leaveOnFinish: false,
-    leaveOnEmpty: true,
-    leaveOnStop: true,
     savePreviousSongs: true,
-    searchSongs: 0,
     ffmpeg: { path: ffmpeg || undefined },
-    ytdlOptions: { highWaterMark: 1 << 25, quality: 'highestaudio' },
     plugins
   });
 
