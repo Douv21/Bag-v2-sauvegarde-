@@ -32,7 +32,7 @@ module.exports = {
 
     let deferred = false;
     try {
-      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      await interaction.deferReply({ ephemeral: true });
       deferred = true;
     } catch (deferErr) {
       // Si on ne peut pas accuser réception, on arrête proprement
