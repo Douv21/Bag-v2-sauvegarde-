@@ -41,7 +41,6 @@ function getMusic(client) {
     emitNewSongOnly: true,
     nsfw: true,
     emitAddSongWhenCreatingQueue: false,
-    youtubeDL: false,
     ytdlOptions: { highWaterMark: 1 << 25 },
     ffmpeg: { path: ffmpeg || undefined },
     plugins: [
