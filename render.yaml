@@ -35,3 +35,5 @@ services:
         value: /opt/render/project/src/node_modules/@distube/yt-dlp/bin
       - key: YTDLP_FILENAME
         value: yt-dlp
+      - key: YTDL_NO_UPDATE
+        value: "1"
