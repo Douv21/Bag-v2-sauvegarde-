@@ -66,10 +66,14 @@ function getMusic(client) {
     })
     .on('error', (channel, error) => {
       try {
+        // Neutralise les URLs pour éviter les aperçus
+        const text = String(error?.message || error)
+          .replace(/https?:\/\/\S+/g, (m) => `<${m}>`)
+          .slice(0, 1000);
         const embed = new EmbedBuilder()
           .setColor('#FF0044')
-          .setTitle('❌ Oups, coquin(e)… Erreur audio')
-          .setDescription(`\`\`\`${String(error?.message || error).slice(0, 1800)}\`\`\``)
+          .setTitle('❌ Erreur audio')
+          .setDescription(`\u2063\n${text}`) // \u2063 = caractère invisible pour empêcher les previews
           .setFooter({ text: THEME.footer });
         if (channel && typeof channel.send === 'function') channel.send({ embeds: [embed] }).catch(() => {});
       } catch {}
