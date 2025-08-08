@@ -46,22 +46,45 @@ module.exports = {
     const distube = getMusic(client);
 
     try {
-      // Si ce n'est pas une URL, on force la recherche YouTube pour des résultats stables
       const isUrl = /^https?:\/\//i.test(query);
-      const normalizedQuery = isUrl ? query : `ytsearch:${query}`;
 
-      // Timeout de sécurité pour éviter un blocage éternel
-      const timeoutMs = 15000;
-      const playPromise = distube.play(voiceChannel, normalizedQuery, {
-        member,
-        textChannel: interaction.channel,
-        interaction
-      });
+      // Helper pour jouer avec timeout
+      const playWithTimeout = (q) => {
+        const timeoutMs = 15000;
+        const playPromise = distube.play(voiceChannel, q, {
+          member,
+          textChannel: interaction.channel,
+          interaction
+        });
+        return Promise.race([
+          playPromise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_MUSIC_PLAY')), timeoutMs))
+        ]);
+      };
 
-      await Promise.race([
-        playPromise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_MUSIC_PLAY')), timeoutMs))
-      ]);
+      if (isUrl) {
+        await playWithTimeout(query);
+      } else {
+        // Essais successifs: ytsearch -> ytmsearch -> sans préfixe
+        const attempts = [`ytsearch:${query}`, `ytmsearch:${query}`, query];
+        let lastErr = null;
+        for (const attempt of attempts) {
+          try {
+            await playWithTimeout(attempt);
+            lastErr = null;
+            break; // succès
+          } catch (err) {
+            lastErr = err;
+            const msg = String(err?.message || err);
+            // Si ce n'est pas une erreur de "pas de résultat" ni un timeout, on arrête tout de suite
+            if (!/Cannot find any song with this query|NO_RESULT/i.test(msg) && msg !== 'TIMEOUT_MUSIC_PLAY') {
+              throw err;
+            }
+            // sinon on tente l'essai suivant
+          }
+        }
+        if (lastErr) throw lastErr;
+      }
 
       if (deferred) {
         await interaction.editReply({ content: `🔥 Je lance: ${query}` });
