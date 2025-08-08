@@ -56,6 +56,20 @@ function getMusic(client) {
   const ytPlugin = resolveYouTubePlugin();
   if (ytPlugin) plugins.push(ytPlugin);
 
+  // Ajout des autres plateformes si disponibles
+  try {
+    const { SpotifyPlugin } = require('@distube/spotify');
+    plugins.push(new SpotifyPlugin({ emitEventsAfterFetching: true }));
+  } catch {}
+  try {
+    const { SoundCloudPlugin } = require('@distube/soundcloud');
+    plugins.push(new SoundCloudPlugin());
+  } catch {}
+  try {
+    const { DeezerPlugin } = require('@distube/deezer');
+    plugins.push(new DeezerPlugin());
+  } catch {}
+
   distubeInstance = new DisTube(client, {
     emitNewSongOnly: true,
     nsfw: true,

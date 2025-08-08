@@ -83,6 +83,18 @@ module.exports = {
             // sinon on tente l'essai suivant
           }
         }
+        // Fallback: recherche manuelle via yt-search si DisTube n'a rien trouvé
+        if (lastErr && /Cannot find any song with this query|NO_RESULT/i.test(String(lastErr?.message || lastErr))) {
+          try {
+            const yts = require('yt-search');
+            const res = await yts(query);
+            const first = res && res.videos && res.videos.length > 0 ? res.videos[0] : null;
+            if (first && first.url) {
+              await playWithTimeout(first.url);
+              lastErr = null;
+            }
+          } catch {}
+        }
         if (lastErr) throw lastErr;
       }
 
