@@ -103,10 +103,6 @@ function getMusic(client) {
     emitAddSongWhenCreatingQueue: false,
     savePreviousSongs: true,
     ffmpeg: { path: ffmpeg || undefined },
-    // Garder la connexion pour faciliter les reprises rapides
-    leaveOnStop: false,
-    leaveOnFinish: false,
-    leaveOnEmpty: true,
     plugins
   });
 
