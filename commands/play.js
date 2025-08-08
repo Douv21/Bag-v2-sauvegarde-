@@ -46,9 +46,13 @@ module.exports = {
     const distube = getMusic(client);
 
     try {
+      // Si ce n'est pas une URL, on force la recherche YouTube pour des résultats stables
+      const isUrl = /^https?:\/\//i.test(query);
+      const normalizedQuery = isUrl ? query : `ytsearch:${query}`;
+
       // Timeout de sécurité pour éviter un blocage éternel
       const timeoutMs = 15000;
-      const playPromise = distube.play(voiceChannel, query, {
+      const playPromise = distube.play(voiceChannel, normalizedQuery, {
         member,
         textChannel: interaction.channel,
         interaction
