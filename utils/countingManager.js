@@ -151,24 +151,8 @@ class CountingManager {
                 channelConfig.recordUserId = userId;
                 console.log(`🏆 NOUVEAU RECORD: ${validationResult.number} par ${message.author.tag}`);
                 
-                // Message spécial pour nouveau record
-                const { EmbedBuilder } = require('discord.js');
-                const recordEmbed = new EmbedBuilder()
-                    .setTitle('🔥 OH MY! NOUVEAU RECORD! 🔥')
-                    .setDescription(`**${message.author.username}** vient d'atteindre le niveau **${validationResult.number}** ! 🥵`)
-                    .addFields(
-                        { name: '💋 Champion(ne) actuel(le)', value: `<@${userId}>`, inline: true },
-                        { name: '🍑 Score hot', value: `\`${validationResult.number}\``, inline: true },
-                        { name: '📅 Date du plaisir', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
-                    )
-                    .setColor(0xff006e) // Rose vif
-                    .setThumbnail(message.author.displayAvatarURL({ dynamic: true }))
-                    .setFooter({ 
-                        text: 'Qui sera le/la prochain(e) à battre ce score? 😈', 
-                        iconURL: message.guild.iconURL() 
-                    });
-                
-                await message.channel.send({ embeds: [recordEmbed] });
+                // (Modifié) Ne plus envoyer d'embed d'annonce de champion ici
+                // On conserve uniquement la mise à jour des données et la réaction trophée plus bas
             }
             
             // Messages spéciaux pour certains nombres
@@ -177,7 +161,7 @@ class CountingManager {
                 420: { emoji: '🌿', message: 'Blaze it! 💨' },
                 666: { emoji: '😈', message: 'Diabolique! 🔥' },
                 100: { emoji: '💯', message: 'Centenaire sexy! 🎉' },
-                1000: { emoji: '🎆', message: 'MILLE! Quel(le) champion(ne)! 🏆' }
+                1000: { emoji: '🎆', message: 'MILLE! Incroyable ! 🏆' }
             };
             
             if (specialNumbers[validationResult.number]) {
@@ -247,7 +231,8 @@ class CountingManager {
                         .addFields(
                             { name: '🔥 Tentative', value: `\`${validationResult.receivedNumber}\``, inline: true },
                             { name: '💦 Punition', value: `Retour à \`0\` 😈`, inline: true },
-                            { name: '🏆 Record du jeu', value: `\`${channelConfig.record || 0}\``, inline: true }
+                            { name: '🏆 Record du jeu', value: `\`${channelConfig.record || 0}\``, inline: true },
+                            { name: '💋 Champion(ne) actuel(le)', value: channelConfig.recordUserId ? `<@${channelConfig.recordUserId}>` : 'Aucun', inline: false }
                         )
                         .setColor(0xff1744) // Rouge passion
                         .setTimestamp()
@@ -263,7 +248,8 @@ class CountingManager {
                         .addFields(
                             { name: '✅ Position attendue', value: `\`${validationResult.expectedNumber}\``, inline: true },
                             { name: '❌ Ta proposition', value: `\`${validationResult.receivedNumber}\``, inline: true },
-                            { name: '🏆 Record atteint', value: `\`${channelConfig.record || 0}\``, inline: true }
+                            { name: '🏆 Record atteint', value: `\`${channelConfig.record || 0}\``, inline: true },
+                            { name: '💋 Champion(ne) actuel(le)', value: channelConfig.recordUserId ? `<@${channelConfig.recordUserId}>` : 'Aucun', inline: false }
                         )
                         .setColor(0xe91e63) // Rose hot
                         .setTimestamp()
@@ -279,7 +265,8 @@ class CountingManager {
                         .addFields(
                             { name: '🔄 Punition', value: 'On recommence tout! 😮', inline: true },
                             { name: '🎯 Prochain coup', value: '`1`', inline: true },
-                            { name: '🏆 Meilleur score', value: `\`${channelConfig.record || 0}\``, inline: true }
+                            { name: '🏆 Meilleur score', value: `\`${channelConfig.record || 0}\``, inline: true },
+                            { name: '💋 Champion(ne) actuel(le)', value: channelConfig.recordUserId ? `<@${channelConfig.recordUserId}>` : 'Aucun', inline: false }
                         )
                         .setColor(0x9c27b0) // Violet sensuel
                         .setTimestamp()
