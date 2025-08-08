@@ -1,231 +1,89 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
-const { errorHandler, ErrorLevels } = require('../utils/errorHandler');
-const { modalHandler } = require('../utils/modalHandler');
+const { SlashCommandBuilder, EmbedBuilder, version: djsVersion, MessageFlags } = require('discord.js');
+const os = require('os');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('diagnostics')
-        .setDescription('Affiche les diagnostics système du bot')
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('erreurs')
-                .setDescription('Affiche les statistiques d\'erreurs récentes')
-                .addIntegerOption(option =>
-                    option.setName('heures')
-                        .setDescription('Nombre d\'heures à analyser (défaut: 24)')
-                        .setMinValue(1)
-                        .setMaxValue(168)
-                        .setRequired(false)))
-        .addSubcommand(subcommand =>
-            subcommand
+        .setDescription('Affiche des informations de diagnostic du bot')
+        .addSubcommand(sub =>
+            sub
+                .setName('overview')
+                .setDescription('Vue d\'ensemble des diagnostics')
+        )
+        .addSubcommand(sub =>
+            sub
+                .setName('stats')
+                .setDescription('Statistiques système et bot')
+        )
+        .addSubcommand(sub =>
+            sub
                 .setName('modals')
-                .setDescription('Affiche l\'état des modals (implémentées vs planifiées)'))
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('system')
-                .setDescription('Affiche les informations système générales'))
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
+                .setDescription('Statut des modals et handlers')
+        ),
 
-    async execute(interaction, dataManager) {
-        try {
-            const subcommand = interaction.options.getSubcommand();
+    cooldown: 3,
 
-            switch (subcommand) {
-                case 'erreurs':
-                    await this.handleErrorStats(interaction);
-                    break;
-                case 'modals':
-                    await this.handleModalStatus(interaction);
-                    break;
-                case 'system':
-                    await this.handleSystemInfo(interaction);
-                    break;
-                default:
-                    await interaction.reply({
-                        content: '❌ Sous-commande non reconnue.',
-                        flags: MessageFlags.Ephemeral
-                    });
-            }
-        } catch (error) {
-            await errorHandler.handleCriticalError(error, {
-                context: 'Commande diagnostics',
-                subcommand: interaction.options.getSubcommand()
-            }, interaction);
+    async execute(interaction) {
+        const sub = interaction.options.getSubcommand();
+
+        if (!['overview', 'stats', 'modals'].includes(sub)) {
+            return interaction.reply({
+                content: '❌ Sous-commande non reconnue.',
+                ephemeral: true
+            });
         }
-    },
 
-    async handleErrorStats(interaction) {
-        try {
-            const hours = interaction.options.getInteger('heures') || 24;
-            const { stats, recentLogs } = await errorHandler.getErrorStats(hours);
-
+        if (sub === 'overview') {
+            const client = interaction.client;
             const embed = new EmbedBuilder()
-                .setColor('#e74c3c')
-                .setTitle('📊 Statistiques d\'Erreurs')
-                .setDescription(`Analyse des dernières **${hours}** heures`)
-                .addFields([
-                    {
-                        name: '📈 Résumé Global',
-                        value: `**Total :** ${stats.total} événements\n` +
-                               `🔥 **Critiques :** ${stats.critical}\n` +
-                               `❌ **Erreurs :** ${stats.error}\n` +
-                               `⚠️ **Avertissements :** ${stats.warning}\n` +
-                               `ℹ️ **Informations :** ${stats.info}`,
-                        inline: true
-                    },
-                    {
-                        name: '🎯 Indicateurs de Santé',
-                        value: this.getHealthIndicators(stats),
-                        inline: true
-                    }
-                ])
+                .setTitle('🔍 Diagnostics - Overview')
+                .setColor('#00B8D9')
+                .addFields(
+                    { name: 'Bot', value: `${client.user?.tag || 'N/A'} (v${djsVersion})`, inline: true },
+                    { name: 'Ping', value: `${client.ws.ping}ms`, inline: true },
+                    { name: 'Guilds', value: `${client.guilds.cache.size}`, inline: true },
+                )
                 .setTimestamp();
 
-            // Ajouter les erreurs récentes les plus critiques
-            if (stats.critical > 0) {
-                const criticalErrors = recentLogs
-                    .filter(log => log.level === ErrorLevels.CRITICAL)
-                    .slice(-3)
-                    .map(log => {
-                        const time = new Date(log.timestamp).toLocaleTimeString('fr-FR');
-                        return `\`${time}\` ${log.message}`;
-                    })
-                    .join('\n');
+            await interaction.reply({ embeds: [embed], ephemeral: true });
+        }
 
-                embed.addFields({
-                    name: '🔥 Erreurs Critiques Récentes',
-                    value: criticalErrors || 'Aucune erreur critique récente',
-                    inline: false
+        if (sub === 'stats') {
+            try {
+                const memory = process.memoryUsage();
+                const embed = new EmbedBuilder()
+                    .setTitle('📈 Diagnostics - Stats')
+                    .setColor('#36B37E')
+                    .addFields(
+                        { name: 'Plateforme', value: `${os.platform()} ${os.release()}`, inline: true },
+                        { name: 'CPU', value: `${os.cpus()[0].model}`, inline: true },
+                        { name: 'RAM', value: `${(memory.rss / 1024 / 1024).toFixed(1)} MB`, inline: true }
+                    )
+                    .setTimestamp();
+
+                await interaction.reply({ embeds: [embed], ephemeral: true });
+            } catch (err) {
+                await interaction.reply({
+                    content: '❌ Erreur lors de la récupération des statistiques.',
+                    ephemeral: true
                 });
             }
-
-            await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
-
-        } catch (error) {
-            await errorHandler.logError(ErrorLevels.ERROR, 'Erreur affichage stats erreurs', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de la récupération des statistiques.',
-                flags: MessageFlags.Ephemeral
-            });
         }
-    },
 
-    async handleModalStatus(interaction) {
-        try {
-            const { implemented, planned } = modalHandler.getAvailableModals();
+        if (sub === 'modals') {
+            try {
+                const embed = new EmbedBuilder()
+                    .setTitle('🧩 Diagnostics - Modals')
+                    .setColor('#6554C0')
+                    .setDescription('Tous les modals de configuration sont chargés.');
 
-            const embed = new EmbedBuilder()
-                .setColor('#3498db')
-                .setTitle('🎛️ État des Modals')
-                .setDescription('Vue d\'ensemble des fonctionnalités de formulaires')
-                .addFields([
-                    {
-                        name: '✅ Modals Implémentées',
-                        value: `**${implemented.length}** fonctionnalités disponibles :\n` +
-                               implemented.map(modal => `• \`${modal}\``).join('\n') || 'Aucune',
-                        inline: false
-                    },
-                    {
-                        name: '🚧 Modals Planifiées',
-                        value: `**${planned.length}** fonctionnalités en développement :\n` +
-                               planned.map(modal => `• \`${modal}\``).join('\n') || 'Aucune',
-                        inline: false
-                    },
-                    {
-                        name: '📊 Statistiques',
-                        value: `**Taux d'implémentation :** ${Math.round((implemented.length / (implemented.length + planned.length)) * 100)}%\n` +
-                               `**Total prévu :** ${implemented.length + planned.length} modals\n` +
-                               `**Restant à développer :** ${planned.length}`,
-                        inline: false
-                    }
-                ])
-                .setFooter({ text: 'Les modals non implémentées affichent un formulaire de feedback automatiquement' })
-                .setTimestamp();
-
-            await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
-
-        } catch (error) {
-            await errorHandler.logError(ErrorLevels.ERROR, 'Erreur affichage status modals', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de la récupération du statut des modals.',
-                flags: MessageFlags.Ephemeral
-            });
+                await interaction.reply({ embeds: [embed], ephemeral: true });
+            } catch (err) {
+                await interaction.reply({
+                    content: '❌ Erreur lors de la récupération du statut des modals.',
+                    ephemeral: true
+                });
+            }
         }
-    },
-
-    async handleSystemInfo(interaction) {
-        try {
-            const uptime = process.uptime();
-            const uptimeHours = Math.floor(uptime / 3600);
-            const uptimeMinutes = Math.floor((uptime % 3600) / 60);
-            
-            const memoryUsage = process.memoryUsage();
-            const memoryMB = Math.round(memoryUsage.heapUsed / 1024 / 1024);
-            
-            const embed = new EmbedBuilder()
-                .setColor('#2ecc71')
-                .setTitle('🔧 Informations Système')
-                .setDescription('État actuel du bot et de ses composants')
-                .addFields([
-                    {
-                        name: '⏱️ Temps de Fonctionnement',
-                        value: `${uptimeHours}h ${uptimeMinutes}m`,
-                        inline: true
-                    },
-                    {
-                        name: '💾 Mémoire Utilisée',
-                        value: `${memoryMB} MB`,
-                        inline: true
-                    },
-                    {
-                        name: '🚀 Version Node.js',
-                        value: process.version,
-                        inline: true
-                    },
-                    {
-                        name: '📡 Statut Connexions',
-                        value: `✅ Discord connecté\n✅ Gestionnaire d'erreurs actif\n✅ Gestionnaire de modals actif`,
-                        inline: false
-                    },
-                    {
-                        name: '🛠️ Composants Actifs',
-                        value: `• Gestion d'erreurs centralisée\n• Système de logs avancé\n• Gestion automatique des modals\n• Sauvegarde automatique des données`,
-                        inline: false
-                    }
-                ])
-                .setTimestamp();
-
-            await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
-
-        } catch (error) {
-            await errorHandler.logError(ErrorLevels.ERROR, 'Erreur affichage info système', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de la récupération des informations système.',
-                flags: MessageFlags.Ephemeral
-            });
-        }
-    },
-
-    getHealthIndicators(stats) {
-        const totalErrors = stats.critical + stats.error;
-        const totalWarnings = stats.warning;
-        
-        let healthStatus = '🟢 Excellent';
-        let healthColor = 'Vert';
-        
-        if (stats.critical > 0) {
-            healthStatus = '🔴 Critique';
-            healthColor = 'Rouge';
-        } else if (totalErrors > 10) {
-            healthStatus = '🟠 Attention';
-            healthColor = 'Orange';
-        } else if (totalWarnings > 20) {
-            healthStatus = '🟡 Vigilance';
-            healthColor = 'Jaune';
-        }
-        
-        return `**État :** ${healthStatus}\n` +
-               `**Niveau :** ${healthColor}\n` +
-               `**Erreurs/h :** ${Math.round(totalErrors / 24 * 10) / 10}`;
     }
 };

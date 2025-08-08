@@ -14,19 +14,19 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '🛑 Viens dans un vocal pour arrêter la musique, sexy.', flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: '🛑 Viens dans un vocal pour arrêter la musique, sexy.', ephemeral: true });
     }
 
     const distube = getMusic(interaction.client);
     const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply({ content: '😴 Rien à arrêter.', flags: MessageFlags.Ephemeral });
+    if (!queue) return interaction.reply({ content: '😴 Rien à arrêter.', ephemeral: true });
 
     let deferred = false;
     try {
-      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      await interaction.deferReply({ ephemeral: true });
       deferred = true;
     } catch {
-      try { await interaction.reply({ content: '❌ Impossible d\'accuser réception de la commande (latence/permissions).', flags: MessageFlags.Ephemeral }); } catch {}
+      try { await interaction.reply({ content: '❌ Impossible d\'accuser réception de la commande (latence/permissions).', ephemeral: true }); } catch {}
       return;
     }
 
@@ -41,7 +41,7 @@ module.exports = {
     } catch (err) {
       const msg = `❌ Oups: ${String(err.message || err)}`;
       if (deferred) await interaction.editReply({ content: msg }).catch(() => {});
-      else await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => {});
+      else await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
     }
   }
 };

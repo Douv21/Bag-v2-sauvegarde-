@@ -1,50 +1,28 @@
 // commands/admin/reset.js
-const { SlashCommandBuilder, MessageFlags } = require('discord.js');
-const { REST, Routes } = require('discord.js');
-// Configuration par défaut si config.json n'existe pas
-const config = {
-    roles: {
-        admin: [], // IDs des rôles admin
-        moderator: [] // IDs des rôles modérateur
-    }
-};
-
-try {
-    const configFile = require('../../config.json');
-    Object.assign(config, configFile);
-} catch (error) {
-    console.log('⚠️ config.json non trouvé, utilisation de la configuration par défaut');
-} // adapte le chemin si besoin
+const { SlashCommandBuilder, REST, Routes, MessageFlags } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('reset')
-    .setDescription('🔁 Supprime toutes les commandes slash du bot (globales et guild)')
-    .setDefaultMemberPermissions(0), // Admin uniquement
-  async execute(interaction) {
-    await interaction.reply({ content: '⏳ Suppression des commandes en cours...', flags: MessageFlags.Ephemeral });
+    .setDescription('Supprime toutes les commandes slash du bot (ADMIN)')
+    .setDMPermission(false),
 
-    const rest = new REST({ version: '10' }).setToken(config.token);
-    const clientId = config.clientId;
-    const guildId = config.guildId;
+  cooldown: 2,
+
+  async execute(interaction) {
+    await interaction.reply({ content: '⏳ Suppression des commandes en cours...', ephemeral: true });
 
     try {
-      // Supprimer les commandes globales
-      const globalCommands = await rest.get(Routes.applicationCommands(clientId));
-      for (const command of globalCommands) {
-        await rest.delete(Routes.applicationCommand(clientId, command.id));
-      }
-
-      // Supprimer les commandes guild
-      const guildCommands = await rest.get(Routes.applicationGuildCommands(clientId, guildId));
-      for (const command of guildCommands) {
-        await rest.delete(Routes.applicationGuildCommand(clientId, guildId, command.id));
-      }
+      const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+      await rest.put(
+        Routes.applicationCommands(process.env.CLIENT_ID),
+        { body: [] }
+      );
 
       await interaction.editReply('✅ Toutes les commandes slash ont été supprimées.');
     } catch (err) {
       console.error('Erreur de suppression :', err);
       await interaction.editReply('❌ Une erreur est survenue lors de la suppression.');
     }
-  },
+  }
 };
