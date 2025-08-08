@@ -19,6 +19,7 @@
     "@distube/spotify": "^2.0.2",
     "@distube/soundcloud": "^2.0.4",
     "@distube/deezer": "^2.0.1",
+    "@distube/youtube": "^1.0.4",
     "@discordjs/voice": "^0.17.0",
     "@discordjs/opus": "^0.9.0",
     "opusscript": "^0.0.8",

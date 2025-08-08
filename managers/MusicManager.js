@@ -34,6 +34,31 @@ function createAddedEmbed(song) {
   return embed;
 }
 
+function resolveYouTubePlugin() {
+  // Préférence: yt-dlp. Fallback: plugin YouTube officiel si binaire indisponible.
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const binPath = process.env.YTDLP_DIR
+      ? path.join(process.env.YTDLP_DIR, process.env.YTDLP_FILENAME || 'yt-dlp')
+      : path.join(__dirname, '..', 'node_modules', '@distube', 'yt-dlp', 'bin', process.env.YTDLP_FILENAME || 'yt-dlp');
+    const exists = fs.existsSync(binPath) && fs.statSync(binPath).size > 100000;
+    if (exists) {
+      return new YtDlpPlugin({ update: process.env.YTDLP_UPDATE === 'true' });
+    }
+  } catch {}
+
+  try {
+    const { YouTubePlugin } = require('@distube/youtube');
+    return new YouTubePlugin({ cookies: undefined });
+  } catch (e) {
+    try {
+      return new YtDlpPlugin({ update: false });
+    } catch {}
+  }
+  return null;
+}
+
 function getMusic(client) {
   if (distubeInstance) return distubeInstance;
 
@@ -47,17 +72,26 @@ function getMusic(client) {
     }
   } catch {}
 
+  const plugins = [
+    new SpotifyPlugin(),
+    new SoundCloudPlugin(),
+    new DeezerPlugin()
+  ];
+  const ytPlugin = resolveYouTubePlugin();
+  if (ytPlugin) plugins.push(ytPlugin);
+
   distubeInstance = new DisTube(client, {
     emitNewSongOnly: true,
     nsfw: true,
     emitAddSongWhenCreatingQueue: false,
+    leaveOnFinish: false,
+    leaveOnEmpty: true,
+    leaveOnStop: true,
+    savePreviousSongs: true,
+    searchSongs: 0,
     ffmpeg: { path: ffmpeg || undefined },
-    plugins: [
-      new SpotifyPlugin(),
-      new SoundCloudPlugin(),
-      new DeezerPlugin(),
-      new YtDlpPlugin({ update: true })
-    ]
+    ytdlOptions: { highWaterMark: 1 << 25, quality: 'highestaudio' },
+    plugins
   });
 
   distubeInstance
