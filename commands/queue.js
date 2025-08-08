@@ -14,13 +14,13 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '👀 La file ? Rejoins un vocal pour jeter un œil.', flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: '👀 La file ? Rejoins un vocal pour jeter un œil.', ephemeral: true });
     }
 
     const distube = getMusic(interaction.client);
     const queue = distube.getQueue(interaction.guildId);
     if (!queue || !queue.songs.length) {
-      return interaction.reply({ content: '😴 La file est vide.', flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: '😴 La file est vide.', ephemeral: true });
     }
 
     const desc = queue.songs
@@ -35,10 +35,10 @@ module.exports = {
       .setFooter({ text: THEME.footer });
 
     try {
-      await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+      await interaction.reply({ embeds: [embed], ephemeral: true });
     } catch {
       // dernier recours
-      await interaction.followUp({ embeds: [embed], flags: MessageFlags.Ephemeral }).catch(() => {});
+      await interaction.followUp({ embeds: [embed], ephemeral: true }).catch(() => {});
     }
   }
 };
