@@ -37,6 +37,16 @@ function createAddedEmbed(song) {
 function getMusic(client) {
   if (distubeInstance) return distubeInstance;
 
+  // Petit rapport console pour diagnostiquer l'audio/voix
+  try {
+    const voice = require('@discordjs/voice');
+    if (voice && typeof voice.generateDependencyReport === 'function') {
+      // N'affiche qu'une seule fois
+      console.log('\n[voice] Dependency report (once):');
+      console.log(voice.generateDependencyReport());
+    }
+  } catch {}
+
   distubeInstance = new DisTube(client, {
     emitNewSongOnly: true,
     nsfw: true,
@@ -59,23 +69,38 @@ function getMusic(client) {
       } catch {}
       const embed = createNowPlayingEmbed(song, queue);
       queue.textChannel?.send({ embeds: [embed] }).catch(() => {});
+      try {
+        console.log(`[music] playSong → ${song.name} (${song.formattedDuration}) | channelId=${queue.voice?.connection?.joinConfig?.channelId}`);
+      } catch {}
     })
     .on('addSong', (queue, song) => {
       const embed = createAddedEmbed(song);
       queue.textChannel?.send({ embeds: [embed] }).catch(() => {});
     })
+    .on('finishSong', (queue, song) => {
+      try { console.log(`[music] finishSong → ${song?.name}`); } catch {}
+    })
+    .on('empty', queue => {
+      try { console.log('[music] empty → voice channel became empty'); } catch {}
+    })
+    .on('noRelated', queue => {
+      try { console.log('[music] noRelated → no related tracks found'); } catch {}
+    })
+    .on('searchNoResult', (message, query) => {
+      try { console.log(`[music] searchNoResult → ${query}`); } catch {}
+    })
     .on('error', (channel, error) => {
       try {
-        // Neutralise les URLs pour éviter les aperçus
         const text = String(error?.message || error)
           .replace(/https?:\/\/\S+/g, (m) => `<${m}>`)
           .slice(0, 1000);
         const embed = new EmbedBuilder()
           .setColor('#FF0044')
           .setTitle('❌ Erreur audio')
-          .setDescription(`\u2063\n${text}`) // \u2063 = caractère invisible pour empêcher les previews
+          .setDescription(`\u2063\n${text}`)
           .setFooter({ text: THEME.footer });
         if (channel && typeof channel.send === 'function') channel.send({ embeds: [embed] }).catch(() => {});
+        console.warn('[music] error:', error?.stack || error);
       } catch {}
     })
     .on('finish', queue => {
@@ -84,6 +109,7 @@ function getMusic(client) {
         .setDescription('💦 File terminée. On se repose un peu ?')
         .setFooter({ text: THEME.footer });
       queue.textChannel?.send({ embeds: [embed] }).catch(() => {});
+      try { console.log('[music] finish → queue ended'); } catch {}
     })
     .on('disconnect', queue => {
       const embed = new EmbedBuilder()
@@ -91,6 +117,11 @@ function getMusic(client) {
         .setDescription('👋 Déconnecté du salon vocal.')
         .setFooter({ text: THEME.footer });
       queue.textChannel?.send({ embeds: [embed] }).catch(() => {});
+      try { console.log('[music] disconnect'); } catch {}
+    })
+    .on('debug', msg => {
+      // Log uniquement côté serveur pour diagnostic
+      try { console.debug('[music][debug]', msg); } catch {}
     });
 
   return distubeInstance;
