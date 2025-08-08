@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.render-final.js",
-    "test": "echo \"Test passed\" && exit 0"
+    "test": "echo \"Test passed\" && exit 0",
+    "postinstall": "node scripts/install-yt-dlp.js"
   },
   "dependencies": {
     "discord.js": "^14.21.0",

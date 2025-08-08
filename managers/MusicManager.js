@@ -46,7 +46,7 @@ function getMusic(client) {
       new SpotifyPlugin(),
       new SoundCloudPlugin(),
       new DeezerPlugin(),
-      new YtDlpPlugin({ update: false })
+      new YtDlpPlugin({ update: true })
     ]
   });
 

@@ -29,3 +29,9 @@ services:
         value: "false"
       - key: YTDLP_UPDATE
         value: "false"
+      - key: YTDLP_URL
+        value: https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
+      - key: YTDLP_DIR
+        value: /opt/render/project/src/node_modules/@distube/yt-dlp/bin
+      - key: YTDLP_FILENAME
+        value: yt-dlp
