@@ -17,6 +17,9 @@ let distubeInstance = null;
 // Track start time and one-shot retry per guild to mitigate premature finishes
 const songStartAtByGuildId = new Map();
 const earlyFinishRetriedGuildIds = new Set();
+// Memo last voice channel and last early-replay per guild to robustly recover
+const lastVoiceChannelByGuildId = new Map();
+const lastEarlyReplayAtByGuildId = new Map();
 
 function createNowPlayingEmbed(song, queue) {
   const embed = new EmbedBuilder()
@@ -107,6 +110,17 @@ function getMusic(client) {
   });
 
   distubeInstance
+    .on('initQueue', (queue) => {
+      try {
+        const guildId = queue?.id || queue?.textChannel?.guildId;
+        if (guildId) {
+          const vc = queue?.voice?.channel || null;
+          if (vc) lastVoiceChannelByGuildId.set(guildId, vc);
+          if (!songStartAtByGuildId.has(guildId)) songStartAtByGuildId.set(guildId, Date.now());
+          earlyFinishRetriedGuildIds.delete(guildId);
+        }
+      } catch {}
+    })
     .on('playSong', (queue, song) => {
       try {
         if (typeof queue.volume === 'number' && queue.volume < 1) {
@@ -120,6 +134,8 @@ function getMusic(client) {
         if (guildId) {
           songStartAtByGuildId.set(guildId, Date.now());
           earlyFinishRetriedGuildIds.delete(guildId);
+          const vc = queue?.voice?.channel || song?.member?.voice?.channel || null;
+          if (vc) lastVoiceChannelByGuildId.set(guildId, vc);
         }
       } catch {}
 
@@ -156,18 +172,32 @@ function getMusic(client) {
         if (
           guildId &&
           typeof elapsedMs === 'number' && elapsedMs < 5000 &&
-          !earlyFinishRetriedGuildIds.has(guildId) &&
-          queue?.voice?.channel
+          !earlyFinishRetriedGuildIds.has(guildId)
         ) {
-          earlyFinishRetriedGuildIds.add(guildId);
-          console.warn(`[music] earlyFinishRetry (${elapsedMs}ms) → trying to replay once`);
-          try {
-            await distubeInstance.play(queue.voice.channel, song?.url || song?.name, {
-              textChannel: queue.textChannel
-            });
-            return; // stop further handling; a new playSong will follow
-          } catch (retryErr) {
-            console.warn('[music] earlyFinishRetry failed:', retryErr?.message || retryErr);
+          // Find a robust voice channel reference
+          const fallbackVc = (guild => {
+            try {
+              const saved = lastVoiceChannelByGuildId.get(guildId);
+              if (saved) return saved;
+            } catch {}
+            try {
+              return queue?.voice?.channel || song?.member?.voice?.channel || null;
+            } catch {}
+            return null;
+          })();
+
+          if (fallbackVc) {
+            earlyFinishRetriedGuildIds.add(guildId);
+            lastEarlyReplayAtByGuildId.set(guildId, Date.now());
+            console.warn(`[music] earlyFinishRetry (${elapsedMs}ms) → trying to replay once`);
+            try {
+              await distubeInstance.play(fallbackVc, song?.url || song?.name, {
+                textChannel: queue.textChannel
+              });
+              return; // stop further handling; a new playSong will follow
+            } catch (retryErr) {
+              console.warn('[music] earlyFinishRetry failed:', retryErr?.message || retryErr);
+            }
           }
         }
       } catch {}
@@ -196,6 +226,16 @@ function getMusic(client) {
       } catch {}
     })
     .on('finish', queue => {
+      // If we just attempted an early replay, suppress the misleading "queue ended" message
+      try {
+        const guildId = queue?.id || queue?.textChannel?.guildId;
+        const replayAt = guildId ? lastEarlyReplayAtByGuildId.get(guildId) : undefined;
+        if (replayAt && Date.now() - replayAt < 4000) {
+          console.log('[music] finish (suppressed after early replay)');
+          return;
+        }
+      } catch {}
+
       const embed = new EmbedBuilder()
         .setColor(THEME.colorSecondary)
         .setDescription('💦 File terminée. On se repose un peu ?')
