@@ -31,7 +31,7 @@ module.exports = {
 
     let deferred = false;
     try {
-      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      await interaction.deferReply({ ephemeral: true });
       deferred = true;
     } catch {
       try { await interaction.reply({ content: '❌ Impossible d\'accuser réception de la commande (permissions ou latence).', flags: MessageFlags.Ephemeral }); } catch {}
