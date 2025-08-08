@@ -31,6 +31,11 @@ const ensureFileAndBlobPolyfills = () => {
   } catch {}
 };
 
+// Charger les variables d'environnement depuis un fichier .env (si présent)
+try {
+  require('dotenv').config();
+} catch {}
+
 ensureFileAndBlobPolyfills();
 
 const { Client, Collection, GatewayIntentBits, Routes, REST, EmbedBuilder } = require('discord.js');
