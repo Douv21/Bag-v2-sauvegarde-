@@ -670,6 +670,17 @@ class RenderSolutionBot {
                         return; // IMPORTANT: arrêter ici pour éviter le double traitement
                     }
                 }
+
+                // Contrôles musique (boutons)
+                if (interaction.isButton() && interaction.customId && interaction.customId.startsWith('music_')) {
+                    try {
+                        const { handleButton } = require('./handlers/MusicControls');
+                        await handleButton(interaction);
+                    } catch (e) {
+                        console.warn('⚠️ Erreur MusicControls:', e?.message || e);
+                    }
+                    return;
+                }
                 
                 await this.handleInteraction(interaction);
             } catch (error) {
