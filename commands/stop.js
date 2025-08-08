@@ -31,7 +31,12 @@ module.exports = {
     }
 
     try {
-      await queue.stop();
+      // Stop via DisTube API (vide la file + arrête la lecture)
+      await distube.stop(interaction.guildId);
+
+      // Sécurité: si une connexion subsiste, tenter de la quitter proprement
+      try { queue.voice?.connection?.destroy?.(); } catch {}
+
       if (deferred) await interaction.editReply({ content: '🧹 File nettoyée. Bisous 💋' });
     } catch (err) {
       const msg = `❌ Oups: ${String(err.message || err)}`;
