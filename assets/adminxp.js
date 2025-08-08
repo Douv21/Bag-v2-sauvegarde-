@@ -145,7 +145,7 @@ module.exports = {
             console.error('Erreur adminxp:', error);
             await interaction.editReply({
                 content: '❌ **Erreur lors de la modification de l\'XP**\n\nVeuillez réessayer plus tard.',
-                ephemeral: true
+                flags: 64
             });
         }
     }
