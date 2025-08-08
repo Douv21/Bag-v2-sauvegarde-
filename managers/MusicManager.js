@@ -67,9 +67,10 @@ function getMusic(client) {
     plugins
   });
 
+  const { buildControls } = require('../handlers/MusicControls');
   distubeInstance
     .on('playSong', (queue, song) => {
-      try { queue.textChannel?.send({ embeds: [createNowPlayingEmbed(song)] }).catch(() => {}); } catch {}
+      try { queue.textChannel?.send({ embeds: [createNowPlayingEmbed(song)], components: buildControls(queue) }).catch(() => {}); } catch {}
     })
     .on('addSong', (queue, song) => {
       try { queue.textChannel?.send({ embeds: [createAddedEmbed(song)] }).catch(() => {}); } catch {}
@@ -100,4 +101,4 @@ function getMusic(client) {
   return distubeInstance;
 }
 
-module.exports = { getMusic, THEME };
+module.exports = { getMusic, THEME, createNowPlayingEmbed };
