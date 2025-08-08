@@ -4,6 +4,7 @@ const { YtDlpPlugin } = require('@distube/yt-dlp');
 const { SpotifyPlugin } = require('@distube/spotify');
 const { SoundCloudPlugin } = require('@distube/soundcloud');
 const { DeezerPlugin } = require('@distube/deezer');
+const ffmpeg = require('ffmpeg-static');
 
 const THEME = {
   colorPrimary: '#FF2E88',
@@ -40,6 +41,12 @@ function getMusic(client) {
     emitNewSongOnly: true,
     nsfw: true,
     emitAddSongWhenCreatingQueue: false,
+    leaveOnStop: true,
+    leaveOnFinish: true,
+    leaveOnEmpty: true,
+    youtubeDL: false,
+    ytdlOptions: { highWaterMark: 1 << 25 },
+    ffmpeg: { path: ffmpeg || undefined },
     plugins: [
       new SpotifyPlugin(),
       new SoundCloudPlugin(),
@@ -50,6 +57,11 @@ function getMusic(client) {
 
   distubeInstance
     .on('playSong', (queue, song) => {
+      try {
+        if (typeof queue.volume === 'number' && queue.volume < 1) {
+          queue.setVolume(80);
+        }
+      } catch {}
       const embed = createNowPlayingEmbed(song, queue);
       queue.textChannel?.send({ embeds: [embed] }).catch(() => {});
     })
