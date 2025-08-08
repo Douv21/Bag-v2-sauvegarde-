@@ -45,6 +45,12 @@ const { errorHandler, ErrorLevels } = require('./utils/errorHandler');
 const { modalHandler } = require('./utils/modalHandler');
 const { wrapInteraction } = require('./utils/interactionWrapper');
 
+// Voice dependency report (optional, helps diagnose encryption libs on Render)
+try {
+  const { generateDependencyReport } = require('@discordjs/voice');
+  console.info(generateDependencyReport());
+} catch {}
+
 // Handlers pour les nouvelles fonctionnalités karma
 async function handleKarmaResetComplete(interaction) {
     try {
