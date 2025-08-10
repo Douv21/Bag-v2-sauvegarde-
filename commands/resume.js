@@ -13,8 +13,8 @@ module.exports = {
     const member = interaction.member;
     const voiceChannel = member?.voice?.channel;
 
-    if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '💬 Rejoins un vocal pour relancer la musique.', ephemeral: true });
+    if (!voiceChannel || ![ChannelType.GuildVoice, ChannelType.GuildStageVoice].includes(voiceChannel.type)) {
+      return interaction.reply({ content: '🎧 Rejoins un salon vocal pour utiliser cette commande.', ephemeral: true });
     }
 
     try { await interaction.deferReply({ ephemeral: true }); } catch {}

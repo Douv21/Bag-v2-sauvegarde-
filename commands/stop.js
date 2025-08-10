@@ -13,18 +13,18 @@ module.exports = {
     const member = interaction.member;
     const voiceChannel = member?.voice?.channel;
 
-    if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '🛑 Viens dans un vocal pour arrêter la musique.', ephemeral: true });
+    if (!voiceChannel || ![ChannelType.GuildVoice, ChannelType.GuildStageVoice].includes(voiceChannel.type)) {
+      return interaction.reply({ content: '🎧 Rejoins un salon vocal pour utiliser cette commande.', ephemeral: true });
     }
 
     try { await interaction.deferReply({ ephemeral: true }); } catch {}
 
     try {
       await stop(interaction.guildId);
-      if (interaction.deferred || interaction.replied) await interaction.editReply({ content: '🧹 File nettoyée.' });
-      else await interaction.reply({ content: '🧹 File nettoyée.', ephemeral: true });
+      if (interaction.deferred || interaction.replied) await interaction.editReply({ content: '🛑 Musique arrêtée et file nettoyée.', ephemeral: true });
+      else await interaction.reply({ content: '🛑 Musique arrêtée et file nettoyée.', ephemeral: true });
     } catch (err) {
-      const msg = `❌ Oups: ${String(err.message || err)}`;
+      const msg = `❌ Erreur: ${String(err.message || err)}`;
       if (interaction.deferred || interaction.replied) await interaction.editReply({ content: msg }).catch(() => {});
       else await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
     }

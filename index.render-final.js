@@ -681,7 +681,18 @@ class RenderSolutionBot {
                     }
                     return;
                 }
-                
+
+                // Sélecteur radio (menus)
+                if (interaction.isStringSelectMenu && interaction.isStringSelectMenu() && interaction.customId === 'radio_select') {
+                    try {
+                        const { handleRadioSelect } = require('./handlers/RadioHandler');
+                        await handleRadioSelect(interaction);
+                    } catch (e) {
+                        console.warn('⚠️ Erreur RadioHandler:', e?.message || e);
+                    }
+                    return;
+                }
+
                 await this.handleInteraction(interaction);
             } catch (error) {
                 // Gestion spécifique des erreurs Discord d'interaction

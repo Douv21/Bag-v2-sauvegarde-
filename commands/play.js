@@ -15,7 +15,7 @@ module.exports = {
     const member = interaction.member;
     const voiceChannel = member?.voice?.channel;
 
-    if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
+    if (!voiceChannel || ![ChannelType.GuildVoice, ChannelType.GuildStageVoice].includes(voiceChannel.type)) {
       return interaction.reply({ content: '💋 Rejoins un salon vocal pour jouer de la musique.', ephemeral: true });
     }
 

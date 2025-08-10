@@ -22,12 +22,53 @@ function decodeBase64(b64) {
   }
 }
 
+function stripCookieHeaderPrefix(value) {
+  if (!value) return value;
+  const trimmed = value.trim();
+  if (/^cookie\s*:/i.test(trimmed)) {
+    return trimmed.replace(/^cookie\s*:/i, '').trim();
+  }
+  return trimmed;
+}
+
+function maybeParseNetscapeCookies(value) {
+  // Détecter un format cookies.txt (Netscape) et le convertir en en-tête Cookie
+  // Format attendu: colonnes tab-séparées, lignes non commentées (#) :
+  // domain \t flag \t path \t secure \t expiration \t name \t value
+  if (!value) return value;
+  const lines = value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const hasTabs = lines.some(l => l.includes('\t'));
+  const looksLikeNetscape = hasTabs || lines.some(l => l.startsWith('# HTTP') || l.startsWith('# Netscape'));
+  if (!looksLikeNetscape) return value;
+
+  const pairs = [];
+  for (const line of lines) {
+    if (!line || line.startsWith('#')) continue;
+    const parts = line.split('\t');
+    if (parts.length < 7) continue;
+    const name = parts[5];
+    const val = parts[6];
+    if (name && typeof val !== 'undefined') {
+      pairs.push(`${name}=${val}`);
+    }
+  }
+  if (pairs.length === 0) return value;
+  return pairs.join('; ');
+}
+
+function normalizeCookieValue(raw) {
+  if (!raw) return null;
+  let v = stripCookieHeaderPrefix(raw);
+  v = maybeParseNetscapeCookies(v);
+  return v && v.trim().length > 0 ? v.trim() : null;
+}
+
 function getYouTubeCookieString() {
   if (cachedCookieString !== undefined) return cachedCookieString;
 
   const direct = process.env.YOUTUBE_COOKIES;
   if (direct && direct.trim().length > 0) {
-    cachedCookieString = direct.trim();
+    cachedCookieString = normalizeCookieValue(direct);
     return cachedCookieString;
   }
 
@@ -35,7 +76,7 @@ function getYouTubeCookieString() {
   if (b64 && b64.trim().length > 0) {
     const decoded = decodeBase64(b64.trim());
     if (decoded && decoded.trim().length > 0) {
-      cachedCookieString = decoded.trim();
+      cachedCookieString = normalizeCookieValue(decoded.trim());
       return cachedCookieString;
     }
   }
@@ -44,7 +85,7 @@ function getYouTubeCookieString() {
   if (file && file.trim().length > 0) {
     const fromFile = readFromFile(file.trim());
     if (fromFile) {
-      cachedCookieString = fromFile;
+      cachedCookieString = normalizeCookieValue(fromFile);
       return cachedCookieString;
     }
   }
