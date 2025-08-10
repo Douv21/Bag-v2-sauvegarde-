@@ -43,6 +43,13 @@ class EconomyConfigHandler {
                 { label: '💰 Voler', value: 'voler', description: 'Action négative - Risque et karma mauvais' },
                 { label: '🎲 Parier', value: 'parier', description: 'Action négative - Gambling et karma' },
                 { label: '🔪 Crime', value: 'crime', description: 'Action très négative - Gros gains/risques' },
+                { label: '💘 Séduire (NSFW)', value: 'seduire', description: 'Séduire un membre (NSFW)' },
+                { label: '💋 Embrasser (NSFW)', value: 'embrasser', description: 'Embrasser un membre (NSFW)' },
+                { label: '🧴 Caresser (NSFW)', value: 'caresser', description: 'Caresser un membre (NSFW)' },
+                { label: '💆 Massage (NSFW)', value: 'massage', description: 'Faire un massage (NSFW)' },
+                { label: '🩶 Striptease (NSFW)', value: 'striptease', description: 'Faire un striptease (NSFW)' },
+                { label: '🌙 After Dark (NSFW)', value: 'after_dark', description: 'Jeu nocturne bonus (NSFW)' },
+                { label: '😏 Aguicher (NSFW)', value: 'aguicher', description: 'Aguicher un membre (NSFW)' },
                 { label: '🔄 Activer/Désactiver toutes', value: 'toggle_all', description: 'Basculer l\'état de toutes les actions' },
                 { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
             ]);
