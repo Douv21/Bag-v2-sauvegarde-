@@ -1513,7 +1513,7 @@ class RenderSolutionBot {
                             
                             const guildId = interaction.guild.id;
                             const items = shop[guildId] || [];
-                            const itemIndex = items.findIndex(i => i.id === itemId);
+                            const itemIndex = items.findIndex(i => String(i.id) === String(itemId));
                             const item = items[itemIndex];
                             
                             if (item) {
@@ -1522,7 +1522,7 @@ class RenderSolutionBot {
                                 if (price >= 1 && price <= 999999) {
                                     item.price = price;
                                     
-                                    if (item.type === 'custom_object' || item.type === 'custom') {
+                                    if (item.type === 'custom_object' || item.type === 'custom' || item.type === 'text') {
                                         item.name = interaction.fields.getTextInputValue('item_name');
                                         item.description = interaction.fields.getTextInputValue('item_description') || '';
                                     } else if (item.type === 'temporary_role' || item.type === 'temp_role') {
@@ -2934,7 +2934,7 @@ async function handleShopPurchase(interaction, dataManager) {
             }
         } else if (item.type === 'private_24h' || item.type === 'private_monthly' || item.type === 'private_permanent') {
             effectMessage = '\n🔒 Suite privée créée: 1 rôle + 2 salons (🔞 texte NSFW + 🎙️ vocal)';
-        } else if (item.type === 'custom_object' || item.type === 'custom') {
+        } else if (item.type === 'custom_object' || item.type === 'custom' || item.type === 'text') {
             effectMessage = '\n🎁 Objet personnalisé acheté !';
         } else {
             effectMessage = '\n📦 Objet ajouté à votre inventaire !';

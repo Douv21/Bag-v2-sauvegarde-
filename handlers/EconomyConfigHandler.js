@@ -874,7 +874,7 @@ class EconomyConfigHandler {
             const guildId = interaction.guild.id;
             const guildItems = shopData[guildId] || [];
 
-            const customObjects = guildItems.filter(item => item.type === 'custom_object' || item.type === 'custom');
+            const customObjects = guildItems.filter(item => item.type === 'custom_object' || item.type === 'custom' || item.type === 'text');
 
             if (customObjects.length === 0) {
                 await interaction.update({
@@ -900,13 +900,13 @@ class EconomyConfigHandler {
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('objets_existants_select')
                 .setPlaceholder('Sélectionner un objet à modifier...')
-                .addOptions(
-                    customObjects.slice(0, 20).map(obj => ({
-                        label: obj.name,
-                        description: `${obj.price}💋 - Créé le ${new Date(obj.created).toLocaleDateString()}`,
-                        value: obj.id
-                    }))
-                );
+                                    .addOptions(
+                        customObjects.slice(0, 20).map(obj => ({
+                            label: obj.name,
+                            description: `${obj.price}💋 - Créé le ${new Date(obj.created).toLocaleDateString()}`,
+                            value: String(obj.id)
+                        }))
+                    );
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
 
@@ -952,7 +952,7 @@ class EconomyConfigHandler {
                         let typeIcon = '❓';
                         let typeName = 'Inconnu';
                         
-                        if (item.type === 'custom_object' || item.type === 'custom') {
+                        if (item.type === 'custom_object' || item.type === 'custom' || item.type === 'text') {
                             typeIcon = '🎨';
                             typeName = 'Objet personnalisé';
                         } else if (item.type === 'temporary_role' || item.type === 'temp_role') {
@@ -975,19 +975,19 @@ class EconomyConfigHandler {
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('delete_articles_select')
                 .setPlaceholder('Sélectionner un article à supprimer...')
-                .addOptions(
-                    guildItems.slice(0, 20).map(item => {
-                        let label = item.name || `Rôle ${item.roleId}`;
-                        let typeIcon = (item.type === 'custom_object' || item.type === 'custom') ? '🎨' : 
+                                    .addOptions(
+                        guildItems.slice(0, 20).map(item => {
+                            let label = item.name || `Rôle ${item.roleId}`;
+                            let typeIcon = (item.type === 'custom_object' || item.type === 'custom' || item.type === 'text') ? '🎨' : 
                                      (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : '⭐';
-                        
-                        return {
-                            label: `${typeIcon} ${label}`,
-                            description: `${item.price}💋 - Supprimer cet article`,
-                            value: item.id
-                        };
-                    })
-                );
+                            
+                            return {
+                                label: `${typeIcon} ${label}`,
+                                description: `${item.price}💋 - Supprimer cet article`,
+                                value: String(item.id)
+                            };
+                        })
+                    );
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
 
@@ -1032,7 +1032,7 @@ class EconomyConfigHandler {
                         let typeIcon = '❓';
                         let typeName = 'Inconnu';
                         
-                        if (item.type === 'custom_object' || item.type === 'custom') {
+                        if (item.type === 'custom_object' || item.type === 'custom' || item.type === 'text') {
                             typeIcon = '🎨';
                             typeName = 'Objet personnalisé';
                         } else if (item.type === 'temporary_role' || item.type === 'temp_role') {
@@ -1055,19 +1055,19 @@ class EconomyConfigHandler {
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('edit_articles_select')
                 .setPlaceholder('Sélectionner un article à modifier...')
-                .addOptions(
-                    guildItems.slice(0, 20).map(item => {
-                        let label = item.name || `Rôle ${item.roleId}`;
-                        let typeIcon = (item.type === 'custom_object' || item.type === 'custom') ? '🎨' : 
+                                    .addOptions(
+                        guildItems.slice(0, 20).map(item => {
+                            let label = item.name || `Rôle ${item.roleId}`;
+                            let typeIcon = (item.type === 'custom_object' || item.type === 'custom' || item.type === 'text') ? '🎨' : 
                                      (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : '⭐';
-                        
-                        return {
-                            label: `${typeIcon} ${label}`,
-                            description: `${item.price}💋 - Modifier cet article`,
-                            value: item.id
-                        };
-                    })
-                );
+                            
+                            return {
+                                label: `${typeIcon} ${label}`,
+                                description: `${item.price}💋 - Modifier cet article`,
+                                value: String(item.id)
+                            };
+                        })
+                    );
 
             const row = new ActionRowBuilder().addComponents(selectMenu);
 
@@ -1100,7 +1100,7 @@ class EconomyConfigHandler {
                 return;
             }
 
-            const item = shopData[guildId].find(i => i.id === itemId);
+            const item = shopData[guildId].find(i => String(i.id) === String(itemId));
             if (!item) {
                 await interaction.reply({
                     content: '❌ Article non trouvé.',
@@ -1137,7 +1137,7 @@ class EconomyConfigHandler {
             const components = [new ActionRowBuilder().addComponents(priceInput)];
 
             // Pour les objets personnalisés
-            if (item.type === 'custom_object' || item.type === 'custom') {
+            if (item.type === 'custom_object' || item.type === 'custom' || item.type === 'text') {
                 const nameInput = new TextInputBuilder()
                     .setCustomId('item_name')
                     .setLabel('📝 Nom de l\'objet')
@@ -1196,7 +1196,7 @@ class EconomyConfigHandler {
                 return;
             }
 
-            const item = shopData[guildId].find(item => item.id === itemId);
+            const item = shopData[guildId].find(item => String(item.id) === String(itemId));
             if (!item) {
                 await interaction.reply({
                     content: '❌ Article non trouvé.',
@@ -1231,7 +1231,7 @@ class EconomyConfigHandler {
                 return;
             }
 
-            const itemIndex = shopData[guildId].findIndex(item => item.id === itemId);
+            const itemIndex = shopData[guildId].findIndex(item => String(item.id) === String(itemId));
             if (itemIndex === -1) {
                 await interaction.reply({
                     content: '❌ Article non trouvé.',
