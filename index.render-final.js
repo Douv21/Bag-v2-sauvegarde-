@@ -2409,14 +2409,58 @@ class RenderSolutionBot {
             if (!isChannelConfigured) return;
             
             if (message.channel.isThread() || message.channel.type !== 0) return;
+
+            // Enforcer le mode NSFW si activé
+            if (autoThreadConfig.nsfw === true && message.channel.nsfw !== true) {
+                return;
+            }
             
-            let threadName = autoThreadConfig.threadName || 'Discussion - {user}';
-            threadName = threadName
-                .replace('{user}', message.author.displayName || message.author.username)
+            // Générer le nom du thread
+            let threadNameTemplate = autoThreadConfig.threadName || 'Discussion - {user}';
+            if (threadNameTemplate === '__RANDOM_NSFW_BG__') {
+                const randomNames = [
+                    'Suite privée de {user} 18+',
+                    'Boudoir de {user} 18+ 💋',
+                    'Chambre rouge de {user} 18+ 🔥',
+                    'Salon interdit de {channel} 18+ 🖤',
+                    'Secrets d\'oreiller de {user} 18+ 🌙',
+                    'Rendez-vous secret de {channel} 18+ 🍷',
+                    'Jeux de nuit de {user} 18+ 😈',
+                    'Nocturne avec {user} 18+ 🌌',
+                    'Ambiance chaude de {channel} 18+ 🔥',
+                    'Après-minuit dans #{channel} 18+ 🌙',
+                    'Coin câlin de {user} 18+ 🤍',
+                    'Tentations de {user} 18+ 🔥',
+                    'Pièce secrète de {user} 18+ 🗝️',
+                    'Velours noir de {user} 18+ 🖤',
+                    'Murmures de {user} 18+ 🕯️',
+                    'Journal intime de {user} 18+ ✒️',
+                    'Chambre des plaisirs de {user} 18+ 😈',
+                    'Entre deux draps avec {user} 18+ 💫',
+                    'Confidences nocturnes de {user} 18+ 🌙',
+                    'Salle privée de {channel} 18+ 🚪',
+                    'Lueur pourpre de {user} 18+ 🌹',
+                    'Suite interdite de {user} 18+ 🔒',
+                    'Loge des voyeurs #{channel} 18+ 👀',
+                    'Œil indiscret sur {user} 18+ 👁️',
+                    'Rôleplay avec {user} 18+ 🎭',
+                    'Maître & Muse : {user} 18+ ⛓️',
+                    'Domination de {user} 18+ ⛓️',
+                    'Soubrette & Maître de {user} 18+ 🥀',
+                    'Baiser volé de {user} 18+ 💋',
+                    'Chuchotis sucrés de {user} 18+ 🍯'
+                ];
+                threadNameTemplate = randomNames[Math.floor(Math.random() * randomNames.length)];
+            }
+            
+            // Remplacer les variables
+            let threadName = threadNameTemplate
+                .replace('{user}', message.member?.displayName || message.author.username)
                 .replace('{channel}', message.channel.name)
                 .replace('{date}', new Date().toLocaleDateString('fr-FR'))
                 .replace('{time}', new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
             
+            // Limiter le nom à 100 caractères (limite Discord)
             threadName = threadName.substring(0, 100);
             
             const thread = await message.startThread({

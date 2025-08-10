@@ -464,16 +464,36 @@ class BagBotRender {
             let threadNameTemplate = mergedAutoThread.threadName || 'Discussion - {user}';
             if (threadNameTemplate === '__RANDOM_NSFW_BG__') {
                 const randomNames = [
-                    'Boys & Girls 18+ - {user}',
-                    'BG Lounge 18+ - {channel}',
-                    'Boys x Girls After Dark 18+',
-                    'Spicy Boys & Girls 18+ - {user}',
-                    'Late Night B&G 18+ - {channel}',
-                    'Private B&G Lounge 18+',
-                    'Red Room B&G 18+ - {user}',
-                    'Forbidden B&G Talk 18+ - {channel}',
-                    'Nocturne B&G 18+ - {user}',
-                    'Heatwave B&G 18+'
+                    'Suite privée de {user} 18+',
+                    'Boudoir de {user} 18+ 💋',
+                    'Chambre rouge de {user} 18+ 🔥',
+                    'Salon interdit de {channel} 18+ 🖤',
+                    'Secrets d\'oreiller de {user} 18+ 🌙',
+                    'Rendez-vous secret de {channel} 18+ 🍷',
+                    'Jeux de nuit de {user} 18+ 😈',
+                    'Nocturne avec {user} 18+ 🌌',
+                    'Ambiance chaude de {channel} 18+ 🔥',
+                    'Après-minuit dans #{channel} 18+ 🌙',
+                    'Coin câlin de {user} 18+ 🤍',
+                    'Tentations de {user} 18+ 🔥',
+                    'Pièce secrète de {user} 18+ 🗝️',
+                    'Velours noir de {user} 18+ 🖤',
+                    'Murmures de {user} 18+ 🕯️',
+                    'Journal intime de {user} 18+ ✒️',
+                    'Chambre des plaisirs de {user} 18+ 😈',
+                    'Entre deux draps avec {user} 18+ 💫',
+                    'Confidences nocturnes de {user} 18+ 🌙',
+                    'Salle privée de {channel} 18+ 🚪',
+                    'Lueur pourpre de {user} 18+ 🌹',
+                    'Suite interdite de {user} 18+ 🔒',
+                    'Loge des voyeurs #{channel} 18+ 👀',
+                    'Œil indiscret sur {user} 18+ 👁️',
+                    'Rôleplay avec {user} 18+ 🎭',
+                    'Maître & Muse : {user} 18+ ⛓️',
+                    'Domination de {user} 18+ ⛓️',
+                    'Soubrette & Maître de {user} 18+ 🥀',
+                    'Baiser volé de {user} 18+ 💋',
+                    'Chuchotis sucrés de {user} 18+ 🍯'
                 ];
                 threadNameTemplate = randomNames[Math.floor(Math.random() * randomNames.length)];
             }
