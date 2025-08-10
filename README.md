@@ -1,4 +1,4 @@
-# 🤖 BAG v2 - Bot Discord Complet
+# BAG Bot V2 - Test Dashboard
 
 ![Version](https://img.shields.io/badge/version-2.0-blue)
 ![Discord.js](https://img.shields.io/badge/discord.js-14.x-brightgreen)

@@ -44,7 +44,10 @@ class EconomyConfigHandler {
                 { label: '🎲 Oser', value: 'parier', description: 'Action négative - Gambling et karma' },
                 { label: '🔥 Coup de folie', value: 'crime', description: 'Action très négative - Gros gains/risques' },
                 { label: '😉 Aguicher', value: 'aguicher', description: 'NSFW: gains modérés, faible cooldown' },
-                { label: '🔥 Défi Osé', value: 'defier', description: 'NSFW: gains ou pertes variables' },
+                { label: '💄 Embrasser', value: 'embrasser', description: 'NSFW: doux, court cooldown' },
+                { label: '🤲 Caresser', value: 'caresser', description: 'NSFW: léger, très court cooldown' },
+                { label: '💆 Massage', value: 'massage', description: 'NSFW: positif, moyen cooldown' },
+                { label: '🩶 Striptease', value: 'striptease', description: 'NSFW: gros gains, plus risqué' },
                 { label: '💃 Séduire (Masse)', value: 'seduire_mass', description: 'NSFW: très risqué, gros gains/pénalités' },
                 { label: '🌙 After Dark', value: 'after_dark', description: 'NSFW: bonus selon l\'heure' },
                 { label: '🔄 Activer/Désactiver toutes', value: 'toggle_all', description: 'Basculer l\'état de toutes les actions' },
@@ -3113,7 +3116,11 @@ class EconomyConfigHandler {
             aguicher: ['aguicher'],
             defier: ['defier'],
             seduire_mass: ['seduire_mass'],
-            after_dark: ['after_dark']
+            after_dark: ['after_dark'],
+            embrasser: ['embrasser'],
+            caresser: ['caresser'],
+            massage: ['massage'],
+            striptease: ['striptease']
         };
         return map[action] || [action];
     }

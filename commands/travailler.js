@@ -7,8 +7,8 @@ function asNumber(value, fallback = 0) {
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('charmer')
-        .setDescription('Charmer pour gagner du plaisir (Action positive)'),
+        .setName('travailler')
+        .setDescription('Travailler pour gagner du plaisir (Action standard) '),
 
     async execute(interaction, dataManager) {
         try {
@@ -17,7 +17,7 @@ module.exports = {
             
             // Charger la configuration économique avec debug
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const rawCfg = (economyConfig.actions?.charmer || economyConfig.actions?.travailler) || {};
+            const rawCfg = (economyConfig.actions?.travailler || economyConfig.actions?.charmer) || {};
             
             const enabled = rawCfg.enabled !== false;
             const minReward = asNumber(rawCfg.minReward ?? rawCfg?.montant?.minAmount, 100);
@@ -29,7 +29,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /charmer est actuellement désactivée.',
+                    content: '❌ La commande /travailler est actuellement désactivée.',
                     flags: 64
                 });
                 return;
@@ -44,7 +44,7 @@ module.exports = {
             if (userData.lastWork && (now - userData.lastWork) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastWork)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir recharmer.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir retravailler.`,
                     flags: 64
                 });
             }
@@ -62,11 +62,11 @@ module.exports = {
             await dataManager.updateUser(userId, guildId, userData);
             
             const workActions = [
-                'Vous avez charmé la galerie',
-                'Vous avez envoyé un clin d’œil ravageur',
-                'Vous avez lancé un compliment coquin',
-                'Vous avez esquissé un sourire mystérieux',
-                'Vous avez fait monter la température'
+                'Vous avez travaillé d\'arrache-pied',
+                'Vous avez bouclé un gros dossier',
+                'Vous avez enchaîné les tâches efficacement',
+                'Vous avez aidé un collègue',
+                'Vous avez fait des heures sup\' rentables'
             ];
             
             const action = workActions[Math.floor(Math.random() * workActions.length)];
@@ -76,7 +76,7 @@ module.exports = {
             
             const embed = new EmbedBuilder()
                 .setColor('#00ff00')
-                .setTitle('💋 Charme Réussi !')
+                .setTitle('💼 Travail Réussi !')
                 .setDescription(`${action} et avez gagné **${totalReward}💋** !`)
                 .addFields([
                     { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
@@ -98,7 +98,7 @@ module.exports = {
             }
             
         } catch (error) {
-            console.error('❌ Erreur charmer:', error);
+            console.error('❌ Erreur travailler:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64
