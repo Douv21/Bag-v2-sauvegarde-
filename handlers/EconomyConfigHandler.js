@@ -50,6 +50,7 @@ class EconomyConfigHandler {
                 { label: '🩶 Striptease', value: 'striptease', description: 'NSFW: gros gains, plus risqué' },
                 { label: '💃 Séduire (Masse)', value: 'seduire_mass', description: 'NSFW: très risqué, gros gains/pénalités' },
                 { label: '🌙 After Dark', value: 'after_dark', description: 'NSFW: bonus selon l\'heure' },
+                { label: '⚔️ Défier', value: 'defier', description: 'NSFW: défi osé, gains variables' },
                 { label: '🔄 Activer/Désactiver toutes', value: 'toggle_all', description: 'Basculer l\'état de toutes les actions' },
                 { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
             ]);
@@ -371,7 +372,7 @@ class EconomyConfigHandler {
             .setTitle('💋 Configuration du Jeu Coquin')
             .setDescription('Choisissez la section à configurer :')
             .addFields([
-                { name: '🎯 Actions Sexy', value: 'Configurer les 6 actions (montant, cooldown, karma)', inline: true },
+                { name: '🎯 Actions Sexy', value: 'Configurer les actions (montant, cooldown, karma, NSFW)', inline: true },
                 { name: '🏪 Boutique Coquine', value: 'Objets personnalisés, rôles, remises karma', inline: true },
                 { name: '📅 Daily/Quotidien', value: 'Configuration des récompenses quotidiennes', inline: true },
                 { name: '💬 Messages', value: 'Configuration des gains par message', inline: true },
@@ -385,7 +386,7 @@ class EconomyConfigHandler {
                 {
                     label: '🎯 Actions Sexy',
                     value: 'actions',
-                    description: 'Configurer charmer, flirter, séduire, offrir, oser, coup de folie'
+                    description: 'Configurer charmer, flirter, séduire, offrir, oser, coup de folie et NSFW'
                 },
                 {
                     label: '🏪 Boutique Coquine',
