@@ -17,14 +17,21 @@ class SimpleDataManager {
         }
     }
 
+    // Normaliser le nom de fichier pour garantir l'extension .json
+    ensureJsonFilename(filename) {
+        if (typeof filename !== 'string') return filename;
+        return filename.endsWith('.json') ? filename : `${filename}.json`;
+    }
+
     // Lire un fichier JSON
     getData(filename) {
         try {
-            const filepath = path.join(this.dataPath, filename);
+            const normalized = this.ensureJsonFilename(filename);
+            const filepath = path.join(this.dataPath, normalized);
             
             if (!fs.existsSync(filepath)) {
-                console.log(`📁 Création fichier: ${filename}`);
-                this.setData(filename, {});
+                console.log(`📁 Création fichier: ${normalized}`);
+                this.setData(normalized, {});
                 return {};
             }
             
@@ -40,13 +47,14 @@ class SimpleDataManager {
     // Écrire un fichier JSON
     setData(filename, data) {
         try {
-            const filepath = path.join(this.dataPath, filename);
+            const normalized = this.ensureJsonFilename(filename);
+            const filepath = path.join(this.dataPath, normalized);
             fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
-            console.log(`💾 Fichier sauvegardé: ${filename}`);
+            console.log(`💾 Fichier sauvegardé: ${normalized}`);
             
             // Déclencher sauvegarde automatique MongoDB
             if (dataHooks) {
-                dataHooks.triggerBackup(`setData_${filename}`);
+                dataHooks.triggerBackup(`setData_${normalized}`);
             }
             
         } catch (error) {
@@ -60,7 +68,8 @@ class SimpleDataManager {
         
         // Déclencher sauvegarde automatique MongoDB
         if (dataHooks) {
-            dataHooks.triggerBackup(`saveData_${filename}`);
+            const normalized = this.ensureJsonFilename(filename);
+            dataHooks.triggerBackup(`saveData_${normalized}`);
         }
         
         return true;
