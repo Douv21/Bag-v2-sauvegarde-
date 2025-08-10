@@ -67,6 +67,8 @@ class DeploymentManager {
                 
                 if (mongoSuccess) {
                     console.log('✅ Restauration MongoDB réussie');
+                    // Nettoyage automatique des artefacts de test (prix 594939) côté Mongo
+                    await this.cleanMongoTestShopItems();
                     await this.verifyDataIntegrity();
                     return true;
                 }
@@ -84,6 +86,70 @@ class DeploymentManager {
             console.error('❌ Erreur restauration complète:', error);
             await this.createDefaultFiles();
             return false;
+        }
+    }
+
+    // Nettoyer les objets de test (prix 594939) dans les collections Mongo de sauvegarde boutique
+    async cleanMongoTestShopItems() {
+        try {
+            // Ne rien faire si Mongo non configuré
+            if (!process.env.MONGODB_PASSWORD || !process.env.MONGODB_USERNAME || !process.env.MONGODB_CLUSTER_URL) {
+                return;
+            }
+
+            const connected = await mongoBackup.connect();
+            if (!connected || !mongoBackup.db) {
+                console.log('⚠️ MongoDB indisponible - nettoyage distant ignoré');
+                return;
+            }
+
+            const db = mongoBackup.db;
+            const targetPrice = 594939;
+
+            const cleanCollection = async (collectionName) => {
+                try {
+                    const col = db.collection(collectionName);
+                    const docs = await col.find({}).toArray();
+                    let modifiedDocs = 0;
+                    let removedItems = 0;
+
+                    for (const doc of docs) {
+                        if (!doc || typeof doc.data !== 'object' || doc.data === null) continue;
+
+                        let changed = false;
+                        const newData = { ...doc.data };
+
+                        for (const [guildId, items] of Object.entries(newData)) {
+                            if (Array.isArray(items)) {
+                                const before = items.length;
+                                const filtered = items.filter(it => !(it && typeof it === 'object' && it.price === targetPrice));
+                                if (filtered.length !== before) {
+                                    newData[guildId] = filtered;
+                                    removedItems += (before - filtered.length);
+                                    changed = true;
+                                }
+                            }
+                        }
+
+                        if (changed) {
+                            await col.updateOne({ _id: doc._id }, { $set: { data: newData, timestamp: new Date() } });
+                            modifiedDocs += 1;
+                        }
+                    }
+
+                    console.log(`🧹 Nettoyage ${collectionName}: ${modifiedDocs} doc(s) mis à jour, ${removedItems} item(s) retiré(s)`);
+                } catch (err) {
+                    console.log(`⚠️ Nettoyage ignoré pour ${collectionName}: ${err.message}`);
+                }
+            };
+
+            // Nettoyer mapping dédié et ancien mapping
+            await cleanCollection('backup_shop_items');
+            await cleanCollection('shop');
+
+            await mongoBackup.disconnect();
+        } catch (error) {
+            console.log('⚠️ Erreur nettoyage Mongo test shop items:', error.message);
         }
     }
 
