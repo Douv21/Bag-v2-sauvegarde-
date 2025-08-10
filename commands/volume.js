@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType } = require('discord.js');
-const { getMusic } = require('../managers/MusicManager');
+const { setVolume } = require('../managers/SimpleMusicManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,11 +19,12 @@ module.exports = {
     }
 
     const value = interaction.options.getInteger('pourcent', true);
-    const distube = getMusic(interaction.client);
-    const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply({ content: '😴 Aucun morceau en cours.', ephemeral: true });
 
-    queue.setVolume(value);
-    await interaction.reply({ content: `🔊 Volume: ${value}%`, ephemeral: true }).catch(() => {});
+    try {
+      const v = await setVolume(interaction.guildId, value);
+      await interaction.reply({ content: `🔊 Volume: ${v}%`, ephemeral: true }).catch(() => {});
+    } catch (e) {
+      await interaction.reply({ content: `❌ Impossible de régler le volume: ${String(e.message || e)}`, ephemeral: true }).catch(() => {});
+    }
   }
 };

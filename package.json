@@ -14,21 +14,13 @@
     "express": "^4.21.2",
     "mongodb": "^6.18.0",
     "sharp": "^0.34.3",
-    "distube": "^5.0.5",
-    "@distube/yt-dlp": "^2.0.1",
-    "@distube/spotify": "^2.0.2",
-    "@distube/soundcloud": "^2.0.4",
-    "@distube/deezer": "^2.0.1",
-    "@distube/youtube": "^1.0.4",
     "@discordjs/voice": "^0.17.0",
     "@discordjs/opus": "^0.9.0",
     "opusscript": "^0.0.8",
     "ffmpeg-static": "^5.2.0",
     "is-ci": "^3.0.1",
     "libsodium-wrappers": "^0.7.13",
-    "yt-search": "^2.11.0",
-    "play-dl": "^1.9.6",
-    "@distube/ytdl-core": "^4.16.12"
+    "play-dl": "^1.9.6"
   },
   "engines": {
     "node": "18.x"
