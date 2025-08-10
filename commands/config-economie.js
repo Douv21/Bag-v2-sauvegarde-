@@ -18,11 +18,11 @@ module.exports = {
         try {
             const embed = new EmbedBuilder()
                 .setColor('#e74c3c')
-                .setTitle('💋 Configuration du Jeu Coquin')
-                .setDescription('Le jeu des boys & girls - Comptez ensemble et atteignez des sommets! 🔥')
+                .setTitle('💰 Configuration Économie')
+                .setDescription('Paramétrez les actions, la boutique, le daily, les messages et le karma.')
                 .addFields([
-                    { name: '🎯 Actions Sexy', value: 'Configurer les actions standard (travailler, pecher, voler, crime, donner) et NSFW', inline: true },
-                    { name: '🏪 Boutique Coquine', value: 'Objets personnalisés, rôles, remises karma', inline: true },
+                    { name: '🎯 Actions', value: 'Configurer travailler, pêcher, voler, crime, donner, parier', inline: true },
+                    { name: '🏪 Boutique', value: 'Objets personnalisés, rôles, remises karma', inline: true },
                     { name: '📅 Daily/Quotidien', value: 'Configuration des récompenses quotidiennes', inline: true },
                     { name: '💬 Messages', value: 'Configuration des gains par message', inline: true },
                     { name: '⚖️ Karma', value: 'Système karma et récompenses automatiques', inline: true }
@@ -33,12 +33,12 @@ module.exports = {
                 .setPlaceholder('🔧 Choisissez une section...')
                 .addOptions([
                     {
-                        label: '🎯 Actions Sexy',
+                        label: '🎯 Actions',
                         value: 'actions',
-                        description: 'Configurer travailler, pecher, voler, crime, donner et NSFW'
+                        description: 'Configurer travailler, pêcher, voler, crime, donner, parier'
                     },
                     {
-                        label: '🏪 Boutique Coquine',
+                        label: '🏪 Boutique',
                         value: 'boutique',
                         description: 'Objets, rôles temporaires/permanents, remises karma'
                     },
