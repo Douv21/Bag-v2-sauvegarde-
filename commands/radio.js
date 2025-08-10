@@ -53,13 +53,27 @@ module.exports = {
         await interaction.editReply({ content: `📻 Radio lancée: ${url} • Bonne écoute 😈` });
       }
     } catch (err) {
-      const msg = err && err.message === 'TIMEOUT_MUSIC_PLAY'
-        ? '⏳ La connexion vocale ou la récupération du flux est trop lente. Réessaie dans un instant et vérifie mes permissions/latence.'
-        : `❌ Impossible de lire le flux: ${String(err.message || err)}`;
-      if (deferred) {
-        await interaction.editReply({ content: msg }).catch(() => {});
-      } else {
-        await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
+      // Fallback moteur alternatif direct
+      try {
+        const { playAlt } = require('../managers/AltPlayer');
+        await playAlt(voiceChannel, url, interaction.channel, interaction.user);
+        if (deferred) {
+          await interaction.editReply({ content: `📻 Radio lancée (ALT): ${url}` }).catch(() => {});
+        } else {
+          await interaction.reply({ content: `📻 Radio lancée (ALT): ${url}`, ephemeral: true }).catch(() => {});
+        }
+        return;
+      } catch (altErr) {
+        const primaryMsg = err && err.message === 'TIMEOUT_MUSIC_PLAY'
+          ? '⏳ La connexion vocale ou la récupération du flux est trop lente. Réessaie dans un instant et vérifie mes permissions/latence.'
+          : `❌ Impossible de lire le flux (DisTube): ${String(err.message || err)}`;
+        const altMsg = ` • Fallback ALT: ${String(altErr?.message || altErr)}`;
+        const msg = `${primaryMsg}${altMsg}`;
+        if (deferred) {
+          await interaction.editReply({ content: msg }).catch(() => {});
+        } else {
+          await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
+        }
       }
     }
   }
