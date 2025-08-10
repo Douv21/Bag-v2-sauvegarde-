@@ -1,7 +1,7 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioPlayerStatus, VoiceConnectionStatus, entersState, StreamType } = require('@discordjs/voice');
 const { ChannelType, EmbedBuilder } = require('discord.js');
 const play = require('play-dl');
-const { applyPlayDlCookies } = require('../utils/youtubeCookies');
+const { applyPlayDlCookies, getYouTubeCookieString } = require('../utils/youtubeCookies');
 applyPlayDlCookies(play);
 const prism = require('prism-media');
 
@@ -62,6 +62,22 @@ async function ensureConnection(voiceChannel) {
       selfDeaf: true,
     });
     await entersState(state.connection, VoiceConnectionStatus.Ready, 15000);
+
+    // Reconnexion automatique si Discord coupe la connexion
+    try {
+      state.connection.on(VoiceConnectionStatus.Disconnected, async () => {
+        try {
+          await Promise.race([
+            entersState(state.connection, VoiceConnectionStatus.Signalling, 5_000),
+            entersState(state.connection, VoiceConnectionStatus.Connecting, 5_000),
+          ]);
+        } catch {
+          try { state.player?.stop(true); } catch {}
+          try { state.connection?.destroy(); } catch {}
+          guildIdToState.delete(guildId);
+        }
+      });
+    } catch {}
   }
 
   // Lecteur
@@ -98,6 +114,63 @@ async function ensureConnection(voiceChannel) {
   return state;
 }
 
+// Préparer ffmpeg-static si disponible pour une meilleure compatibilité Render
+try {
+  const ffmpegStatic = require('ffmpeg-static');
+  if (ffmpegStatic) {
+    process.env.FFMPEG_PATH = ffmpegStatic;
+  }
+} catch {}
+
+const { spawn } = require('child_process');
+const path = require('path');
+
+function isYouTubeUrl(u) {
+  return /(?:youtube\.com|youtu\.be)\//i.test(u || '');
+}
+
+function resolveYtdlpPath() {
+  if (process.env.YTDLP_BIN && process.env.YTDLP_BIN.trim().length > 0) return process.env.YTDLP_BIN.trim();
+  return path.join(__dirname, '..', 'node_modules', '@distube', 'yt-dlp', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+}
+
+async function createResourceWithYtdlp(url, startSeconds = 0) {
+  const bin = resolveYtdlpPath();
+  const args = [
+    '-f', 'bestaudio/best',
+    '--no-playlist',
+    '-o', '-',
+    '-q',
+    '--no-warnings',
+    url
+  ];
+
+  const cookie = getYouTubeCookieString();
+  if (cookie) {
+    args.unshift('--add-header', `Cookie: ${cookie}`);
+  }
+
+  const ytdlp = spawn(bin, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+
+  const ffmpegArgs = [
+    '-hide_banner', '-loglevel', 'error',
+  ];
+  if (startSeconds > 0) {
+    ffmpegArgs.push('-ss', String(startSeconds));
+  }
+  ffmpegArgs.push(
+    '-i', 'pipe:0',
+    '-analyzeduration', '0',
+    '-f', 's16le', '-ar', '48000', '-ac', '2'
+  );
+
+  const ffmpeg = new prism.FFmpeg({ args: ffmpegArgs });
+
+  ytdlp.stdout.pipe(ffmpeg);
+  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Arbitrary, inlineVolume: true });
+  return resource;
+}
+
 async function createResourceFromQuery(query, seekSeconds = 0) {
   // URL directe ou recherche
   const isUrl = /^https?:\/\//i.test(query);
@@ -117,9 +190,18 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
     } catch {}
   }
 
-  const stream = await play.stream(url, { seek: seekSeconds > 0 ? seekSeconds : 0, discordPlayerCompatibility: true });
-  const resource = createAudioResource(stream.stream, { inputType: stream.type, inlineVolume: true });
-  return { resource, url, title };
+  try {
+    const stream = await play.stream(url, { seek: seekSeconds > 0 ? seekSeconds : 0, discordPlayerCompatibility: true });
+    const resource = createAudioResource(stream.stream, { inputType: stream.type, inlineVolume: true });
+    return { resource, url, title };
+  } catch (err) {
+    // Fallback yt-dlp si YouTube échoue (age/region/cipher)
+    if (isYouTubeUrl(url)) {
+      const resource = await createResourceWithYtdlp(url, seekSeconds);
+      return { resource, url, title };
+    }
+    throw err;
+  }
 }
 
 async function playNext(guildId) {

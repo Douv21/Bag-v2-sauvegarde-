@@ -3,5 +3,11 @@
   { "id": "somafm_groove", "name": "SomaFM - Groove Salad", "url": "https://ice2.somafm.com/groovesalad-128-mp3" },
   { "id": "somafm_lush", "name": "SomaFM - Lush", "url": "https://ice2.somafm.com/lush-128-mp3" },
   { "id": "somafm_drone", "name": "SomaFM - Drone Zone", "url": "https://ice2.somafm.com/dronezone-128-mp3" },
-  { "id": "nightride_lofi", "name": "Nightride - LoFi", "url": "https://stream.nightride.fm/lofi.ogg" }
+  { "id": "nightride_lofi", "name": "Nightride - LoFi", "url": "https://stream.nightride.fm/lofi.ogg" },
+  { "id": "nrj", "name": "NRJ", "url": "https://scdn.nrjaudio.fm/adwz1/fr/31121/mp3_128.mp3" },
+  { "id": "skyrock", "name": "Skyrock", "url": "https://icecast.skyrock.net/s/natio_mp3_128k" },
+  { "id": "funradio", "name": "Fun Radio", "url": "https://streaming.radio.funradio.fr/fun-1-44-128" },
+  { "id": "rtl2", "name": "RTL2", "url": "https://icecast.rtl2.fr/rtl2-1-44-128" },
+  { "id": "nostalgie", "name": "Nostalgie", "url": "https://scdn.nrjaudio.fm/adwz1/fr/30601/mp3_128.mp3" },
+  { "id": "rmc", "name": "RMC", "url": "https://icecast.rmc.fr/rmcinfo-mp3" }
 ]
