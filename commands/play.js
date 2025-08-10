@@ -32,6 +32,8 @@ module.exports = {
 
     try {
       await interaction.deferReply({ ephemeral: true });
+      // Message de progression immédiat pour éviter l'état "réfléchit"
+      await interaction.editReply({ content: '🎶 Je prépare la lecture...'}).catch(() => {});
     } catch {}
 
     try {

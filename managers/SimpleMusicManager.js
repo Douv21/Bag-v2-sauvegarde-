@@ -11,6 +11,22 @@ const THEME = {
   footer: 'Boys & Girls • NSFW Vibes 💋'
 };
 
+// Ajout: utilitaire de timeout pour éviter les blocages
+function withTimeout(promise, ms, label = 'operation') {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      console.warn(`[music] Timeout ${ms}ms sur ${label}`);
+      reject(new Error(`TIMEOUT_${label}`));
+    }, ms);
+    promise
+      .then((v) => { if (!settled) { settled = true; clearTimeout(timer); resolve(v); } })
+      .catch((e) => { if (!settled) { settled = true; clearTimeout(timer); reject(e); } });
+  });
+}
+
 /**
  * État global: par serveur
  * guildId -> {
@@ -146,9 +162,18 @@ async function ytdlpSearchFirst(query) {
     const proc = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
+    const killTimer = setTimeout(() => {
+      try { proc.kill('SIGKILL'); } catch {}
+      reject(new Error('yt-dlp search timeout'));
+    }, 12000);
     proc.stdout.on('data', (d) => { stdout += d.toString(); });
     proc.stderr.on('data', (d) => { stderr += d.toString(); });
+    proc.on('error', (e) => {
+      clearTimeout(killTimer);
+      reject(e);
+    });
     proc.on('close', (code) => {
+      clearTimeout(killTimer);
       if (code === 0 && stdout.trim().length > 0) {
         try {
           // yt-dlp peut renvoyer plusieurs lignes JSON; on prend la dernière non vide
@@ -211,15 +236,21 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
   let title = query;
 
   if (!isUrl) {
-    // Essayer d'abord play-dl, puis retomber sur yt-dlp en cas d'échec
+    // Essayer d'abord play-dl, puis retomber sur yt-dlp en cas d'échec/timeout
     let resolved = null;
     try {
-      const results = await play.search(query, { limit: 1, source: { youtube: 'video', soundcloud: 'tracks' } });
+      const results = await withTimeout(
+        play.search(query, { limit: 1, source: { youtube: 'video', soundcloud: 'tracks' } }),
+        8000,
+        'play.search'
+      );
       if (results && results.length > 0) {
         const first = results[0];
         resolved = { url: first.url, title: first.title || query };
       }
-    } catch {}
+    } catch (e) {
+      console.warn('[music] play.search échec/timeout -> fallback yt-dlp');
+    }
 
     if (!resolved) {
       // Fallback robuste
@@ -230,18 +261,27 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
     title = resolved.title;
   } else {
     try {
-      const info = await play.video_basic_info(query).catch(() => null);
+      const info = await withTimeout(
+        play.video_basic_info(query).catch(() => null),
+        6000,
+        'video_basic_info'
+      );
       title = info?.video_details?.title || title;
     } catch {}
   }
 
   try {
-    const stream = await play.stream(url, { seek: seekSeconds > 0 ? seekSeconds : 0, discordPlayerCompatibility: true });
+    const stream = await withTimeout(
+      play.stream(url, { seek: seekSeconds > 0 ? seekSeconds : 0, discordPlayerCompatibility: true }),
+      12000,
+      'play.stream'
+    );
     const resource = createAudioResource(stream.stream, { inputType: stream.type, inlineVolume: true });
     return { resource, url, title };
   } catch (err) {
-    // Fallback yt-dlp si YouTube échoue (age/region/cipher)
+    // Fallback yt-dlp si YouTube échoue (age/region/cipher/timeout)
     if (isYouTubeUrl(url)) {
+      console.warn('[music] play.stream échec/timeout -> fallback yt-dlp');
       const resource = await createResourceWithYtdlp(url, seekSeconds);
       return { resource, url, title };
     }
@@ -282,7 +322,11 @@ async function playCommand(voiceChannel, query, textChannel, requestedBy) {
   if (!track.url) {
     let resolved = null;
     try {
-      const results = await play.search(query, { limit: 1, source: { youtube: 'video', soundcloud: 'tracks' } });
+      const results = await withTimeout(
+        play.search(query, { limit: 1, source: { youtube: 'video', soundcloud: 'tracks' } }),
+        8000,
+        'play.search'
+      );
       if (results && results.length > 0) {
         const first = results[0];
         resolved = { url: first.url, title: first.title || query };
@@ -297,7 +341,11 @@ async function playCommand(voiceChannel, query, textChannel, requestedBy) {
     track.title = resolved.title;
   } else {
     try {
-      const info = await play.video_basic_info(track.url).catch(() => null);
+      const info = await withTimeout(
+        play.video_basic_info(track.url).catch(() => null),
+        6000,
+        'video_basic_info'
+      );
       track.title = info?.video_details?.title || null;
     } catch {}
   }
