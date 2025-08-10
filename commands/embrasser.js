@@ -45,7 +45,7 @@ module.exports = {
       userData.lastEmbrasser = now;
       await dataManager.updateUser(userId, guildId, userData);
 
-      const karmaNet = (userData.goodKarma || 0) - (userData.badKarma || 0);
+      const karmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
       const embed = new EmbedBuilder()
         .setColor('#ff7675')
         .setTitle('💋 Baiser Volé !')

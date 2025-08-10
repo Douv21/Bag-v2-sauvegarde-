@@ -54,7 +54,7 @@ module.exports = {
       const balance = alternateEconomyData.balance || economyData.balance || 0;
       const goodKarma = alternateEconomyData.goodKarma || economyData.goodKarma || 0;
       const badKarma = alternateEconomyData.badKarma || economyData.badKarma || 0;
-      const karmaNet = goodKarma - badKarma;
+      const karmaNet = (goodKarma || 0) + (badKarma || 0);
       
       // Priorité aux données alternates (economy.json) qui sont les plus à jour
       const messageCount = alternateEconomyData.messageCount || levelData.totalMessages || levelData.messageCount || economyData.messageCount || 0;

@@ -71,8 +71,8 @@ module.exports = {
             
             const action = workActions[Math.floor(Math.random() * workActions.length)];
             
-            // Recalculer le karma net APRÈS la mise à jour
-            const karmaNet = (asNumber(userData.goodKarma, 0)) - (asNumber(userData.badKarma, 0));
+            // Recalculer la réputation APRÈS la mise à jour (karma net = charme + perversion négative)
+            const karmaNet = (asNumber(userData.goodKarma, 0)) + (asNumber(userData.badKarma, 0));
             
             const embed = new EmbedBuilder()
                 .setColor('#00ff00')

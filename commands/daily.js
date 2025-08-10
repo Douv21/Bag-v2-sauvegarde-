@@ -31,7 +31,7 @@ module.exports = {
             // Calculer récompense
             const baseReward = 200;
             const streakBonus = Math.min(newStreak * 10, 100); // Max 100💋 bonus
-            const karmaBonus = Math.max(0, (userData.goodKarma || 0) - (userData.badKarma || 0)) * 5;
+            const karmaBonus = Math.max(0, (userData.goodKarma || 0) + (userData.badKarma || 0)) * 5;
             const totalReward = baseReward + streakBonus + karmaBonus;
             
             // Mettre à jour utilisateur avec dataManager

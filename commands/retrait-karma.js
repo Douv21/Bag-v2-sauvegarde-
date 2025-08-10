@@ -89,8 +89,8 @@ module.exports = {
                 newKarma = userData.badKarma;
             }
 
-            // Calculer le nouveau karma net (badKarma est déjà négatif dans le système)
-            const karmaNet = userData.goodKarma + userData.badKarma;
+            // Calculer la réputation (karma net = charme + perversion négative)
+            const karmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
 
             // Sauvegarder dans le bon fichier
             await dataManager.saveData('economy.json', economy);

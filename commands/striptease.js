@@ -45,7 +45,7 @@ module.exports = {
       userData.lastStriptease = now;
       await dataManager.updateUser(userId, guildId, userData);
 
-      const karmaNet = (userData.goodKarma || 0) - (userData.badKarma || 0);
+      const karmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
       const embed = new EmbedBuilder()
         .setColor('#fd79a8')
         .setTitle('🩶 Striptease envoûtant')

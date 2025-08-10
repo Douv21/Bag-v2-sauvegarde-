@@ -122,7 +122,7 @@ module.exports = {
                     else if (position === 3) medal = '🥉';
                     else medal = `**${position}.**`;
                     
-                    const karmaNet = user.goodKarma - user.badKarma;
+                    const karmaNet = (user.goodKarma || 0) + (user.badKarma || 0);
                     goodLeaderboard += `${medal} **${user.displayName}**\n`;
                     goodLeaderboard += `   └ **${user.goodKarma}** charme 🫦 (Réputation: ${karmaNet})\n\n`;
                 });
@@ -142,7 +142,7 @@ module.exports = {
                     else if (position === 3) medal = '🥉';
                     else medal = `**${position}.**`;
                     
-                    const karmaNet = user.goodKarma - user.badKarma;
+                    const karmaNet = (user.goodKarma || 0) + (user.badKarma || 0);
                     badLeaderboard += `${medal} **${user.displayName}**\n`;
                     badLeaderboard += `   └ **${user.badKarma}** perversion 😈 (Réputation: ${karmaNet})\n\n`;
                 });

@@ -85,8 +85,8 @@ module.exports = {
                 
                 await dataManager.updateUser(userId, guildId, userData);
                 
-                // Calculer karma net après mise à jour
-                const karmaNet = toNumber(userData.goodKarma, 0) - toNumber(userData.badKarma, 0);
+                // Calculer réputation (karma net = charme + perversion négative)
+                const karmaNet = toNumber(userData.goodKarma, 0) + toNumber(userData.badKarma, 0);
                 const cooldownHours = Math.max(1, Math.round(toNumber(cooldownTime, 3600000) / 3600000));
                 
                 const embed = new EmbedBuilder()
@@ -115,8 +115,8 @@ module.exports = {
                 
                 await dataManager.updateUser(userId, guildId, userData);
                 
-                // Calculer karma net après mise à jour
-                const karmaNet = toNumber(userData.goodKarma, 0) - toNumber(userData.badKarma, 0);
+                // Calculer réputation (karma net = charme + perversion négative)
+                const karmaNet = toNumber(userData.goodKarma, 0) + toNumber(userData.badKarma, 0);
                 const cooldownHours = Math.max(1, Math.round(toNumber(cooldownTime, 3600000) / 3600000));
                 
                 const embed = new EmbedBuilder()

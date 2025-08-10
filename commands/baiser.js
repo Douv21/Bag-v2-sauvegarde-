@@ -45,7 +45,7 @@ module.exports = {
       userData.lastBaiser = now;
       await dataManager.updateUser(userId, guildId, userData);
 
-      const karmaNet = (userData.goodKarma || 0) - (userData.badKarma || 0);
+      const karmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
       const embed = new EmbedBuilder()
         .setColor('#d35400')
         .setTitle('🔥 Moment Torrid !')
