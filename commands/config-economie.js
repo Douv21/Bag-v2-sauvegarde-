@@ -21,7 +21,7 @@ module.exports = {
                 .setTitle('💋 Configuration du Jeu Coquin')
                 .setDescription('Le jeu des boys & girls - Comptez ensemble et atteignez des sommets! 🔥')
                 .addFields([
-                    { name: '🎯 Actions Sexy', value: 'Configurer les 6 actions (montant, cooldown, karma)', inline: true },
+                    { name: '🎯 Actions Sexy', value: 'Configurer les actions standard (travailler, pecher, voler, crime, donner) et NSFW', inline: true },
                     { name: '🏪 Boutique Coquine', value: 'Objets personnalisés, rôles, remises karma', inline: true },
                     { name: '📅 Daily/Quotidien', value: 'Configuration des récompenses quotidiennes', inline: true },
                     { name: '💬 Messages', value: 'Configuration des gains par message', inline: true },
@@ -35,7 +35,7 @@ module.exports = {
                     {
                         label: '🎯 Actions Sexy',
                         value: 'actions',
-                        description: 'Configurer charmer, flirter, séduire, offrir, oser, coup de folie'
+                        description: 'Configurer travailler, pecher, voler, crime, donner et NSFW'
                     },
                     {
                         label: '🏪 Boutique Coquine',

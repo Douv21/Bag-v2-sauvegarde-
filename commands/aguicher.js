@@ -20,12 +20,14 @@ function resolveActionParams(cfg, defaults) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('aguicher')
-    .setDescription('Aguicher pour gagner du plaisir (Action positive 😇)'),
+    .setDescription('Aguicher un membre pour gagner du plaisir (NSFW)')
+    .addUserOption(opt => opt.setName('membre').setDescription('Membre ciblé').setRequired(true)),
 
   async execute(interaction, dataManager) {
     try {
       const userId = interaction.user.id;
       const guildId = interaction.guild.id;
+      const targetUser = interaction.options.getUser('membre');
 
       const economyConfig = await dataManager.loadData('economy.json', {});
       const rawCfg = economyConfig.actions?.aguicher || {};
@@ -58,7 +60,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor('#FF69B4')
         .setTitle('😉 Aguichage Réussi !')
-        .setDescription(`Votre petite provocation a fait son effet... **+${gain}💋**`)
+        .setDescription(`Vous avez aguiché <@${targetUser.id}> et gagné **+${gain}💋**`)
         .addFields(
           { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
           { name: '😇 Karma Positif', value: `+${params.goodKarma || 0} (${userData.goodKarma})`, inline: true },
@@ -68,7 +70,7 @@ module.exports = {
         )
         .setFooter({ text: 'Revenez aguicher un peu plus tard...' });
 
-      await interaction.reply({ embeds: [embed] });
+      await interaction.reply({ content: `<@${targetUser.id}>`, embeds: [embed] });
     } catch (error) {
       console.error('❌ Erreur aguicher:', error);
       await interaction.reply({ content: '❌ Une erreur est survenue.', flags: 64 });

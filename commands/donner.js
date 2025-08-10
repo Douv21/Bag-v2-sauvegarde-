@@ -7,15 +7,15 @@ function asNumber(value, fallback = 0) {
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('offrir')
-        .setDescription('Offrir du plaisir à un membre (Action très positive 😇)')
+        .setName('donner')
+        .setDescription('Donner du plaisir à un membre (Action positive 😇)')
         .addUserOption(option =>
             option.setName('membre')
-                .setDescription('Membre à qui offrir du plaisir')
+                .setDescription('Membre à qui donner du plaisir')
                 .setRequired(true))
         .addIntegerOption(option =>
             option.setName('montant')
-                .setDescription('Montant à offrir (minimum 10💋)')
+                .setDescription('Montant à donner (minimum 10💋)')
                 .setRequired(true)
                 .setMinValue(10)),
 
@@ -27,16 +27,16 @@ module.exports = {
             const amount = asNumber(interaction.options.getInteger('montant'), 0);
             
             if (targetUser.id === userId) {
-                return await interaction.reply({ content: '❌ Vous ne pouvez pas vous offrir de l\'argent à vous-même !', flags: 64 });
+                return await interaction.reply({ content: '❌ Vous ne pouvez pas vous donner de l\'argent à vous-même !', flags: 64 });
             }
             
             if (targetUser.bot) {
-                return await interaction.reply({ content: '❌ Vous ne pouvez pas offrir d\'argent à un bot !', flags: 64 });
+                return await interaction.reply({ content: '❌ Vous ne pouvez pas donner d\'argent à un bot !', flags: 64 });
             }
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const rawCfg = (economyConfig.actions?.offrir || economyConfig.actions?.donner) || {};
+            const rawCfg = (economyConfig.actions?.donner || economyConfig.actions?.offrir) || {};
             
             const enabled = rawCfg.enabled !== false;
             const cooldown = asNumber(rawCfg.cooldown, 3600000);
@@ -45,7 +45,7 @@ module.exports = {
 
             // Vérifier si l'action est activée
             if (!enabled) {
-                await interaction.reply({ content: '❌ La commande /offrir est actuellement désactivée.', flags: 64 });
+                await interaction.reply({ content: '❌ La commande /donner est actuellement désactivée.', flags: 64 });
                 return;
             }
             
@@ -62,7 +62,7 @@ module.exports = {
             
             const currentBalance = asNumber(userData.balance, 0);
             if (currentBalance < amount) {
-                return await interaction.reply({ content: `❌ Vous n'avez pas assez de plaisir ! Votre solde : **${currentBalance}💋**`, flags: 64 });
+                return await interaction.reply({ content: `❌ Vous n\'avez pas assez de plaisir ! Votre solde : **${currentBalance}💋**`, flags: 64 });
             }
             
             // Effectuer le don avec dataManager
@@ -84,38 +84,36 @@ module.exports = {
             
             const embed = new EmbedBuilder()
                 .setColor('#32cd32')
-                .setTitle('🎁 Cadeau Coquin !')
-                .setDescription(`Vous avez offert **${amount}💋** à ${targetUser.username}`)
+                .setTitle('🎁 Don effectué !')
+                .setDescription(`Vous avez donné **${amount}💋** à <@${targetUser.id}>`)
                 .addFields([
-                    { name: '💋 Plaisir Offert', value: `${amount}💋`, inline: true },
+                    { name: '💋 Plaisir Donné', value: `${amount}💋`, inline: true },
                     { name: '💋 Votre Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
                     { name: '😇 Karma Positif', value: `${deltaGood >= 0 ? '+' : ''}${deltaGood} (${userData.goodKarma})`, inline: true },
                     { name: '😈 Karma Négatif', value: `${deltaBad >= 0 ? '+' : ''}${deltaBad} (${userData.badKarma})`, inline: true },
-                    { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
-                    { name: '🎁 Bénéficiaire', value: `${targetUser.username} a reçu ${amount}💋`, inline: false },
-                    { name: '🌟 Générosité', value: 'Votre acte de générosité améliore grandement votre karma', inline: false }
+                    { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true }
                 ])
                 .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 60000)} minutes` });
                 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.reply({ content: `<@${targetUser.id}>`, embeds: [embed] });
             
             // Notification privée au bénéficiaire
             try {
                 const dmEmbed = new EmbedBuilder()
                     .setColor('#32cd32')
-                    .setTitle('🎁 Vous avez reçu un cadeau !')
-                    .setDescription(`${interaction.user.username} vous a offert **${amount}💋** sur ${interaction.guild.name}`)
+                    .setTitle('🎁 Vous avez reçu un don !')
+                    .setDescription(`${interaction.user.username} vous a donné **${amount}💋** sur ${interaction.guild.name}`)
                     .addFields([
                         { name: '💋 Plaisir Reçu', value: `${amount}💋`, inline: true },
                         { name: '💋 Votre Nouveau Plaisir', value: `${targetData.balance}💋`, inline: true }
                     ]);
-                    
+                
                 await targetUser.send({ embeds: [dmEmbed] });
             } catch (error) {
-                // MP fermés ou erreur - pas grave
+                // MP fermés ou erreur - ignorer
             }
         } catch (error) {
-            console.error('❌ Erreur offrir:', error);
+            console.error('❌ Erreur donner:', error);
             await interaction.reply({ content: '❌ Une erreur est survenue.', flags: 64 });
         }
     }

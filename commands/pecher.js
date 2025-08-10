@@ -7,8 +7,8 @@ function asNumber(value, fallback = 0) {
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('flirter')
-        .setDescription('Flirter pour gagner du plaisir (Action positive 😇)'),
+        .setName('pecher')
+        .setDescription('Pêcher pour gagner du plaisir (Action standard 😇)'),
 
     async execute(interaction, dataManager) {
         try {
@@ -17,7 +17,7 @@ module.exports = {
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const rawCfg = (economyConfig.actions?.flirter || economyConfig.actions?.pecher) || {};
+            const rawCfg = (economyConfig.actions?.pecher || economyConfig.actions?.flirter) || {};
             
             const enabled = rawCfg.enabled !== false;
             const minReward = asNumber(rawCfg.minReward, 50);
@@ -29,7 +29,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /flirter est actuellement désactivée.',
+                    content: '❌ La commande /pecher est actuellement désactivée.',
                     flags: 64
                 });
                 return;
@@ -44,7 +44,7 @@ module.exports = {
             if (userData.lastFish && (now - userData.lastFish) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastFish)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir flirter à nouveau.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir pêcher à nouveau.`,
                     flags: 64
                 });
             }
@@ -52,14 +52,13 @@ module.exports = {
             // Calculer le gain aléatoire selon la configuration
             const gainAmount = Math.floor(Math.random() * (Math.max(0, maxReward - minReward) + 1)) + minReward;
             
-            // Types de "poissons" avec valeurs basées sur le gain calculé
+            // Types de poissons
             const fishTypes = [
-                { name: 'un clin d’œil', emoji: '😉', multiplier: 0.6 },
-                { name: 'un compliment', emoji: '💬', multiplier: 0.8 },
-                { name: 'un sourire', emoji: '😊', multiplier: 1.0 },
-                { name: 'un regard appuyé', emoji: '👀', multiplier: 1.2 },
-                { name: 'une vibe irrésistible', emoji: '🔥', multiplier: 1.5 },
-                { name: 'une alchimie parfaite', emoji: '💞', multiplier: 2.0 }
+                { name: 'un petit poisson', emoji: '🐟', multiplier: 0.6 },
+                { name: 'une belle prise', emoji: '🎣', multiplier: 1.0 },
+                { name: 'un gros poisson', emoji: '🐠', multiplier: 1.2 },
+                { name: 'un banc entier', emoji: '🐡', multiplier: 1.5 },
+                { name: 'un trésor englouti', emoji: '💎', multiplier: 2.0 }
             ];
             
             // Sélectionner un type de poisson aléatoire
@@ -78,9 +77,9 @@ module.exports = {
             const karmaNet = (asNumber(userData.goodKarma, 0)) - (asNumber(userData.badKarma, 0));
             
             const embed = new EmbedBuilder()
-                .setColor('#FF69B4')
-                .setTitle('🍑 Flirt Réussi !')
-                .setDescription(`Vous avez décroché ${selectedFish.name} ${selectedFish.emoji}`)
+                .setColor('#1E90FF')
+                .setTitle('🎣 Pêche Réussie !')
+                .setDescription(`Vous avez attrapé ${selectedFish.name} ${selectedFish.emoji}`)
                 .addFields([
                     { name: '💋 Plaisir Gagné', value: `${actualGain}💋`, inline: true },
                     { name: '😇 Karma Positif', value: `+${deltaGood} (${userData.goodKarma})`, inline: true },
@@ -90,7 +89,7 @@ module.exports = {
                     { name: '💋 Plaisir Total', value: `${userData.balance}💋`, inline: true },
                     { name: '🎯 Configuration', value: `Gains: ${minReward}💋-${maxReward}💋`, inline: false }
                 ])
-                .setFooter({ text: 'Prochain flirt dans 1h30' });
+                .setFooter({ text: 'Prochaine pêche dans 1h30' });
             
             await interaction.reply({ embeds: [embed] });
 
@@ -104,7 +103,7 @@ module.exports = {
             }
             
         } catch (error) {
-            console.error('❌ Erreur flirter:', error);
+            console.error('❌ Erreur pecher:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64

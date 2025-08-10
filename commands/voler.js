@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, UserSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 function asNumber(value, fallback = 0) {
   const n = Number(value);
@@ -7,22 +7,32 @@ function asNumber(value, fallback = 0) {
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('seduire')
-        .setDescription('Tenter de séduire (Action pimentée)')
+        .setName('voler')
+        .setDescription('Voler du plaisir à un membre (risqué 😈)')
         .addUserOption(option =>
-            option.setName('cible')
-                .setDescription('Utilisateur à séduire (optionnel - aléatoire si non spécifié)')
-                .setRequired(false)),
+            option.setName('membre')
+                .setDescription('Utilisateur à voler (obligatoire)')
+                .setRequired(true)),
 
     async execute(interaction, dataManager) {
         try {
             const userId = interaction.user.id;
             const guildId = interaction.guild.id;
-            const targetUser = interaction.options.getUser('cible');
+            const target = interaction.options.getUser('membre');
+            
+            if (!target) {
+                return await interaction.reply({ content: '❌ Vous devez choisir un membre à voler.', flags: 64 });
+            }
+            if (target.bot) {
+                return await interaction.reply({ content: '❌ Impossible de voler un bot.', flags: 64 });
+            }
+            if (target.id === userId) {
+                return await interaction.reply({ content: '❌ Vous ne pouvez pas vous voler vous-même !', flags: 64 });
+            }
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const rawCfg = (economyConfig.actions?.seduire || economyConfig.actions?.voler) || {};
+            const rawCfg = (economyConfig.actions?.voler) || {};
 
             const enabled = rawCfg.enabled !== false;
             const successChance = asNumber(rawCfg.successChance, 0.7);
@@ -35,7 +45,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /seduire est actuellement désactivée.',
+                    content: '❌ La commande /voler est actuellement désactivée.',
                     flags: 64
                 });
                 return;
@@ -43,6 +53,7 @@ module.exports = {
             
             // Vérifier cooldown avec dataManager
             const userData = await dataManager.getUser(userId, guildId);
+            const targetData = await dataManager.getUser(target.id, guildId);
             
             const now = Date.now();
             const cooldownTime = cooldown;
@@ -50,45 +61,12 @@ module.exports = {
             if (userData.lastSteal && (now - userData.lastSteal) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastSteal)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir séduire à nouveau.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir voler à nouveau.`,
                     flags: 64
                 });
             }
 
-            let target;
-            if (targetUser) {
-                target = targetUser;
-            } else {
-                // Sélectionner une cible aléatoire
-                const members = await interaction.guild.members.fetch();
-                // Obtenir tous les utilisateurs du serveur pour trouver des cibles valides
-                const allUsers = await dataManager.getAllUsers(guildId);
-                const validTargets = members.filter(member => 
-                    !member.user.bot && 
-                    member.user.id !== userId &&
-                    allUsers.some(u => u.userId === member.user.id && (asNumber(u.balance, 1000)) > 10)
-                );
-                
-                if (validTargets.size === 0) {
-                    return await interaction.reply({
-                        content: '❌ Aucune cible valide trouvée avec de l\'argent.',
-                        flags: 64
-                    });
-                }
-                
-                const randomTarget = validTargets.random();
-                target = randomTarget.user;
-            }
-
-            const targetData = await dataManager.getUser(target.id, guildId);
             const targetBalance = asNumber(targetData.balance, 0);
-
-            if (target.id === userId) {
-                return await interaction.reply({
-                    content: '❌ Vous ne pouvez pas vous voler vous-même !',
-                    flags: 64
-                });
-            }
 
             if (targetBalance < 10) {
                 return await interaction.reply({
@@ -119,13 +97,13 @@ module.exports = {
                 await dataManager.updateUser(userId, guildId, userData);
                 await dataManager.updateUser(target.id, guildId, targetData);
                 
-                // Calculer karma net après mise à jour (somme des valeurs absolues)
+                // Calculer karma net après mise à jour
                 const karmaNet = (asNumber(userData.goodKarma, 0)) - (asNumber(userData.badKarma, 0));
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')
-                    .setTitle('😈 Séduction Réussie !')
-                    .setDescription(`Vous avez arraché **${stolenAmount}💋** à ${target.username} !`)
+                    .setTitle('😈 Vol Réussi !')
+                    .setDescription(`Vous avez volé **${stolenAmount}💋** à <@${target.id}> !`)
                     .addFields([
                         { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
                         { name: '😈 Karma Négatif', value: `${deltaBad >= 0 ? '+' : ''}${deltaBad} (${userData.badKarma})`, inline: true },
@@ -134,16 +112,7 @@ module.exports = {
                     ])
                     .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 60000)} minutes` });
                     
-                await interaction.reply({ embeds: [embed] });
-
-                // Vérifier et appliquer les récompenses karma automatiques
-                try {
-                    const KarmaRewardManager = require('../utils/karmaRewardManager');
-                    const karmaManager = new KarmaRewardManager(dataManager);
-                    await karmaManager.checkAndApplyKarmaRewards(interaction.user, interaction.guild, interaction.channel);
-                } catch (error) {
-                    console.error('Erreur vérification récompenses karma:', error);
-                }
+                await interaction.reply({ content: `<@${target.id}>`, embeds: [embed] });
                 
             } else {
                 // Vol échoué
@@ -155,12 +124,12 @@ module.exports = {
                 
                 await dataManager.updateUser(userId, guildId, userData);
                 
-                // Calculer karma net après échec (somme des valeurs absolues)
+                // Calculer karma net après échec
                 const karmaNet = (asNumber(userData.goodKarma, 0)) - (asNumber(userData.badKarma, 0));
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff4444')
-                    .setTitle('❌ Séduction Échouée !')
+                    .setTitle('❌ Vol Échoué !')
                     .setDescription(`Repéré(e) ! Pénalité de **${penalty}💋**.`)
                     .addFields([
                         { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
@@ -171,19 +140,10 @@ module.exports = {
                     .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 60000)} minutes` });
                     
                 await interaction.reply({ embeds: [embed] });
-
-                // Vérifier et appliquer les récompenses karma automatiques (vol échoué)
-                try {
-                    const KarmaRewardManager = require('../utils/karmaRewardManager');
-                    const karmaManager = new KarmaRewardManager(dataManager);
-                    await karmaManager.checkAndApplyKarmaRewards(interaction.user, interaction.guild, interaction.channel);
-                } catch (error) {
-                    console.error('Erreur vérification récompenses karma:', error);
-                }
             }
             
         } catch (error) {
-            console.error('❌ Erreur séduire:', error);
+            console.error('❌ Erreur voler:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64

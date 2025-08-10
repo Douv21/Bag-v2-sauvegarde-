@@ -17,8 +17,8 @@ function sanitizeConfig(rawCfg) {
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('coup-de-folie')
-        .setDescription('Faire un coup de folie pour beaucoup de plaisir (Action très pimentée 😈)'),
+        .setName('crime')
+        .setDescription('Commettre un crime pour beaucoup de plaisir (très risqué 😈)'),
 
     async execute(interaction, dataManager) {
         try {
@@ -28,7 +28,7 @@ module.exports = {
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
             const actions = (economyConfig && economyConfig.actions) ? economyConfig.actions : {};
-            const rawCfg = (actions['coup-de-folie'] || actions.coup_de_folie || actions.crime) || {};
+            const rawCfg = (actions.crime || actions['coup-de-folie'] || actions.coup_de_folie) || {};
 
             // Normaliser les paramètres numériques
             const { minReward, maxReward, cooldown, goodKarma: deltaGood, badKarma: deltaBad, enabled } = sanitizeConfig(rawCfg);
@@ -36,7 +36,7 @@ module.exports = {
             // Vérifier si l'action est activée
             if (!enabled) {
                 await interaction.reply({
-                    content: '❌ La commande /coup-de-folie est actuellement désactivée.',
+                    content: '❌ La commande /crime est actuellement désactivée.',
                     flags: 64
                 });
                 return;
@@ -51,7 +51,7 @@ module.exports = {
             if (userData.lastCrime && (now - userData.lastCrime) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastCrime)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir refaire un coup de folie.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir refaire un crime.`,
                     flags: 64
                 });
             }
@@ -60,11 +60,11 @@ module.exports = {
             const success = Math.random() < 0.6;
             
             const crimes = [
-                'Vous avez tenté un baiser volé',
-                'Vous avez envoyé un message audacieux',
-                'Vous avez dansé au milieu de la piste',
-                'Vous avez flirté sans retenue',
-                'Vous avez soufflé des compliments torrides'
+                'Vous avez tenté un braquage discret',
+                'Vous avez fait un coup tordu',
+                'Vous avez piraté une caisse',
+                'Vous avez monté un plan risqué',
+                'Vous avez joué avec le feu'
             ];
             
             const crime = crimes[Math.floor(Math.random() * crimes.length)];
@@ -91,14 +91,14 @@ module.exports = {
                 
                 const embed = new EmbedBuilder()
                     .setColor('#8b0000')
-                    .setTitle('🔥 Coup de Folie Réussi !')
+                    .setTitle('🔥 Crime Réussi !')
                     .setDescription(`${crime} et avez gagné **${earnings}💋** !`)
                     .addFields([
                         { name: '💋 Nouveau Plaisir', value: `${toNumber(userData.balance, 0)}💋`, inline: true },
                         { name: '😈 Karma Négatif', value: `${toNumber(deltaBad, 0) >= 0 ? '+' : ''}${toNumber(deltaBad, 0)} (${toNumber(userData.badKarma, 0)})`, inline: true },
                         { name: '😇 Karma Positif', value: `${toNumber(deltaGood, 0) >= 0 ? '+' : ''}${toNumber(deltaGood, 0)} (${toNumber(userData.goodKarma, 0)})`, inline: true },
                         { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
-                        { name: '⚠️ Attention', value: 'Vos actions ont des conséquences morales', inline: false }
+                        { name: '⚠️ Attention', value: 'Le crime a des conséquences', inline: false }
                     ])
                     .setFooter({ text: `Prochaine utilisation dans ${cooldownHours} heures` });
                 
@@ -121,7 +121,7 @@ module.exports = {
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')
-                    .setTitle('❌ Coup de Folie Échoué !')
+                    .setTitle('❌ Crime Échoué !')
                     .setDescription(`Ça n'a pas pris... Pénalité de **${penalty}💋**.`)
                     .addFields([
                         { name: '💋 Nouveau Plaisir', value: `${toNumber(userData.balance, 0)}💋`, inline: true },
@@ -136,7 +136,7 @@ module.exports = {
             }
             
         } catch (error) {
-            console.error('❌ Erreur coup-de-folie:', error);
+            console.error('❌ Erreur crime:', error);
             await interaction.reply({
                 content: '❌ Une erreur est survenue.',
                 flags: 64
