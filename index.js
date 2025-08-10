@@ -468,7 +468,7 @@ class BagBotRender {
                     'Boudoir de {user} 18+',
                     'Chambre rouge Boys & Girls 18+ - {user}',
                     'Salon interdit Boys & Girls 18+ - {channel}',
-                    'Confessions de {user} 18+',
+                    'Secrets d’oreiller de {user} 18+',
                     'Rendez-vous secret B&G 18+ - {channel}',
                     'Jeux de nuit B&G 18+ - {user}',
                     'Nocturne Boys & Girls 18+ - {user}',
