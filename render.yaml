@@ -37,3 +37,9 @@ services:
         value: yt-dlp
       - key: YTDL_NO_UPDATE
         value: "1"
+      - key: YOUTUBE_COOKIES_B64
+        fromSecret: YOUTUBE_COOKIES_B64
+      - key: YOUTUBE_COOKIES
+        fromSecret: YOUTUBE_COOKIES
+      - key: YOUTUBE_COOKIES_FILE
+        value: /opt/render/project/src/cookies.txt
