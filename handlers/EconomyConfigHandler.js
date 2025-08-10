@@ -30,27 +30,19 @@ class EconomyConfigHandler {
     async showActionsMenu(interaction) {
         const embed = new EmbedBuilder()
             .setColor('#3498db')
-            .setTitle('😈 Configuration Actions Sexy')
+            .setTitle('💰 Configuration Actions Économiques')
             .setDescription('Sélectionnez l\'action à configurer :');
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('economy_actions_select')
             .setPlaceholder('Choisissez une action...')
             .addOptions([
-                { label: '💋 Charmer (Travailler)', value: 'travailler', description: 'Action positive - Gains et karma' },
-                { label: '🍑 Flirter (Pêcher)', value: 'pecher', description: 'Action positive - Gains et karma' },
-                { label: '🎁 Offrir (Donner)', value: 'donner', description: 'Action très positive - Transfert et karma' },
-                { label: '😈 Séduire (Voler)', value: 'voler', description: 'Action négative - Risque et karma mauvais' },
-                { label: '🎲 Oser (Parier)', value: 'parier', description: 'Action négative - Gambling et karma' },
-                { label: '🔥 Coup de folie (Crime)', value: 'crime', description: 'Action très négative - Gros gains/risques' },
-                { label: '😉 Aguicher', value: 'aguicher', description: 'NSFW: gains modérés, faible cooldown' },
-                { label: '💄 Embrasser', value: 'embrasser', description: 'NSFW: doux, court cooldown' },
-                { label: '🤲 Caresser', value: 'caresser', description: 'NSFW: léger, très court cooldown' },
-                { label: '💆 Massage', value: 'massage', description: 'NSFW: positif, moyen cooldown' },
-                { label: '🩶 Striptease', value: 'striptease', description: 'NSFW: gros gains, plus risqué' },
-                { label: '💃 Séduire (Masse)', value: 'seduire_mass', description: 'NSFW: très risqué, gros gains/pénalités' },
-                { label: '🌙 After Dark', value: 'after_dark', description: 'NSFW: bonus selon l\'heure' },
-                { label: '⚔️ Défier', value: 'defier', description: 'NSFW: défi osé, gains variables' },
+                { label: '💼 Travailler', value: 'travailler', description: 'Action positive - Gains et karma' },
+                { label: '🎣 Pêcher', value: 'pecher', description: 'Action positive - Gains et karma' },
+                { label: '🎁 Donner', value: 'donner', description: 'Action très positive - Transfert et karma' },
+                { label: '💰 Voler', value: 'voler', description: 'Action négative - Risque et karma mauvais' },
+                { label: '🎲 Parier', value: 'parier', description: 'Action négative - Gambling et karma' },
+                { label: '🔪 Crime', value: 'crime', description: 'Action très négative - Gros gains/risques' },
                 { label: '🔄 Activer/Désactiver toutes', value: 'toggle_all', description: 'Basculer l\'état de toutes les actions' },
                 { label: '🔙 Retour', value: 'back_main', description: 'Retour au menu principal' }
             ]);
@@ -3108,10 +3100,10 @@ class EconomyConfigHandler {
 
     getActionAliasKeys(action) {
         const map = {
-            travailler: ['travailler', 'charmer'],
-            pecher: ['pecher', 'flirter'],
-            donner: ['donner', 'offrir'],
-            voler: ['voler', 'seduire'],
+            travailler: ['travailler'],
+            pecher: ['pecher'],
+            donner: ['donner'],
+            voler: ['voler'],
             crime: ['crime', 'coup-de-folie'],
             parier: ['parier', 'oser'],
             aguicher: ['aguicher'],
