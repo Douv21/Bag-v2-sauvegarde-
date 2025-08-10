@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, ChannelType, MessageFlags } = require('discord.js');
-const { getMusic } = require('../managers/MusicManager');
+const { SlashCommandBuilder, ChannelType } = require('discord.js');
+const { stop } = require('../managers/SimpleMusicManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,33 +14,18 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '🛑 Viens dans un vocal pour arrêter la musique, sexy.', ephemeral: true });
+      return interaction.reply({ content: '🛑 Viens dans un vocal pour arrêter la musique.', ephemeral: true });
     }
 
-    const distube = getMusic(interaction.client);
-    const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply({ content: '😴 Rien à arrêter.', ephemeral: true });
-
-    let deferred = false;
-    try {
-      await interaction.deferReply({ ephemeral: true });
-      deferred = true;
-    } catch {
-      try { await interaction.reply({ content: '❌ Impossible d\'accuser réception de la commande (latence/permissions).', ephemeral: true }); } catch {}
-      return;
-    }
+    try { await interaction.deferReply({ ephemeral: true }); } catch {}
 
     try {
-      // Stop via DisTube API (vide la file + arrête la lecture)
-      await distube.stop(interaction.guildId);
-
-      // Sécurité: si une connexion subsiste, tenter de la quitter proprement
-      try { queue.voice?.connection?.destroy?.(); } catch {}
-
-      if (deferred) await interaction.editReply({ content: '🧹 File nettoyée. Bisous 💋' });
+      await stop(interaction.guildId);
+      if (interaction.deferred || interaction.replied) await interaction.editReply({ content: '🧹 File nettoyée.' });
+      else await interaction.reply({ content: '🧹 File nettoyée.', ephemeral: true });
     } catch (err) {
       const msg = `❌ Oups: ${String(err.message || err)}`;
-      if (deferred) await interaction.editReply({ content: msg }).catch(() => {});
+      if (interaction.deferred || interaction.replied) await interaction.editReply({ content: msg }).catch(() => {});
       else await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
     }
   }

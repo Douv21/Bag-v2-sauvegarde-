@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType } = require('discord.js');
-const { getMusic, createNowPlayingEmbed } = require('../managers/MusicManager');
+const { getQueueInfo, createNowPlayingEmbed } = require('../managers/SimpleMusicManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -17,9 +17,8 @@ module.exports = {
       return interaction.reply({ content: '🎶 Rejoins un salon vocal pour voir ce qui joue.', ephemeral: true });
     }
 
-    const distube = getMusic(interaction.client);
-    const queue = distube.getQueue(interaction.guildId);
-    const song = queue?.songs?.[0];
+    const info = getQueueInfo(interaction.guildId);
+    const song = info?.current;
     if (!song) {
       return interaction.reply({ content: '😴 Aucun morceau en cours.', ephemeral: true });
     }

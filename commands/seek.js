@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType } = require('discord.js');
-const { getMusic } = require('../managers/MusicManager');
+const { seek } = require('../managers/SimpleMusicManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,12 +19,9 @@ module.exports = {
     }
 
     const seconds = interaction.options.getInteger('secondes', true);
-    const distube = getMusic(interaction.client);
-    const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply({ content: '😴 Aucun morceau en cours.', ephemeral: true });
 
     try {
-      queue.seek(seconds);
+      await seek(interaction.guildId, seconds);
       await interaction.reply({ content: `⏩ Position: ${seconds}s`, ephemeral: true });
     } catch (e) {
       await interaction.reply({ content: `❌ Impossible de seek: ${String(e.message || e)}`, ephemeral: true }).catch(() => {});

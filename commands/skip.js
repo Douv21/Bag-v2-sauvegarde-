@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, ChannelType, MessageFlags } = require('discord.js');
-const { getMusic } = require('../managers/MusicManager');
+const { SlashCommandBuilder, ChannelType } = require('discord.js');
+const { skip } = require('../managers/SimpleMusicManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,28 +14,18 @@ module.exports = {
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({ content: '👂 Rejoins un salon vocal pour skipper, coquin(e)!', ephemeral: true });
+      return interaction.reply({ content: '👂 Rejoins un salon vocal pour passer au suivant.', ephemeral: true });
     }
 
-    const distube = getMusic(interaction.client);
-    const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply({ content: '😴 Rien à skipper…', ephemeral: true });
-
-    let deferred = false;
-    try {
-      await interaction.deferReply({ ephemeral: true });
-      deferred = true;
-    } catch {
-      try { await interaction.reply({ content: '❌ Impossible d\'accuser réception de la commande (latence/permissions).', ephemeral: true }); } catch {}
-      return;
-    }
+    try { await interaction.deferReply({ ephemeral: true }); } catch {}
 
     try {
-      await queue.skip();
-      if (deferred) await interaction.editReply({ content: '⏭️ Hop ! Suivant.' });
+      await skip(interaction.guildId);
+      if (interaction.deferred || interaction.replied) await interaction.editReply({ content: '⏭️ Hop ! Suivant.' });
+      else await interaction.reply({ content: '⏭️ Hop ! Suivant.', ephemeral: true });
     } catch (err) {
       const msg = `❌ Oups: ${String(err.message || err)}`;
-      if (deferred) await interaction.editReply({ content: msg }).catch(() => {});
+      if (interaction.deferred || interaction.replied) await interaction.editReply({ content: msg }).catch(() => {});
       else await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
     }
   }

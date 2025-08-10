@@ -1,13 +1,11 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelType, PermissionsBitField } = require('discord.js');
-const { getMusic } = require('../managers/MusicManager');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField } = require('discord.js');
+const { pause, resume, skip, stop, setVolume, getQueueInfo, createNowPlayingEmbed } = require('../managers/SimpleMusicManager');
 
-function buildControls(queue) {
+function buildControls() {
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('music_toggle').setLabel('Pause/Play').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('music_skip').setLabel('Skip').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId('music_loop').setLabel('Loop').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('music_shuffle').setLabel('Shuffle').setStyle(ButtonStyle.Secondary)
+    new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Danger)
   );
 
   const row2 = new ActionRowBuilder().addComponents(
@@ -35,72 +33,56 @@ async function handleButton(interaction) {
       return interaction.reply({ content: '❌ Je n’ai pas les permissions pour me connecter/parler ici.', ephemeral: true });
     }
 
-    const distube = getMusic(interaction.client);
-    const queue = distube.getQueue(interaction.guildId);
-
-    if (!queue) {
-      return interaction.reply({ content: '😴 Aucune lecture en cours.', ephemeral: true });
-    }
-
     const id = interaction.customId;
     let msg = null;
 
     switch (id) {
-      case 'music_toggle':
-        if (queue.paused) {
-          queue.resume();
-          msg = '▶️ Lecture relancée.';
+      case 'music_toggle': {
+        const info = getQueueInfo(interaction.guildId);
+        if (info?.current) {
+          // Déterminer l'état via tentative: Discord ne donne pas directement l'état ici
+          // On alterne: si un morceau existe on toggle en reprenant ou en pausant
+          // On tente une pause puis si aucune erreur, message pause; sinon resume
+          try {
+            await pause(interaction.guildId);
+            msg = '⏸️ Lecture en pause.';
+          } catch {
+            await resume(interaction.guildId);
+            msg = '▶️ Lecture relancée.';
+          }
         } else {
-          queue.pause();
-          msg = '⏸️ Lecture en pause.';
+          msg = '😴 Aucune lecture en cours.';
         }
         break;
+      }
       case 'music_skip':
-        await queue.skip();
+        await skip(interaction.guildId);
         msg = '⏭️ Morceau suivant.';
         break;
       case 'music_stop':
-        await distube.stop(interaction.guildId);
-        try { queue.voice?.connection?.destroy?.(); } catch {}
-        try {
-          const { stopAlt } = require('../managers/AltPlayer');
-          await stopAlt(interaction.guildId).catch(() => {});
-        } catch {}
-        try {
-          const { getVoiceConnection } = require('@discordjs/voice');
-          const existing = getVoiceConnection(interaction.guildId);
-          if (existing) existing.destroy();
-        } catch {}
+        await stop(interaction.guildId);
         msg = '🛑 Musique arrêtée et file nettoyée.';
         break;
-      case 'music_loop': {
-        const mode = typeof queue.repeatMode === 'number' ? (queue.repeatMode + 1) % 3 : 0;
-        const final = queue.setRepeatMode(mode);
-        msg = final === 0 ? '🔁 Loop désactivé.' : final === 1 ? '🔂 Loop sur le morceau.' : '🔁 Loop sur la file.';
-        break;
-      }
-      case 'music_shuffle':
-        queue.shuffle();
-        msg = '🔀 File mélangée.';
-        break;
       case 'music_voldown': {
-        const v = Math.max(0, (queue.volume || 100) - 10);
-        queue.setVolume(v);
-        msg = `🔉 Volume: ${v}%`;
+        const info = getQueueInfo(interaction.guildId);
+        const v = Math.max(0, (info.volume || 100) - 10);
+        const nv = await setVolume(interaction.guildId, v);
+        msg = `🔉 Volume: ${nv}%`;
         break;
       }
       case 'music_volup': {
-        const v = Math.min(100, (queue.volume || 100) + 10);
-        queue.setVolume(v);
-        msg = `🔊 Volume: ${v}%`;
+        const info = getQueueInfo(interaction.guildId);
+        const v = Math.min(100, (info.volume || 100) + 10);
+        const nv = await setVolume(interaction.guildId, v);
+        msg = `🔊 Volume: ${nv}%`;
         break;
       }
       case 'music_np': {
-        const song = queue.songs?.[0];
+        const info = getQueueInfo(interaction.guildId);
+        const song = info?.current;
         if (!song) {
           msg = '😶 Aucun morceau en cours.';
         } else {
-          const { createNowPlayingEmbed } = require('../managers/MusicManager');
           const embed = createNowPlayingEmbed(song);
           return interaction.reply({ embeds: [embed], ephemeral: true }).catch(() => {});
         }
