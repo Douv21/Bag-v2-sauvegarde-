@@ -1,6 +1,8 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioPlayerStatus, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
 const { ChannelType, EmbedBuilder } = require('discord.js');
 const play = require('play-dl');
+const { applyPlayDlCookies } = require('../utils/youtubeCookies');
+applyPlayDlCookies(play);
 
 const THEME = {
   colorPrimary: '#FF2E88',
@@ -30,7 +32,7 @@ function createNowPlayingEmbed(track) {
 }
 
 async function ensureConnection(voiceChannel) {
-  if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
+  if (!voiceChannel || ![ChannelType.GuildVoice, ChannelType.GuildStageVoice].includes(voiceChannel.type)) {
     throw new Error('NOT_IN_VOICE');
   }
 
