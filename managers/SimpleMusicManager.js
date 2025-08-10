@@ -1,8 +1,9 @@
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioPlayerStatus, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioPlayerStatus, VoiceConnectionStatus, entersState, StreamType } = require('@discordjs/voice');
 const { ChannelType, EmbedBuilder } = require('discord.js');
 const play = require('play-dl');
 const { applyPlayDlCookies } = require('../utils/youtubeCookies');
 applyPlayDlCookies(play);
+const prism = require('prism-media');
 
 const THEME = {
   colorPrimary: '#FF2E88',
@@ -229,6 +230,47 @@ async function seek(guildId, seconds) {
   state.player.play(resource);
 }
 
+async function createRadioResource(url) {
+  const ffmpeg = new prism.FFmpeg({
+    args: [
+      '-hide_banner',
+      '-loglevel', 'error',
+      '-reconnect', '1',
+      '-reconnect_streamed', '1',
+      '-reconnect_delay_max', '5',
+      '-i', url,
+      '-analyzeduration', '0',
+      '-f', 's16le',
+      '-ar', '48000',
+      '-ac', '2'
+    ]
+  });
+  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Arbitrary, inlineVolume: true });
+  return resource;
+}
+
+async function playRadio(voiceChannel, radio, textChannel, requestedBy) {
+  const state = await ensureConnection(voiceChannel);
+  state.textChannel = textChannel || state.textChannel;
+
+  // Reset queue et état pour radio
+  state.queue = [];
+  state.current = { query: radio.name, url: radio.url, title: radio.name, requestedBy, isRadio: true };
+
+  const resource = await createRadioResource(radio.url);
+  if (resource?.volume) resource.volume.setVolume((state.volume || 100) / 100);
+
+  state.player.play(resource);
+
+  try {
+    if (state.textChannel) {
+      await state.textChannel.send({ embeds: [createNowPlayingEmbed(state.current)] });
+    }
+  } catch {}
+
+  return state.current;
+}
+
 function getQueueInfo(guildId) {
   const state = guildIdToState.get(guildId);
   return {
@@ -249,4 +291,5 @@ module.exports = {
   getQueueInfo,
   createNowPlayingEmbed,
   THEME,
+  playRadio,
 };
