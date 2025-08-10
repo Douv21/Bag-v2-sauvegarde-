@@ -41,5 +41,5 @@ services:
         fromSecret: YOUTUBE_COOKIES_B64
       - key: YOUTUBE_COOKIES
         fromSecret: YOUTUBE_COOKIES
-      - key: YOUTUBE_COOKIES_FILE
+      - key: YT_COOKIES_FILE
         value: /opt/render/project/src/cookies.txt

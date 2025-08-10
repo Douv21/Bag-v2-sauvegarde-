@@ -72,6 +72,12 @@ function sanitizeCookieForHeader(raw) {
   return v;
 }
 
+// Convertit les séquences "\n" en vrais retours à la ligne
+function convertEscapedNewlinesToReal(value) {
+  if (typeof value !== 'string') return value;
+  return value.replace(/\\n/g, '\n');
+}
+
 function normalizeCookieValue(raw) {
   if (!raw) return null;
   let v = stripCookieHeaderPrefix(raw);
@@ -83,27 +89,37 @@ function normalizeCookieValue(raw) {
 function getYouTubeCookieString() {
   if (cachedCookieString !== undefined) return cachedCookieString;
 
-  const direct = process.env.YOUTUBE_COOKIES;
-  if (direct && direct.trim().length > 0) {
-    cachedCookieString = normalizeCookieValue(direct);
-    return cachedCookieString;
-  }
-
-  const b64 = process.env.YOUTUBE_COOKIES_B64;
-  if (b64 && b64.trim().length > 0) {
-    const decoded = decodeBase64(b64.trim());
-    if (decoded && decoded.trim().length > 0) {
-      cachedCookieString = normalizeCookieValue(decoded.trim());
+  // Alias directs (header complet), avec support des "\\n" littéraux
+  const directAliases = [process.env.YT_COOKIES, process.env.YOUTUBE_COOKIES];
+  for (const direct of directAliases) {
+    if (direct && direct.trim().length > 0) {
+      const unescaped = convertEscapedNewlinesToReal(direct);
+      cachedCookieString = normalizeCookieValue(unescaped);
       return cachedCookieString;
     }
   }
 
-  const file = process.env.YOUTUBE_COOKIES_FILE;
-  if (file && file.trim().length > 0) {
-    const fromFile = readFromFile(file.trim());
-    if (fromFile) {
-      cachedCookieString = normalizeCookieValue(fromFile);
-      return cachedCookieString;
+  // Alias base64 (peut contenir soit un header, soit un fichier Netscape complet)
+  const b64Aliases = [process.env.YT_COOKIES_B64, process.env.YOUTUBE_COOKIES_B64];
+  for (const b64 of b64Aliases) {
+    if (b64 && b64.trim().length > 0) {
+      const decoded = decodeBase64(b64.trim());
+      if (decoded && decoded.trim().length > 0) {
+        cachedCookieString = normalizeCookieValue(decoded.trim());
+        return cachedCookieString;
+      }
+    }
+  }
+
+  // Alias fichier
+  const fileAliases = [process.env.YT_COOKIES_FILE, process.env.YOUTUBE_COOKIES_FILE];
+  for (const file of fileAliases) {
+    if (file && file.trim().length > 0) {
+      const fromFile = readFromFile(file.trim());
+      if (fromFile) {
+        cachedCookieString = normalizeCookieValue(fromFile);
+        return cachedCookieString;
+      }
     }
   }
 
