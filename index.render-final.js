@@ -2822,8 +2822,8 @@ async function handleShopPurchase(interaction, dataManager) {
             });
         }
 
-        // Calculer la réputation (karma net = charme - perversion)
-        const userKarmaNet = (userData.goodKarma || 0) - Math.abs(userData.badKarma || 0);
+        // Calculer la réputation (karma net = charme + perversion négative)
+        const userKarmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
         let discountPercent = 0;
         
         const guildDiscounts = karmaDiscountsData[guildId] || [];

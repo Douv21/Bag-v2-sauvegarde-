@@ -23,7 +23,7 @@ module.exports = {
             // Utiliser les bonnes propriétés karma (priorité aux nouvelles)
             const goodKarma = user.goodKarma || user.karma_good || 0;
             const badKarma = user.badKarma || user.karma_bad || 0;
-            const karmaNet = goodKarma - badKarma;
+            const karmaNet = (goodKarma || 0) + (badKarma || 0);
             
             console.log(`🔍 Debug karma: ${targetUser.username || 'Utilisateur'} - Good: ${goodKarma}, Bad: ${badKarma}, Net: ${karmaNet}`);
             

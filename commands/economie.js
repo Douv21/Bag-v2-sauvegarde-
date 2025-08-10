@@ -34,7 +34,7 @@ module.exports = {
             });
             
             // Si badKarma est négatif, on fait goodKarma - badKarma = goodKarma - (-10) = goodKarma + 10
-            const karmaNet = goodKarma - badKarma; // Changement: pas de Math.abs()
+            const karmaNet = (goodKarma || 0) + (badKarma || 0); // Réputation = charme + perversion (perversion négative)
             
             console.log(`🔍 Debug karma: ${targetUser.username || 'Utilisateur'} - Good: ${goodKarma}, Bad: ${badKarma}, Net: ${karmaNet}`);
             

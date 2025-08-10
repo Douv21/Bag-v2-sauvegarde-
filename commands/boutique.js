@@ -19,7 +19,7 @@ module.exports = {
             const vipItems = allShopItems.filter(i => (i.category || '').toLowerCase().includes('vip'));
             const normalItems = allShopItems.filter(i => !((i.category || '').toLowerCase().includes('vip')));
 
-            const userKarmaNet = (userData.goodKarma || 0) - (userData.badKarma || 0);
+            const userKarmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
             
             const calculateKarmaDiscount = (userKarmaNet, karmaDiscountsData, guildId) => {
                 const guildDiscounts = karmaDiscountsData[guildId] || [];

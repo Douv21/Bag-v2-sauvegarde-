@@ -57,7 +57,7 @@ module.exports = {
 
       await dataManager.updateUser(userId, guildId, userData);
 
-      const karmaNet = (userData.goodKarma || 0) - (userData.badKarma || 0);
+      const karmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
 
       const embed = new EmbedBuilder()
         .setColor(delta >= 0 ? '#8e44ad' : '#2c3e50')

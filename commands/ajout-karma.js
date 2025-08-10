@@ -74,8 +74,8 @@ module.exports = {
                 embedColor = '#FF0000';
             }
             
-            // Calculer le karma net (badKarma est déjà négatif dans le système)
-            const karmaNet = economy[userKey].goodKarma + economy[userKey].badKarma;
+            // Calculer la réputation (karma net = charme + perversion négative)
+            const karmaNet = (economy[userKey].goodKarma || 0) + (economy[userKey].badKarma || 0);
 
             // Sauvegarder dans le bon fichier
             await dataManager.saveData('economy.json', economy);

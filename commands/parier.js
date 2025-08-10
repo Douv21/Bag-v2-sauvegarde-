@@ -65,8 +65,8 @@ module.exports = {
                 
                 await dataManager.updateUser(userId, guildId, userData);
                 
-                // Calculer karma net après mise à jour
-                const karmaNet = (asNumber(userData.goodKarma, 0)) - (asNumber(userData.badKarma, 0));
+                // Calculer réputation (karma net = charme + perversion négative)
+                const karmaNet = (asNumber(userData.goodKarma, 0)) + (asNumber(userData.badKarma, 0));
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ffd700')
@@ -93,7 +93,7 @@ module.exports = {
                 
                 await dataManager.updateUser(userId, guildId, userData);
                 
-                const karmaNet = (asNumber(userData.goodKarma, 0)) - (asNumber(userData.badKarma, 0));
+                const karmaNet = (asNumber(userData.goodKarma, 0)) + (asNumber(userData.badKarma, 0));
                 
                 const embed = new EmbedBuilder()
                     .setColor('#ff0000')
