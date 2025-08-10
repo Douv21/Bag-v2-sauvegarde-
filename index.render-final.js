@@ -2409,14 +2409,38 @@ class RenderSolutionBot {
             if (!isChannelConfigured) return;
             
             if (message.channel.isThread() || message.channel.type !== 0) return;
+
+            // Enforcer le mode NSFW si activé
+            if (autoThreadConfig.nsfw === true && message.channel.nsfw !== true) {
+                return;
+            }
             
-            let threadName = autoThreadConfig.threadName || 'Discussion - {user}';
-            threadName = threadName
-                .replace('{user}', message.author.displayName || message.author.username)
+            // Générer le nom du thread
+            let threadNameTemplate = autoThreadConfig.threadName || 'Discussion - {user}';
+            if (threadNameTemplate === '__RANDOM_NSFW_BG__') {
+                const randomNames = [
+                    'Boys & Girls 18+ - {user}',
+                    'BG Lounge 18+ - {channel}',
+                    'Boys x Girls After Dark 18+',
+                    'Spicy Boys & Girls 18+ - {user}',
+                    'Late Night B&G 18+ - {channel}',
+                    'Private B&G Lounge 18+',
+                    'Red Room B&G 18+ - {user}',
+                    'Forbidden B&G Talk 18+ - {channel}',
+                    'Nocturne B&G 18+ - {user}',
+                    'Heatwave B&G 18+'
+                ];
+                threadNameTemplate = randomNames[Math.floor(Math.random() * randomNames.length)];
+            }
+            
+            // Remplacer les variables
+            let threadName = threadNameTemplate
+                .replace('{user}', message.member?.displayName || message.author.username)
                 .replace('{channel}', message.channel.name)
                 .replace('{date}', new Date().toLocaleDateString('fr-FR'))
                 .replace('{time}', new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
             
+            // Limiter le nom à 100 caractères (limite Discord)
             threadName = threadName.substring(0, 100);
             
             const thread = await message.startThread({
