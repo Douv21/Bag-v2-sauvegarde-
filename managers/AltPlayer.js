@@ -1,6 +1,10 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioPlayerStatus, getVoiceConnection, VoiceConnectionStatus, entersState, demuxProbe } = require('@discordjs/voice');
 const { ChannelType, EmbedBuilder } = require('discord.js');
 const play = require('play-dl');
+const { applyPlayDlCookies, buildYtdlRequestOptions } = require('../utils/youtubeCookies');
+
+// Configure play-dl with cookies if provided via env
+try { applyPlayDlCookies(play); } catch (_) {}
 
 const guildIdToAltState = new Map();
 
@@ -36,6 +40,7 @@ async function createResourceFromYouTube(url) {
     quality: 'highestaudio',
     highWaterMark: 1 << 25,
     dlChunkSize: 0,
+    requestOptions: buildYtdlRequestOptions(),
   });
   const probe = await demuxProbe(ytdlStream);
   return createAudioResource(probe.stream, { inputType: probe.type, inlineVolume: true });
