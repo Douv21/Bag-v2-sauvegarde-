@@ -27,7 +27,8 @@
     "is-ci": "^3.0.1",
     "libsodium-wrappers": "^0.7.13",
     "yt-search": "^2.11.0",
-    "play-dl": "^1.9.6"
+    "play-dl": "^1.9.6",
+    "@distube/ytdl-core": "^4.16.12"
   },
   "engines": {
     "node": "18.x"
