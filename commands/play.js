@@ -43,6 +43,18 @@ module.exports = {
     }
 
     const client = interaction.client;
+
+    // Évite "already has a voice connection which is not managed by DisTube"
+    try {
+      const { getVoiceConnection } = require('@discordjs/voice');
+      const existing = getVoiceConnection(interaction.guildId);
+      if (existing) existing.destroy();
+    } catch {}
+    try {
+      const { stopAlt } = require('../managers/AltPlayer');
+      await stopAlt(interaction.guildId).catch(() => {});
+    } catch {}
+
     const distube = getMusic(client);
 
     try {

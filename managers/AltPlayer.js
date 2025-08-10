@@ -29,7 +29,7 @@ async function connectToChannel(voiceChannel) {
 }
 
 // --- Helpers YouTube
-const YT_URL_REGEX = /^(https?:\/\/)?(www\.)?(music\.)?(youtube\.com\/(watch\?v=|shorts\/|live\/)|youtu\.be\/)/i;
+const YT_URL_REGEX = /^(https?:\/\/)?((www|m)\.)?(music\.)?(youtube\.com|youtu\.be)\//i;
 let ytdlCore = null;
 try { ytdlCore = require('@distube/ytdl-core'); } catch {}
 
@@ -81,6 +81,24 @@ async function playAlt(voiceChannel, query, textChannel, requestedBy) {
   const guildId = voiceChannel.guild.id;
   // Nettoyage état précédent si existant
   await stopAlt(guildId).catch(() => {});
+
+  // Si une queue DisTube existe, l'arrêter proprement pour éviter les conflits de connexion
+  try {
+    const { getMusic } = require('./MusicManager');
+    const distube = getMusic(voiceChannel.client);
+    const q = distube.getQueue(guildId);
+    if (q) {
+      await distube.stop(guildId).catch(() => {});
+      try { q.voice?.connection?.destroy?.(); } catch {}
+    }
+  } catch {}
+
+  // Détruire toute connexion vocale résiduelle avant de rejoindre
+  try {
+    const { getVoiceConnection } = require('@discordjs/voice');
+    const existing = getVoiceConnection(guildId);
+    if (existing) existing.destroy();
+  } catch {}
 
   const connection = await connectToChannel(voiceChannel);
   const player = createAudioPlayer({ behaviors: { noSubscriber: NoSubscriberBehavior.Pause } });
