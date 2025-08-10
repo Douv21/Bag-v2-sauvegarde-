@@ -138,15 +138,5 @@
     "totalVoiceTime": 0,
     "lastMessageTime": 0,
     "lastVoiceTime": 0
-  },
-  "guild456_test123": {
-    "userId": "test123",
-    "guildId": "guild456",
-    "xp": 25,
-    "level": 1,
-    "totalMessages": 1,
-    "totalVoiceTime": 0,
-    "lastMessageTime": 1754318254500,
-    "lastVoiceTime": 0
   }
 }
