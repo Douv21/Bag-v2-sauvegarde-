@@ -37,12 +37,12 @@ class EconomyConfigHandler {
             .setCustomId('economy_actions_select')
             .setPlaceholder('Choisissez une action...')
             .addOptions([
-                { label: '💋 Charmer', value: 'travailler', description: 'Action positive - Gains et karma' },
-                { label: '🍑 Flirter', value: 'pecher', description: 'Action positive - Gains et karma' },
-                { label: '🎁 Offrir', value: 'donner', description: 'Action très positive - Transfert et karma' },
-                { label: '😈 Séduire', value: 'voler', description: 'Action négative - Risque et karma mauvais' },
-                { label: '🎲 Oser', value: 'parier', description: 'Action négative - Gambling et karma' },
-                { label: '🔥 Coup de folie', value: 'crime', description: 'Action très négative - Gros gains/risques' },
+                { label: '💋 Charmer (Travailler)', value: 'travailler', description: 'Action positive - Gains et karma' },
+                { label: '🍑 Flirter (Pêcher)', value: 'pecher', description: 'Action positive - Gains et karma' },
+                { label: '🎁 Offrir (Donner)', value: 'donner', description: 'Action très positive - Transfert et karma' },
+                { label: '😈 Séduire (Voler)', value: 'voler', description: 'Action négative - Risque et karma mauvais' },
+                { label: '🎲 Oser (Parier)', value: 'parier', description: 'Action négative - Gambling et karma' },
+                { label: '🔥 Coup de folie (Crime)', value: 'crime', description: 'Action très négative - Gros gains/risques' },
                 { label: '😉 Aguicher', value: 'aguicher', description: 'NSFW: gains modérés, faible cooldown' },
                 { label: '💄 Embrasser', value: 'embrasser', description: 'NSFW: doux, court cooldown' },
                 { label: '🤲 Caresser', value: 'caresser', description: 'NSFW: léger, très court cooldown' },
