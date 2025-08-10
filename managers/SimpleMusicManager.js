@@ -134,6 +134,39 @@ function resolveYtdlpPath() {
   return path.join(__dirname, '..', 'node_modules', '@distube', 'yt-dlp', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
 }
 
+// Fallback: recherche via yt-dlp (ytsearch1:query)
+async function ytdlpSearchFirst(query) {
+  const bin = resolveYtdlpPath();
+  const args = ['-j', `ytsearch1:${query}`];
+  const cookie = getYouTubeCookieString();
+  if (cookie) {
+    args.unshift('--add-header', `Cookie: ${cookie}`);
+  }
+  return await new Promise((resolve, reject) => {
+    const proc = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    proc.stdout.on('data', (d) => { stdout += d.toString(); });
+    proc.stderr.on('data', (d) => { stderr += d.toString(); });
+    proc.on('close', (code) => {
+      if (code === 0 && stdout.trim().length > 0) {
+        try {
+          // yt-dlp peut renvoyer plusieurs lignes JSON; on prend la dernière non vide
+          const lines = stdout.trim().split(/\r?\n/).filter(Boolean);
+          const last = lines[lines.length - 1];
+          const data = JSON.parse(last);
+          const url = data.webpage_url || data.url;
+          const title = data.title || query;
+          if (url) return resolve({ url, title });
+        } catch (e) {
+          return reject(e);
+        }
+      }
+      reject(new Error(stderr.trim() || `yt-dlp search failed (code ${code})`));
+    });
+  });
+}
+
 async function createResourceWithYtdlp(url, startSeconds = 0) {
   const bin = resolveYtdlpPath();
   const args = [
@@ -178,11 +211,23 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
   let title = query;
 
   if (!isUrl) {
-    const results = await play.search(query, { limit: 1, source: { youtube: 'video', soundcloud: 'tracks' } });
-    if (!results || results.length === 0) throw new Error('NO_RESULT');
-    const first = results[0];
-    url = first.url;
-    title = first.title || query;
+    // Essayer d'abord play-dl, puis retomber sur yt-dlp en cas d'échec
+    let resolved = null;
+    try {
+      const results = await play.search(query, { limit: 1, source: { youtube: 'video', soundcloud: 'tracks' } });
+      if (results && results.length > 0) {
+        const first = results[0];
+        resolved = { url: first.url, title: first.title || query };
+      }
+    } catch {}
+
+    if (!resolved) {
+      // Fallback robuste
+      resolved = await ytdlpSearchFirst(query);
+    }
+
+    url = resolved.url;
+    title = resolved.title;
   } else {
     try {
       const info = await play.video_basic_info(query).catch(() => null);
@@ -235,11 +280,21 @@ async function playCommand(voiceChannel, query, textChannel, requestedBy) {
 
   // Si pas d'URL, on résout maintenant le titre/URL pour feedback rapide
   if (!track.url) {
-    const results = await play.search(query, { limit: 1, source: { youtube: 'video', soundcloud: 'tracks' } });
-    if (!results || results.length === 0) throw new Error('NO_RESULT');
-    const first = results[0];
-    track.url = first.url;
-    track.title = first.title || query;
+    let resolved = null;
+    try {
+      const results = await play.search(query, { limit: 1, source: { youtube: 'video', soundcloud: 'tracks' } });
+      if (results && results.length > 0) {
+        const first = results[0];
+        resolved = { url: first.url, title: first.title || query };
+      }
+    } catch {}
+
+    if (!resolved) {
+      resolved = await ytdlpSearchFirst(query);
+    }
+
+    track.url = resolved.url;
+    track.title = resolved.title;
   } else {
     try {
       const info = await play.video_basic_info(track.url).catch(() => null);
