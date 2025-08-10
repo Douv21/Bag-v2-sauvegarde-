@@ -2423,7 +2423,7 @@ class RenderSolutionBot {
                     'Boudoir de {user} 18+',
                     'Chambre rouge de {user} 18+',
                     'Salon interdit de {channel} 18+',
-                    'Secrets d'oreiller de {user} 18+',
+                    'Secrets d\'oreiller de {user} 18+',
                     'Rendez-vous secret de {channel} 18+',
                     'Jeux de nuit de {user} 18+',
                     'Nocturne avec {user} 18+',
