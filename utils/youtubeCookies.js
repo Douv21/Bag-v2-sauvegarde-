@@ -56,10 +56,27 @@ function maybeParseNetscapeCookies(value) {
   return pairs.join('; ');
 }
 
+function sanitizeCookieForHeader(raw) {
+  if (typeof raw !== 'string') raw = String(raw ?? '');
+  if (!raw) return null;
+  // Supprimer les octets nuls et aplatir les retours à la ligne pour éviter les erreurs spawn
+  let v = raw.replace(/\u0000/g, '').replace(/[\r\n]+/g, '; ').trim();
+  // Si trop court après nettoyage, considérer comme invalide
+  if (v.length === 0) return null;
+  // Éviter les espaces multiples
+  v = v.replace(/\s{2,}/g, ' ');
+  // Limiter taille extrême (sécurité/ergonomie); si trop long, ignorer
+  if (v.length > 8192) return null;
+  // Doit ressembler à des paires clef=valeur
+  if (!v.includes('=')) return null;
+  return v;
+}
+
 function normalizeCookieValue(raw) {
   if (!raw) return null;
   let v = stripCookieHeaderPrefix(raw);
   v = maybeParseNetscapeCookies(v);
+  v = sanitizeCookieForHeader(v);
   return v && v.trim().length > 0 ? v.trim() : null;
 }
 
