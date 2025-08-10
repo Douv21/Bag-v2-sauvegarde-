@@ -29,7 +29,7 @@ async function connectToChannel(voiceChannel) {
 }
 
 // --- Helpers YouTube
-const YT_URL_REGEX = /^(https?:\/\/)?(www\.)?(music\.)?youtube\.com\/(watch|shorts)\/|youtu\.be\//i;
+const YT_URL_REGEX = /^(https?:\/\/)?(www\.)?(music\.)?(youtube\.com\/(watch\?v=|shorts\/|live\/)|youtu\.be\/)/i;
 let ytdlCore = null;
 try { ytdlCore = require('@distube/ytdl-core'); } catch {}
 
