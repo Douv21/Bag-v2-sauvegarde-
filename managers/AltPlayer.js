@@ -24,10 +24,35 @@ async function connectToChannel(voiceChannel) {
   return connection;
 }
 
+// --- Helpers YouTube
+const YT_URL_REGEX = /^(https?:\/\/)?(www\.)?(music\.)?youtube\.com\/(watch|shorts)\/|youtu\.be\//i;
+let ytdlCore = null;
+try { ytdlCore = require('@distube/ytdl-core'); } catch {}
+
+async function createResourceFromYouTube(url) {
+  if (!ytdlCore) throw new Error('YTDL_CORE_UNAVAILABLE');
+  const ytdlStream = ytdlCore(url, {
+    filter: 'audioonly',
+    quality: 'highestaudio',
+    highWaterMark: 1 << 25,
+    dlChunkSize: 0,
+  });
+  const probe = await demuxProbe(ytdlStream);
+  return createAudioResource(probe.stream, { inputType: probe.type, inlineVolume: true });
+}
+
 async function createResourceFromQuery(query) {
   // URL direct ou recherche cross‑source
   const isUrl = /^https?:\/\//i.test(query);
   if (isUrl) {
+    // YouTube: tenter ytdl-core d'abord, sinon fallback play-dl
+    if (YT_URL_REGEX.test(query)) {
+      try {
+        return await createResourceFromYouTube(query);
+      } catch (_) {
+        // ignore et tente via play-dl
+      }
+    }
     const stream = await play.stream(query, { discordPlayerCompatibility: true });
     return createAudioResource(stream.stream, { inputType: stream.type, inlineVolume: true });
   }
@@ -36,6 +61,16 @@ async function createResourceFromQuery(query) {
   const results = await play.search(query, { limit: 1, source: { soundcloud: 'tracks', youtube: 'video' } });
   if (!results || results.length === 0) throw new Error('NO_RESULT');
   const target = results[0];
+
+  // Si résultat YouTube, même stratégie de fallback
+  if (target?.url && YT_URL_REGEX.test(target.url)) {
+    try {
+      return await createResourceFromYouTube(target.url);
+    } catch (_) {
+      // fallback play-dl
+    }
+  }
+
   const stream = await play.stream(target.url, { discordPlayerCompatibility: true });
   return createAudioResource(stream.stream, { inputType: stream.type, inlineVolume: true });
 }
@@ -65,7 +100,19 @@ async function playAlt(voiceChannel, query, textChannel, requestedBy) {
     try { textChannel?.send({ embeds: [buildAltEmbed('🏁 Lecture terminée', 'Le moteur alternatif s\'est arrêté.')] }).catch(() => {}); } catch {}
   });
 
-  const resource = await createResourceFromQuery(query);
+  // Création ressource avec fallback YouTube
+  let resource;
+  try {
+    resource = await createResourceFromQuery(query);
+  } catch (err) {
+    // Si play-dl a échoué à parser YT, retenter explicitement via ytdl-core
+    if (YT_URL_REGEX.test(query) && (!resource)) {
+      resource = await createResourceFromYouTube(query);
+    } else {
+      throw err;
+    }
+  }
+
   connection.subscribe(player);
   player.play(resource);
 
