@@ -50,13 +50,10 @@ async function createResourceFromQuery(query) {
   // URL direct ou recherche cross‑source
   const isUrl = /^https?:\/\//i.test(query);
   if (isUrl) {
-    // YouTube: tenter ytdl-core d'abord, sinon fallback play-dl
+    // YouTube: toujours via ytdl-core, pas de fallback play-dl pour éviter
+    // les erreurs "Failed to Parse YouTube Video".
     if (YT_URL_REGEX.test(query)) {
-      try {
-        return await createResourceFromYouTube(query);
-      } catch (_) {
-        // ignore et tente via play-dl
-      }
+      return await createResourceFromYouTube(query); // laisse remonter l'erreur si échec
     }
     const stream = await play.stream(query, { discordPlayerCompatibility: true });
     return createAudioResource(stream.stream, { inputType: stream.type, inlineVolume: true });
@@ -67,13 +64,9 @@ async function createResourceFromQuery(query) {
   if (!results || results.length === 0) throw new Error('NO_RESULT');
   const target = results[0];
 
-  // Si résultat YouTube, même stratégie de fallback
+  // Si résultat YouTube, forcer ytdl-core
   if (target?.url && YT_URL_REGEX.test(target.url)) {
-    try {
-      return await createResourceFromYouTube(target.url);
-    } catch (_) {
-      // fallback play-dl
-    }
+    return await createResourceFromYouTube(target.url); // laisse remonter l'erreur si échec
   }
 
   const stream = await play.stream(target.url, { discordPlayerCompatibility: true });
