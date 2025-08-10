@@ -464,16 +464,20 @@ class BagBotRender {
             let threadNameTemplate = mergedAutoThread.threadName || 'Discussion - {user}';
             if (threadNameTemplate === '__RANDOM_NSFW_BG__') {
                 const randomNames = [
-                    'Boys & Girls 18+ - {user}',
-                    'BG Lounge 18+ - {channel}',
-                    'Boys x Girls After Dark 18+',
-                    'Spicy Boys & Girls 18+ - {user}',
-                    'Late Night B&G 18+ - {channel}',
-                    'Private B&G Lounge 18+',
-                    'Red Room B&G 18+ - {user}',
-                    'Forbidden B&G Talk 18+ - {channel}',
-                    'Nocturne B&G 18+ - {user}',
-                    'Heatwave B&G 18+'
+                    'Suite privée de {user} 18+',
+                    'Boudoir de {user} 18+',
+                    'Chambre rouge Boys & Girls 18+ - {user}',
+                    'Salon interdit Boys & Girls 18+ - {channel}',
+                    'Confessions de {user} 18+',
+                    'Rendez-vous secret B&G 18+ - {channel}',
+                    'Jeux de nuit B&G 18+ - {user}',
+                    'Nocturne Boys & Girls 18+ - {user}',
+                    'Ambiance chaude B&G 18+ - {channel}',
+                    'Après-minuit Boys & Girls 18+ - {channel}',
+                    'Coin câlin de {user} 18+',
+                    'Tentations de {user} 18+',
+                    'Lounge privé B&G 18+ - {channel}',
+                    'Pièce secrète B&G 18+ - {user}'
                 ];
                 threadNameTemplate = randomNames[Math.floor(Math.random() * randomNames.length)];
             }
