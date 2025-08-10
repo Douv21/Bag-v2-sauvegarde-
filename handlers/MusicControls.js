@@ -62,6 +62,15 @@ async function handleButton(interaction) {
       case 'music_stop':
         await distube.stop(interaction.guildId);
         try { queue.voice?.connection?.destroy?.(); } catch {}
+        try {
+          const { stopAlt } = require('../managers/AltPlayer');
+          await stopAlt(interaction.guildId).catch(() => {});
+        } catch {}
+        try {
+          const { getVoiceConnection } = require('@discordjs/voice');
+          const existing = getVoiceConnection(interaction.guildId);
+          if (existing) existing.destroy();
+        } catch {}
         msg = '🛑 Musique arrêtée et file nettoyée.';
         break;
       case 'music_loop': {
