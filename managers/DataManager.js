@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { MongoClient } = require('mongodb');
 
 class DataManager {
     constructor() {
@@ -13,6 +14,10 @@ class DataManager {
         
         // Cache en mémoire pour performances
         this.cache = new Map();
+        
+        // MongoDB connection
+        this.db = null;
+        this.mongoClient = null;
         
         // Types de données par commande
         this.dataTypes = {
@@ -54,6 +59,56 @@ class DataManager {
 
         // Initialiser le LevelBackupManager
         this.initializeLevelBackup();
+        
+        // Initialiser MongoDB
+        this.initializeMongoDB();
+    }
+
+    /**
+     * Initialise la connexion MongoDB
+     */
+    async initializeMongoDB() {
+        try {
+            const username = process.env.MONGODB_USERNAME;
+            const password = process.env.MONGODB_PASSWORD;
+            let clusterUrl = process.env.MONGODB_CLUSTER_URL;
+            
+            if (!username || !password || !clusterUrl) {
+                console.log('⚠️ Variables d\'environnement MongoDB manquantes - utilisation du mode JSON uniquement');
+                console.log('   Pour utiliser le système de bump, configurez:');
+                console.log('   - MONGODB_USERNAME');
+                console.log('   - MONGODB_PASSWORD');
+                console.log('   - MONGODB_CLUSTER_URL');
+                return;
+            }
+            
+            // Nettoyer l'URL du cluster
+            if (clusterUrl.includes('mongodb+srv://')) {
+                const match = clusterUrl.match(/@([^\/\?]+)/);
+                if (match) {
+                    clusterUrl = match[1];
+                }
+            }
+            
+            // Construire la chaîne de connexion
+            const connectionString = `mongodb+srv://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${clusterUrl}/bagbot?retryWrites=true&w=majority`;
+            
+            console.log('🔄 Connexion à MongoDB...');
+            this.mongoClient = new MongoClient(connectionString, {
+                serverSelectionTimeoutMS: 15000,
+                connectTimeoutMS: 15000,
+                maxPoolSize: 10
+            });
+            
+            await this.mongoClient.connect();
+            this.db = this.mongoClient.db('bagbot');
+            
+            console.log('✅ Connexion MongoDB établie');
+            
+        } catch (error) {
+            console.error('❌ Erreur connexion MongoDB:', error.message);
+            console.log('⚠️ Fonctionnement en mode JSON uniquement');
+        }
     }
 
     // Initialiser le système de sauvegarde level
@@ -424,6 +479,20 @@ class DataManager {
             this.cache.delete(type);
         } else {
             this.cache.clear();
+        }
+    }
+
+    /**
+     * Fermer la connexion MongoDB
+     */
+    async closeMongoDB() {
+        if (this.mongoClient) {
+            try {
+                await this.mongoClient.close();
+                console.log('🔐 Connexion MongoDB fermée');
+            } catch (error) {
+                console.error('❌ Erreur fermeture MongoDB:', error);
+            }
         }
     }
 }
