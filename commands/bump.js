@@ -48,7 +48,10 @@ module.exports = {
 
             // Vérifier la configuration
             const config = await bumpManager.getBumpConfig(guildId);
-            if (!config.enabledPlatforms || config.enabledPlatforms.length === 0) {
+            const hasNSFWChannels = interaction.guild.channels.cache.some(channel => channel.nsfw);
+            const allEnabledPlatforms = bumpManager.getAllEnabledPlatforms(config, hasNSFWChannels);
+            
+            if (allEnabledPlatforms.length === 0) {
                 const embed = new EmbedBuilder()
                     .setTitle('⚙️ Configuration requise')
                     .setDescription('Aucune plateforme n\'est configurée pour ce serveur.')
@@ -77,7 +80,7 @@ module.exports = {
 
             // Si une plateforme spécifique est demandée
             if (specificPlatform) {
-                if (!config.enabledPlatforms.includes(specificPlatform)) {
+                if (!allEnabledPlatforms.includes(specificPlatform)) {
                     return await interaction.editReply({
                         content: `❌ La plateforme ${bumpManager.platforms[specificPlatform].name} n'est pas activée sur ce serveur.`,
                     });

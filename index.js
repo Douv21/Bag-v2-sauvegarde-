@@ -48,6 +48,7 @@ const KarmaManager = require('./managers/KarmaManager');
 const BumpManager = require('./managers/BumpManager');
 const InteractionHandler = require('./handlers/InteractionHandler');
 const BumpInteractionHandler = require('./handlers/BumpInteractionHandler');
+const ConfigBumpHandler = require('./handlers/ConfigBumpHandler');
 const MainRouterHandler = require('./handlers/MainRouterHandler');
 const CommandHandler = require('./handlers/CommandHandler');
 
@@ -71,6 +72,7 @@ class BagBotRender {
         this.bumpManager = new BumpManager(this.dataManager);
         this.interactionHandler = new InteractionHandler(this.dataManager);
         this.bumpInteractionHandler = new BumpInteractionHandler(this.bumpManager);
+        this.configBumpHandler = new ConfigBumpHandler(this.bumpManager);
         this.mainRouterHandler = new MainRouterHandler(this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
 
@@ -332,6 +334,9 @@ class BagBotRender {
             try {
                 await this.bumpManager.initializeDatabase();
                 console.log('✅ Base de données bump initialisée');
+                
+                // Initialiser les auto-bumps pour tous les serveurs
+                await this.bumpManager.initializeAllAutoBumps(this.client);
             } catch (bumpDbError) {
                 console.error('❌ Erreur initialisation database bump:', bumpDbError);
             }
@@ -381,6 +386,12 @@ class BagBotRender {
                     // Essayer d'abord le gestionnaire de bump
                     const bumpHandled = await this.bumpInteractionHandler.handleInteraction(interaction);
                     if (bumpHandled) {
+                        return;
+                    }
+
+                    // Essayer ensuite le gestionnaire de config-bump
+                    const configBumpHandled = await this.configBumpHandler.handleInteraction(interaction);
+                    if (configBumpHandled) {
                         return;
                     }
                     

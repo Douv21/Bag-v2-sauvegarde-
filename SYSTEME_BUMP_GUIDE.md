@@ -7,11 +7,19 @@ Le système de bump multi-plateforme permet de promouvoir votre serveur Discord 
 ## 🚀 Fonctionnalités
 
 ### Plateformes supportées
+
+#### Plateformes Générales
 - **🔥 Top.gg** - Cooldown: 12h
 - **⭐ Discord Bot List** - Cooldown: 24h
 - **🚢 Discord Boats** - Cooldown: 12h
 - **🤖 Discord Bots** - Cooldown: 24h
 - **📢 Disboard** - Cooldown: 2h
+
+#### Plateformes NSFW (uniquement pour serveurs avec canaux NSFW)
+- **🔞 NSFW Bot List** - Cooldown: 24h
+- **💋 Adult Discord Servers** - Cooldown: 12h
+- **🔥 NSFW Server List** - Cooldown: 6h
+- **🌶️ Adult Servers Hub** - Cooldown: 8h
 
 ### Fonctionnalités principales
 - ✅ Bump sur plusieurs plateformes simultanément
@@ -20,6 +28,9 @@ Le système de bump multi-plateforme permet de promouvoir votre serveur Discord 
 - 📊 Statistiques et historique des bumps
 - 🔔 Rappels automatiques (optionnel)
 - ⚙️ Configuration par serveur
+- 🤖 **Bump automatique** - Système de bump programmé
+- 🔞 **Support NSFW** - Plateformes spécialisées pour contenu adulte
+- 🎛️ **Menu centralisé** - Interface de configuration complète
 
 ## 📝 Commandes
 
@@ -35,25 +46,26 @@ Commande principale pour bumper le serveur.
 /bump plateforme:topgg
 ```
 
-### `/bump-config`
-Configuration du système de bump.
+### `/config-bump`
+**NOUVEAU** Menu de configuration centralisé pour toutes les options de bump.
+
+Interface interactive unique pour :
+- 🌐 **Plateformes Générales** - Configuration des plateformes standard
+- 🔞 **Plateformes NSFW** - Plateformes pour serveurs adultes
+- 🤖 **Bump Automatique** - Configuration du système automatique
+- 📢 **Canal de Notification** - Définir le canal des notifications
+- 💬 **Message Personnalisé** - Personnaliser les messages de bump
+- 🔔 **Rappels Automatiques** - Gestion des rappels
+
+### `/bump-config` (Legacy)
+Ancienne interface de configuration (toujours disponible).
 
 **Sous-commandes:**
-
-#### `/bump-config plateformes`
-Active/désactive les plateformes de bump via une interface interactive.
-
-#### `/bump-config channel <channel>`
-Définit le canal par défaut pour les notifications de bump.
-
-#### `/bump-config message [message]`
-Configure un message personnalisé ou réinitialise au message par défaut.
-
-#### `/bump-config reminder <activer>`
-Active/désactive les rappels automatiques.
-
-#### `/bump-config status`
-Affiche la configuration actuelle du serveur.
+- `/bump-config plateformes` - Active/désactive les plateformes
+- `/bump-config channel <channel>` - Définit le canal de notification
+- `/bump-config message [message]` - Configure le message personnalisé
+- `/bump-config reminder <activer>` - Active/désactive les rappels
+- `/bump-config status` - Affiche la configuration actuelle
 
 ## 🎮 Interface Interactive
 
@@ -85,6 +97,43 @@ Une interface intuitive permet de sélectionner les plateformes à bump :
 - Résistant aux redémarrages du bot
 - Historique des bumps par utilisateur
 
+## 🤖 Bump Automatique
+
+### Configuration
+Le système de bump automatique permet de promouvoir votre serveur sans intervention manuelle.
+
+**Options disponibles :**
+- **Intervalles** : 6h, 12h, 24h (recommandé), 48h
+- **Plateformes cibles** :
+  - Toutes les plateformes activées
+  - Plateformes générales uniquement
+  - Plateformes NSFW uniquement
+
+### Fonctionnement
+1. Le système vérifie les plateformes disponibles (pas en cooldown)
+2. Effectue le bump sur les plateformes configurées
+3. Envoie une notification dans le canal configuré
+4. Programme le prochain bump automatique
+
+### Gestion
+- ✅ Démarrage/arrêt via `/config-bump`
+- 📊 Suivi des bumps automatiques
+- 🔔 Notifications de statut
+- ⚙️ Configuration flexible par serveur
+
+## 🔞 Plateformes NSFW
+
+### Conditions d'accès
+Les plateformes NSFW ne sont disponibles que pour les serveurs possédant au moins un canal NSFW.
+
+### Sécurité
+- Vérification automatique des canaux NSFW
+- Separation claire des plateformes générales/NSFW
+- Configuration indépendante
+
+### Plateformes spécialisées
+Les plateformes NSFW offrent une visibilité ciblée pour les serveurs de contenu adulte avec des cooldowns optimisés.
+
 ## 🛠️ Configuration Technique
 
 ### Base de données
@@ -95,10 +144,17 @@ Stocke la configuration par serveur :
 ```javascript
 {
   guildId: String,
-  enabledPlatforms: [String],
+  enabledPlatforms: [String],        // Plateformes générales
+  enabledNSFWPlatforms: [String],    // Plateformes NSFW
   bumpChannelId: String,
   autoReminder: Boolean,
   customMessage: String,
+  autoBump: {
+    enabled: Boolean,
+    interval: Number,                // Intervalle en ms
+    platforms: String,               // 'all', 'general', 'nsfw'
+    lastRun: Number                  // Timestamp du dernier bump auto
+  },
   updatedAt: Date
 }
 ```
@@ -167,18 +223,26 @@ async callTopGGAPI(guildId) {
 
 ### Serveur de communauté
 ```
-1. Configuration initiale avec /bump-config plateformes
+1. Configuration avec /config-bump
 2. Activation de Top.gg et Disboard pour visibilité maximale
-3. Bump quotidien avec /bump
+3. Bump automatique toutes les 24h
 4. Rappels automatiques pour les modérateurs
 ```
 
 ### Serveur de gaming
 ```
-1. Configuration toutes plateformes pour audience large
-2. Canal dédié aux bumps avec /bump-config channel
+1. Configuration toutes plateformes via /config-bump
+2. Canal dédié aux bumps
 3. Message personnalisé mentionnant les événements
-4. Bump coordonné par équipe de modération
+4. Bump automatique + bumps manuels d'événements
+```
+
+### Serveur NSFW
+```
+1. Configuration plateformes générales + NSFW via /config-bump
+2. Bump automatique sur plateformes NSFW uniquement
+3. Intervalle court (6-12h) pour visibilité maximale
+4. Canal de notification dédié
 ```
 
 ## 🚨 Limitations actuelles

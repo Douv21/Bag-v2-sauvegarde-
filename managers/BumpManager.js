@@ -9,37 +9,75 @@ class BumpManager {
     constructor(dataManager) {
         this.dataManager = dataManager;
         this.platforms = {
+            // Plateformes générales
             'topgg': {
                 name: 'Top.gg',
                 cooldown: 12 * 60 * 60 * 1000, // 12 heures
                 emoji: '🔥',
-                color: '#ff6b6b'
+                color: '#ff6b6b',
+                category: 'general'
             },
             'discordbotlist': {
                 name: 'Discord Bot List',
                 cooldown: 24 * 60 * 60 * 1000, // 24 heures
                 emoji: '⭐',
-                color: '#4267B2'
+                color: '#4267B2',
+                category: 'general'
             },
             'discordboats': {
                 name: 'Discord Boats',
                 cooldown: 12 * 60 * 60 * 1000, // 12 heures
                 emoji: '🚢',
-                color: '#36393f'
+                color: '#36393f',
+                category: 'general'
             },
             'discordbots': {
                 name: 'Discord Bots',
                 cooldown: 24 * 60 * 60 * 1000, // 24 heures
                 emoji: '🤖',
-                color: '#7289da'
+                color: '#7289da',
+                category: 'general'
             },
             'disboard': {
                 name: 'Disboard',
                 cooldown: 2 * 60 * 60 * 1000, // 2 heures
                 emoji: '📢',
-                color: '#2f3136'
+                color: '#2f3136',
+                category: 'general'
+            },
+            // Plateformes NSFW
+            'nsfwbot': {
+                name: 'NSFW Bot List',
+                cooldown: 24 * 60 * 60 * 1000, // 24 heures
+                emoji: '🔞',
+                color: '#e91e63',
+                category: 'nsfw'
+            },
+            'adultdiscord': {
+                name: 'Adult Discord Servers',
+                cooldown: 12 * 60 * 60 * 1000, // 12 heures
+                emoji: '💋',
+                color: '#8e24aa',
+                category: 'nsfw'
+            },
+            'nsfwlist': {
+                name: 'NSFW Server List',
+                cooldown: 6 * 60 * 60 * 1000, // 6 heures
+                emoji: '🔥',
+                color: '#d32f2f',
+                category: 'nsfw'
+            },
+            'adultservers': {
+                name: 'Adult Servers Hub',
+                cooldown: 8 * 60 * 60 * 1000, // 8 heures
+                emoji: '🌶️',
+                color: '#ff5722',
+                category: 'nsfw'
             }
         };
+        
+        // Planificateur pour bumps automatiques
+        this.autoScheduler = new Map(); // guildId -> intervalId
     }
 
     /**
@@ -79,9 +117,16 @@ class BumpManager {
                 return {
                     guildId,
                     enabledPlatforms: [],
+                    enabledNSFWPlatforms: [],
                     bumpChannelId: null,
                     autoReminder: true,
-                    customMessage: null
+                    customMessage: null,
+                    autoBump: {
+                        enabled: false,
+                        interval: 24 * 60 * 60 * 1000, // 24 heures par défaut
+                        lastRun: null,
+                        platforms: 'all' // 'all', 'general', 'nsfw', ou array de plateformes
+                    }
                 };
             }
             return config;
@@ -298,6 +343,201 @@ class BumpManager {
         );
 
         return row;
+    }
+
+    /**
+     * Filtre les plateformes par catégorie
+     */
+    getPlatformsByCategory(category) {
+        return Object.keys(this.platforms).filter(platform => 
+            this.platforms[platform].category === category
+        );
+    }
+
+    /**
+     * Récupère toutes les plateformes activées (générales + NSFW si applicable)
+     */
+    getAllEnabledPlatforms(config, guildHasNSFWChannels = false) {
+        let platforms = [...config.enabledPlatforms];
+        
+        if (guildHasNSFWChannels && config.enabledNSFWPlatforms) {
+            platforms = platforms.concat(config.enabledNSFWPlatforms);
+        }
+        
+        return platforms;
+    }
+
+    /**
+     * Démarre le bump automatique pour un serveur
+     */
+    async startAutoBump(guildId, guild) {
+        try {
+            const config = await this.getBumpConfig(guildId);
+            
+            if (!config.autoBump.enabled) {
+                return false;
+            }
+
+            // Arrêter l'ancien planificateur s'il existe
+            this.stopAutoBump(guildId);
+
+            const intervalId = setInterval(async () => {
+                try {
+                    await this.performAutoBump(guildId, guild);
+                } catch (error) {
+                    console.error(`❌ Erreur auto-bump pour ${guildId}:`, error);
+                }
+            }, config.autoBump.interval);
+
+            this.autoScheduler.set(guildId, intervalId);
+            console.log(`✅ Auto-bump démarré pour ${guild?.name || guildId} (interval: ${config.autoBump.interval / (1000 * 60 * 60)}h)`);
+            return true;
+
+        } catch (error) {
+            console.error('❌ Erreur démarrage auto-bump:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Arrête le bump automatique pour un serveur
+     */
+    stopAutoBump(guildId) {
+        const intervalId = this.autoScheduler.get(guildId);
+        if (intervalId) {
+            clearInterval(intervalId);
+            this.autoScheduler.delete(guildId);
+            console.log(`🛑 Auto-bump arrêté pour ${guildId}`);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Effectue un bump automatique
+     */
+    async performAutoBump(guildId, guild) {
+        try {
+            const config = await this.getBumpConfig(guildId);
+            
+            if (!config.autoBump.enabled) {
+                this.stopAutoBump(guildId);
+                return;
+            }
+
+            // Déterminer les plateformes à bump
+            let platformsToBump = [];
+            const hasNSFWChannels = guild?.channels?.cache?.some(channel => channel.nsfw) || false;
+            
+            if (config.autoBump.platforms === 'all') {
+                platformsToBump = this.getAllEnabledPlatforms(config, hasNSFWChannels);
+            } else if (config.autoBump.platforms === 'general') {
+                platformsToBump = config.enabledPlatforms;
+            } else if (config.autoBump.platforms === 'nsfw') {
+                platformsToBump = hasNSFWChannels ? config.enabledNSFWPlatforms : [];
+            } else if (Array.isArray(config.autoBump.platforms)) {
+                platformsToBump = config.autoBump.platforms;
+            }
+
+            if (platformsToBump.length === 0) {
+                return;
+            }
+
+            // Vérifier les cooldowns
+            const cooldownInfo = await this.checkCooldowns(guildId, 'AUTO_BUMP');
+            const availablePlatforms = platformsToBump.filter(platform => 
+                cooldownInfo.canBump.includes(platform)
+            );
+
+            if (availablePlatforms.length === 0) {
+                console.log(`⏰ Auto-bump ${guildId}: Toutes les plateformes en cooldown`);
+                return;
+            }
+
+            // Effectuer le bump
+            const results = await this.performBump(guildId, 'AUTO_BUMP', availablePlatforms);
+            const successCount = results.filter(r => r.success).length;
+
+            // Mettre à jour la date du dernier bump auto
+            config.autoBump.lastRun = Date.now();
+            await this.updateBumpConfig(guildId, config);
+
+            console.log(`🚀 Auto-bump ${guild?.name || guildId}: ${successCount}/${availablePlatforms.length} plateformes bumpées`);
+
+            // Envoyer notification dans le canal configuré si disponible
+            if (config.bumpChannelId && guild) {
+                await this.sendAutoBumpNotification(guild, config.bumpChannelId, results);
+            }
+
+        } catch (error) {
+            console.error(`❌ Erreur lors du bump automatique pour ${guildId}:`, error);
+        }
+    }
+
+    /**
+     * Envoie une notification de bump automatique
+     */
+    async sendAutoBumpNotification(guild, channelId, results) {
+        try {
+            const channel = guild.channels.cache.get(channelId);
+            if (!channel) return;
+
+            const successPlatforms = results.filter(r => r.success);
+            const failedPlatforms = results.filter(r => !r.success);
+
+            const embed = new EmbedBuilder()
+                .setTitle('🤖 Bump Automatique Effectué')
+                .setColor(failedPlatforms.length === 0 ? '#00ff00' : '#ffcc00')
+                .setTimestamp()
+                .setFooter({ text: 'Bump automatique' });
+
+            if (successPlatforms.length > 0) {
+                const successText = successPlatforms
+                    .map(r => `${this.platforms[r.platform].emoji} ${this.platforms[r.platform].name}`)
+                    .join('\n');
+                embed.addFields({ name: '✅ Succès', value: successText, inline: true });
+            }
+
+            if (failedPlatforms.length > 0) {
+                const failedText = failedPlatforms
+                    .map(r => `${this.platforms[r.platform].emoji} ${this.platforms[r.platform].name}`)
+                    .join('\n');
+                embed.addFields({ name: '❌ Échecs', value: failedText, inline: true });
+            }
+
+            await channel.send({ embeds: [embed] });
+
+        } catch (error) {
+            console.error('❌ Erreur envoi notification auto-bump:', error);
+        }
+    }
+
+    /**
+     * Initialise les auto-bumps pour tous les serveurs au démarrage
+     */
+    async initializeAllAutoBumps(client) {
+        try {
+            if (!this.dataManager.db) {
+                console.log('❌ Database not connected for auto-bump initialization');
+                return;
+            }
+
+            const configs = await this.dataManager.db.collection('bumpConfigs').find({
+                'autoBump.enabled': true
+            }).toArray();
+
+            for (const config of configs) {
+                const guild = client.guilds.cache.get(config.guildId);
+                if (guild) {
+                    await this.startAutoBump(config.guildId, guild);
+                }
+            }
+
+            console.log(`✅ ${configs.length} auto-bumps initialisés`);
+
+        } catch (error) {
+            console.error('❌ Erreur initialisation auto-bumps:', error);
+        }
     }
 }
 
