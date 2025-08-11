@@ -79,6 +79,17 @@ async function ensureConnection(voiceChannel) {
     });
     await entersState(state.connection, VoiceConnectionStatus.Ready, 15000);
 
+    // Auto-unsuppress on Stage channels so audio is audible
+    try {
+      if (voiceChannel.type === ChannelType.GuildStageVoice) {
+        const me = voiceChannel.guild.members.me;
+        // Try to become a speaker
+        try { await me?.voice?.setSuppressed?.(false); } catch {}
+        // Also try to request to speak on platforms where required
+        try { await me?.voice?.setRequestToSpeak?.(true); } catch {}
+      }
+    } catch {}
+
     // Reconnexion automatique si Discord coupe la connexion
     try {
       state.connection.on(VoiceConnectionStatus.Disconnected, async () => {
@@ -256,10 +267,10 @@ async function createResourceWithYtdlp(url, startSeconds = 0) {
     '-f', 's16le', '-ar', '48000', '-ac', '2'
   );
 
-  const ffmpeg = new prism.FFmpeg({ args: ffmpegArgs });
-
+    const ffmpeg = new prism.FFmpeg({ args: ffmpegArgs });
+ 
   ytdlp.stdout.pipe(ffmpeg);
-  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Arbitrary, inlineVolume: true });
+  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Raw, inlineVolume: true });
   return resource;
 }
 
@@ -356,6 +367,20 @@ async function playNext(guildId) {
 async function playCommand(voiceChannel, query, textChannel, requestedBy) {
   const state = await ensureConnection(voiceChannel);
   state.textChannel = textChannel || state.textChannel;
+
+  // Si Stage: assurer que le bot est orateur, sinon avertir
+  try {
+    if (voiceChannel.type === ChannelType.GuildStageVoice) {
+      const me = voiceChannel.guild.members.me;
+      try { await me?.voice?.setSuppressed?.(false); } catch {}
+      try { await me?.voice?.setRequestToSpeak?.(true); } catch {}
+      if (me?.voice?.suppress) {
+        try {
+          await state.textChannel?.send('⚠️ Sur un salon Stage, ajoutez le bot comme orateur pour qu’il soit audible. Ouvrez les paramètres du salon et “Inviter à parler” le bot.');
+        } catch {}
+      }
+    }
+  } catch {}
 
   // Support direct des radios via /play "nom" ou id
   const maybeRadio = findRadioByQuery(query);
@@ -478,7 +503,7 @@ async function createRadioResource(url) {
       '-ac', '2'
     ]
   });
-  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Arbitrary, inlineVolume: true });
+  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Raw, inlineVolume: true });
   return resource;
 }
 
