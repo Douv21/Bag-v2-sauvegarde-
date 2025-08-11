@@ -231,13 +231,16 @@ function findRadioByQuery(query) {
 }
 
 // Fallback: recherche via yt-dlp (ytsearch1:query)
-async function ytdlpSearchFirst(query) {
+async function ytdlpSearchFirst(query, retryCount = 0) {
   const bin = resolveYtdlpPath();
   const args = [
     '--force-ipv4',
-    '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 6),
+    '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 10),
     '--geo-bypass',
-    '-j', `ytsearch1:${query}`
+    '--retries', '2',
+    '--fragment-retries', '2',
+    '--default-search', 'ytsearch1',
+    '-j', query
   ];
   if (process.env.YTDLP_NO_CHECK_CERT === '1' || process.env.YTDLP_NO_CHECK_CERT === 'true') {
     args.unshift('--no-check-certificates');
@@ -246,14 +249,16 @@ async function ytdlpSearchFirst(query) {
   if (cookie) {
     args.unshift('--add-header', `Cookie: ${cookie}`);
   }
-  return await new Promise((resolve, reject) => {
+  
+  try {
+    return await new Promise((resolve, reject) => {
     const proc = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     const killTimer = setTimeout(() => {
       try { proc.kill('SIGKILL'); } catch {}
       reject(new Error('yt-dlp search timeout'));
-    }, 18000);
+    }, 25000);
     proc.stdout.on('data', (d) => { stdout += d.toString(); });
     proc.stderr.on('data', (d) => { stderr += d.toString(); });
     proc.on('error', (e) => {
@@ -277,15 +282,25 @@ async function ytdlpSearchFirst(query) {
       }
       reject(new Error(stderr.trim() || `yt-dlp search failed (code ${code})`));
     });
-  });
+    });
+  } catch (error) {
+    if (retryCount < 2) {
+      console.warn(`[music] yt-dlp retry ${retryCount + 1}/2 for: ${query}`);
+      await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+      return ytdlpSearchFirst(query, retryCount + 1);
+    }
+    throw error;
+  }
 }
 
 async function createResourceWithYtdlp(url, startSeconds = 0) {
   const bin = resolveYtdlpPath();
   const args = [
     '--force-ipv4',
-    '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 6),
+    '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 10),
     '--geo-bypass',
+    '--retries', '2',
+    '--fragment-retries', '2',
     '-f', 'bestaudio/best',
     '--no-playlist',
     '-o', '-',
@@ -352,7 +367,7 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
     try {
       const results = await withTimeout(
         play.search(query, { limit: 1, source: { youtube: 'video', soundcloud: 'tracks' } }),
-        8000,
+        12000,
         'play.search'
       );
       if (results && results.length > 0) {
@@ -364,8 +379,27 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
     }
 
     if (!resolved) {
-      // Fallback robuste
-      resolved = await ytdlpSearchFirst(query);
+      // Fallback robuste avec gestion d'erreur
+      try {
+        resolved = await ytdlpSearchFirst(query);
+      } catch (e) {
+        console.warn(`[music] yt-dlp fallback failed: ${e.message}`);
+        // Si yt-dlp échoue complètement, utiliser SoundCloud comme dernière tentative
+        try {
+          const scResults = await withTimeout(
+            play.search(query, { limit: 1, source: { soundcloud: 'tracks' } }),
+            10000,
+            'soundcloud.search'
+          );
+          if (scResults && scResults.length > 0) {
+            const first = scResults[0];
+            resolved = { url: first.url, title: first.title || query };
+          }
+        } catch (scErr) {
+          // Dernier recours: créer une entrée avec juste la query
+          resolved = { url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, title: query };
+        }
+      }
     }
 
     url = resolved.url;
@@ -384,7 +418,7 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
   try {
     const stream = await withTimeout(
       play.stream(url, { seek: seekSeconds > 0 ? seekSeconds : 0, discordPlayerCompatibility: true }),
-      12000,
+      15000,
       'play.stream'
     );
     const resource = createAudioResource(stream.stream, { inputType: stream.type, inlineVolume: true });
@@ -393,8 +427,13 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
     // Fallback yt-dlp si YouTube échoue (age/region/cipher/timeout)
     if (isYouTubeUrl(url)) {
       console.warn('[music] play.stream échec/timeout -> fallback yt-dlp');
-      const resource = await createResourceWithYtdlp(url, seekSeconds);
-      return { resource, url, title };
+      try {
+        const resource = await createResourceWithYtdlp(url, seekSeconds);
+        return { resource, url, title };
+      } catch (ytdlpErr) {
+        console.error('[music] yt-dlp fallback also failed:', ytdlpErr.message);
+        throw new Error(`Impossible de lire cette vidéo: ${ytdlpErr.message}`);
+      }
     }
     throw err;
   }
@@ -456,7 +495,7 @@ async function playCommand(voiceChannel, query, textChannel, requestedBy) {
     try {
       const results = await withTimeout(
         play.search(query, { limit: 1, source: { youtube: 'video', soundcloud: 'tracks' } }),
-        8000,
+        12000,
         'play.search'
       );
       if (results && results.length > 0) {
@@ -466,7 +505,13 @@ async function playCommand(voiceChannel, query, textChannel, requestedBy) {
     } catch {}
 
     if (!resolved) {
-      resolved = await ytdlpSearchFirst(query);
+      try {
+        resolved = await ytdlpSearchFirst(query);
+      } catch (e) {
+        console.warn(`[music] yt-dlp fallback failed: ${e.message}`);
+        // Dernier recours avec juste la query
+        resolved = { url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, title: query };
+      }
     }
 
     track.url = resolved.url;
