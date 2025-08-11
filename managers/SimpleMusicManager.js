@@ -149,7 +149,7 @@ try {
   }
 } catch {}
 
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -159,7 +159,39 @@ function isYouTubeUrl(u) {
 
 function resolveYtdlpPath() {
   if (process.env.YTDLP_BIN && process.env.YTDLP_BIN.trim().length > 0) return process.env.YTDLP_BIN.trim();
-  return path.join(__dirname, '..', 'node_modules', '@distube', 'yt-dlp', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+
+  // Prefer system binaries first
+  const candidates = [];
+  const exe = process.platform === 'win32' ? ['yt-dlp.exe', 'youtube-dl.exe'] : ['yt-dlp', 'youtube-dl'];
+
+  // PATH resolution via spawnSync
+  for (const name of exe) {
+    try {
+      const which = process.platform === 'win32' ? 'where' : 'which';
+      const r = spawnSync(which, [name], { encoding: 'utf8' });
+      if (r.status === 0 && r.stdout) {
+        const p = r.stdout.split(/\r?\n/).find(Boolean);
+        if (p && fs.existsSync(p)) return p.trim();
+      }
+    } catch {}
+  }
+
+  // Local bin in project
+  const localBins = [
+    path.join(__dirname, '..', 'bin', exe[0]),
+    path.join(__dirname, '..', 'node_modules', '.bin', exe[0])
+  ];
+  for (const p of localBins) {
+    if (fs.existsSync(p)) return p;
+  }
+
+  // As last resort, Distube’s vendored binary (can be disabled)
+  if (process.env.YTDLP_DISABLE_DISTUBE !== '1' && process.env.YTDLP_DISABLE_DISTUBE !== 'true') {
+    return path.join(__dirname, '..', 'node_modules', '@distube', 'yt-dlp', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+  }
+
+  // Nothing found
+  throw new Error('yt-dlp binary not found. Set YTDLP_BIN or install yt-dlp.');
 }
 
 // Helper radios: charge une fois la liste et cherche par id/nom
@@ -253,7 +285,20 @@ async function createResourceWithYtdlp(url, startSeconds = 0) {
     args.unshift('--add-header', `Cookie: ${cookie}`);
   }
 
-  const ytdlp = spawn(bin, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+  let ytdlp;
+  try {
+    ytdlp = spawn(bin, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch (spawnErr) {
+    // If spawn fails (e.g., ENOENT), try fallback names directly
+    const fallbackExe = process.platform === 'win32' ? ['yt-dlp.exe', 'youtube-dl.exe'] : ['yt-dlp', 'youtube-dl'];
+    for (const name of fallbackExe) {
+      try {
+        ytdlp = spawn(name, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+        break;
+      } catch {}
+    }
+    if (!ytdlp) throw spawnErr;
+  }
 
   const ffmpegArgs = [
     '-hide_banner', '-loglevel', 'error',
