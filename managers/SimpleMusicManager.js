@@ -79,6 +79,17 @@ async function ensureConnection(voiceChannel) {
     });
     await entersState(state.connection, VoiceConnectionStatus.Ready, 15000);
 
+    // Auto-unsuppress on Stage channels so audio is audible
+    try {
+      if (voiceChannel.type === ChannelType.GuildStageVoice) {
+        const me = voiceChannel.guild.members.me;
+        // Try to become a speaker
+        try { await me?.voice?.setSuppressed?.(false); } catch {}
+        // Also try to request to speak on platforms where required
+        try { await me?.voice?.setRequestToSpeak?.(true); } catch {}
+      }
+    } catch {}
+
     // Reconnexion automatique si Discord coupe la connexion
     try {
       state.connection.on(VoiceConnectionStatus.Disconnected, async () => {
@@ -138,7 +149,7 @@ try {
   }
 } catch {}
 
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -148,7 +159,39 @@ function isYouTubeUrl(u) {
 
 function resolveYtdlpPath() {
   if (process.env.YTDLP_BIN && process.env.YTDLP_BIN.trim().length > 0) return process.env.YTDLP_BIN.trim();
-  return path.join(__dirname, '..', 'node_modules', '@distube', 'yt-dlp', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+
+  // Prefer system binaries first
+  const candidates = [];
+  const exe = process.platform === 'win32' ? ['yt-dlp.exe', 'youtube-dl.exe'] : ['yt-dlp', 'youtube-dl'];
+
+  // PATH resolution via spawnSync
+  for (const name of exe) {
+    try {
+      const which = process.platform === 'win32' ? 'where' : 'which';
+      const r = spawnSync(which, [name], { encoding: 'utf8' });
+      if (r.status === 0 && r.stdout) {
+        const p = r.stdout.split(/\r?\n/).find(Boolean);
+        if (p && fs.existsSync(p)) return p.trim();
+      }
+    } catch {}
+  }
+
+  // Local bin in project
+  const localBins = [
+    path.join(__dirname, '..', 'bin', exe[0]),
+    path.join(__dirname, '..', 'node_modules', '.bin', exe[0])
+  ];
+  for (const p of localBins) {
+    if (fs.existsSync(p)) return p;
+  }
+
+  // As last resort, Distube’s vendored binary (can be disabled)
+  if (process.env.YTDLP_DISABLE_DISTUBE !== '1' && process.env.YTDLP_DISABLE_DISTUBE !== 'true') {
+    return path.join(__dirname, '..', 'node_modules', '@distube', 'yt-dlp', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+  }
+
+  // Nothing found
+  throw new Error('yt-dlp binary not found. Set YTDLP_BIN or install yt-dlp.');
 }
 
 // Helper radios: charge une fois la liste et cherche par id/nom
@@ -242,7 +285,20 @@ async function createResourceWithYtdlp(url, startSeconds = 0) {
     args.unshift('--add-header', `Cookie: ${cookie}`);
   }
 
-  const ytdlp = spawn(bin, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+  let ytdlp;
+  try {
+    ytdlp = spawn(bin, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch (spawnErr) {
+    // If spawn fails (e.g., ENOENT), try fallback names directly
+    const fallbackExe = process.platform === 'win32' ? ['yt-dlp.exe', 'youtube-dl.exe'] : ['yt-dlp', 'youtube-dl'];
+    for (const name of fallbackExe) {
+      try {
+        ytdlp = spawn(name, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+        break;
+      } catch {}
+    }
+    if (!ytdlp) throw spawnErr;
+  }
 
   const ffmpegArgs = [
     '-hide_banner', '-loglevel', 'error',
@@ -256,10 +312,10 @@ async function createResourceWithYtdlp(url, startSeconds = 0) {
     '-f', 's16le', '-ar', '48000', '-ac', '2'
   );
 
-  const ffmpeg = new prism.FFmpeg({ args: ffmpegArgs });
-
+    const ffmpeg = new prism.FFmpeg({ args: ffmpegArgs });
+ 
   ytdlp.stdout.pipe(ffmpeg);
-  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Arbitrary, inlineVolume: true });
+  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Raw, inlineVolume: true });
   return resource;
 }
 
@@ -356,6 +412,20 @@ async function playNext(guildId) {
 async function playCommand(voiceChannel, query, textChannel, requestedBy) {
   const state = await ensureConnection(voiceChannel);
   state.textChannel = textChannel || state.textChannel;
+
+  // Si Stage: assurer que le bot est orateur, sinon avertir
+  try {
+    if (voiceChannel.type === ChannelType.GuildStageVoice) {
+      const me = voiceChannel.guild.members.me;
+      try { await me?.voice?.setSuppressed?.(false); } catch {}
+      try { await me?.voice?.setRequestToSpeak?.(true); } catch {}
+      if (me?.voice?.suppress) {
+        try {
+          await state.textChannel?.send('⚠️ Sur un salon Stage, ajoutez le bot comme orateur pour qu’il soit audible. Ouvrez les paramètres du salon et “Inviter à parler” le bot.');
+        } catch {}
+      }
+    }
+  } catch {}
 
   // Support direct des radios via /play "nom" ou id
   const maybeRadio = findRadioByQuery(query);
@@ -478,7 +548,7 @@ async function createRadioResource(url) {
       '-ac', '2'
     ]
   });
-  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Arbitrary, inlineVolume: true });
+  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Raw, inlineVolume: true });
   return resource;
 }
 
