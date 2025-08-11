@@ -49,6 +49,10 @@ const { handleObjectInteraction } = require('./handlers/ObjectHandler');
 const { errorHandler, ErrorLevels } = require('./utils/errorHandler');
 const { modalHandler } = require('./utils/modalHandler');
 const { wrapInteraction } = require('./utils/interactionWrapper');
+const DataManager = require('./managers/DataManager');
+const BumpManager = require('./managers/BumpManager');
+const BumpInteractionHandler = require('./handlers/BumpInteractionHandler');
+const ConfigBumpHandler = require('./handlers/ConfigBumpHandler');
 
 // Voice dependency report (optional, helps diagnose encryption libs on Render)
 try {
@@ -570,6 +574,13 @@ class RenderSolutionBot {
             ]
         });
 
+        // Initialisation du système de bump (DataManager Mongo + BumpManager)
+        this.coreDataManager = new DataManager();
+        this.bumpManager = new BumpManager(this.coreDataManager);
+        this.client.bumpManager = this.bumpManager;
+        this.bumpInteractionHandler = new BumpInteractionHandler(this.bumpManager);
+        this.configBumpHandler = new ConfigBumpHandler(this.bumpManager);
+
         this.commands = new Collection();
         await this.loadCommands();
         await this.setupEventHandlers();
@@ -617,6 +628,19 @@ class RenderSolutionBot {
             console.log(`✅ ${this.client.user.tag} connecté`);
             console.log(`🏰 ${this.client.guilds.cache.size} serveur(s)`);
             console.log(`📋 Commandes disponibles: ${this.commands.size}`);
+            
+            // Initialiser la base de données bump et auto-bumps
+            try {
+                const ok = await this.bumpManager.initializeDatabase();
+                if (ok) {
+                    console.log('✅ Base de données bump initialisée');
+                    await this.bumpManager.initializeAllAutoBumps(this.client);
+                } else {
+                    console.log('⚠️ Système de bump en mode dégradé (MongoDB non connecté)');
+                }
+            } catch (bumpInitError) {
+                console.error('❌ Erreur initialisation système de bump:', bumpInitError);
+            }
             
             // Initialiser le moteur musique (DisTube)
             try {
@@ -689,6 +713,25 @@ class RenderSolutionBot {
                         await handleRadioSelect(interaction);
                     } catch (e) {
                         console.warn('⚠️ Erreur RadioHandler:', e?.message || e);
+                    }
+                    return;
+                }
+
+                // Gestion des interactions du système de bump
+                if ((interaction.isButton() || (interaction.isStringSelectMenu && interaction.isStringSelectMenu())) && interaction.customId && interaction.customId.startsWith('bump_')) {
+                    try {
+                        await this.bumpInteractionHandler.handleInteraction(interaction);
+                    } catch (e) {
+                        console.warn('⚠️ Erreur BumpInteractionHandler:', e?.message || e);
+                    }
+                    return;
+                }
+
+                if ((interaction.isButton() || (interaction.isStringSelectMenu && interaction.isStringSelectMenu()) || interaction.isModalSubmit()) && interaction.customId && interaction.customId.startsWith('config_bump_')) {
+                    try {
+                        await this.configBumpHandler.handleInteraction(interaction);
+                    } catch (e) {
+                        console.warn('⚠️ Erreur ConfigBumpHandler:', e?.message || e);
                     }
                     return;
                 }
@@ -812,7 +855,12 @@ class RenderSolutionBot {
                 }
 
                 console.log(`🔧 /${interaction.commandName} par ${interaction.user.tag}`);
-                await command.execute(interaction, dataManager);
+                const needsClient = ['bump', 'bump-config', 'config-bump'].includes(interaction.commandName);
+                if (needsClient) {
+                    await command.execute(interaction, this.client);
+                } else {
+                    await command.execute(interaction, dataManager);
+                }
             } 
             else if (interaction.isModalSubmit()) {
                 console.log(`📝 Modal: ${interaction.customId}`);
