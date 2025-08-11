@@ -140,6 +140,7 @@ try {
 
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 function isYouTubeUrl(u) {
   return /(?:youtube\.com|youtu\.be)\//i.test(u || '');
@@ -150,10 +151,40 @@ function resolveYtdlpPath() {
   return path.join(__dirname, '..', 'node_modules', '@distube', 'yt-dlp', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
 }
 
+// Helper radios: charge une fois la liste et cherche par id/nom
+let cachedRadios;
+function loadRadiosOnce() {
+  if (cachedRadios) return cachedRadios;
+  try {
+    const p = path.join(__dirname, '..', 'data', 'radios.json');
+    const raw = fs.readFileSync(p, 'utf8');
+    const list = JSON.parse(raw);
+    cachedRadios = Array.isArray(list) ? list : [];
+  } catch {
+    cachedRadios = [];
+  }
+  return cachedRadios;
+}
+function findRadioByQuery(query) {
+  if (!query) return null;
+  const q = String(query).trim().toLowerCase();
+  if (!q) return null;
+  const radios = loadRadiosOnce();
+  return radios.find(r => r?.id?.toLowerCase() === q || r?.name?.toLowerCase() === q) || null;
+}
+
 // Fallback: recherche via yt-dlp (ytsearch1:query)
 async function ytdlpSearchFirst(query) {
   const bin = resolveYtdlpPath();
-  const args = ['-j', `ytsearch1:${query}`];
+  const args = [
+    '--force-ipv4',
+    '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 6),
+    '--geo-bypass',
+    '-j', `ytsearch1:${query}`
+  ];
+  if (process.env.YTDLP_NO_CHECK_CERT === '1' || process.env.YTDLP_NO_CHECK_CERT === 'true') {
+    args.unshift('--no-check-certificates');
+  }
   const cookie = getYouTubeCookieString();
   if (cookie) {
     args.unshift('--add-header', `Cookie: ${cookie}`);
@@ -165,7 +196,7 @@ async function ytdlpSearchFirst(query) {
     const killTimer = setTimeout(() => {
       try { proc.kill('SIGKILL'); } catch {}
       reject(new Error('yt-dlp search timeout'));
-    }, 12000);
+    }, 18000);
     proc.stdout.on('data', (d) => { stdout += d.toString(); });
     proc.stderr.on('data', (d) => { stderr += d.toString(); });
     proc.on('error', (e) => {
@@ -195,6 +226,9 @@ async function ytdlpSearchFirst(query) {
 async function createResourceWithYtdlp(url, startSeconds = 0) {
   const bin = resolveYtdlpPath();
   const args = [
+    '--force-ipv4',
+    '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 6),
+    '--geo-bypass',
     '-f', 'bestaudio/best',
     '--no-playlist',
     '-o', '-',
@@ -236,6 +270,13 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
   let title = query;
 
   if (!isUrl) {
+    // Si la requête correspond à une radio connue, jouer la radio directement
+    const maybeRadio = findRadioByQuery(query);
+    if (maybeRadio) {
+      const resource = await createRadioResource(maybeRadio.url);
+      return { resource, url: maybeRadio.url, title: maybeRadio.name };
+    }
+
     // Essayer d'abord play-dl, puis retomber sur yt-dlp en cas d'échec/timeout
     let resolved = null;
     try {
@@ -315,6 +356,13 @@ async function playNext(guildId) {
 async function playCommand(voiceChannel, query, textChannel, requestedBy) {
   const state = await ensureConnection(voiceChannel);
   state.textChannel = textChannel || state.textChannel;
+
+  // Support direct des radios via /play "nom" ou id
+  const maybeRadio = findRadioByQuery(query);
+  if (maybeRadio) {
+    const played = await playRadio(voiceChannel, maybeRadio, textChannel, requestedBy);
+    return played;
+  }
 
   const track = { query, url: /^https?:\/\//i.test(query) ? query : null, title: null, requestedBy };
 
