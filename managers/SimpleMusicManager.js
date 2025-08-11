@@ -71,13 +71,27 @@ async function ensureConnection(voiceChannel) {
 
   // Connexion vocale
   if (!state.connection) {
-    state.connection = joinVoiceChannel({
-      channelId: voiceChannel.id,
-      guildId: voiceChannel.guild.id,
-      adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-      selfDeaf: true,
-    });
-    await entersState(state.connection, VoiceConnectionStatus.Ready, 15000);
+    // Vérification de sécurité pour voiceAdapterCreator
+    if (!voiceChannel.guild.voiceAdapterCreator || typeof voiceChannel.guild.voiceAdapterCreator !== 'function') {
+      throw new Error('INVALID_VOICE_ADAPTER');
+    }
+
+    try {
+      state.connection = joinVoiceChannel({
+        channelId: voiceChannel.id,
+        guildId: voiceChannel.guild.id,
+        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        selfDeaf: true,
+      });
+      await entersState(state.connection, VoiceConnectionStatus.Ready, 15000);
+    } catch (error) {
+      // Nettoyage en cas d'erreur de connexion
+      guildIdToState.delete(guildId);
+      if (error.message && error.message.includes('sendPayload')) {
+        throw new Error('BOT_NOT_CONNECTED');
+      }
+      throw error;
+    }
 
     // Auto-unsuppress on Stage channels so audio is audible
     try {

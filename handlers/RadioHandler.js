@@ -55,7 +55,20 @@ async function handleRadioSelect(interaction) {
       await interaction.editReply({ content: `📻 Lecture de: ${radio.name}` }).catch(() => {});
     }
   } catch (err) {
-    try { await interaction.reply({ content: `❌ Erreur: ${String(err.message || err)}`, ephemeral: true }); } catch {}
+    const errorMsg = String(err?.message || err || 'Erreur inconnue');
+    let friendly;
+    
+    if (errorMsg === 'BOT_NOT_CONNECTED') {
+      friendly = '🤖 Le bot n\'est pas connecté à Discord. Contacte un administrateur.';
+    } else if (errorMsg === 'INVALID_VOICE_ADAPTER') {
+      friendly = '⚙️ Problème de configuration vocale. Le bot doit être redémarré.';
+    } else if (errorMsg === 'NOT_IN_VOICE') {
+      friendly = '🎧 Rejoins un salon vocal pour écouter la radio.';
+    } else {
+      friendly = `❌ Erreur: ${errorMsg}`;
+    }
+    
+    try { await interaction.reply({ content: friendly, ephemeral: true }); } catch {}
   }
 }
 
