@@ -369,12 +369,8 @@ class BagBotRender {
         // Gestion des interactions (boutons, menus, modals, commandes slash)
         this.client.on('interactionCreate', async (interaction) => {
             try {
-                // Gestion des commandes slash
+                // Les commandes slash sont gérées par CommandHandler
                 if (interaction.isChatInputCommand()) {
-                    const command = this.client.commands.get(interaction.commandName);
-                    if (!command) return;
-                    
-                    await command.execute(interaction);
                     return;
                 }
                 

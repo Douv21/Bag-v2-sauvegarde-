@@ -84,7 +84,12 @@ class CommandHandler {
 
                 try {
                     await this.handleCooldown(interaction, command);
-                    await command.execute(interaction, this.dataManager);
+                    const needsClient = ['bump', 'bump-config', 'config-bump'].includes(interaction.commandName);
+                    if (needsClient) {
+                        await command.execute(interaction, this.client);
+                    } else {
+                        await command.execute(interaction, this.dataManager);
+                    }
                 } catch (error) {
                     console.error(`❌ Erreur commande ${interaction.commandName}:`, error);
 
