@@ -330,6 +330,13 @@ class BagBotRender {
             // Enregistrement des commandes slash
             await this.registerSlashCommands();
 
+            // Attendre l'initialisation MongoDB
+            try {
+                await this.dataManager.initializeMongoDB();
+            } catch (mongoError) {
+                console.error('❌ Erreur initialisation MongoDB:', mongoError);
+            }
+
             // Initialisation de la base de données bump
             try {
                 await this.bumpManager.initializeDatabase();

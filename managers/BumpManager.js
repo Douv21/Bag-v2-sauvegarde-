@@ -111,29 +111,42 @@ class BumpManager {
      */
     async getBumpConfig(guildId) {
         try {
+            // Vérifier si MongoDB est disponible
+            if (!this.dataManager.db) {
+                console.log('⚠️ MongoDB non connecté - utilisation configuration par défaut');
+                return this.getDefaultBumpConfig(guildId);
+            }
+
             const config = await this.dataManager.db.collection('bumpConfigs').findOne({ guildId });
             if (!config) {
                 // Configuration par défaut
-                return {
-                    guildId,
-                    enabledPlatforms: [],
-                    enabledNSFWPlatforms: [],
-                    bumpChannelId: null,
-                    autoReminder: true,
-                    customMessage: null,
-                    autoBump: {
-                        enabled: false,
-                        interval: 24 * 60 * 60 * 1000, // 24 heures par défaut
-                        lastRun: null,
-                        platforms: 'all' // 'all', 'general', 'nsfw', ou array de plateformes
-                    }
-                };
+                return this.getDefaultBumpConfig(guildId);
             }
             return config;
         } catch (error) {
             console.error('❌ Error getting bump config:', error);
-            return null;
+            return this.getDefaultBumpConfig(guildId);
         }
+    }
+
+    /**
+     * Retourne la configuration par défaut
+     */
+    getDefaultBumpConfig(guildId) {
+        return {
+            guildId,
+            enabledPlatforms: [],
+            enabledNSFWPlatforms: [],
+            bumpChannelId: null,
+            autoReminder: true,
+            customMessage: null,
+            autoBump: {
+                enabled: false,
+                interval: 24 * 60 * 60 * 1000, // 24 heures par défaut
+                lastRun: null,
+                platforms: 'all' // 'all', 'general', 'nsfw', ou array de plateformes
+            }
+        };
     }
 
     /**
@@ -141,6 +154,11 @@ class BumpManager {
      */
     async updateBumpConfig(guildId, config) {
         try {
+            if (!this.dataManager.db) {
+                console.log('⚠️ MongoDB non connecté - impossible de sauvegarder la configuration');
+                return false;
+            }
+
             await this.dataManager.db.collection('bumpConfigs').updateOne(
                 { guildId },
                 { $set: { ...config, guildId, updatedAt: new Date() } },
@@ -161,6 +179,12 @@ class BumpManager {
             const config = await this.getBumpConfig(guildId);
             if (!config || !config.enabledPlatforms.length) {
                 return { canBump: [], onCooldown: [] };
+            }
+
+            // Si MongoDB n'est pas connecté, considérer toutes les plateformes comme disponibles
+            if (!this.dataManager.db) {
+                console.log('⚠️ MongoDB non connecté - toutes les plateformes considérées disponibles');
+                return { canBump: config.enabledPlatforms, onCooldown: [] };
             }
 
             const cooldowns = await this.dataManager.db.collection('bumpCooldowns').find({
