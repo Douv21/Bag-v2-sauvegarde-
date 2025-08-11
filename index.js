@@ -45,7 +45,10 @@ const fs = require('fs');
 // Gestionnaires centralisés
 const DataManager = require('./managers/DataManager');
 const KarmaManager = require('./managers/KarmaManager');
+const BumpManager = require('./managers/BumpManager');
 const InteractionHandler = require('./handlers/InteractionHandler');
+const BumpInteractionHandler = require('./handlers/BumpInteractionHandler');
+const ConfigBumpHandler = require('./handlers/ConfigBumpHandler');
 const MainRouterHandler = require('./handlers/MainRouterHandler');
 const CommandHandler = require('./handlers/CommandHandler');
 
@@ -66,9 +69,15 @@ class BagBotRender {
         // Gestionnaires
         this.dataManager = new DataManager();
         this.karmaManager = new KarmaManager(this.dataManager);
+        this.bumpManager = new BumpManager(this.dataManager);
         this.interactionHandler = new InteractionHandler(this.dataManager);
+        this.bumpInteractionHandler = new BumpInteractionHandler(this.bumpManager);
+        this.configBumpHandler = new ConfigBumpHandler(this.bumpManager);
         this.mainRouterHandler = new MainRouterHandler(this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
+
+        // Rendre le bumpManager accessible depuis le client pour les commandes
+        this.client.bumpManager = this.bumpManager;
 
         // Collections
         this.client.commands = new Collection();
@@ -321,6 +330,17 @@ class BagBotRender {
             // Enregistrement des commandes slash
             await this.registerSlashCommands();
 
+            // Initialisation de la base de données bump
+            try {
+                await this.bumpManager.initializeDatabase();
+                console.log('✅ Base de données bump initialisée');
+                
+                // Initialiser les auto-bumps pour tous les serveurs
+                await this.bumpManager.initializeAllAutoBumps(this.client);
+            } catch (bumpDbError) {
+                console.error('❌ Erreur initialisation database bump:', bumpDbError);
+            }
+
             // Scheduler reset hebdomadaire du karma (vérification horaire)
             try {
                 // Vérification immédiate au démarrage
@@ -362,6 +382,18 @@ class BagBotRender {
                     }
                     
                     console.log(`🔄 Traitement interaction: ${interaction.customId}`);
+                    
+                    // Essayer d'abord le gestionnaire de bump
+                    const bumpHandled = await this.bumpInteractionHandler.handleInteraction(interaction);
+                    if (bumpHandled) {
+                        return;
+                    }
+
+                    // Essayer ensuite le gestionnaire de config-bump
+                    const configBumpHandled = await this.configBumpHandler.handleInteraction(interaction);
+                    if (configBumpHandled) {
+                        return;
+                    }
                     
                     // Router vers le MainRouterHandler
                     const handled = await this.mainRouterHandler.handleInteraction(interaction);
