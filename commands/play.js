@@ -54,9 +54,19 @@ module.exports = {
       }
     } catch (err) {
       const errorMsg = String(err?.message || err || 'Erreur inconnue');
-      const friendly = errorMsg.startsWith('TIMEOUT_')
-        ? '⏰ Timeout lors de la récupération du flux. Réessaie dans un instant.'
-        : `❌ Erreur: ${errorMsg}`;
+      let friendly;
+      
+      if (errorMsg.startsWith('TIMEOUT_')) {
+        friendly = '⏰ Timeout lors de la récupération du flux. Réessaie dans un instant.';
+      } else if (errorMsg === 'BOT_NOT_CONNECTED') {
+        friendly = '🤖 Le bot n\'est pas connecté à Discord. Contacte un administrateur.';
+      } else if (errorMsg === 'INVALID_VOICE_ADAPTER') {
+        friendly = '⚙️ Problème de configuration vocale. Le bot doit être redémarré.';
+      } else if (errorMsg === 'NOT_IN_VOICE') {
+        friendly = '🎧 Rejoins un salon vocal pour utiliser cette commande.';
+      } else {
+        friendly = `❌ Erreur: ${errorMsg}`;
+      }
 
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ content: friendly }).catch(() => {});
