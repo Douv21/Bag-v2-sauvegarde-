@@ -959,6 +959,23 @@ class MainRouterHandler {
                 await interaction.update({ content: `✅ Seuil d'inactivité défini à ${months} mois (${days} jours)`, components: [], embeds: [], ephemeral: true });
                 return true;
             }
+
+            // Nouveau: sélecteur rapide pour basculer les autokicks
+            if (customId === 'moderation_autokick_select') {
+                const action = interaction.values?.[0];
+                if (action === 'role_toggle') {
+                    const enabled = !(cfg.roleEnforcement?.enabled === true);
+                    await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), enabled } });
+                    await interaction.update({ content: `✅ Rôle requis ${enabled ? 'activé' : 'désactivé'}`, components: [], embeds: [], ephemeral: true });
+                    return true;
+                }
+                if (action === 'inactivity_toggle') {
+                    const enabled = !(cfg.inactivity?.enabled === true);
+                    await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), enabled } });
+                    await interaction.update({ content: `✅ Inactivité ${enabled ? 'activée' : 'désactivée'}`, components: [], embeds: [], ephemeral: true });
+                    return true;
+                }
+            }
  
             if (customId === 'moderation_required_role') {
                 const roleName = interaction.values?.[0];

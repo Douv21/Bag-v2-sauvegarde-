@@ -79,7 +79,16 @@ module.exports = {
         { label: '12 mois', value: '12' }
       ]);
 
-    // Boutons Activer/Désactiver
+    // Nouveau: sélecteur rapide pour activer/désactiver les autokicks
+    const quickToggleSelect = new StringSelectMenuBuilder()
+      .setCustomId('moderation_autokick_select')
+      .setPlaceholder('Activer/Désactiver: Autokick sans rôle / Autokick inactivité')
+      .addOptions([
+        { label: `Autokick sans rôle — ${cfg.roleEnforcement?.enabled ? 'Désactiver' : 'Activer'}`, value: 'role_toggle' },
+        { label: `Autokick inactivité — ${cfg.inactivity?.enabled ? 'Désactiver' : 'Activer'}`, value: 'inactivity_toggle' }
+      ]);
+
+    // Boutons Activer/Désactiver (conservés)
     const toggles = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('moderation_toggle_role')
@@ -92,6 +101,7 @@ module.exports = {
     );
 
     const rows = [
+      new ActionRowBuilder().addComponents(quickToggleSelect),
       new ActionRowBuilder().addComponents(roleSelect),
       new ActionRowBuilder().addComponents(graceDaysSelect),
       new ActionRowBuilder().addComponents(inactivityMonthsSelect),
