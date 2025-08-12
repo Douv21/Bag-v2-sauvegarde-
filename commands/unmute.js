@@ -22,7 +22,7 @@ module.exports = {
     const reason = interaction.options.getString('raison') || 'Aucun motif';
     const member = await guild.members.fetch(user.id).catch(() => null);
     if (!member) return interaction.reply({ content: 'Utilisateur introuvable.', flags: 64 });
-    await mod.unmuteMember(member, reason);
+    await mod.unmuteMember(member, reason, interaction.user);
     return interaction.reply({ content: `✅ ${user.tag} a été unmute.`, flags: 64 });
   }
 };

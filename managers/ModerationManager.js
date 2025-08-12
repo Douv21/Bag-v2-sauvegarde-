@@ -86,18 +86,18 @@ class ModerationManager {
     return warnings[guildId]?.[userId] || [];
   }
 
-    async muteMember(member, durationMs, reason) {
+    async muteMember(member, durationMs, reason, moderatorUser = null) {
     const ms = Math.min(Math.max(durationMs || 0, 0), 28 * 24 * 60 * 60 * 1000); // Max 28 jours
     await member.timeout(ms > 0 ? ms : 60 * 1000, reason || 'Muted');
-    try { if (this.client.logManager) await this.client.logManager.logMute(member, null, ms, reason); } catch {}
+    try { if (this.client.logManager) await this.client.logManager.logMute(member, moderatorUser, ms, reason); } catch {}
   }
 
-    async unmuteMember(member, reason) {
+    async unmuteMember(member, reason, moderatorUser = null) {
     await member.timeout(null, reason || 'Unmuted');
-    try { if (this.client.logManager) await this.client.logManager.logUnmute(member, null, reason); } catch {}
+    try { if (this.client.logManager) await this.client.logManager.logUnmute(member, moderatorUser, reason); } catch {}
   }
 
-    async purgeChannel(channel, options = { resetFeatures: true }) {
+    async purgeChannel(channel, options = { resetFeatures: true }, moderatorUser = null) {
     // Bulk delete messages in batches (cannot delete >14 days old)
     let totalDeleted = 0;
     try {
@@ -114,7 +114,7 @@ class ModerationManager {
       // ignore errors for older messages
     }
 
-    try { if (this.client.logManager) await this.client.logManager.logPurge(channel, channel.guild?.members.me?.user || null, totalDeleted); } catch {}
+    try { if (this.client.logManager) await this.client.logManager.logPurge(channel, moderatorUser || channel.guild?.members.me?.user || null, totalDeleted); } catch {}
 
     if (options.resetFeatures) {
       await this.restoreChannelFeatures(channel.guild.id, channel.id);

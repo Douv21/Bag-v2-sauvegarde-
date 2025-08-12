@@ -23,7 +23,8 @@ class LogManager {
         messages: { enabled: true, channelId: null, logEdits: true, logDeletes: true, includeContent: true },
         moderation: { enabled: true, channelId: null, logWarns: true, logMutes: true, logKicks: true, logBans: true, logUnbans: true, logPurges: true },
         members: { enabled: true, channelId: null, logJoins: true, logLeaves: true },
-        nicknames: { enabled: true, channelId: null }
+        nicknames: { enabled: true, channelId: null },
+        economy: { enabled: true, channelId: null, logDaily: true, logTransfers: true, logRewards: true, logAdminChanges: true }
       }
     };
   }
@@ -183,7 +184,7 @@ class LogManager {
         .setTitle('⚠️ Avertissement')
         .addFields(
           { name: 'Utilisateur', value: `${targetUser.tag} (<@${targetUser.id}>)`, inline: true },
-          { name: 'Modérateur', value: `${moderatorUser?.tag || '—'}`, inline: true },
+          { name: 'Modérateur', value: `${moderatorUser?.tag || 'AutoMod'}`, inline: true },
           { name: 'Raison', value: reason || 'Aucune' }
         )
         .setTimestamp(new Date());
@@ -201,6 +202,7 @@ class LogManager {
         .setTitle('🔇 Mute')
         .addFields(
           { name: 'Utilisateur', value: `${member.user.tag} (<@${member.id}>)`, inline: true },
+          { name: 'Modérateur', value: `${moderatorUser?.tag || 'AutoMod'}`, inline: true },
           { name: 'Durée', value: durationMs ? `${Math.round(durationMs / 60000)} min` : '—', inline: true },
           { name: 'Raison', value: reason || 'Aucune' }
         )
@@ -219,6 +221,7 @@ class LogManager {
         .setTitle('🔈 Unmute')
         .addFields(
           { name: 'Utilisateur', value: `${member.user.tag} (<@${member.id}>)`, inline: true },
+          { name: 'Modérateur', value: `${moderatorUser?.tag || 'AutoMod'}`, inline: true },
           { name: 'Raison', value: reason || 'Aucune' }
         )
         .setTimestamp(new Date());
@@ -236,6 +239,7 @@ class LogManager {
         .setTitle('👢 Expulsion')
         .addFields(
           { name: 'Utilisateur', value: `${member.user?.tag || '—'} (<@${member.id}>)`, inline: true },
+          { name: 'Modérateur', value: `${moderatorUser?.tag || 'AutoMod'}`, inline: true },
           { name: 'Raison', value: reason || 'Aucune' }
         )
         .setTimestamp(new Date());
@@ -243,7 +247,7 @@ class LogManager {
     } catch {}
   }
 
-  async logBan(guild, user, reason) {
+  async logBan(guild, user, reason, moderatorUser = null) {
     try {
       const cfg = await this.getGuildConfig(guild.id);
       const cat = cfg.categories.moderation;
@@ -253,6 +257,7 @@ class LogManager {
         .setTitle('🔨 Ban')
         .addFields(
           { name: 'Utilisateur', value: `${user.tag || '—'} (<@${user.id}>)`, inline: true },
+          { name: 'Modérateur', value: `${moderatorUser?.tag || 'AutoMod'}`, inline: true },
           { name: 'Raison', value: reason || 'Aucune' }
         )
         .setTimestamp(new Date());
@@ -260,7 +265,7 @@ class LogManager {
     } catch {}
   }
 
-  async logUnban(guild, user) {
+  async logUnban(guild, user, moderatorUser = null) {
     try {
       const cfg = await this.getGuildConfig(guild.id);
       const cat = cfg.categories.moderation;
@@ -268,7 +273,10 @@ class LogManager {
       const embed = new EmbedBuilder()
         .setColor(Colors.Green)
         .setTitle('♻️ Unban')
-        .addFields({ name: 'Utilisateur', value: `${user.tag || '—'} (<@${user.id}>)` })
+        .addFields(
+          { name: 'Utilisateur', value: `${user.tag || '—'} (<@${user.id}>)`, inline: true },
+          { name: 'Modérateur', value: `${moderatorUser?.tag || 'AutoMod'}`, inline: true }
+        )
         .setTimestamp(new Date());
       await this.sendToCategory(guild, 'moderation', embed);
     } catch {}
@@ -284,11 +292,102 @@ class LogManager {
         .setTitle('🧹 Purge de messages')
         .addFields(
           { name: 'Salon', value: `<#${channel.id}>`, inline: true },
-          { name: 'Modérateur', value: `${moderatorUser?.tag || '—'}`, inline: true },
+          { name: 'Modérateur', value: `${moderatorUser?.tag || 'AutoMod'}`, inline: true },
           { name: 'Nombre', value: `${count || '—'}`, inline: true }
         )
         .setTimestamp(new Date());
       await this.sendToCategory(channel.guild, 'moderation', embed);
+    } catch {}
+  }
+
+  // Economy
+  async logDaily(guild, user, totalReward, parts) {
+    try {
+      const cfg = await this.getGuildConfig(guild.id);
+      const cat = cfg.categories.economy;
+      if (!cat?.enabled || !cat.logDaily) return;
+      const embed = new EmbedBuilder()
+        .setColor(0xf1c40f)
+        .setTitle('🎁 Daily')
+        .addFields(
+          { name: 'Utilisateur', value: `${user.tag} (<@${user.id}>)`, inline: true },
+          { name: 'Total', value: `${totalReward}💋`, inline: true },
+          { name: 'Détail', value: parts || '—' }
+        )
+        .setTimestamp(new Date());
+      await this.sendToCategory(guild, 'economy', embed);
+    } catch {}
+  }
+
+  async logTransfer(guild, fromUser, toUser, amount) {
+    try {
+      const cfg = await this.getGuildConfig(guild.id);
+      const cat = cfg.categories.economy;
+      if (!cat?.enabled || !cat.logTransfers) return;
+      const embed = new EmbedBuilder()
+        .setColor(0x2ecc71)
+        .setTitle('💸 Transfert')
+        .addFields(
+          { name: 'De', value: `${fromUser.tag} (<@${fromUser.id}>)`, inline: true },
+          { name: 'À', value: `${toUser.tag} (<@${toUser.id}>)`, inline: true },
+          { name: 'Montant', value: `${amount}💋`, inline: true }
+        )
+        .setTimestamp(new Date());
+      await this.sendToCategory(guild, 'economy', embed);
+    } catch {}
+  }
+
+  async logAdminMoneyAdd(guild, targetUser, amount, moderatorUser) {
+    try {
+      const cfg = await this.getGuildConfig(guild.id);
+      const cat = cfg.categories.economy;
+      if (!cat?.enabled || !cat.logAdminChanges) return;
+      const embed = new EmbedBuilder()
+        .setColor(0xe91e63)
+        .setTitle('➕ Ajout d’argent (Admin)')
+        .addFields(
+          { name: 'Utilisateur', value: `${targetUser.tag} (<@${targetUser.id}>)`, inline: true },
+          { name: 'Montant', value: `+${amount}💋`, inline: true },
+          { name: 'Modérateur', value: `${moderatorUser?.tag || '—'}`, inline: true }
+        )
+        .setTimestamp(new Date());
+      await this.sendToCategory(guild, 'economy', embed);
+    } catch {}
+  }
+
+  async logAdminMoneyRemove(guild, targetUser, amount, moderatorUser) {
+    try {
+      const cfg = await this.getGuildConfig(guild.id);
+      const cat = cfg.categories.economy;
+      if (!cat?.enabled || !cat.logAdminChanges) return;
+      const embed = new EmbedBuilder()
+        .setColor(0xe74c3c)
+        .setTitle('➖ Retrait d’argent (Admin)')
+        .addFields(
+          { name: 'Utilisateur', value: `${targetUser.tag} (<@${targetUser.id}>)`, inline: true },
+          { name: 'Montant', value: `-${amount}💋`, inline: true },
+          { name: 'Modérateur', value: `${moderatorUser?.tag || '—'}`, inline: true }
+        )
+        .setTimestamp(new Date());
+      await this.sendToCategory(guild, 'economy', embed);
+    } catch {}
+  }
+
+  async logMessageReward(message, amount) {
+    try {
+      const cfg = await this.getGuildConfig(message.guild.id);
+      const cat = cfg.categories.economy;
+      if (!cat?.enabled || !cat.logRewards) return;
+      const embed = new EmbedBuilder()
+        .setColor(0x3498db)
+        .setTitle('💬 Récompense Message')
+        .addFields(
+          { name: 'Utilisateur', value: `${message.author.tag} (<@${message.author.id}>)`, inline: true },
+          { name: 'Montant', value: `+${amount}💋`, inline: true },
+          { name: 'Salon', value: `<#${message.channel.id}>`, inline: true }
+        )
+        .setTimestamp(new Date());
+      await this.sendToCategory(message.guild, 'economy', embed);
     } catch {}
   }
 }

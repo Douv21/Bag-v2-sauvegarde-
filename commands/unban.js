@@ -20,6 +20,10 @@ module.exports = {
     const userId = interaction.options.getString('userid', true);
     const reason = interaction.options.getString('raison') || 'Aucun motif';
     await guild.bans.remove(userId, reason).catch(() => {});
+    try {
+      const user = await interaction.client.users.fetch(userId).catch(() => ({ id: userId, tag: `User ${userId}` }));
+      await interaction.client.logManager?.logUnban(guild, user, interaction.user);
+    } catch {}
     return interaction.reply({ content: `✅ Utilisateur ${userId} débanni.`, flags: 64 });
   }
 };

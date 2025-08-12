@@ -19,7 +19,8 @@ class LogsConfigHandler {
         { name: '📝 Messages', value: `${c.messages.enabled ? '✅' : '❌'} <#${c.messages.channelId || 'non-configuré'}> • Éditions: ${c.messages.logEdits ? '✅' : '❌'} • Suppressions: ${c.messages.logDeletes ? '✅' : '❌'}` },
         { name: '🛡️ Modération', value: `${c.moderation.enabled ? '✅' : '❌'} <#${c.moderation.channelId || 'non-configuré'}>` },
         { name: '👥 Arrivées/Départs', value: `${c.members.enabled ? '✅' : '❌'} <#${c.members.channelId || 'non-configuré'}>` },
-        { name: '🏷️ Pseudos', value: `${c.nicknames.enabled ? '✅' : '❌'} <#${c.nicknames.channelId || 'non-configuré'}>` }
+        { name: '🏷️ Pseudos', value: `${c.nicknames.enabled ? '✅' : '❌'} <#${c.nicknames.channelId || 'non-configuré'}>` },
+        { name: '💰 Économie', value: `${c.economy.enabled ? '✅' : '❌'} <#${c.economy.channelId || 'non-configuré'}>` }
       );
 
     const rows = [
@@ -38,6 +39,10 @@ class LogsConfigHandler {
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('logs_toggle_nicknames').setLabel('Activer/Arrêter Pseudos').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('logs_set_channel_nicknames').setLabel('Salon Pseudos').setStyle(ButtonStyle.Primary)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_toggle_economy').setLabel('Activer/Arrêter Économie').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_set_channel_economy').setLabel('Salon Économie').setStyle(ButtonStyle.Primary)
       )
     ];
 

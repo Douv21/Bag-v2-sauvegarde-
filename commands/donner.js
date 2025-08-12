@@ -96,6 +96,11 @@ module.exports = {
                 .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 60000)} minutes` });
                 
             await interaction.reply({ content: `<@${targetUser.id}>`, embeds: [embed] });
+
+            // Log économie: transfert
+            try {
+                await interaction.client.logManager?.logTransfer(interaction.guild, interaction.user, targetUser, amount);
+            } catch {}
             
             // Notification privée au bénéficiaire
             try {

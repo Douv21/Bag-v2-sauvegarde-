@@ -2585,6 +2585,9 @@ class RenderSolutionBot {
             
             await dataManager.updateUser(userId, guildId, user);
             
+            // Log économie: récompense message
+            try { await this.logManager?.logMessageReward(message, guildConfig.amount); } catch {}
+            
             console.log(`💰 ${message.author.tag} a gagné ${guildConfig.amount}€ en envoyant un message`);
             
         } catch (error) {
