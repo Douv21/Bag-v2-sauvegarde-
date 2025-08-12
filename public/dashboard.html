@@ -226,6 +226,33 @@
             50% { opacity: 0.7; transform: scale(1.2); }
         }
 
+        .server-select {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-accent);
+            padding: 0.35rem 0.6rem;
+            border-radius: 12px;
+        }
+        .server-select select {
+            background: transparent;
+            color: var(--text-primary);
+            border: none;
+            outline: none;
+        }
+        .server-select .btn-refresh {
+            background: rgba(229, 62, 62, 0.15);
+            border: 1px solid var(--border-accent);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+        }
+        .server-select .btn-refresh:hover {
+            background: rgba(229, 62, 62, 0.25);
+        }
+
         /* Layout Principal */
         .main-container {
             max-width: 1600px;
@@ -1169,7 +1196,7 @@
             </div>
             <div class="header-stats">
                 <div class="stat-item">
-                    <div class="stat-icon"></div>
+                    <div class="stat-icon status-indicator"></div>
                     <span>Bot en ligne</span>
                 </div>
                 <div class="stat-item">
@@ -1179,6 +1206,13 @@
                 <div class="stat-item">
                     <i class="fas fa-users"></i>
                     <span id="user-count">0 utilisateurs</span>
+                </div>
+                <div class="server-select">
+                    <i class="fas fa-layer-group"></i>
+                    <select id="serverSelector"></select>
+                    <button class="btn-refresh" id="refreshOverview" title="Actualiser">
+                        <i class="fas fa-rotate"></i>
+                    </button>
                 </div>
             </div>
         </div>
