@@ -2721,6 +2721,12 @@ class RenderSolutionBot {
         try {
             const userId = newState.id;
             const guild = newState.guild;
+
+            // Skip bots entirely for voice XP
+            const member = newState.member || oldState.member;
+            if (!member || (member.user && member.user.bot)) {
+                return;
+            }
             
             // Utilisateur rejoint un canal vocal (n'était pas en vocal avant)
             if (!oldState.channel && newState.channel) {
@@ -2741,6 +2747,13 @@ class RenderSolutionBot {
             this.voiceIntervals = new Map();
         }
         
+        // Skip if the member is a bot (safety net)
+        const cachedMember = guild.members.cache.get(userId);
+        if (cachedMember?.user?.bot) {
+            console.log(`🤖 Ignorer le suivi XP vocal pour un bot (${userId})`);
+            return;
+        }
+        
         // Si déjà en cours, arrêter l'ancien
         if (this.voiceIntervals.has(userId)) {
             clearInterval(this.voiceIntervals.get(userId));
@@ -2750,7 +2763,7 @@ class RenderSolutionBot {
         const interval = setInterval(async () => {
             try {
                 const result = await levelManager.addVoiceXP(userId, guild.id, {
-                    user: { username: `User${userId}` },
+                    user: { username: cachedMember?.user?.username || `User${userId}`, bot: false },
                     guild: guild
                 });
                 

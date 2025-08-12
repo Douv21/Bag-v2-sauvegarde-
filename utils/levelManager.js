@@ -289,6 +289,11 @@ class LevelManager {
 
     async addTextXP(userId, guildId, context = {}) {
         try {
+            // Skip bots entirely (safety net)
+            if (context?.user?.bot === true) {
+                return null;
+            }
+
             // Check cooldown
             const cooldownKey = `${guildId}_${userId}_text`;
             if (this.cooldowns.has(cooldownKey)) {
@@ -381,6 +386,11 @@ class LevelManager {
 
     async addVoiceXP(userId, guildId, context = {}) {
         try {
+            // Skip bots entirely (safety net)
+            if (context?.user?.bot === true) {
+                return null;
+            }
+
             const users = this.loadUsers();
             const userKey = `${guildId}_${userId}`;
             const userLevel = this.getUserLevel(userId, guildId);
@@ -710,74 +720,26 @@ class LevelManager {
 
     async sendRewardNotification(userId, role, level, guild, config) {
         try {
-            const channel = await guild.channels.fetch(config.notifications.channelId);
+            const channelId = config.notifications.channelId || config.notifications.channel;
+            const channel = await guild.channels.fetch(channelId);
             if (!channel || !channel.isTextBased()) {
-                console.log(`⚠️ Canal de notification non trouvé ou invalide: ${config.notifications.channelId}`);
+                console.log(`⚠️ Canal de notification non trouvé ou invalide: ${channelId}`);
                 return;
             }
-            
-            const user = await guild.members.fetch(userId);
-            if (!user) return;
-            
-            console.log(`🎁 Envoi notification récompense ${role.name} pour ${user.user.username} dans ${channel.name}`);
-            
-            // Préparer l'utilisateur avec ses rôles pour la génération de carte
-            const serverAvatar = user.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
-            const globalAvatar = user.user.displayAvatarURL?.({ format: 'png', size: 256 }) || null;
-            let finalAvatar = serverAvatar || globalAvatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
-            
-            if (finalAvatar && finalAvatar.includes('.webp')) {
-                finalAvatar = finalAvatar.replace('.webp', '.png');
-            }
 
-            const userWithRoles = {
-                id: user.user.id,
-                username: user.user.username || 'Unknown',
-                displayName: user.displayName || user.user.displayName || user.user.username || 'Unknown User',
-                avatarURL: finalAvatar,
-                roles: user.roles.cache.map(role => ({ name: role.name, id: role.id }))
-            };
+            const member = await guild.members.fetch(userId).catch(() => null);
+            const username = member?.user?.username || 'Unknown';
 
             const messageContent = {
-                content: `<@${userId}> 🏆 **Nouvelle récompense obtenue !**`,
+                content: `<@${userId}> 🏆 Rôle obtenu: ${role.name} (niveau ${level})`,
                 allowedMentions: { users: [userId] }
             };
-            
-            // Générer et ajouter la carte de récompense
-            try {
-                const cardBuffer = await levelCardGenerator.generateRewardCard(
-                    userWithRoles,
-                    `🏆 Rôle obtenu: ${role.name}`,
-                    level
-                );
-                
-                if (cardBuffer && cardBuffer.length > 0) {
-                    messageContent.files = [{
-                        attachment: cardBuffer,
-                        name: `reward_${userId}_${level}.png`
-                    }];
-                }
-            } catch (cardError) {
-                console.error('Erreur génération carte pour récompense:', cardError);
-                // Continue without card
-            }
-            
+
             await channel.send(messageContent);
-            console.log(`✅ Notification récompense envoyée pour ${user.user.username}`);
-            
+            console.log(`✅ Notification récompense envoyée pour ${username}`);
         } catch (error) {
             console.error('Erreur envoi notification récompense:', error);
         }
-    }
-
-    resetGuildProgress(guildId) {
-        const users = this.loadUsers();
-        const keysToDelete = Object.keys(users).filter(key => key.startsWith(`${guildId}_`));
-        
-        keysToDelete.forEach(key => delete users[key]);
-        
-        this.saveUsers(users);
-        return keysToDelete.length;
     }
 }
 
