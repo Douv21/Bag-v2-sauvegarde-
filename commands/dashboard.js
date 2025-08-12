@@ -20,8 +20,7 @@ module.exports = {
       .setColor('#ff2e88');
 
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setLabel('🌐 Ouvrir le Dashboard Web').setStyle(ButtonStyle.Link).setURL(dashboardUrl),
-      new ButtonBuilder().setCustomId('moderation_main').setLabel('🔞 Modération NSFW').setStyle(ButtonStyle.Primary)
+      new ButtonBuilder().setLabel('🌐 Ouvrir le Dashboard Web').setStyle(ButtonStyle.Link).setURL(dashboardUrl)
     );
 
     return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });

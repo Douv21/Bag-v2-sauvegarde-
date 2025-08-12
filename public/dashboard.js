@@ -193,10 +193,7 @@ class BAGDashboard {
                     console.log('💬 Affichage de la section confessions...');
                     await this.showConfessionsSection();
                     break;
-                case 'moderation':
-                    console.log('🛡️ Affichage de la section modération...');
-                    await this.showModerationSection();
-                    break;
+
                 case 'counting':
                     console.log('🔢 Affichage de la section comptage...');
                     await this.showCountingSection();
@@ -657,7 +654,7 @@ class BAGDashboard {
         `;
     }
 
-    async showModerationSection() {
+    async showModerationSection_REMOVED() {
         const container = document.getElementById('content-container');
         const guildId = (this.data.servers?.[0]?.id) || null;
 
@@ -1414,7 +1411,7 @@ class BAGDashboard {
             console.log(`✅ Navigation: ${navLinks.length} liens trouvés`);
             
             // Test des sections
-            const sections = ['overview', 'economy', 'levels', 'karma', 'confessions', 'moderation', 'backup', 'settings'];
+            const sections = ['overview', 'economy', 'levels', 'karma', 'confessions', 'backup', 'settings'];
             let workingSections = 0;
             
             for (const section of sections) {
