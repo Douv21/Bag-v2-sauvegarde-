@@ -295,6 +295,50 @@ class BAGDashboard {
                     console.log('🎵 Affichage de la section musique...');
                     await this.showMusicSection();
                     break;
+                case 'arrivals':
+                    console.log('🚪 Affichage de la section arrivées/départs...');
+                    await this.showArrivalsSection();
+                    break;
+                case 'autoroles':
+                    console.log('🏷️ Affichage de la section rôles automatiques...');
+                    await this.showAutoRolesSection();
+                    break;
+                case 'messages':
+                    console.log('✉️ Affichage de la section messages...');
+                    await this.showMessagesSection();
+                    break;
+                case 'automod':
+                    console.log('🛡️ Affichage de la section auto-modération...');
+                    await this.showAutoModSection();
+                    break;
+                case 'reactionroles':
+                    console.log('😀 Affichage de la section rôles-réactions...');
+                    await this.showReactionRolesSection();
+                    break;
+                case 'recurring':
+                    console.log('🔁 Affichage de la section messages récurrents...');
+                    await this.showRecurringSection();
+                    break;
+                case 'reports':
+                    console.log('🚩 Affichage de la section signalements...');
+                    await this.showReportsSection();
+                    break;
+                case 'social':
+                    console.log('🔔 Affichage de la section notifications sociales...');
+                    await this.showSocialNotifSection();
+                    break;
+                case 'tickets':
+                    console.log('🎫 Affichage de la section tickets...');
+                    await this.showTicketsSection();
+                    break;
+                case 'community':
+                    console.log('👥 Affichage de la section communautaire...');
+                    await this.showCommunitySection();
+                    break;
+                case 'suggestions':
+                    console.log('💡 Affichage de la section suggestions...');
+                    await this.showSuggestionsSection();
+                    break;
                 case 'backup':
                     console.log('💾 Affichage de la section sauvegardes...');
                     await this.showBackupSection();
@@ -366,6 +410,50 @@ class BAGDashboard {
             moderation: {
                 title: 'Modération Automatique',
                 subtitle: 'Outils et paramètres de modération du serveur'
+            },
+            arrivals: {
+                title: 'Arrivées & Départs',
+                subtitle: 'Messages de bienvenue et de départ, salon et visuels'
+            },
+            autoroles: {
+                title: 'Rôles automatiques',
+                subtitle: 'Attribuer automatiquement des rôles aux nouveaux membres'
+            },
+            messages: {
+                title: 'Messages prédéfinis',
+                subtitle: 'Messages automatiques, templates et variables'
+            },
+            automod: {
+                title: 'Auto-Modération',
+                subtitle: 'Filtres, limites et règles de modération'
+            },
+            reactionroles: {
+                title: 'Rôles-Réactions',
+                subtitle: 'Associer des réactions à des rôles sur des messages'
+            },
+            recurring: {
+                title: 'Messages récurrents',
+                subtitle: 'Planifier des messages périodiques'
+            },
+            reports: {
+                title: 'Signalements',
+                subtitle: 'Configuration du système de reports et salon'
+            },
+            social: {
+                title: 'Notifications sociales',
+                subtitle: 'Flux d'annonces Twitter/Twitch/YouTube'
+            },
+            tickets: {
+                title: 'Tickets',
+                subtitle: 'Système de support par tickets'
+            },
+            community: {
+                title: 'Communautaire',
+                subtitle: 'Utilitaires et configuration pour l'animation de la communauté'
+            },
+            suggestions: {
+                title: 'Suggestions',
+                subtitle: 'Boîte à idées et votes'
             },
             backup: {
                 title: 'Sauvegardes & Données',
@@ -2044,6 +2132,140 @@ class BAGDashboard {
     destroy() {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
+        }
+    }
+
+    // Sections simples branchées sur /api/config/:name
+    async showArrivalsSection() {
+        await this.renderSimpleConfig('arrivals', [
+            { id: 'enabled', label: 'Activer', type: 'select', options: [['true','Activé'], ['false','Désactivé']] },
+            { id: 'channelId', label: 'Salon', type: 'text', placeholder: 'ID du salon' },
+            { id: 'welcomeMessage', label: 'Message de bienvenue', type: 'textarea', placeholder: 'Texte avec variables {user} {server}' },
+            { id: 'leaveMessage', label: 'Message de départ', type: 'textarea', placeholder: 'Texte au départ' }
+        ]);
+    }
+
+    async showAutoRolesSection() {
+        await this.renderSimpleConfig('autoroles', [
+            { id: 'enabled', label: 'Activer', type: 'select', options: [['true','Activé'], ['false','Désactivé']] },
+            { id: 'roleIds', label: 'Rôles à donner (IDs séparés par des virgules)', type: 'text', placeholder: '123,456' }
+        ]);
+    }
+
+    async showMessagesSection() {
+        await this.renderSimpleConfig('messages', [
+            { id: 'templates', label: 'Templates JSON', type: 'textarea', placeholder: '{"welcome":"..."}' }
+        ]);
+    }
+
+    async showAutoModSection() {
+        await this.renderSimpleConfig('automod', [
+            { id: 'badWords', label: 'Mots interdits (séparés par des virgules)', type: 'text' },
+            { id: 'capsLimit', label: 'Limite MAJUSCULES (%)', type: 'number' },
+            { id: 'spamInterval', label: 'Intervalle anti-spam (ms)', type: 'number' }
+        ]);
+    }
+
+    async showReactionRolesSection() {
+        await this.renderSimpleConfig('reactionroles', [
+            { id: 'messageId', label: 'ID du message', type: 'text' },
+            { id: 'mappings', label: 'Mapping JSON (emoji -> roleId)', type: 'textarea', placeholder: '{"✅":"123"}' }
+        ]);
+    }
+
+    async showRecurringSection() {
+        await this.renderSimpleConfig('recurring', [
+            { id: 'enabled', label: 'Activer', type: 'select', options: [['true','Activé'], ['false','Désactivé']] },
+            { id: 'cron', label: 'Expression CRON', type: 'text', placeholder: '0 12 * * *' },
+            { id: 'content', label: 'Contenu', type: 'textarea' }
+        ]);
+    }
+
+    async showReportsSection() {
+        await this.renderSimpleConfig('reports', [
+            { id: 'channelId', label: 'Salon des signalements', type: 'text' },
+            { id: 'pingRoles', label: 'Rôles ping (IDs, virgules)', type: 'text' }
+        ]);
+    }
+
+    async showSocialNotifSection() {
+        await this.renderSimpleConfig('social', [
+            { id: 'youtube', label: 'Chaînes YouTube (URLs, virgules)', type: 'text' },
+            { id: 'twitch', label: 'Chaînes Twitch (noms, virgules)', type: 'text' },
+            { id: 'twitter', label: 'Comptes X/Twitter (handles, virgules)', type: 'text' }
+        ]);
+    }
+
+    async showTicketsSection() {
+        await this.renderSimpleConfig('tickets', [
+            { id: 'enabled', label: 'Activer', type: 'select', options: [['true','Activé'], ['false','Désactivé']] },
+            { id: 'categoryId', label: 'Catégorie des tickets (ID)', type: 'text' },
+            { id: 'supportRoleId', label: 'Rôle support (ID)', type: 'text' }
+        ]);
+    }
+
+    async showCommunitySection() {
+        await this.renderSimpleConfig('community', [
+            { id: 'welcomeTips', label: 'Conseils d'accueil (texte)', type: 'textarea' },
+            { id: 'rulesMessageId', label: 'ID message des règles', type: 'text' }
+        ]);
+    }
+
+    async showSuggestionsSection() {
+        await this.renderSimpleConfig('suggestions', [
+            { id: 'channelId', label: 'Salon des suggestions (ID)', type: 'text' },
+            { id: 'minLength', label: 'Longueur minimale', type: 'number' }
+        ]);
+    }
+
+    // Helper: rendu d'un formulaire simple basé sur /api/config/:name
+    async renderSimpleConfig(name, fields) {
+        const container = document.getElementById('content-container');
+        const cfgRes = await this.apiCall(`/api/config/${name}`, 'GET');
+        const config = (cfgRes && cfgRes.data) || {};
+
+        const fieldHtml = fields.map(f => {
+            const val = (config[f.id] ?? '');
+            if (f.type === 'select') {
+                const opts = f.options.map(([v, label]) => `<option value="${v}" ${String(val)===String(v)?'selected':''}>${label}</option>`).join('');
+                return `<div class="config-item"><label class="config-label">${f.label}</label><select class="config-input" id="${name}_${f.id}">${opts}</select></div>`;
+            }
+            if (f.type === 'number') {
+                return `<div class="config-item"><label class="config-label">${f.label}</label><input type="number" class="config-input" id="${name}_${f.id}" value="${val}"/></div>`;
+            }
+            if (f.type === 'textarea') {
+                return `<div class="config-item"><label class="config-label">${f.label}</label><textarea class="config-input" id="${name}_${f.id}" placeholder="${f.placeholder||''}">${val}</textarea></div>`;
+            }
+            // text par défaut
+            return `<div class="config-item"><label class="config-label">${f.label}</label><input type="text" class="config-input" id="${name}_${f.id}" value="${val}" placeholder="${f.placeholder||''}"/></div>`;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title"><i class="fas fa-cog"></i> Configuration</h3>
+                </div>
+                <div class="config-grid">${fieldHtml}</div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="${name}_save"><i class="fas fa-save"></i> Sauvegarder</button>
+                </div>
+            </div>
+        `;
+
+        const saveBtn = document.getElementById(`${name}_save`);
+        if (saveBtn) {
+            saveBtn.addEventListener('click', async () => {
+                const payload = {};
+                for (const f of fields) {
+                    const el = document.getElementById(`${name}_${f.id}`);
+                    if (!el) continue;
+                    if (f.type === 'number') payload[f.id] = Number(el.value || 0);
+                    else if (f.type === 'select') payload[f.id] = el.value === 'true' ? true : el.value === 'false' ? false : el.value;
+                    else payload[f.id] = el.value;
+                }
+                const res = await this.apiCall(`/api/config/${name}`, 'POST', payload);
+                this.showNotification(res?.success ? 'Configuration sauvegardée' : 'Erreur lors de la sauvegarde', res?.success ? 'success' : 'error');
+            });
         }
     }
 }
