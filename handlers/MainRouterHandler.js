@@ -922,7 +922,7 @@ class MainRouterHandler {
                     new ButtonBuilder().setCustomId('moderation_enter_role_name').setStyle(ButtonStyle.Success).setLabel('✍️ Entrer le nom du rôle')
                 );
 
-                const components = [featureRow, row1, row2, row3, row4];
+                const components = [featureRow];
 
                 if (interaction.replied) {
                     await interaction.followUp({ embeds: [embed], components, ephemeral: true });
@@ -965,7 +965,7 @@ class MainRouterHandler {
                     const embed = new EmbedBuilder()
                         .setTitle('⚙️ Autokick sans rôle')
                         .setColor('#e91e63')
-                        .setDescription('Définissez le rôle requis et le délai de grâce. Les membres sans ce rôle seront exclus après le délai.')
+                        .setDescription('Choisissez le rôle requis et le délai. Les deux sont obligatoires avant validation.')
                         .addFields(
                             { name: 'État', value: cfg.roleEnforcement?.enabled ? '✅ Activé' : '❌ Désactivé', inline: true },
                             { name: 'Rôle requis', value: cfg.roleEnforcement?.requiredRoleName || '—', inline: true },
@@ -994,11 +994,16 @@ class MainRouterHandler {
                             ])
                     );
 
-                    const toggleRow = new ActionRowBuilder().addComponents(
-                        new ButtonBuilder().setCustomId('moderation_toggle_role').setStyle(ButtonStyle.Primary).setLabel(cfg.roleEnforcement?.enabled ? 'Désactiver' : 'Activer')
+                    const ready = Boolean((cfg.roleEnforcement?.requiredRoleName || cfg.roleEnforcement?.requiredRoleId) && (cfg.roleEnforcement?.gracePeriodMs || 0) > 0);
+                    const confirmRow = new ActionRowBuilder().addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('moderation_role_confirm')
+                            .setStyle(ButtonStyle.Success)
+                            .setLabel('Valider')
+                            .setDisabled(!ready)
                     );
 
-                    await interaction.update({ embeds: [embed], components: [featureSelector, roleRow, graceRow, toggleRow] });
+                    await interaction.update({ embeds: [embed], components: [featureSelector, roleRow, graceRow, confirmRow] });
                     return true;
                 }
 
@@ -1006,7 +1011,7 @@ class MainRouterHandler {
                     const embed = new EmbedBuilder()
                         .setTitle('⚙️ Autokick inactivité')
                         .setColor('#5865F2')
-                        .setDescription('Définissez le seuil d\'inactivité. Les membres inactifs au-delà de ce seuil seront exclus.')
+                        .setDescription('Choisissez le délai d\'inactivité avant exclusion. Obligatoire avant validation.')
                         .addFields(
                             { name: 'État', value: cfg.inactivity?.enabled ? '✅ Activé' : '❌ Désactivé', inline: true },
                             { name: 'Seuil (jours)', value: String(Math.round((cfg.inactivity?.thresholdMs || 0) / (24*60*60*1000))), inline: true }
@@ -1024,11 +1029,16 @@ class MainRouterHandler {
                             ])
                     );
 
-                    const toggleRow = new ActionRowBuilder().addComponents(
-                        new ButtonBuilder().setCustomId('moderation_toggle_inactivity').setStyle(ButtonStyle.Secondary).setLabel(cfg.inactivity?.enabled ? 'Désactiver' : 'Activer')
+                    const ready = Boolean((cfg.inactivity?.thresholdMs || 0) > 0);
+                    const confirmRow = new ActionRowBuilder().addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('moderation_inactivity_confirm')
+                            .setStyle(ButtonStyle.Success)
+                            .setLabel('Valider')
+                            .setDisabled(!ready)
                     );
 
-                    await interaction.update({ embeds: [embed], components: [featureSelector, daysRow, toggleRow] });
+                    await interaction.update({ embeds: [embed], components: [featureSelector, daysRow, confirmRow] });
                     return true;
                 }
 
@@ -1039,8 +1049,51 @@ class MainRouterHandler {
             if (customId === 'moderation_inactivity_days') {
                 const days = Number(interaction.values?.[0] || 30);
                 const thresholdMs = Math.max(1, days) * 24 * 60 * 60 * 1000;
-                await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), thresholdMs } });
-                await interaction.update({ content: `✅ Seuil d'inactivité défini à ${days} jours`, components: [], embeds: [] });
+                const updated = await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), thresholdMs } });
+
+                // Rerender feature view with updated readiness
+                const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js');
+                const featureSelector = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_feature_select')
+                        .setPlaceholder('Choisir la fonctionnalité à configurer')
+                        .addOptions([
+                            { label: 'Autokick sans rôle', value: 'feature_role', description: 'Kick si le rôle requis est absent après délai' },
+                            { label: 'Autokick inactivité', value: 'feature_inactivity', description: 'Kick après une période d\'inactivité' }
+                        ])
+                );
+
+                const embed = new EmbedBuilder()
+                    .setTitle('⚙️ Autokick inactivité')
+                    .setColor('#5865F2')
+                    .setDescription('Choisissez le délai d\'inactivité avant exclusion. Obligatoire avant validation.')
+                    .addFields(
+                        { name: 'État', value: updated.inactivity?.enabled ? '✅ Activé' : '❌ Désactivé', inline: true },
+                        { name: 'Seuil (jours)', value: String(days), inline: true }
+                    );
+
+                const daysRow = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_inactivity_days')
+                        .setPlaceholder('Seuil d\'inactivité (jours)')
+                        .addOptions([
+                            { label: '7 jours', value: '7' },
+                            { label: '14 jours', value: '14' },
+                            { label: '30 jours', value: '30' },
+                            { label: '60 jours', value: '60' }
+                        ])
+                );
+
+                const ready = Boolean((updated.inactivity?.thresholdMs || 0) > 0);
+                const confirmRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('moderation_inactivity_confirm')
+                        .setStyle(ButtonStyle.Success)
+                        .setLabel('Valider')
+                        .setDisabled(!ready)
+                );
+
+                await interaction.update({ embeds: [embed], components: [featureSelector, daysRow, confirmRow] });
                 return true;
             }
 
@@ -1048,8 +1101,61 @@ class MainRouterHandler {
             if (customId === 'moderation_role_grace_days') {
                 const days = Number(interaction.values?.[0] || 7);
                 const gracePeriodMs = Math.max(1, days) * 24 * 60 * 60 * 1000;
-                await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), gracePeriodMs } });
-                await interaction.update({ content: `✅ Délai du rôle requis défini à ${days} jours`, components: [], embeds: [] });
+                const updated = await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), gracePeriodMs } });
+
+                const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, RoleSelectMenuBuilder } = require('discord.js');
+                const featureSelector = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_feature_select')
+                        .setPlaceholder('Choisir la fonctionnalité à configurer')
+                        .addOptions([
+                            { label: 'Autokick sans rôle', value: 'feature_role', description: 'Kick si le rôle requis est absent après délai' },
+                            { label: 'Autokick inactivité', value: 'feature_inactivity', description: 'Kick après une période d\'inactivité' }
+                        ])
+                );
+
+                const embed = new EmbedBuilder()
+                    .setTitle('⚙️ Autokick sans rôle')
+                    .setColor('#e91e63')
+                    .setDescription('Choisissez le rôle requis et le délai. Les deux sont obligatoires avant validation.')
+                    .addFields(
+                        { name: 'État', value: updated.roleEnforcement?.enabled ? '✅ Activé' : '❌ Désactivé', inline: true },
+                        { name: 'Rôle requis', value: updated.roleEnforcement?.requiredRoleName || '—', inline: true },
+                        { name: 'Délai (jours)', value: String(days), inline: true }
+                    );
+
+                const roleRow = new ActionRowBuilder().addComponents(
+                    new RoleSelectMenuBuilder()
+                        .setCustomId('moderation_required_role')
+                        .setPlaceholder('Choisir le rôle requis')
+                        .setMinValues(1)
+                        .setMaxValues(1)
+                );
+
+                const graceRow = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_role_grace_days')
+                        .setPlaceholder('Délai rôle requis (jours)')
+                        .addOptions([
+                            { label: '2 jours', value: '2' },
+                            { label: '4 jours', value: '4' },
+                            { label: '5 jours', value: '5' },
+                            { label: '10 jours', value: '10' },
+                            { label: '20 jours', value: '20' },
+                            { label: '30 jours', value: '30' }
+                        ])
+                );
+
+                const ready = Boolean((updated.roleEnforcement?.requiredRoleName || updated.roleEnforcement?.requiredRoleId) && (updated.roleEnforcement?.gracePeriodMs || 0) > 0);
+                const confirmRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('moderation_role_confirm')
+                        .setStyle(ButtonStyle.Success)
+                        .setLabel('Valider')
+                        .setDisabled(!ready)
+                );
+
+                await interaction.update({ embeds: [embed], components: [featureSelector, roleRow, graceRow, confirmRow] });
                 return true;
             }
 
@@ -1079,13 +1185,93 @@ class MainRouterHandler {
                     return true;
                 }
             }
- 
+
+            // Nouveau: confirmation explicite après sélections obligatoires
+            if (customId === 'moderation_role_confirm') {
+                const latest = await modManager.getGuildConfig(guildId);
+                const hasRole = Boolean(latest.roleEnforcement?.requiredRoleName || latest.roleEnforcement?.requiredRoleId);
+                const hasDelay = (latest.roleEnforcement?.gracePeriodMs || 0) > 0;
+                if (!hasRole || !hasDelay) {
+                    await interaction.reply({ content: '❌ Veuillez choisir un rôle et un délai avant de valider.', ephemeral: true });
+                    return true;
+                }
+                await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(latest.roleEnforcement || {}), enabled: true } });
+                await interaction.update({ content: '✅ Autokick sans rôle activé.', components: [], embeds: [] });
+                return true;
+            }
+
+            if (customId === 'moderation_inactivity_confirm') {
+                const latest = await modManager.getGuildConfig(guildId);
+                const hasDelay = (latest.inactivity?.thresholdMs || 0) > 0;
+                if (!hasDelay) {
+                    await interaction.reply({ content: '❌ Veuillez choisir un délai d\'inactivité avant de valider.', ephemeral: true });
+                    return true;
+                }
+                await modManager.setGuildConfig(guildId, { inactivity: { ...(latest.inactivity || {}), enabled: true } });
+                await interaction.update({ content: '✅ Autokick inactivité activé.', components: [], embeds: [] });
+                return true;
+            }
+
             if (customId === 'moderation_required_role') {
                 const roleId = interaction.values?.[0];
                 const role = interaction.guild.roles.cache.get(roleId);
                 const roleName = role?.name || roleId;
-                await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleId: roleId, requiredRoleName: roleName } });
-                await interaction.update({ content: `✅ Rôle requis défini: ${roleName}`, components: [], embeds: [] });
+                const updated = await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleId: roleId, requiredRoleName: roleName } });
+
+                // Rerender feature view with updated readiness
+                const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, RoleSelectMenuBuilder } = require('discord.js');
+                const featureSelector = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_feature_select')
+                        .setPlaceholder('Choisir la fonctionnalité à configurer')
+                        .addOptions([
+                            { label: 'Autokick sans rôle', value: 'feature_role', description: 'Kick si le rôle requis est absent après délai' },
+                            { label: 'Autokick inactivité', value: 'feature_inactivity', description: 'Kick après une période d\'inactivité' }
+                        ])
+                );
+
+                const embed = new EmbedBuilder()
+                    .setTitle('⚙️ Autokick sans rôle')
+                    .setColor('#e91e63')
+                    .setDescription('Choisissez le rôle requis et le délai. Les deux sont obligatoires avant validation.')
+                    .addFields(
+                        { name: 'État', value: updated.roleEnforcement?.enabled ? '✅ Activé' : '❌ Désactivé', inline: true },
+                        { name: 'Rôle requis', value: updated.roleEnforcement?.requiredRoleName || '—', inline: true },
+                        { name: 'Délai (jours)', value: String(Math.round((updated.roleEnforcement?.gracePeriodMs || 0) / (24*60*60*1000))), inline: true }
+                    );
+
+                const roleRow = new ActionRowBuilder().addComponents(
+                    new RoleSelectMenuBuilder()
+                        .setCustomId('moderation_required_role')
+                        .setPlaceholder('Choisir le rôle requis')
+                        .setMinValues(1)
+                        .setMaxValues(1)
+                );
+
+                const graceRow = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_role_grace_days')
+                        .setPlaceholder('Délai rôle requis (jours)')
+                        .addOptions([
+                            { label: '2 jours', value: '2' },
+                            { label: '4 jours', value: '4' },
+                            { label: '5 jours', value: '5' },
+                            { label: '10 jours', value: '10' },
+                            { label: '20 jours', value: '20' },
+                            { label: '30 jours', value: '30' }
+                        ])
+                );
+
+                const ready = Boolean((updated.roleEnforcement?.requiredRoleName || updated.roleEnforcement?.requiredRoleId) && (updated.roleEnforcement?.gracePeriodMs || 0) > 0);
+                const confirmRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('moderation_role_confirm')
+                        .setStyle(ButtonStyle.Success)
+                        .setLabel('Valider')
+                        .setDisabled(!ready)
+                );
+
+                await interaction.update({ embeds: [embed], components: [featureSelector, roleRow, graceRow, confirmRow] });
                 return true;
             }
 
@@ -1112,8 +1298,62 @@ class MainRouterHandler {
             // Nouveau: gestion de soumission du modal rôle requis
             if (interaction.isModalSubmit() && customId === 'moderation_enter_role_name_modal') {
                 const roleName = interaction.fields.getTextInputValue('required_role_name_input');
-                await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleName: roleName } });
-                await interaction.reply({ content: `✅ Rôle requis défini: ${roleName}`, ephemeral: true });
+                const updated = await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleName: roleName } });
+
+                // Rerender role feature with readiness
+                const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, RoleSelectMenuBuilder } = require('discord.js');
+                const featureSelector = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_feature_select')
+                        .setPlaceholder('Choisir la fonctionnalité à configurer')
+                        .addOptions([
+                            { label: 'Autokick sans rôle', value: 'feature_role', description: 'Kick si le rôle requis est absent après délai' },
+                            { label: 'Autokick inactivité', value: 'feature_inactivity', description: 'Kick après une période d\'inactivité' }
+                        ])
+                );
+
+                const embed = new EmbedBuilder()
+                    .setTitle('⚙️ Autokick sans rôle')
+                    .setColor('#e91e63')
+                    .setDescription('Choisissez le rôle requis et le délai. Les deux sont obligatoires avant validation.')
+                    .addFields(
+                        { name: 'État', value: updated.roleEnforcement?.enabled ? '✅ Activé' : '❌ Désactivé', inline: true },
+                        { name: 'Rôle requis', value: updated.roleEnforcement?.requiredRoleName || '—', inline: true },
+                        { name: 'Délai (jours)', value: String(Math.round((updated.roleEnforcement?.gracePeriodMs || 0) / (24*60*60*1000))), inline: true }
+                    );
+
+                const roleRow = new ActionRowBuilder().addComponents(
+                    new RoleSelectMenuBuilder()
+                        .setCustomId('moderation_required_role')
+                        .setPlaceholder('Choisir le rôle requis')
+                        .setMinValues(1)
+                        .setMaxValues(1)
+                );
+
+                const graceRow = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_role_grace_days')
+                        .setPlaceholder('Délai rôle requis (jours)')
+                        .addOptions([
+                            { label: '2 jours', value: '2' },
+                            { label: '4 jours', value: '4' },
+                            { label: '5 jours', value: '5' },
+                            { label: '10 jours', value: '10' },
+                            { label: '20 jours', value: '20' },
+                            { label: '30 jours', value: '30' }
+                        ])
+                );
+
+                const ready = Boolean((updated.roleEnforcement?.requiredRoleName || updated.roleEnforcement?.requiredRoleId) && (updated.roleEnforcement?.gracePeriodMs || 0) > 0);
+                const confirmRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('moderation_role_confirm')
+                        .setStyle(ButtonStyle.Success)
+                        .setLabel('Valider')
+                        .setDisabled(!ready)
+                );
+
+                await interaction.reply({ embeds: [embed], components: [featureSelector, roleRow, graceRow, confirmRow], ephemeral: true });
                 return true;
             }
 
