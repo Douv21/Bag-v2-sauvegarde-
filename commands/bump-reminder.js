@@ -1,9 +1,11 @@
-const { SlashCommandBuilder, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, ChannelType, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('bump-reminder')
     .setDescription('Configurer les rappels de bump (Disboard et similaires)')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .setDMPermission(false)
     .addSubcommand(sc => sc.setName('enable').setDescription('Activer les rappels'))
     .addSubcommand(sc => sc.setName('disable').setDescription('Désactiver les rappels'))
     .addSubcommand(sc => sc.setName('set-channel')
