@@ -427,29 +427,37 @@ class BumpInteractionHandler {
             .setTimestamp();
 
         const successPlatforms = results.filter(r => r.success);
-        const failedPlatforms = results.filter(r => !r.success);
+        const failedPlatforms = results.filter(r => !r.success && !r.manual);
+        const manualPlatforms = results.filter(r => r.manual);
 
         if (successPlatforms.length > 0) {
             const successText = successPlatforms
-                .map(r => `${this.bumpManager.platforms[r.platform].emoji} ${this.bumpManager.platforms[r.platform].name}`)
+                .map(r => `${this.bumpManager.platforms[r.platform].emoji} ${this.bumpManager.platforms[r.platform].name}${r.message ? ` — ${r.message}` : ''}`)
                 .join('\n');
-            resultsEmbed.addFields({ name: '✅ Succès', value: successText, inline: true });
+            resultsEmbed.addFields({ name: '✅ Succès', value: successText, inline: false });
         }
 
         if (failedPlatforms.length > 0) {
             const failedText = failedPlatforms
-                .map(r => `${this.bumpManager.platforms[r.platform].emoji} ${this.bumpManager.platforms[r.platform].name}`)
+                .map(r => `${this.bumpManager.platforms[r.platform].emoji} ${this.bumpManager.platforms[r.platform].name}${r.message ? ` — ${r.message}` : ''}`)
                 .join('\n');
-            resultsEmbed.addFields({ name: '❌ Échecs', value: failedText, inline: true });
+            resultsEmbed.addFields({ name: '❌ Échecs', value: failedText, inline: false });
+        }
+
+        if (manualPlatforms.length > 0) {
+            const manualText = manualPlatforms
+                .map(r => `${this.bumpManager.platforms[r.platform].emoji} ${this.bumpManager.platforms[r.platform].name}${r.message ? ` — ${r.message}` : ''}`)
+                .join('\n');
+            resultsEmbed.addFields({ name: 'ℹ️ Action requise', value: manualText, inline: false });
         }
 
         // Définir la couleur en fonction des résultats
-        if (failedPlatforms.length === 0) {
+        if (failedPlatforms.length === 0 && manualPlatforms.length === 0) {
             resultsEmbed.setColor('#00ff00').setDescription('Tous les bumps ont été effectués avec succès !');
-        } else if (successPlatforms.length === 0) {
-            resultsEmbed.setColor('#ff0000').setDescription('Tous les bumps ont échoué.');
+        } else if (successPlatforms.length === 0 && manualPlatforms.length === 0) {
+            resultsEmbed.setColor('#ff0000').setDescription('Tous les bumps automatisés ont échoué.');
         } else {
-            resultsEmbed.setColor('#ffcc00').setDescription('Certains bumps ont réussi, d\'autres ont échoué.');
+            resultsEmbed.setColor('#ffcc00').setDescription('Certains bumps ont réussi ou nécessitent une action manuelle.');
         }
 
         const backButton = new ActionRowBuilder()

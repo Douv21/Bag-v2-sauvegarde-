@@ -577,6 +577,7 @@ class RenderSolutionBot {
         // Initialisation du système de bump (DataManager Mongo + BumpManager)
         this.coreDataManager = new DataManager();
         this.bumpManager = new BumpManager(this.coreDataManager);
+        this.bumpManager.setClient(this.client);
         this.client.bumpManager = this.bumpManager;
         this.bumpInteractionHandler = new BumpInteractionHandler(this.bumpManager);
         this.configBumpHandler = new ConfigBumpHandler(this.bumpManager);

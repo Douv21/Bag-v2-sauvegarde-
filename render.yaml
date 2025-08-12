@@ -12,6 +12,14 @@ services:
         fromSecret: DISCORD_TOKEN
       - key: CLIENT_ID
         fromSecret: DISCORD_CLIENT_ID
+      - key: TOPGG_TOKEN
+        fromSecret: TOPGG_TOKEN
+      - key: DBL_TOKEN
+        fromSecret: DBL_TOKEN
+      - key: DISCORD_BOATS_TOKEN
+        fromSecret: DISCORD_BOATS_TOKEN
+      - key: DISCORD_BOTS_GG_TOKEN
+        fromSecret: DISCORD_BOTS_GG_TOKEN
       - key: RENDER_EXTERNAL_URL
         fromService:
           type: web

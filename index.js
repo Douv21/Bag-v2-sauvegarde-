@@ -70,6 +70,7 @@ class BagBotRender {
         this.dataManager = new DataManager();
         this.karmaManager = new KarmaManager(this.dataManager);
         this.bumpManager = new BumpManager(this.dataManager);
+        this.bumpManager.setClient(this.client);
         this.interactionHandler = new InteractionHandler(this.dataManager);
         this.bumpInteractionHandler = new BumpInteractionHandler(this.bumpManager);
         this.configBumpHandler = new ConfigBumpHandler(this.bumpManager);
