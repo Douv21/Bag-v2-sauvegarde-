@@ -909,7 +909,12 @@ class MainRouterHandler {
                         .addOptions(roles.map(r => ({ label: r.name, value: r.name })))
                 ) : null;
 
-                const components = row3 ? [row1, row2, row3] : [row1, row2];
+                // Nouveau: bouton pour saisir manuellement le nom du rôle
+                const row4 = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('moderation_enter_role_name').setStyle(ButtonStyle.Success).setLabel('✍️ Entrer le nom du rôle')
+                );
+
+                const components = row3 ? [row1, row2, row3, row4] : [row1, row2, row4];
 
                 if (interaction.replied) {
                     await interaction.followUp({ embeds: [embed], components, ephemeral: true });
@@ -1075,6 +1080,34 @@ class MainRouterHandler {
                 const roleName = interaction.values?.[0];
                 await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleName: roleName } });
                 await interaction.update({ content: `✅ Rôle requis défini: ${roleName}`, components: [], embeds: [] });
+                return true;
+            }
+
+            // Nouveau: ouvrir un modal pour saisir le nom du rôle requis
+            if (customId === 'moderation_enter_role_name') {
+                const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+                const modal = new ModalBuilder()
+                    .setCustomId('moderation_enter_role_name_modal')
+                    .setTitle('Nom du rôle requis');
+
+                const input = new TextInputBuilder()
+                    .setCustomId('required_role_name_input')
+                    .setLabel('Nom exact du rôle (insensible à la casse)')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(100)
+                    .setPlaceholder('Ex: Membre Vérifié');
+
+                modal.addComponents(new ActionRowBuilder().addComponents(input));
+                await interaction.showModal(modal);
+                return true;
+            }
+
+            // Nouveau: gestion de soumission du modal rôle requis
+            if (interaction.isModalSubmit() && customId === 'moderation_enter_role_name_modal') {
+                const roleName = interaction.fields.getTextInputValue('required_role_name_input');
+                await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleName: roleName } });
+                await interaction.reply({ content: `✅ Rôle requis défini: ${roleName}`, ephemeral: true });
                 return true;
             }
 

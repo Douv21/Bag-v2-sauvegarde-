@@ -1,9 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('config-moderation')
-    .setDescription('Configurer séparément: autokick sans rôle OU autokick inactivité')
+    .setDescription('Ouvrir le menu de configuration de la modération')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
 
   cooldown: 2,
@@ -13,24 +13,17 @@ module.exports = {
       return interaction.reply({ content: '❌ Réservé aux administrateurs.', ephemeral: true });
     }
 
-    const guild = interaction.guild;
-    const mod = interaction.client.moderationManager;
-    const cfg = await mod.getGuildConfig(guild.id);
-
     const embed = new EmbedBuilder()
       .setTitle('🛡️ Configuration Modération')
       .setColor('#e91e63')
-      .setDescription('Choisissez une fonctionnalité à configurer: Autokick sans rôle OU Autokick inactivité');
+      .setDescription('Cliquez sur le bouton ci-dessous pour ouvrir le menu de modération complet.');
 
-    const featureSelect = new StringSelectMenuBuilder()
-      .setCustomId('moderation_feature_select')
-      .setPlaceholder('Choisir la fonctionnalité à configurer')
-      .addOptions([
-        { label: 'Autokick sans rôle', value: 'feature_role', description: 'Kick si le rôle requis n\'est pas obtenu après un délai' },
-        { label: 'Autokick inactivité', value: 'feature_inactivity', description: 'Kick après une période d\'inactivité' }
-      ]);
-
-    const row = new ActionRowBuilder().addComponents(featureSelect);
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('moderation_main')
+        .setLabel('Ouvrir le menu Modération')
+        .setStyle(ButtonStyle.Primary)
+    );
 
     return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
   }
