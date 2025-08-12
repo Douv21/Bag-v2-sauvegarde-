@@ -50,9 +50,8 @@ const { errorHandler, ErrorLevels } = require('./utils/errorHandler');
 const { modalHandler } = require('./utils/modalHandler');
 const { wrapInteraction } = require('./utils/interactionWrapper');
 const DataManager = require('./managers/DataManager');
-const BumpManager = require('./managers/BumpManager');
-const BumpInteractionHandler = require('./handlers/BumpInteractionHandler');
-const ConfigBumpHandler = require('./handlers/ConfigBumpHandler');
+const ReminderManager = require('./managers/ReminderManager');
+const ReminderInteractionHandler = require('./handlers/ReminderInteractionHandler');
 
 // Voice dependency report (optional, helps diagnose encryption libs on Render)
 try {
@@ -574,12 +573,11 @@ class RenderSolutionBot {
             ]
         });
 
-        // Initialisation du système de bump (DataManager Mongo + BumpManager)
+        // Initialisation DataManager + ReminderManager (rappels de bump)
         this.coreDataManager = new DataManager();
-        this.bumpManager = new BumpManager(this.coreDataManager);
-        this.client.bumpManager = this.bumpManager;
-        this.bumpInteractionHandler = new BumpInteractionHandler(this.bumpManager);
-        this.configBumpHandler = new ConfigBumpHandler(this.bumpManager);
+        this.reminderManager = new ReminderManager(this.coreDataManager, this.client);
+        this.client.reminderManager = this.reminderManager;
+        this.reminderInteractionHandler = new ReminderInteractionHandler(this.reminderManager);
 
         this.commands = new Collection();
         await this.loadCommands();
@@ -629,17 +627,12 @@ class RenderSolutionBot {
             console.log(`🏰 ${this.client.guilds.cache.size} serveur(s)`);
             console.log(`📋 Commandes disponibles: ${this.commands.size}`);
             
-            // Initialiser la base de données bump et auto-bumps
+            // Initialiser les rappels de bump
             try {
-                const ok = await this.bumpManager.initializeDatabase();
-                if (ok) {
-                    console.log('✅ Base de données bump initialisée');
-                    await this.bumpManager.initializeAllAutoBumps(this.client);
-                } else {
-                    console.log('⚠️ Système de bump en mode dégradé (MongoDB non connecté)');
-                }
-            } catch (bumpInitError) {
-                console.error('❌ Erreur initialisation système de bump:', bumpInitError);
+                await this.reminderManager.initialize();
+                console.log('🔔 Rappels de bump initialisés');
+            } catch (remError) {
+                console.error('❌ Erreur initialisation rappels de bump:', remError);
             }
             
             // Initialiser le moteur musique (DisTube)
@@ -717,23 +710,14 @@ class RenderSolutionBot {
                     return;
                 }
 
-                // Gestion des interactions du système de bump
-                if ((interaction.isButton() || (interaction.isStringSelectMenu && interaction.isStringSelectMenu())) && interaction.customId && interaction.customId.startsWith('bump_')) {
+                // Rappels de bump (boutons)
+                if (interaction.isButton() && interaction.customId && (interaction.customId.startsWith('bump_reminder_done_') || interaction.customId.startsWith('bump_reminder_info_'))) {
                     try {
-                        await this.bumpInteractionHandler.handleInteraction(interaction);
+                        const handled = await this.reminderInteractionHandler.handleInteraction(interaction);
+                        if (handled) return;
                     } catch (e) {
-                        console.warn('⚠️ Erreur BumpInteractionHandler:', e?.message || e);
+                        console.warn('⚠️ Erreur ReminderInteractionHandler:', e?.message || e);
                     }
-                    return;
-                }
-
-                if ((interaction.isButton() || (interaction.isStringSelectMenu && interaction.isStringSelectMenu()) || interaction.isModalSubmit()) && interaction.customId && interaction.customId.startsWith('config_bump_')) {
-                    try {
-                        await this.configBumpHandler.handleInteraction(interaction);
-                    } catch (e) {
-                        console.warn('⚠️ Erreur ConfigBumpHandler:', e?.message || e);
-                    }
-                    return;
                 }
 
                 await this.handleInteraction(interaction);

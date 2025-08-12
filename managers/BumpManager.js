@@ -78,6 +78,13 @@ class BumpManager {
         
         // Planificateur pour bumps automatiques
         this.autoScheduler = new Map(); // guildId -> intervalId
+
+        // Référence client Discord (injectée au runtime)
+        this.client = null;
+    }
+
+    setClient(client) {
+        this.client = client;
     }
 
     /**
@@ -228,26 +235,29 @@ class BumpManager {
             const now = Date.now();
 
             for (const platform of platforms) {
-                // Simuler l'API call (à remplacer par de vraies APIs)
-                const success = await this.callPlatformAPI(platform, guildId);
-                
-                if (success) {
-                    // Mettre à jour le cooldown
-                    await this.dataManager.db.collection('bumpCooldowns').updateOne(
-                        { guildId, platform },
-                        { 
-                            $set: { 
-                                lastBump: now,
-                                userId,
-                                updatedAt: new Date()
-                            }
-                        },
-                        { upsert: true }
-                    );
+                const apiResult = await this.callPlatformAPI(platform, guildId);
 
-                    results.push({ platform, success: true });
+                if (apiResult && apiResult.success) {
+                    // Mettre à jour le cooldown uniquement si succès réel
+                    if (this.dataManager.db) {
+                        await this.dataManager.db.collection('bumpCooldowns').updateOne(
+                            { guildId, platform },
+                            { 
+                                $set: { 
+                                    lastBump: now,
+                                    userId,
+                                    updatedAt: new Date()
+                                }
+                            },
+                            { upsert: true }
+                        );
+                    }
+
+                    results.push({ platform, success: true, manual: false, message: apiResult.message });
                 } else {
-                    results.push({ platform, success: false, error: 'API Error' });
+                    const manual = Boolean(apiResult && apiResult.manual);
+                    const message = apiResult && apiResult.message ? apiResult.message : (apiResult && apiResult.error) || 'API Error';
+                    results.push({ platform, success: false, manual, message });
                 }
             }
 
@@ -259,17 +269,240 @@ class BumpManager {
     }
 
     /**
-     * Appelle l'API d'une plateforme (simulation)
+     * Appelle l'API d'une plateforme (réel ou guidé)
      */
     async callPlatformAPI(platform, guildId) {
-        // Simulation d'appel API
-        // Dans un vrai cas, ici on appellerait les vraies APIs
-        return new Promise(resolve => {
-            setTimeout(() => {
-                // 90% de chance de succès
-                resolve(Math.random() > 0.1);
-            }, Math.random() * 2000 + 500);
+        // Sélecteur par plateforme
+        try {
+            switch (platform) {
+                case 'disboard':
+                    return await this.handleDisboardManualBump(guildId);
+                case 'topgg':
+                    return await this.postTopGGStats();
+                case 'discordbotlist':
+                    return await this.postDiscordBotListStats();
+                case 'discordboats':
+                    return await this.postDiscordBoatsStats();
+                case 'discordbots':
+                    return await this.postDiscordBotsGGStats();
+                default:
+                    // Plateformes NSFW fictives ou non supportées en automatisation
+                    return { success: false, error: 'Plateforme non supportée en bump automatique.' };
+            }
+        } catch (error) {
+            console.error(`❌ Error calling API for ${platform}:`, error);
+            return { success: false, error: error.message || 'Unhandled error' };
+        }
+    }
+
+    // --- Helpers spécifiques plateformes ---
+
+    async handleDisboardManualBump(guildId) {
+        // Disboard n'expose pas d'API pour lancer /bump. On guide l'action utilisateur.
+        const config = await this.getBumpConfig(guildId);
+        const channelId = config.bumpChannelId;
+
+        if (!this.client) {
+            return { success: false, manual: true, message: 'Client Discord non initialisé. Impossible d’envoyer les instructions.' };
+        }
+        if (!channelId) {
+            return { success: false, manual: true, message: 'Aucun canal de bump configuré. Définissez-en un avec /bump-config channel.' };
+        }
+
+        try {
+            const channel = await this.client.channels.fetch(channelId);
+            if (!channel) {
+                return { success: false, manual: true, message: 'Canal de bump introuvable.' };
+            }
+
+            const instruction = 'Pour Disboard, exécutez la commande /bump avec le bot DISBOARD dans ce canal pour effectuer un vrai bump.';
+            await channel.send({ content: `📢 ${instruction}` });
+
+            return { success: false, manual: true, message: instruction };
+        } catch (error) {
+            return { success: false, manual: true, message: `Impossible d’envoyer les instructions Disboard: ${error.message}` };
+        }
+    }
+
+    getNodeFetch() {
+        if (typeof fetch === 'function') {
+            return fetch;
+        }
+        try {
+            return require('undici').fetch;
+        } catch {
+            throw new Error('Aucune implémentation fetch disponible. Node 18+ ou undici requis.');
+        }
+    }
+
+    getBotIdFor(platformKey) {
+        // Par défaut, utiliser CLIENT_ID si l’ID spécifique n’est pas fourni
+        const env = process.env;
+        switch (platformKey) {
+            case 'topgg':
+                return env.TOPGG_BOT_ID || env.CLIENT_ID;
+            case 'discordbotlist':
+                return env.DBL_BOT_ID || env.CLIENT_ID;
+            case 'discordboats':
+                return env.DISCORD_BOATS_BOT_ID || env.CLIENT_ID;
+            case 'discordbots':
+                return env.DISCORD_BOTS_GG_BOT_ID || env.CLIENT_ID;
+            default:
+                return env.CLIENT_ID;
+        }
+    }
+
+    getServerCount() {
+        try {
+            return this.client?.guilds?.cache?.size || 0;
+        } catch {
+            return 0;
+        }
+    }
+
+    async postTopGGStats() {
+        const token = process.env.TOPGG_TOKEN;
+        const botId = this.getBotIdFor('topgg');
+        if (!token || !botId) {
+            return { success: false, error: 'TOPGG_TOKEN ou BOT_ID manquant' };
+        }
+        const url = `https://top.gg/api/bots/${botId}/stats`;
+        const body = { server_count: this.getServerCount() };
+        return this.postJSON(url, token, body, 'Top.gg stats mises à jour');
+    }
+
+    async postDiscordBotListStats() {
+        const token = process.env.DBL_TOKEN; // discordbotlist.com
+        const botId = this.getBotIdFor('discordbotlist');
+        if (!token || !botId) {
+            return { success: false, error: 'DBL_TOKEN ou BOT_ID manquant' };
+        }
+        const url = `https://discordbotlist.com/api/v1/bots/${botId}/stats`;
+        const body = { guilds: this.getServerCount() };
+        return this.postJSON(url, token, body, 'Discord Bot List stats mises à jour');
+    }
+
+    async postDiscordBoatsStats() {
+        const token = process.env.DISCORD_BOATS_TOKEN; // discord.boats
+        const botId = this.getBotIdFor('discordboats');
+        if (!token || !botId) {
+            return { success: false, error: 'DISCORD_BOATS_TOKEN ou BOT_ID manquant' };
+        }
+        const url = `https://discord.boats/api/bot/${botId}`;
+        const body = { server_count: this.getServerCount() };
+        return this.postJSON(url, token, body, 'Discord Boats stats mises à jour');
+    }
+
+    async postDiscordBotsGGStats() {
+        const token = process.env.DISCORD_BOTS_GG_TOKEN; // discord.bots.gg
+        const botId = this.getBotIdFor('discordbots');
+        if (!token || !botId) {
+            return { success: false, error: 'DISCORD_BOTS_GG_TOKEN ou BOT_ID manquant' };
+        }
+        const url = `https://discord.bots.gg/api/v1/bots/${botId}/stats`;
+        const body = { guildCount: this.getServerCount() };
+        return this.postJSON(url, token, body, 'Discord Bots GG stats mises à jour');
+    }
+
+    async postJSON(url, token, body, okMessage) {
+        const doFetch = this.getNodeFetch();
+        const response = await doFetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
         });
+        if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            return { success: false, error: `HTTP ${response.status} ${response.statusText} - ${text}` };
+        }
+        return { success: true, message: okMessage };
+    }
+
+    // ========= Récupération d'informations (lecture) =========
+    getPlatformListingUrl(platform) {
+        const botId = this.getBotIdFor(platform);
+        switch (platform) {
+            case 'topgg':
+                return `https://top.gg/bot/${botId}`;
+            case 'discordbotlist':
+                return `https://discordbotlist.com/bots/${botId}`;
+            case 'discordboats':
+                return `https://discord.boats/bot/${botId}`;
+            case 'discordbots':
+                return `https://discord.bots.gg/bots/${botId}`;
+            case 'disboard':
+                // Disboard est orienté serveur : lien de serveur à fournir manuellement si connu
+                return null;
+            default:
+                return null;
+        }
+    }
+
+    async getJSON(url, token) {
+        const doFetch = this.getNodeFetch();
+        const response = await doFetch(url, {
+            method: 'GET',
+            headers: token ? { 'Authorization': token } : undefined
+        });
+        const text = await response.text();
+        let json = null;
+        try { json = JSON.parse(text); } catch {}
+        return { ok: response.ok, status: response.status, statusText: response.statusText, json, text };
+    }
+
+    async fetchPlatformData(platform) {
+        const botId = this.getBotIdFor(platform);
+        if (!botId) {
+            return { platform, ok: false, error: 'BOT_ID manquant', url: this.getPlatformListingUrl(platform) };
+        }
+        try {
+            switch (platform) {
+                case 'topgg': {
+                    const token = process.env.TOPGG_TOKEN;
+                    const url = `https://top.gg/api/bots/${botId}`;
+                    const { ok, status, statusText, json, text } = await this.getJSON(url, token);
+                    return { platform, ok, status, statusText, url: this.getPlatformListingUrl(platform), data: json || text };
+                }
+                case 'discordbotlist': {
+                    const token = process.env.DBL_TOKEN;
+                    const url = `https://discordbotlist.com/api/v1/bots/${botId}`;
+                    const { ok, status, statusText, json, text } = await this.getJSON(url, token);
+                    return { platform, ok, status, statusText, url: this.getPlatformListingUrl(platform), data: json || text };
+                }
+                case 'discordboats': {
+                    const token = process.env.DISCORD_BOATS_TOKEN;
+                    const url = `https://discord.boats/api/bot/${botId}`;
+                    const { ok, status, statusText, json, text } = await this.getJSON(url, token);
+                    return { platform, ok, status, statusText, url: this.getPlatformListingUrl(platform), data: json || text };
+                }
+                case 'discordbots': {
+                    const token = process.env.DISCORD_BOTS_GG_TOKEN;
+                    const url = `https://discord.bots.gg/api/v1/bots/${botId}`;
+                    const { ok, status, statusText, json, text } = await this.getJSON(url, token);
+                    return { platform, ok, status, statusText, url: this.getPlatformListingUrl(platform), data: json || text };
+                }
+                case 'disboard': {
+                    // Pas d'API officielle publique; on renvoie une info guidée
+                    return { platform, ok: false, url: null, note: 'Pas d’API officielle pour récupérer les données du serveur Disboard.' };
+                }
+                default:
+                    return { platform, ok: false, error: 'Plateforme non supportée' };
+            }
+        } catch (error) {
+            return { platform, ok: false, error: error.message };
+        }
+    }
+
+    async fetchPlatformsData(platforms) {
+        const unique = Array.from(new Set(platforms));
+        const results = [];
+        for (const p of unique) {
+            results.push(await this.fetchPlatformData(p));
+        }
+        return results;
     }
 
     /**

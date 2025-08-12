@@ -796,6 +796,25 @@ class ConfigBumpHandler {
             }).join('\n');
 
             embed.addFields({ name: 'État des Plateformes', value: platformStatus, inline: false });
+
+            // Récupérer des informations externes si possible
+            const fetched = await this.bumpManager.fetchPlatformsData(allPlatforms);
+            const infoLines = fetched.map(r => {
+                const p = this.bumpManager.platforms[r.platform]?.name || r.platform;
+                if (r.ok) {
+                    const summary = typeof r.data === 'object' ? (r.data.shortdesc || r.data.tagline || r.data.username || r.statusText) : r.data;
+                    const url = r.url ? `[Fiche](${r.url})` : '';
+                    return `✅ ${p} ${url} — ${summary ? String(summary).slice(0, 80) : 'OK'}`;
+                } else {
+                    if (r.note) return `ℹ️ ${p} — ${r.note}`;
+                    const url = r.url ? `[Fiche](${r.url})` : '';
+                    return `❌ ${p} ${url} — ${r.error || (r.status ? `HTTP ${r.status} ${r.statusText}` : 'Erreur')}`;
+                }
+            }).join('\n');
+
+            if (infoLines.length > 0) {
+                embed.addFields({ name: 'Infos Plateformes', value: infoLines, inline: false });
+            }
         }
 
         // Auto-bump
