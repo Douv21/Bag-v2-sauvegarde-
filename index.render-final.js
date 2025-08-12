@@ -567,7 +567,9 @@ class RenderSolutionBot {
                         enabled: false,
                         thresholdMs: 30 * 24 * 60 * 60 * 1000,
                         exemptRoleIds: [],
-                        exemptRoleNames: []
+                        exemptRoleNames: [],
+                        autoExemptRoleId: null,
+                        autoExemptRoleName: null
                     },
                     mute: { defaultDurationMs: 60 * 60 * 1000 }
                 };
@@ -602,7 +604,9 @@ class RenderSolutionBot {
                         enabled: Boolean(updates.inactivity?.enabled),
                         thresholdMs: Math.max(0, Number(updates.inactivity?.thresholdMs ?? existing.inactivity?.thresholdMs ?? 0)) || 0,
                         exemptRoleIds: Array.isArray(updates.inactivity?.exemptRoleIds) ? updates.inactivity.exemptRoleIds : (existing.inactivity?.exemptRoleIds || []),
-                        exemptRoleNames: Array.isArray(updates.inactivity?.exemptRoleNames) ? updates.inactivity.exemptRoleNames : (existing.inactivity?.exemptRoleNames || [])
+                        exemptRoleNames: Array.isArray(updates.inactivity?.exemptRoleNames) ? updates.inactivity.exemptRoleNames : (existing.inactivity?.exemptRoleNames || []),
+                        autoExemptRoleId: updates.inactivity?.autoExemptRoleId ?? existing.inactivity?.autoExemptRoleId ?? null,
+                        autoExemptRoleName: updates.inactivity?.autoExemptRoleName ?? existing.inactivity?.autoExemptRoleName ?? null
                     },
                     mute: {
                         defaultDurationMs: Math.max(0, Number(updates.mute?.defaultDurationMs ?? existing.mute?.defaultDurationMs ?? 60 * 60 * 1000))
