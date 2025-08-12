@@ -197,6 +197,30 @@ class BAGDashboard {
                     console.log('🛡️ Affichage de la section modération...');
                     await this.showModerationSection();
                     break;
+                case 'counting':
+                    console.log('🔢 Affichage de la section comptage...');
+                    await this.showCountingSection();
+                    break;
+                case 'autothread':
+                    console.log('🧵 Affichage de la section auto-threads...');
+                    await this.showAutothreadSection();
+                    break;
+                case 'shop':
+                    console.log('🏪 Affichage de la section boutique...');
+                    await this.showShopSection();
+                    break;
+                case 'logs':
+                    console.log('📜 Affichage de la section logs...');
+                    await this.showLogsSection();
+                    break;
+                case 'bump':
+                    console.log('📣 Affichage de la section bump...');
+                    await this.showBumpSection();
+                    break;
+                case 'music':
+                    console.log('🎵 Affichage de la section musique...');
+                    await this.showMusicSection();
+                    break;
                 case 'backup':
                     console.log('💾 Affichage de la section sauvegardes...');
                     await this.showBackupSection();
@@ -240,6 +264,30 @@ class BAGDashboard {
             confessions: {
                 title: 'Confessions Anonymes',
                 subtitle: 'Configuration des canaux et modération des confessions'
+            },
+            counting: {
+                title: 'Comptage Mathématique',
+                subtitle: 'Configuration des canaux et paramètres du comptage'
+            },
+            autothread: {
+                title: 'Auto-threads',
+                subtitle: 'Création automatique de fils et paramètres par canal'
+            },
+            shop: {
+                title: 'Boutique',
+                subtitle: 'Objets, rôles et remises basées sur le karma'
+            },
+            logs: {
+                title: 'Logs & Journalisation',
+                subtitle: 'Configuration des logs et niveaux de détail'
+            },
+            bump: {
+                title: 'Rappels Bump',
+                subtitle: 'Programmation et configuration des rappels de bump'
+            },
+            music: {
+                title: 'Musique',
+                subtitle: 'Contrôles et paramètres des fonctionnalités musicales'
             },
             moderation: {
                 title: 'Modération Automatique',
@@ -1120,6 +1168,240 @@ class BAGDashboard {
             console.error('Erreur sauvegarde confessions:', error);
             this.showNotification('Erreur lors de la sauvegarde', 'error');
         }
+    }
+
+    async showCountingSection() {
+        const container = document.getElementById('content-container');
+        const cfgRes = await this.apiCall('/api/config/counting', 'GET');
+        const config = (cfgRes && cfgRes.data) || { mathEnabled: true, reactionsEnabled: true, channels: [] };
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title"><i class="fas fa-hashtag"></i> Configuration Comptage</h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Mode mathématique</label>
+                        <select id="countingMath" class="config-input">
+                            <option value="true" ${config.mathEnabled ? 'selected' : ''}>Activé</option>
+                            <option value="false" ${!config.mathEnabled ? 'selected' : ''}>Désactivé</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Réactions</label>
+                        <select id="countingReactions" class="config-input">
+                            <option value="true" ${config.reactionsEnabled ? 'selected' : ''}>Activées</option>
+                            <option value="false" ${!config.reactionsEnabled ? 'selected' : ''}>Désactivées</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveCountingConfig()"><i class="fas fa-save"></i> Sauvegarder</button>
+                </div>
+            </div>
+        `;
+    }
+
+    async saveCountingConfig() {
+        const payload = {
+            mathEnabled: document.getElementById('countingMath').value === 'true',
+            reactionsEnabled: document.getElementById('countingReactions').value === 'true'
+        };
+        const res = await this.apiCall('/api/config/counting', 'POST', payload);
+        this.showNotification(res?.success ? 'Comptage sauvegardé' : 'Erreur sauvegarde comptage', res?.success ? 'success' : 'error');
+    }
+
+    async showAutothreadSection() {
+        const container = document.getElementById('content-container');
+        const cfgRes = await this.apiCall('/api/config/autothread', 'GET');
+        const config = (cfgRes && cfgRes.data) || { enabled: false, archiveDelay: 60, channels: [] };
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title"><i class="fas fa-comments"></i> Auto-threads</h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Activer</label>
+                        <select id="autoThreadEnabled" class="config-input">
+                            <option value="true" ${config.enabled ? 'selected' : ''}>Activé</option>
+                            <option value="false" ${!config.enabled ? 'selected' : ''}>Désactivé</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Auto-archivage (minutes)</label>
+                        <input id="autoThreadArchive" type="number" class="config-input" min="10" max="10080" value="${config.archiveDelay || 60}" />
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveAutothreadConfig()"><i class="fas fa-save"></i> Sauvegarder</button>
+                </div>
+            </div>
+        `;
+    }
+
+    async saveAutothreadConfig() {
+        const payload = {
+            enabled: document.getElementById('autoThreadEnabled').value === 'true',
+            archiveDelay: Number(document.getElementById('autoThreadArchive').value || 60)
+        };
+        const res = await this.apiCall('/api/config/autothread', 'POST', payload);
+        this.showNotification(res?.success ? 'Auto-threads sauvegardé' : 'Erreur sauvegarde auto-threads', res?.success ? 'success' : 'error');
+    }
+
+    async showShopSection() {
+        const container = document.getElementById('content-container');
+        const cfgRes = await this.apiCall('/api/config/shop', 'GET');
+        const config = (cfgRes && cfgRes.data) || { currency: '💰', taxRate: 0, items: [] };
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title"><i class="fas fa-store"></i> Boutique</h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Devise</label>
+                        <input id="shopCurrency" class="config-input" maxlength="4" value="${config.currency || '💰'}" />
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Taxe (%)</label>
+                        <input id="shopTax" type="number" class="config-input" min="0" max="100" step="0.5" value="${config.taxRate || 0}" />
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveShopConfig()"><i class="fas fa-save"></i> Sauvegarder</button>
+                </div>
+            </div>
+        `;
+    }
+
+    async saveShopConfig() {
+        const payload = {
+            currency: (document.getElementById('shopCurrency').value || '💰').slice(0, 4),
+            taxRate: Number(document.getElementById('shopTax').value || 0)
+        };
+        const res = await this.apiCall('/api/config/shop', 'POST', payload);
+        this.showNotification(res?.success ? 'Boutique sauvegardée' : 'Erreur sauvegarde boutique', res?.success ? 'success' : 'error');
+    }
+
+    async showLogsSection() {
+        const container = document.getElementById('content-container');
+        const cfgRes = await this.apiCall('/api/config/logs', 'GET');
+        const config = (cfgRes && cfgRes.data) || { level: 'basic', includeImages: false, pingRoles: [] };
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title"><i class="fas fa-scroll"></i> Logs</h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Niveau de logs</label>
+                        <select id="logsLevel" class="config-input">
+                            <option value="basic" ${config.level === 'basic' ? 'selected' : ''}>Basic</option>
+                            <option value="detailed" ${config.level === 'detailed' ? 'selected' : ''}>Détaillé</option>
+                            <option value="full" ${config.level === 'full' ? 'selected' : ''}>Complet</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Inclure les images</label>
+                        <select id="logsImages" class="config-input">
+                            <option value="true" ${config.includeImages ? 'selected' : ''}>Oui</option>
+                            <option value="false" ${!config.includeImages ? 'selected' : ''}>Non</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveLogsConfig()"><i class="fas fa-save"></i> Sauvegarder</button>
+                </div>
+            </div>
+        `;
+    }
+
+    async saveLogsConfig() {
+        const payload = {
+            level: document.getElementById('logsLevel').value,
+            includeImages: document.getElementById('logsImages').value === 'true'
+        };
+        const res = await this.apiCall('/api/config/logs', 'POST', payload);
+        this.showNotification(res?.success ? 'Logs sauvegardés' : 'Erreur sauvegarde logs', res?.success ? 'success' : 'error');
+    }
+
+    async showBumpSection() {
+        const container = document.getElementById('content-container');
+        const cfgRes = await this.apiCall('/api/config/bump', 'GET');
+        const config = (cfgRes && cfgRes.data) || { enabled: false, intervalMinutes: 120, mentionRoleId: null };
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title"><i class="fas fa-bullhorn"></i> Rappels Bump</h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Activer</label>
+                        <select id="bumpEnabled" class="config-input">
+                            <option value="true" ${config.enabled ? 'selected' : ''}>Activé</option>
+                            <option value="false" ${!config.enabled ? 'selected' : ''}>Désactivé</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Intervalle (minutes)</label>
+                        <input id="bumpInterval" type="number" class="config-input" min="60" max="360" value="${config.intervalMinutes || 120}" />
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Rôle à mentionner (ID)</label>
+                        <input id="bumpRole" type="text" class="config-input" value="${config.mentionRoleId || ''}" />
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveBumpConfig()"><i class="fas fa-save"></i> Sauvegarder</button>
+                </div>
+            </div>
+        `;
+    }
+
+    async saveBumpConfig() {
+        const payload = {
+            enabled: document.getElementById('bumpEnabled').value === 'true',
+            intervalMinutes: Number(document.getElementById('bumpInterval').value || 120),
+            mentionRoleId: document.getElementById('bumpRole').value || null
+        };
+        const res = await this.apiCall('/api/config/bump', 'POST', payload);
+        this.showNotification(res?.success ? 'Bump sauvegardé' : 'Erreur sauvegarde bump', res?.success ? 'success' : 'error');
+    }
+
+    async showMusicSection() {
+        const container = document.getElementById('content-container');
+        const cfgRes = await this.apiCall('/api/config/music', 'GET');
+        const config = (cfgRes && cfgRes.data) || { defaultVolume: 50, djRoleId: null };
+        container.innerHTML = `
+            <div class="config-section fade-in">
+                <div class="config-header">
+                    <h3 class="config-title"><i class="fas fa-music"></i> Musique</h3>
+                </div>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label class="config-label">Volume par défaut</label>
+                        <input id="musicVolume" type="number" class="config-input" min="0" max="100" value="${config.defaultVolume || 50}" />
+                    </div>
+                    <div class="config-item">
+                        <label class="config-label">Rôle DJ (ID)</label>
+                        <input id="musicDjRole" type="text" class="config-input" value="${config.djRoleId || ''}" />
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveMusicConfig()"><i class="fas fa-save"></i> Sauvegarder</button>
+                </div>
+            </div>
+        `;
+    }
+
+    async saveMusicConfig() {
+        const payload = {
+            defaultVolume: Number(document.getElementById('musicVolume').value || 50),
+            djRoleId: document.getElementById('musicDjRole').value || null
+        };
+        const res = await this.apiCall('/api/config/music', 'POST', payload);
+        this.showNotification(res?.success ? 'Musique sauvegardée' : 'Erreur sauvegarde musique', res?.success ? 'success' : 'error');
     }
 
     // Nouvelle fonction de test du dashboard
