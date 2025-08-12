@@ -521,15 +521,109 @@ class RenderSolutionBot {
                             autoDelete: false,
                             minLength: 10,
                             maxLength: 2000
-                        },
-                        moderation: {
-                            autoMod: true,
-                            warnLimit: 3,
-                            muteTime: 600,
-                            banTime: 86400
                         }
                     }
                 });
+            }
+        });
+
+        // === Moderation & Rôles endpoints ===
+        // Liste des rôles d'un serveur (pour recherche côté UI)
+        app.get('/api/guilds/:guildId/roles', async (req, res) => {
+            try {
+                const guildId = req.params.guildId;
+                const guild = this.client?.guilds?.cache?.get(guildId);
+                if (!guild) {
+                    return res.status(404).json({ success: false, error: 'Guild not found' });
+                }
+                const fetched = await guild.roles.fetch();
+                const roles = Array.from(fetched.values())
+                    .map(r => ({ id: r.id, name: r.name, position: r.position, color: r.hexColor }))
+                    .sort((a, b) => b.position - a.position);
+                return res.json({ success: true, data: roles });
+            } catch (error) {
+                console.error('Erreur liste rôles:', error);
+                return res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Récupérer la configuration de modération pour un serveur
+        app.get('/api/moderation/:guildId', async (req, res) => {
+            try {
+                const guildId = req.params.guildId;
+                const dataManager = require('./utils/simpleDataManager');
+                const allConfigs = dataManager.getData('moderation_config.json');
+
+                const defaultCfg = {
+                    guildId,
+                    logsChannelId: null,
+                    roleEnforcement: {
+                        enabled: false,
+                        requiredRoleId: null,
+                        requiredRoleName: null,
+                        gracePeriodMs: 7 * 24 * 60 * 60 * 1000
+                    },
+                    inactivity: {
+                        enabled: false,
+                        thresholdMs: 30 * 24 * 60 * 60 * 1000,
+                        exemptRoleIds: [],
+                        exemptRoleNames: []
+                    },
+                    mute: { defaultDurationMs: 60 * 60 * 1000 }
+                };
+
+                const cfg = allConfigs[guildId] ? { ...defaultCfg, ...allConfigs[guildId] } : defaultCfg;
+                return res.json({ success: true, data: cfg });
+            } catch (error) {
+                console.error('Erreur get moderation config:', error);
+                return res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Sauvegarder la configuration de modération pour un serveur
+        app.post('/api/moderation/:guildId', async (req, res) => {
+            try {
+                const guildId = req.params.guildId;
+                const updates = req.body || {};
+                const dataManager = require('./utils/simpleDataManager');
+                const allConfigs = dataManager.getData('moderation_config.json');
+                const existing = allConfigs[guildId] || {};
+
+                const normalized = {
+                    ...existing,
+                    logsChannelId: updates.logsChannelId ?? existing.logsChannelId ?? null,
+                    roleEnforcement: {
+                        enabled: Boolean(updates.roleEnforcement?.enabled),
+                        requiredRoleId: updates.roleEnforcement?.requiredRoleId ?? existing.roleEnforcement?.requiredRoleId ?? null,
+                        requiredRoleName: updates.roleEnforcement?.requiredRoleName ?? existing.roleEnforcement?.requiredRoleName ?? null,
+                        gracePeriodMs: Math.max(0, Number(updates.roleEnforcement?.gracePeriodMs ?? existing.roleEnforcement?.gracePeriodMs ?? 0)) || 0
+                    },
+                    inactivity: {
+                        enabled: Boolean(updates.inactivity?.enabled),
+                        thresholdMs: Math.max(0, Number(updates.inactivity?.thresholdMs ?? existing.inactivity?.thresholdMs ?? 0)) || 0,
+                        exemptRoleIds: Array.isArray(updates.inactivity?.exemptRoleIds) ? updates.inactivity.exemptRoleIds : (existing.inactivity?.exemptRoleIds || []),
+                        exemptRoleNames: Array.isArray(updates.inactivity?.exemptRoleNames) ? updates.inactivity.exemptRoleNames : (existing.inactivity?.exemptRoleNames || [])
+                    },
+                    mute: {
+                        defaultDurationMs: Math.max(0, Number(updates.mute?.defaultDurationMs ?? existing.mute?.defaultDurationMs ?? 60 * 60 * 1000))
+                    }
+                };
+
+                allConfigs[guildId] = normalized;
+                dataManager.setData('moderation_config.json', allConfigs);
+                try {
+                    if (this.moderationManager) {
+                        await this.moderationManager.setGuildConfig(guildId, normalized);
+                    } else if (this.coreDataManager) {
+                        await this.coreDataManager.saveData('moderation_config', allConfigs);
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Sync moderation_config vers cache principal échouée:', e?.message || e);
+                }
+                return res.json({ success: true, data: normalized });
+            } catch (error) {
+                console.error('Erreur save moderation config:', error);
+                return res.status(500).json({ success: false, error: error.message });
             }
         });
 

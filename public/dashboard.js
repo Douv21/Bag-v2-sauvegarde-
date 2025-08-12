@@ -611,7 +611,33 @@ class BAGDashboard {
 
     async showModerationSection() {
         const container = document.getElementById('content-container');
-        
+        const guildId = (this.data.servers?.[0]?.id) || null;
+
+        // Charger config/modération et rôles si possible
+        let moderationCfg = null;
+        let roles = [];
+        try {
+            if (guildId) {
+                const cfgRes = await this.apiCall(`/api/moderation/${guildId}`, 'GET');
+                if (cfgRes?.success) moderationCfg = cfgRes.data;
+                const rolesRes = await this.apiCall(`/api/guilds/${guildId}/roles`, 'GET');
+                if (rolesRes?.success) roles = rolesRes.data;
+            }
+        } catch {}
+
+        const cfg = moderationCfg || {
+            roleEnforcement: { enabled: false, requiredRoleId: null, requiredRoleName: null, gracePeriodMs: 7 * 24 * 60 * 60 * 1000 },
+            inactivity: { enabled: false, thresholdMs: 30 * 24 * 60 * 60 * 1000, exemptRoleIds: [], exemptRoleNames: [] },
+            mute: { defaultDurationMs: 60 * 60 * 1000 }
+        };
+
+        // Helpers
+        const msToDays = (ms) => Math.max(0, Math.round((ms || 0) / (24 * 60 * 60 * 1000)));
+        const daysToMs = (d) => Math.max(0, Number(d || 0)) * 24 * 60 * 60 * 1000;
+
+        const roleOptions = roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+        const selectedExempts = new Set(cfg.inactivity?.exemptRoleIds || []);
+
         container.innerHTML = `
             <div class="config-section fade-in">
                 <div class="config-header">
@@ -619,35 +645,198 @@ class BAGDashboard {
                         <i class="fas fa-shield-alt"></i>
                         Outils de Modération
                     </h3>
+                    ${guildId ? '' : '<p class="config-description">Aucun serveur chargé. Les réglages seront limités.</p>'}
                 </div>
+
                 <div class="dashboard-grid">
                     <div class="dashboard-card">
                         <div class="card-header">
-                            <h3 class="card-title">Actions Rapides</h3>
-                            <div class="card-icon">
-                                <i class="fas fa-bolt"></i>
-                            </div>
+                            <h3 class="card-title">Auto-kick sans rôle requis</h3>
+                            <div class="card-icon"><i class="fas fa-user-slash"></i></div>
                         </div>
                         <div class="card-content">
-                            <div class="action-buttons">
-                                <button class="btn btn-secondary" onclick="dashboard.clearTestObjects()">
-                                    <i class="fas fa-trash"></i>
-                                    Nettoyer objets de test
-                                </button>
-                                <button class="btn btn-secondary" onclick="dashboard.resetCommands()">
-                                    <i class="fas fa-sync"></i>
-                                    Réinitialiser commandes
-                                </button>
-                                <button class="btn btn-secondary" onclick="dashboard.forceBackup()">
-                                    <i class="fas fa-save"></i>
-                                    Forcer sauvegarde
-                                </button>
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label class="config-label">Activer</label>
+                                    <select class="config-input" id="roleEnfEnabled">
+                                        <option value="true" ${cfg.roleEnforcement?.enabled ? 'selected' : ''}>Activé</option>
+                                        <option value="false" ${!cfg.roleEnforcement?.enabled ? 'selected' : ''}>Désactivé</option>
+                                    </select>
+                                    <p class="config-description">Exclut les membres n'ayant pas acquis le rôle requis après le délai de grâce.</p>
+                                </div>
+
+                                <div class="config-item">
+                                    <label class="config-label">Rôle requis</label>
+                                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                                        <input type="text" class="config-input" id="roleSearch" placeholder="Rechercher un rôle..." oninput="dashboard.filterRoleOptions(this.value)" />
+                                        <select class="config-input" id="requiredRoleId">
+                                            <option value="">— Aucun —</option>
+                                            ${roleOptions}
+                                        </select>
+                                    </div>
+                                    <p class="config-description">Sélection rapide avec recherche. Le nom peut aussi être saisi.</p>
+                                    <input type="text" class="config-input" id="requiredRoleName" placeholder="Nom du rôle (option)" value="${cfg.roleEnforcement?.requiredRoleName || ''}" />
+                                </div>
+
+                                <div class="config-item">
+                                    <label class="config-label">Délai de grâce (jours)</label>
+                                    <input type="number" min="0" class="config-input" id="graceDays" value="${msToDays(cfg.roleEnforcement?.gracePeriodMs)}" />
+                                    <p class="config-description">Après ce délai sans rôle requis, le membre est exclu.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Auto-kick inactivité</h3>
+                            <div class="card-icon"><i class="fas fa-moon"></i></div>
+                        </div>
+                        <div class="card-content">
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label class="config-label">Activer</label>
+                                    <select class="config-input" id="inactivityEnabled">
+                                        <option value="true" ${cfg.inactivity?.enabled ? 'selected' : ''}>Activé</option>
+                                        <option value="false" ${!cfg.inactivity?.enabled ? 'selected' : ''}>Désactivé</option>
+                                    </select>
+                                    <p class="config-description">Exclut les membres inactifs au-delà du seuil configuré.</p>
+                                </div>
+
+                                <div class="config-item">
+                                    <label class="config-label">Seuil d'inactivité (jours)</label>
+                                    <input type="number" min="0" class="config-input" id="inactivityDays" value="${msToDays(cfg.inactivity?.thresholdMs)}" />
+                                    <p class="config-description">Dernier message ou date d'arrivée antérieure à ce seuil ➜ exclusion.</p>
+                                </div>
+
+                                <div class="config-item">
+                                    <label class="config-label">Rôles exempts (recherche + multi-sélection)</label>
+                                    <input type="text" class="config-input" id="exemptRoleSearch" placeholder="Rechercher un rôle..." oninput="dashboard.filterExemptRoleOptions(this.value)" />
+                                    <select class="config-input" id="exemptRoleIds" multiple size="6">
+                                        ${roles.map(r => `<option value="${r.id}" ${selectedExempts.has(r.id) ? 'selected' : ''}>${r.name}</option>`).join('')}
+                                    </select>
+                                    <p class="config-description">Les membres ayant ces rôles ne seront jamais auto-kick pour inactivité.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Autres paramètres</h3>
+                            <div class="card-icon"><i class="fas fa-tools"></i></div>
+                        </div>
+                        <div class="card-content">
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label class="config-label">Durée mute par défaut (minutes)</label>
+                                    <input type="number" min="0" class="config-input" id="muteMinutes" value="${Math.round((cfg.mute?.defaultDurationMs || 3600000) / 60000)}" />
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="dashboard.saveModerationConfig('${guildId || ''}')">
+                        <i class="fas fa-save"></i> Sauvegarder
+                    </button>
+                    <button class="btn btn-secondary" onclick="dashboard.resetModerationConfig()">
+                        <i class="fas fa-undo"></i> Réinitialiser
+                    </button>
+                </div>
             </div>
         `;
+
+        // Pré-sélectionner le role requis si présent
+        if (cfg.roleEnforcement?.requiredRoleId) {
+            const sel = document.getElementById('requiredRoleId');
+            if (sel) sel.value = cfg.roleEnforcement.requiredRoleId;
+        }
+    }
+
+    filterRoleOptions(query) {
+        const select = document.getElementById('requiredRoleId');
+        if (!select) return;
+        const q = (query || '').toLowerCase();
+        for (const opt of select.options) {
+            if (!opt.value) continue; // garder l’option vide
+            opt.hidden = q && !opt.text.toLowerCase().includes(q);
+        }
+    }
+
+    filterExemptRoleOptions(query) {
+        const select = document.getElementById('exemptRoleIds');
+        if (!select) return;
+        const q = (query || '').toLowerCase();
+        for (const opt of select.options) {
+            opt.hidden = q && !opt.text.toLowerCase().includes(q);
+        }
+    }
+
+    async saveModerationConfig(guildId) {
+        try {
+            const roleEnfEnabled = document.getElementById('roleEnfEnabled').value === 'true';
+            const requiredRoleId = document.getElementById('requiredRoleId').value || null;
+            const requiredRoleName = document.getElementById('requiredRoleName').value || null;
+            const graceDays = Number(document.getElementById('graceDays').value || 0);
+
+            const inactivityEnabled = document.getElementById('inactivityEnabled').value === 'true';
+            const inactivityDays = Number(document.getElementById('inactivityDays').value || 0);
+
+            const exemptSelect = document.getElementById('exemptRoleIds');
+            const exemptRoleIds = Array.from(exemptSelect?.selectedOptions || []).map(o => o.value);
+
+            const muteMinutes = Number(document.getElementById('muteMinutes').value || 0);
+
+            const body = {
+                roleEnforcement: {
+                    enabled: roleEnfEnabled,
+                    requiredRoleId,
+                    requiredRoleName,
+                    gracePeriodMs: Math.max(0, graceDays) * 24 * 60 * 60 * 1000
+                },
+                inactivity: {
+                    enabled: inactivityEnabled,
+                    thresholdMs: Math.max(0, inactivityDays) * 24 * 60 * 60 * 1000,
+                    exemptRoleIds
+                },
+                mute: { defaultDurationMs: Math.max(0, muteMinutes) * 60000 }
+            };
+
+            if (!guildId) {
+                this.showNotification('Aucun serveur sélectionné. Impossible de sauvegarder.', 'warning');
+                return;
+            }
+
+            const res = await this.apiCall(`/api/moderation/${guildId}`, 'POST', body);
+            if (res?.success) {
+                this.showNotification('Configuration de modération sauvegardée!', 'success');
+            } else {
+                throw new Error(res?.error || 'Erreur inconnue');
+            }
+        } catch (e) {
+            console.error('Erreur sauvegarde modération:', e);
+            this.showNotification('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    resetModerationConfig() {
+        const defaults = {
+            roleEnforcement: { enabled: false, requiredRoleId: '', requiredRoleName: '', gracePeriodMs: 7 * 24 * 60 * 60 * 1000 },
+            inactivity: { enabled: false, thresholdMs: 30 * 24 * 60 * 60 * 1000, exemptRoleIds: [] },
+            mute: { defaultDurationMs: 60 * 60 * 1000 }
+        };
+        document.getElementById('roleEnfEnabled').value = defaults.roleEnforcement.enabled ? 'true' : 'false';
+        document.getElementById('requiredRoleId').value = '';
+        document.getElementById('requiredRoleName').value = '';
+        document.getElementById('graceDays').value = Math.round(defaults.roleEnforcement.gracePeriodMs / (24 * 60 * 60 * 1000));
+        document.getElementById('inactivityEnabled').value = defaults.inactivity.enabled ? 'true' : 'false';
+        document.getElementById('inactivityDays').value = Math.round(defaults.inactivity.thresholdMs / (24 * 60 * 60 * 1000));
+        const exempt = document.getElementById('exemptRoleIds');
+        if (exempt) Array.from(exempt.options).forEach(o => (o.selected = false));
+        document.getElementById('muteMinutes').value = Math.round(defaults.mute.defaultDurationMs / 60000);
+        this.showNotification('Configuration réinitialisée', 'info');
     }
 
     async showBackupSection() {
