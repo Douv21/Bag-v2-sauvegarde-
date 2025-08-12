@@ -52,6 +52,7 @@ const { wrapInteraction } = require('./utils/interactionWrapper');
 const DataManager = require('./managers/DataManager');
 const ReminderManager = require('./managers/ReminderManager');
 const ReminderInteractionHandler = require('./handlers/ReminderInteractionHandler');
+const ModerationManager = require('./managers/ModerationManager');
 
 // Voice dependency report (optional, helps diagnose encryption libs on Render)
 try {
@@ -578,6 +579,13 @@ class RenderSolutionBot {
         this.reminderManager = new ReminderManager(this.coreDataManager, this.client);
         this.client.reminderManager = this.reminderManager;
         this.reminderInteractionHandler = new ReminderInteractionHandler(this.reminderManager);
+        // Initialiser et attacher la modération
+        try {
+            this.moderationManager = new ModerationManager(this.coreDataManager, this.client);
+            this.client.moderationManager = this.moderationManager;
+        } catch (e) {
+            console.warn('⚠️ Échec initialisation ModerationManager:', e?.message || e);
+        }
 
         this.commands = new Collection();
         await this.loadCommands();
@@ -633,6 +641,16 @@ class RenderSolutionBot {
                 console.log('🔔 Rappels de bump initialisés');
             } catch (remError) {
                 console.error('❌ Erreur initialisation rappels de bump:', remError);
+            }
+            
+            // Démarrer le scheduler de modération (inactivité / rôle requis)
+            try {
+                if (this.moderationManager) {
+                    this.moderationManager.startScheduler(60 * 60 * 1000);
+                    console.log('🕒 Planification des vérifications de modération activée (check hourly)');
+                }
+            } catch (modErr) {
+                console.error('❌ Erreur initialisation scheduler moderation:', modErr);
             }
             
             // Initialiser le moteur musique (DisTube)
