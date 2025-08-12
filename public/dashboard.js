@@ -658,11 +658,8 @@ class BAGDashboard {
                             <div class="config-grid">
                                 <div class="config-item">
                                     <label class="config-label">Activer</label>
-                                    <select class="config-input" id="roleEnfEnabled">
-                                        <option value="true" ${cfg.roleEnforcement?.enabled ? 'selected' : ''}>Activé</option>
-                                        <option value="false" ${!cfg.roleEnforcement?.enabled ? 'selected' : ''}>Désactivé</option>
-                                    </select>
-                                    <p class="config-description">Exclut les membres n'ayant pas acquis le rôle requis après le délai de grâce.</p>
+                                    <input type="checkbox" class="config-input" id="roleEnfEnabled" ${cfg.roleEnforcement?.enabled ? 'checked' : ''} />
+                                    <span class="config-description" style="margin-left: .5rem;">Exclut les membres n'ayant pas acquis le rôle requis après le délai de grâce.</span>
                                 </div>
 
                                 <div class="config-item">
@@ -696,16 +693,20 @@ class BAGDashboard {
                             <div class="config-grid">
                                 <div class="config-item">
                                     <label class="config-label">Activer</label>
-                                    <select class="config-input" id="inactivityEnabled">
-                                        <option value="true" ${cfg.inactivity?.enabled ? 'selected' : ''}>Activé</option>
-                                        <option value="false" ${!cfg.inactivity?.enabled ? 'selected' : ''}>Désactivé</option>
-                                    </select>
-                                    <p class="config-description">Exclut les membres inactifs au-delà du seuil configuré.</p>
+                                    <input type="checkbox" class="config-input" id="inactivityEnabled" ${cfg.inactivity?.enabled ? 'checked' : ''} />
+                                    <span class="config-description" style="margin-left: .5rem;">Exclut les membres inactifs au-delà du seuil configuré.</span>
                                 </div>
 
                                 <div class="config-item">
                                     <label class="config-label">Seuil d'inactivité (jours)</label>
-                                    <input type="number" min="0" class="config-input" id="inactivityDays" value="${msToDays(cfg.inactivity?.thresholdMs)}" />
+                                    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                                        <input type="number" min="0" class="config-input" id="inactivityDays" value="${msToDays(cfg.inactivity?.thresholdMs)}" />
+                                        <div class="btn-group" style="display:flex; gap:0.5rem;">
+                                            <button class="btn btn-secondary" onclick="dashboard.setInactivityPreset(90)">90 j</button>
+                                            <button class="btn btn-secondary" onclick="dashboard.setInactivityPreset(180)">6 mois</button>
+                                            <button class="btn btn-secondary" onclick="dashboard.setInactivityPreset(365)">12 mois</button>
+                                        </div>
+                                    </div>
                                     <p class="config-description">Dernier message ou date d'arrivée antérieure à ce seuil ➜ exclusion.</p>
                                 </div>
 
@@ -776,12 +777,12 @@ class BAGDashboard {
 
     async saveModerationConfig(guildId) {
         try {
-            const roleEnfEnabled = document.getElementById('roleEnfEnabled').value === 'true';
+            const roleEnfEnabled = !!document.getElementById('roleEnfEnabled').checked;
             const requiredRoleId = document.getElementById('requiredRoleId').value || null;
             const requiredRoleName = document.getElementById('requiredRoleName').value || null;
             const graceDays = Number(document.getElementById('graceDays').value || 0);
 
-            const inactivityEnabled = document.getElementById('inactivityEnabled').value === 'true';
+            const inactivityEnabled = !!document.getElementById('inactivityEnabled').checked;
             const inactivityDays = Number(document.getElementById('inactivityDays').value || 0);
 
             const exemptSelect = document.getElementById('exemptRoleIds');
@@ -827,16 +828,21 @@ class BAGDashboard {
             inactivity: { enabled: false, thresholdMs: 30 * 24 * 60 * 60 * 1000, exemptRoleIds: [] },
             mute: { defaultDurationMs: 60 * 60 * 1000 }
         };
-        document.getElementById('roleEnfEnabled').value = defaults.roleEnforcement.enabled ? 'true' : 'false';
+        document.getElementById('roleEnfEnabled').checked = !!defaults.roleEnforcement.enabled;
         document.getElementById('requiredRoleId').value = '';
         document.getElementById('requiredRoleName').value = '';
         document.getElementById('graceDays').value = Math.round(defaults.roleEnforcement.gracePeriodMs / (24 * 60 * 60 * 1000));
-        document.getElementById('inactivityEnabled').value = defaults.inactivity.enabled ? 'true' : 'false';
+        document.getElementById('inactivityEnabled').checked = !!defaults.inactivity.enabled;
         document.getElementById('inactivityDays').value = Math.round(defaults.inactivity.thresholdMs / (24 * 60 * 60 * 1000));
         const exempt = document.getElementById('exemptRoleIds');
         if (exempt) Array.from(exempt.options).forEach(o => (o.selected = false));
         document.getElementById('muteMinutes').value = Math.round(defaults.mute.defaultDurationMs / 60000);
         this.showNotification('Configuration réinitialisée', 'info');
+    }
+
+    setInactivityPreset(days) {
+        const input = document.getElementById('inactivityDays');
+        if (input) input.value = Number(days) || 0;
     }
 
     async showBackupSection() {
