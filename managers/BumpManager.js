@@ -421,6 +421,90 @@ class BumpManager {
         return { success: true, message: okMessage };
     }
 
+    // ========= Récupération d'informations (lecture) =========
+    getPlatformListingUrl(platform) {
+        const botId = this.getBotIdFor(platform);
+        switch (platform) {
+            case 'topgg':
+                return `https://top.gg/bot/${botId}`;
+            case 'discordbotlist':
+                return `https://discordbotlist.com/bots/${botId}`;
+            case 'discordboats':
+                return `https://discord.boats/bot/${botId}`;
+            case 'discordbots':
+                return `https://discord.bots.gg/bots/${botId}`;
+            case 'disboard':
+                // Disboard est orienté serveur : lien de serveur à fournir manuellement si connu
+                return null;
+            default:
+                return null;
+        }
+    }
+
+    async getJSON(url, token) {
+        const doFetch = this.getNodeFetch();
+        const response = await doFetch(url, {
+            method: 'GET',
+            headers: token ? { 'Authorization': token } : undefined
+        });
+        const text = await response.text();
+        let json = null;
+        try { json = JSON.parse(text); } catch {}
+        return { ok: response.ok, status: response.status, statusText: response.statusText, json, text };
+    }
+
+    async fetchPlatformData(platform) {
+        const botId = this.getBotIdFor(platform);
+        if (!botId) {
+            return { platform, ok: false, error: 'BOT_ID manquant', url: this.getPlatformListingUrl(platform) };
+        }
+        try {
+            switch (platform) {
+                case 'topgg': {
+                    const token = process.env.TOPGG_TOKEN;
+                    const url = `https://top.gg/api/bots/${botId}`;
+                    const { ok, status, statusText, json, text } = await this.getJSON(url, token);
+                    return { platform, ok, status, statusText, url: this.getPlatformListingUrl(platform), data: json || text };
+                }
+                case 'discordbotlist': {
+                    const token = process.env.DBL_TOKEN;
+                    const url = `https://discordbotlist.com/api/v1/bots/${botId}`;
+                    const { ok, status, statusText, json, text } = await this.getJSON(url, token);
+                    return { platform, ok, status, statusText, url: this.getPlatformListingUrl(platform), data: json || text };
+                }
+                case 'discordboats': {
+                    const token = process.env.DISCORD_BOATS_TOKEN;
+                    const url = `https://discord.boats/api/bot/${botId}`;
+                    const { ok, status, statusText, json, text } = await this.getJSON(url, token);
+                    return { platform, ok, status, statusText, url: this.getPlatformListingUrl(platform), data: json || text };
+                }
+                case 'discordbots': {
+                    const token = process.env.DISCORD_BOTS_GG_TOKEN;
+                    const url = `https://discord.bots.gg/api/v1/bots/${botId}`;
+                    const { ok, status, statusText, json, text } = await this.getJSON(url, token);
+                    return { platform, ok, status, statusText, url: this.getPlatformListingUrl(platform), data: json || text };
+                }
+                case 'disboard': {
+                    // Pas d'API officielle publique; on renvoie une info guidée
+                    return { platform, ok: false, url: null, note: 'Pas d’API officielle pour récupérer les données du serveur Disboard.' };
+                }
+                default:
+                    return { platform, ok: false, error: 'Plateforme non supportée' };
+            }
+        } catch (error) {
+            return { platform, ok: false, error: error.message };
+        }
+    }
+
+    async fetchPlatformsData(platforms) {
+        const unique = Array.from(new Set(platforms));
+        const results = [];
+        for (const p of unique) {
+            results.push(await this.fetchPlatformData(p));
+        }
+        return results;
+    }
+
     /**
      * Formate le temps restant
      */
