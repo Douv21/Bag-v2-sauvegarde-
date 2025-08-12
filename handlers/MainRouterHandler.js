@@ -20,11 +20,10 @@ class MainRouterHandler {
         const AutoThreadConfigHandler = require('./AutoThreadConfigHandler');
         const CountingConfigHandler = require('./CountingConfigHandler');
         const DashboardHandler = require('./DashboardHandler');
-        const ObjectHandler = require('./ObjectHandler');
+                const ObjectHandler = require('./ObjectHandler');
 
         // Import du ConfessionHandler original pour les méthodes complètes
         const ConfessionHandler = require('./ConfessionHandler');
-        
         this.handlers = {
             confession: new ConfessionHandler(this.dataManager),
             economy: new EconomyConfigHandler(this.dataManager),
@@ -55,10 +54,19 @@ class MainRouterHandler {
                 return await this.handleModerationUI(interaction, customId);
             }
 
-            // Router basé sur le préfixe du customId
+                        // Router basé sur le préfixe du customId
             if (customId.startsWith('confession_config') || customId.startsWith('confession_')) {
                 console.log(`➡️ Routage vers ConfessionHandler: ${customId}`);
                 return await this.routeToConfessionHandler(interaction, customId);
+            }
+
+                        // Logs config
+            if (customId.startsWith('logs_')) {
+                console.log(`➡️ Routage vers LogsConfigHandler: ${customId}`);
+                const LogsConfigHandler = require('./LogsConfigHandler');
+                const LogManager = require('../managers/LogManager');
+                const handler = new LogsConfigHandler(this.dataManager, new LogManager(this.dataManager, interaction.client));
+                return await handler.handle(interaction, customId);
             }
             
             // Gestion des sélecteurs de rôles pour la boutique

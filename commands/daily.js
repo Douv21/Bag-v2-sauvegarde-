@@ -70,6 +70,13 @@ module.exports = {
                 .setFooter({ text: `Streak actuel: ${newStreak} jour(s) • Prochaine récompense dans 24h` });
                 
             await interaction.reply({ embeds: [embed] });
+
+            // Log économie: Daily
+            try {
+                const parts = `Base: ${baseReward}💋 • Streak: ${streakBonus}💋 (x${newStreak}) • Karma: ${karmaBonus}💋`;
+                const user = interaction.user;
+                await interaction.client.logManager?.logDaily(interaction.guild, user, totalReward, parts);
+            } catch {}
             
         } catch (error) {
             console.error('❌ Erreur daily:', error);

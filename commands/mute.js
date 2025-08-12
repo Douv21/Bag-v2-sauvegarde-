@@ -24,7 +24,7 @@ module.exports = {
     const reason = interaction.options.getString('raison') || 'Aucun motif';
     const member = await guild.members.fetch(user.id).catch(() => null);
     if (!member) return interaction.reply({ content: 'Utilisateur introuvable.', flags: 64 });
-    await mod.muteMember(member, minutes * 60 * 1000, reason);
+    await mod.muteMember(member, minutes * 60 * 1000, reason, interaction.user);
     return interaction.reply({ content: `✅ ${user.tag} a été mute ${minutes} min.`, flags: 64 });
   }
 };

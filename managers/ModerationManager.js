@@ -47,7 +47,7 @@ class ModerationManager {
     return config[guildId];
   }
 
-  async addWarning(guildId, userId, moderatorId, reason) {
+    async addWarning(guildId, userId, moderatorId, reason) {
     const warnings = await this.dataManager.getData('warnings');
     if (!warnings[guildId]) warnings[guildId] = {};
     if (!warnings[guildId][userId]) warnings[guildId][userId] = [];
@@ -57,16 +57,27 @@ class ModerationManager {
       timestamp: Date.now()
     });
     await this.dataManager.saveData('warnings', warnings);
+
+    try {
+      const guild = this.client.guilds.cache.get(guildId);
+      const targetUser = await this.client.users.fetch(userId).catch(() => null);
+      const moderatorUser = moderatorId ? await this.client.users.fetch(moderatorId).catch(() => null) : null;
+      if (guild && targetUser && this.client.logManager) {
+        await this.client.logManager.logWarn(guild, targetUser, moderatorUser, reason);
+      }
+    } catch {}
+
     return warnings[guildId][userId];
   }
 
-  async removeLastWarning(guildId, userId) {
+    async removeLastWarning(guildId, userId) {
     const warnings = await this.dataManager.getData('warnings');
     if (!warnings[guildId] || !warnings[guildId][userId] || warnings[guildId][userId].length === 0) {
       return null;
     }
     const removed = warnings[guildId][userId].pop();
     await this.dataManager.saveData('warnings', warnings);
+    // Optionnel: log remove warn (non requis)
     return removed;
   }
 
@@ -75,17 +86,20 @@ class ModerationManager {
     return warnings[guildId]?.[userId] || [];
   }
 
-  async muteMember(member, durationMs, reason) {
+    async muteMember(member, durationMs, reason, moderatorUser = null) {
     const ms = Math.min(Math.max(durationMs || 0, 0), 28 * 24 * 60 * 60 * 1000); // Max 28 jours
     await member.timeout(ms > 0 ? ms : 60 * 1000, reason || 'Muted');
+    try { if (this.client.logManager) await this.client.logManager.logMute(member, moderatorUser, ms, reason); } catch {}
   }
 
-  async unmuteMember(member, reason) {
+    async unmuteMember(member, reason, moderatorUser = null) {
     await member.timeout(null, reason || 'Unmuted');
+    try { if (this.client.logManager) await this.client.logManager.logUnmute(member, moderatorUser, reason); } catch {}
   }
 
-  async purgeChannel(channel, options = { resetFeatures: true }) {
+    async purgeChannel(channel, options = { resetFeatures: true }, moderatorUser = null) {
     // Bulk delete messages in batches (cannot delete >14 days old)
+    let totalDeleted = 0;
     try {
       let fetched;
       do {
@@ -93,11 +107,14 @@ class ModerationManager {
         const deletable = fetched.filter(m => (Date.now() - m.createdTimestamp) < 14 * 24 * 60 * 60 * 1000);
         if (deletable.size > 0) {
           await channel.bulkDelete(deletable, true).catch(() => {});
+          totalDeleted += deletable.size;
         }
       } while (fetched && fetched.size >= 2);
     } catch (e) {
       // ignore errors for older messages
     }
+
+    try { if (this.client.logManager) await this.client.logManager.logPurge(channel, moderatorUser || channel.guild?.members.me?.user || null, totalDeleted); } catch {}
 
     if (options.resetFeatures) {
       await this.restoreChannelFeatures(channel.guild.id, channel.id);
@@ -269,10 +286,11 @@ class ModerationManager {
     }
   }
 
-  async safeKick(member, reason) {
+    async safeKick(member, reason) {
     try {
       await member.send(`Vous avez été exclu de ${member.guild.name} : ${reason}`).catch(() => {});
       await member.kick(reason).catch(() => {});
+      try { if (this.client.logManager) await this.client.logManager.logKick(member, null, reason); } catch {}
     } catch {}
   }
 

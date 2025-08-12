@@ -86,6 +86,12 @@ module.exports = {
                 flags: 64
             });
 
+            // Log économie: retrait admin
+            try {
+                const targetUser = targetMember;
+                await interaction.client.logManager?.logAdminMoneyRemove(interaction.guild, targetUser, amount, interaction.user);
+            } catch {}
+
         } catch (error) {
             console.error('❌ Erreur retrait-argent:', error);
             await interaction.reply({

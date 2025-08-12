@@ -23,7 +23,7 @@ module.exports = {
       return interaction.reply({ content: `🧹 ${deleted?.size || 0} messages supprimés.`, flags: 64 });
     } else {
       await interaction.deferReply({ flags: 64 });
-      await mod.purgeChannel(channel, { resetFeatures: true });
+      await mod.purgeChannel(channel, { resetFeatures: true }, interaction.user);
       return interaction.editReply({ content: '🧹 Salon vidé et paramètres restaurés (confession, counting, autothread, ...).' });
     }
   }

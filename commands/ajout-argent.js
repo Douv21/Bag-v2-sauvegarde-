@@ -78,6 +78,12 @@ module.exports = {
                 flags: 64
             });
 
+            // Log économie: ajout admin
+            try {
+                const targetUser = targetMember;
+                await interaction.client.logManager?.logAdminMoneyAdd(interaction.guild, targetUser, amount, interaction.user);
+            } catch {}
+
         } catch (error) {
             console.error('❌ Erreur ajout-argent:', error);
             await interaction.reply({

@@ -677,12 +677,21 @@ class RenderSolutionBot {
         this.reminderManager = new ReminderManager(this.coreDataManager, this.client);
         this.client.reminderManager = this.reminderManager;
         this.reminderInteractionHandler = new ReminderInteractionHandler(this.reminderManager);
-        // Initialiser et attacher la modération
+                // Initialiser et attacher la modération
         try {
             this.moderationManager = new ModerationManager(this.coreDataManager, this.client);
             this.client.moderationManager = this.moderationManager;
         } catch (e) {
             console.warn('⚠️ Échec initialisation ModerationManager:', e?.message || e);
+        }
+
+        // Initialiser et attacher le gestionnaire de logs
+        try {
+            const LogManager = require('./managers/LogManager');
+            this.logManager = new LogManager(this.coreDataManager, this.client);
+            this.client.logManager = this.logManager;
+        } catch (e) {
+            console.warn('⚠️ Échec initialisation LogManager:', e?.message || e);
         }
 
         this.commands = new Collection();
@@ -903,6 +912,37 @@ class RenderSolutionBot {
 
         this.client.on('voiceStateUpdate', async (oldState, newState) => {
             await this.handleVoiceXP(oldState, newState);
+        });
+
+        // === Système de logs ===
+        // Modifications et suppressions de messages
+        this.client.on('messageUpdate', async (oldMessage, newMessage) => {
+            try { if (this.logManager) await this.logManager.logMessageEdit(oldMessage, newMessage); } catch {}
+        });
+        this.client.on('messageDelete', async (message) => {
+            try { if (this.logManager) await this.logManager.logMessageDelete(message); } catch {}
+        });
+
+        // Arrivées / départs
+        this.client.on('guildMemberAdd', async (member) => {
+            try { if (this.moderationManager) await this.moderationManager.recordJoin(member.guild.id, member.id); } catch {}
+            try { if (this.logManager) await this.logManager.logMemberJoin(member); } catch {}
+        });
+        this.client.on('guildMemberRemove', async (member) => {
+            try { if (this.logManager) await this.logManager.logMemberLeave(member); } catch {}
+        });
+
+        // Changement de pseudo
+        this.client.on('guildMemberUpdate', async (oldMember, newMember) => {
+            try { if (this.logManager) await this.logManager.logNicknameChange(oldMember, newMember); } catch {}
+        });
+
+        // Ban / Unban
+        this.client.on('guildBanAdd', async (ban) => {
+            try { if (this.logManager) await this.logManager.logBan(ban.guild, ban.user, ban.reason); } catch {}
+        });
+        this.client.on('guildBanRemove', async (ban) => {
+            try { if (this.logManager) await this.logManager.logUnban(ban.guild, ban.user); } catch {}
         });
 
         this.client.on('error', async error => {

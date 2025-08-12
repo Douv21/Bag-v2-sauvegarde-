@@ -22,6 +22,7 @@ module.exports = {
     const member = await guild.members.fetch(user.id).catch(() => null);
     if (!member) return interaction.reply({ content: 'Utilisateur introuvable dans ce serveur.', flags: 64 });
     await member.ban({ reason });
+    try { await interaction.client.logManager?.logBan(guild, user, reason, interaction.user); } catch {}
     return interaction.reply({ content: `✅ ${user.tag} a été banni.`, flags: 64 });
   }
 };

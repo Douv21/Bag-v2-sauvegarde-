@@ -59,7 +59,8 @@ class DataManager {
             // Moderation
             'warnings': 'warnings.json',
             'moderation_config': 'moderation_config.json',
-            'moderation_state': 'moderation_state.json'
+            'moderation_state': 'moderation_state.json',
+            'logs_config': 'logs_config.json'
         };
 
         // Initialiser le LevelBackupManager
@@ -271,7 +272,8 @@ class DataManager {
             // Moderation defaults
             'warnings': {},
             'moderation_config': {},
-            'moderation_state': {}
+            'moderation_state': {},
+            'logs_config': {}
         };
 
         return defaults[type] || {};
