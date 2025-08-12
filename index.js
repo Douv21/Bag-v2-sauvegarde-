@@ -71,7 +71,9 @@ class BagBotRender {
         this.interactionHandler = new InteractionHandler(this.dataManager);
         this.reminderManager = new ReminderManager(this.dataManager, this.client);
         this.reminderInteractionHandler = new ReminderInteractionHandler(this.reminderManager);
-        this.moderationManager = new ModerationManager(this.dataManager, this.client);
+                this.moderationManager = new ModerationManager(this.dataManager, this.client);
+        const LogManager = require('./managers/LogManager');
+        this.logManager = new LogManager(this.dataManager, this.client);
         // Optionnel: conserver config-bump uniquement pour UI? On va retirer bump complet; pas d'UI bump.
         this.mainRouterHandler = new MainRouterHandler(this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
@@ -79,6 +81,7 @@ class BagBotRender {
         // Attache reminderManager
         this.client.reminderManager = this.reminderManager;
         this.client.moderationManager = this.moderationManager;
+        this.client.logManager = this.logManager;
 
         // Collections
         this.client.commands = new Collection();
@@ -426,7 +429,7 @@ class BagBotRender {
             }
         });
 
-        // Messages pour économie et auto-thread
+                // Messages pour économie et auto-thread
         this.client.on('messageCreate', async (message) => {
             if (message.author.bot) return;
             
@@ -442,11 +445,38 @@ class BagBotRender {
             } catch {}
         });
 
-        // Enregistrer la date d'arrivée pour l'application des rôles obligatoires
+        // Logs message edits/deletes
+        this.client.on('messageUpdate', async (oldMessage, newMessage) => {
+            try { await this.logManager.logMessageEdit(oldMessage, newMessage); } catch {}
+        });
+        this.client.on('messageDelete', async (message) => {
+            try { await this.logManager.logMessageDelete(message); } catch {}
+        });
+
+                // Enregistrer la date d'arrivée pour l'application des rôles obligatoires
         this.client.on('guildMemberAdd', async (member) => {
             try {
                 await this.moderationManager.recordJoin(member.guild.id, member.id);
             } catch {}
+            try { await this.logManager.logMemberJoin(member); } catch {}
+        });
+
+                // Départ membre
+        this.client.on('guildMemberRemove', async (member) => {
+            try { await this.logManager.logMemberLeave(member); } catch {}
+        });
+
+        // Changement de pseudo
+        this.client.on('guildMemberUpdate', async (oldMember, newMember) => {
+            try { await this.logManager.logNicknameChange(oldMember, newMember); } catch {}
+        });
+
+        // Ban/Unban
+        this.client.on('guildBanAdd', async (ban) => {
+            try { await this.logManager.logBan(ban.guild, ban.user, ban.reason); } catch {}
+        });
+        this.client.on('guildBanRemove', async (ban) => {
+            try { await this.logManager.logUnban(ban.guild, ban.user); } catch {}
         });
 
         // Gestion des erreurs
