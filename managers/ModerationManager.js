@@ -24,7 +24,9 @@ class ModerationManager {
         enabled: false,
         thresholdMs: 30 * 24 * 60 * 60 * 1000, // 30 jours
         exemptRoleIds: [], // compat ancien
-        exemptRoleNames: [] // nouveau
+        exemptRoleNames: [], // nouveau
+        autoExemptRoleId: null,
+        autoExemptRoleName: null
       },
       // Mute defaults
       mute: {
@@ -172,6 +174,23 @@ class ModerationManager {
     if (!stats[guildId][userId]) stats[guildId][userId] = { messageCount: 0, lastMessage: 0 };
     stats[guildId][userId].lastMessage = Date.now();
     await this.dataManager.saveData('user_stats', stats);
+
+    // Retirer automatiquement le rôle d'exemption d'inactivité si configuré
+    try {
+      const guild = this.client.guilds.cache.get(guildId);
+      if (!guild) return;
+      const cfg = await this.getGuildConfig(guildId);
+      let autoRoleId = cfg.inactivity?.autoExemptRoleId || null;
+      if (!autoRoleId && cfg.inactivity?.autoExemptRoleName) {
+        autoRoleId = this.resolveRoleByName(guild, cfg.inactivity.autoExemptRoleName)?.id || null;
+      }
+      if (!autoRoleId) return;
+      const member = await guild.members.fetch(userId).catch(() => null);
+      if (!member) return;
+      if (member.roles.cache.has(autoRoleId)) {
+        await member.roles.remove(autoRoleId, 'Retrait automatique: activité détectée').catch(() => {});
+      }
+    } catch {}
   }
 
   resolveRoleByName(guild, roleName) {
@@ -204,6 +223,14 @@ class ModerationManager {
         const r = this.resolveRoleByName(guild, name);
         if (r && !exemptRoleIdList.includes(r.id)) exemptRoleIdList.push(r.id);
       }
+    }
+    // Inclure le rôle d'exemption automatique s'il est configuré
+    let autoExemptRoleId = cfg.inactivity?.autoExemptRoleId || null;
+    if (!autoExemptRoleId && cfg.inactivity?.autoExemptRoleName) {
+      autoExemptRoleId = this.resolveRoleByName(guild, cfg.inactivity.autoExemptRoleName)?.id || null;
+    }
+    if (autoExemptRoleId && !exemptRoleIdList.includes(autoExemptRoleId)) {
+      exemptRoleIdList.push(autoExemptRoleId);
     }
 
     // Role enforcement
