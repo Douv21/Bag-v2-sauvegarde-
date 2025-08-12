@@ -54,7 +54,12 @@ class DataManager {
             
             // Configuration karma personnalisé
             'karma_config': 'karma_config.json',
-            'karma_discounts': 'karma_discounts.json'
+            'karma_discounts': 'karma_discounts.json',
+
+            // Moderation
+            'warnings': 'warnings.json',
+            'moderation_config': 'moderation_config.json',
+            'moderation_state': 'moderation_state.json'
         };
 
         // Initialiser le LevelBackupManager
@@ -262,10 +267,41 @@ class DataManager {
                 customRewards: [],
                 distributionDay: 1,
                 enabled: true
-            }
+            },
+            // Moderation defaults
+            'warnings': {},
+            'moderation_config': {},
+            'moderation_state': {}
         };
 
         return defaults[type] || {};
+    }
+
+    async loadData(filename, fallback = {}) {
+        try {
+            const fs = require('fs');
+            const filePath = path.join(this.dataPath, filename);
+            if (!fs.existsSync(filePath)) return fallback;
+            const raw = fs.readFileSync(filePath, 'utf8');
+            return JSON.parse(raw);
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    async saveRawFile(filename, data) {
+        try {
+            const fs = require('fs');
+            const filePath = path.join(this.dataPath, filename);
+            const dirPath = path.dirname(filePath);
+            if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
+            const tmp = filePath + '.tmp';
+            fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+            fs.renameSync(tmp, filePath);
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
 
     /**

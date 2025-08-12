@@ -46,6 +46,12 @@ class MainRouterHandler {
         const customId = interaction.customId;
         console.log(`🔄 MainRouter traite: ${customId}`);
 
+        // Quick passthrough for moderation components if we add some later
+        if (interaction.customId && interaction.customId.startsWith('moderation_')) {
+            // Nothing yet; reserve namespace
+            return true;
+        }
+
         try {
             // Router basé sur le préfixe du customId
             if (customId.startsWith('confession_config') || customId.startsWith('confession_')) {
