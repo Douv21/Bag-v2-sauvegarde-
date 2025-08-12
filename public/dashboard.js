@@ -270,6 +270,10 @@ class BAGDashboard {
                     console.log('💬 Affichage de la section confessions...');
                     await this.showConfessionsSection();
                     break;
+                case 'moderation':
+                    console.log('🛡️ Affichage de la section modération...');
+                    await this.showModerationSection();
+                    break;
 
                 case 'counting':
                     console.log('🔢 Affichage de la section comptage...');
@@ -731,7 +735,7 @@ class BAGDashboard {
         `;
     }
 
-    async showModerationSection_REMOVED() {
+    async showModerationSection() {
         const container = document.getElementById('content-container');
         const guildId = (this.data.servers?.[0]?.id) || null;
 
