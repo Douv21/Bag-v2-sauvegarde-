@@ -865,7 +865,7 @@ class MainRouterHandler {
 
     async handleModerationUI(interaction, customId) {
         try {
-            const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js');
+            const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, RoleSelectMenuBuilder } = require('discord.js');
             const modManager = interaction.client.moderationManager;
             const guildId = interaction.guild.id;
             const cfg = await modManager.getGuildConfig(guildId);
@@ -897,24 +897,32 @@ class MainRouterHandler {
                         ])
                 );
 
-                const roles = interaction.guild.roles.cache
-                    .filter(r => r.editable && r.name !== '@everyone')
-                    .sort((a, b) => b.position - a.position)
-                    .first(25);
-
-                const row3 = roles && roles.length > 0 ? new ActionRowBuilder().addComponents(
+                // Sélecteur de menu: Kick sans rôle ou Kick inactivité
+                const featureRow = new ActionRowBuilder().addComponents(
                     new StringSelectMenuBuilder()
+                        .setCustomId('moderation_feature_select')
+                        .setPlaceholder('Sélectionner un menu')
+                        .addOptions([
+                            { label: 'Kick sans rôle', value: 'feature_role', description: 'Exclure les membres sans le rôle requis' },
+                            { label: 'Kick inactivité', value: 'feature_inactivity', description: 'Exclure les membres inactifs' }
+                        ])
+                );
+
+                // Sélecteur de rôle avec recherche intégrée (saisie possible)
+                const row3 = new ActionRowBuilder().addComponents(
+                    new RoleSelectMenuBuilder()
                         .setCustomId('moderation_required_role')
                         .setPlaceholder('Choisir le rôle requis')
-                        .addOptions(roles.map(r => ({ label: r.name, value: r.name })))
-                ) : null;
+                        .setMinValues(1)
+                        .setMaxValues(1)
+                );
 
                 // Nouveau: bouton pour saisir manuellement le nom du rôle
                 const row4 = new ActionRowBuilder().addComponents(
                     new ButtonBuilder().setCustomId('moderation_enter_role_name').setStyle(ButtonStyle.Success).setLabel('✍️ Entrer le nom du rôle')
                 );
 
-                const components = row3 ? [row1, row2, row3, row4] : [row1, row2, row4];
+                const components = [featureRow, row1, row2, row3, row4];
 
                 if (interaction.replied) {
                     await interaction.followUp({ embeds: [embed], components, ephemeral: true });
@@ -941,7 +949,7 @@ class MainRouterHandler {
             // Sélection d'une fonctionnalité à configurer
             if (customId === 'moderation_feature_select') {
                 const feature = interaction.values?.[0];
-                const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js');
+                const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, RoleSelectMenuBuilder } = require('discord.js');
 
                 const featureSelector = new ActionRowBuilder().addComponents(
                     new StringSelectMenuBuilder()
@@ -954,11 +962,6 @@ class MainRouterHandler {
                 );
 
                 if (feature === 'feature_role') {
-                    const roles = interaction.guild.roles.cache
-                        .filter(r => r.editable && r.name !== '@everyone')
-                        .sort((a, b) => b.position - a.position)
-                        .first(25);
-
                     const embed = new EmbedBuilder()
                         .setTitle('⚙️ Autokick sans rôle')
                         .setColor('#e91e63')
@@ -970,10 +973,11 @@ class MainRouterHandler {
                         );
 
                     const roleRow = new ActionRowBuilder().addComponents(
-                        new StringSelectMenuBuilder()
+                        new RoleSelectMenuBuilder()
                             .setCustomId('moderation_required_role')
                             .setPlaceholder('Choisir le rôle requis')
-                            .addOptions((roles || []).map(r => ({ label: r.name, value: r.name })).slice(0,25))
+                            .setMinValues(1)
+                            .setMaxValues(1)
                     );
 
                     const graceRow = new ActionRowBuilder().addComponents(
@@ -1077,8 +1081,10 @@ class MainRouterHandler {
             }
  
             if (customId === 'moderation_required_role') {
-                const roleName = interaction.values?.[0];
-                await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleName: roleName } });
+                const roleId = interaction.values?.[0];
+                const role = interaction.guild.roles.cache.get(roleId);
+                const roleName = role?.name || roleId;
+                await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleId: roleId, requiredRoleName: roleName } });
                 await interaction.update({ content: `✅ Rôle requis défini: ${roleName}`, components: [], embeds: [] });
                 return true;
             }
