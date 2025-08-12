@@ -922,14 +922,14 @@ class MainRouterHandler {
             if (customId === 'moderation_toggle_inactivity') {
                 const enabled = !(cfg.inactivity?.enabled === true);
                 await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), enabled } });
-                await interaction.update({ content: `✅ Inactivité ${enabled ? 'activée' : 'désactivée'}`, components: [], embeds: [], ephemeral: true });
+                await interaction.update({ content: `✅ Inactivité ${enabled ? 'activée' : 'désactivée'}`, components: [], embeds: [] });
                 return true;
             }
 
             if (customId === 'moderation_toggle_role') {
                 const enabled = !(cfg.roleEnforcement?.enabled === true);
                 await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), enabled } });
-                await interaction.update({ content: `✅ Rôle requis ${enabled ? 'activé' : 'désactivé'}`, components: [], embeds: [], ephemeral: true });
+                await interaction.update({ content: `✅ Rôle requis ${enabled ? 'activé' : 'désactivé'}`, components: [], embeds: [] });
                 return true;
             }
 
@@ -989,7 +989,7 @@ class MainRouterHandler {
                         new ButtonBuilder().setCustomId('moderation_toggle_role').setStyle(ButtonStyle.Primary).setLabel(cfg.roleEnforcement?.enabled ? 'Désactiver' : 'Activer')
                     );
 
-                    await interaction.update({ embeds: [embed], components: [featureSelector, roleRow, graceRow, toggleRow], ephemeral: true });
+                    await interaction.update({ embeds: [embed], components: [featureSelector, roleRow, graceRow, toggleRow] });
                     return true;
                 }
 
@@ -1019,7 +1019,7 @@ class MainRouterHandler {
                         new ButtonBuilder().setCustomId('moderation_toggle_inactivity').setStyle(ButtonStyle.Secondary).setLabel(cfg.inactivity?.enabled ? 'Désactiver' : 'Activer')
                     );
 
-                    await interaction.update({ embeds: [embed], components: [featureSelector, daysRow, toggleRow], ephemeral: true });
+                    await interaction.update({ embeds: [embed], components: [featureSelector, daysRow, toggleRow] });
                     return true;
                 }
 
@@ -1031,7 +1031,7 @@ class MainRouterHandler {
                 const days = Number(interaction.values?.[0] || 30);
                 const thresholdMs = Math.max(1, days) * 24 * 60 * 60 * 1000;
                 await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), thresholdMs } });
-                await interaction.update({ content: `✅ Seuil d'inactivité défini à ${days} jours`, components: [], embeds: [], ephemeral: true });
+                await interaction.update({ content: `✅ Seuil d'inactivité défini à ${days} jours`, components: [], embeds: [] });
                 return true;
             }
 
@@ -1040,7 +1040,7 @@ class MainRouterHandler {
                 const days = Number(interaction.values?.[0] || 7);
                 const gracePeriodMs = Math.max(1, days) * 24 * 60 * 60 * 1000;
                 await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), gracePeriodMs } });
-                await interaction.update({ content: `✅ Délai du rôle requis défini à ${days} jours`, components: [], embeds: [], ephemeral: true });
+                await interaction.update({ content: `✅ Délai du rôle requis défini à ${days} jours`, components: [], embeds: [] });
                 return true;
             }
 
@@ -1050,7 +1050,7 @@ class MainRouterHandler {
                 const days = Math.max(1, Math.round(months * 30));
                 const thresholdMs = days * 24 * 60 * 60 * 1000;
                 await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), thresholdMs } });
-                await interaction.update({ content: `✅ Seuil d'inactivité défini à ${months} mois (${days} jours)`, components: [], embeds: [], ephemeral: true });
+                await interaction.update({ content: `✅ Seuil d'inactivité défini à ${months} mois (${days} jours)`, components: [], embeds: [] });
                 return true;
             }
 
@@ -1060,13 +1060,13 @@ class MainRouterHandler {
                 if (action === 'role_toggle') {
                     const enabled = !(cfg.roleEnforcement?.enabled === true);
                     await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), enabled } });
-                    await interaction.update({ content: `✅ Rôle requis ${enabled ? 'activé' : 'désactivé'}`, components: [], embeds: [], ephemeral: true });
+                    await interaction.update({ content: `✅ Rôle requis ${enabled ? 'activé' : 'désactivé'}`, components: [], embeds: [] });
                     return true;
                 }
                 if (action === 'inactivity_toggle') {
                     const enabled = !(cfg.inactivity?.enabled === true);
                     await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), enabled } });
-                    await interaction.update({ content: `✅ Inactivité ${enabled ? 'activée' : 'désactivée'}`, components: [], embeds: [], ephemeral: true });
+                    await interaction.update({ content: `✅ Inactivité ${enabled ? 'activée' : 'désactivée'}`, components: [], embeds: [] });
                     return true;
                 }
             }
@@ -1074,7 +1074,7 @@ class MainRouterHandler {
             if (customId === 'moderation_required_role') {
                 const roleName = interaction.values?.[0];
                 await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleName: roleName } });
-                await interaction.update({ content: `✅ Rôle requis défini: ${roleName}`, components: [], embeds: [], ephemeral: true });
+                await interaction.update({ content: `✅ Rôle requis défini: ${roleName}`, components: [], embeds: [] });
                 return true;
             }
 
