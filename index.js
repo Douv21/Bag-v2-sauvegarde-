@@ -49,6 +49,7 @@ const MainRouterHandler = require('./handlers/MainRouterHandler');
 const CommandHandler = require('./handlers/CommandHandler');
 const ReminderManager = require('./managers/ReminderManager');
 const ReminderInteractionHandler = require('./handlers/ReminderInteractionHandler');
+const ModerationManager = require('./managers/ModerationManager');
 
 class BagBotRender {
     constructor() {
@@ -70,12 +71,14 @@ class BagBotRender {
         this.interactionHandler = new InteractionHandler(this.dataManager);
         this.reminderManager = new ReminderManager(this.dataManager, this.client);
         this.reminderInteractionHandler = new ReminderInteractionHandler(this.reminderManager);
+        this.moderationManager = new ModerationManager(this.dataManager, this.client);
         // Optionnel: conserver config-bump uniquement pour UI? On va retirer bump complet; pas d'UI bump.
         this.mainRouterHandler = new MainRouterHandler(this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
 
         // Attache reminderManager
         this.client.reminderManager = this.reminderManager;
+        this.client.moderationManager = this.moderationManager;
 
         // Collections
         this.client.commands = new Collection();
@@ -342,6 +345,14 @@ class BagBotRender {
                 console.error('❌ Erreur initialisation ReminderManager:', remError);
             }
 
+            // Planification des vérifications de modération (inactivité / roles)
+            try {
+                this.moderationManager.startScheduler(60 * 60 * 1000); // hourly
+                console.log('🕒 Planification des vérifications de modération activée (check hourly)');
+            } catch (modErr) {
+                console.error('❌ Erreur initialisation scheduler moderation:', modErr);
+            }
+
             // Scheduler reset hebdomadaire du karma (vérification horaire)
             try {
                 // Vérification immédiate au démarrage
@@ -424,6 +435,18 @@ class BagBotRender {
             
             // Gestion auto-thread
             await this.handleAutoThread(message);
+
+            // Marquer activité pour l'anti-inactivité
+            try {
+                await this.moderationManager.markActive(message.guild.id, message.author.id);
+            } catch {}
+        });
+
+        // Enregistrer la date d'arrivée pour l'application des rôles obligatoires
+        this.client.on('guildMemberAdd', async (member) => {
+            try {
+                await this.moderationManager.recordJoin(member.guild.id, member.id);
+            } catch {}
         });
 
         // Gestion des erreurs
