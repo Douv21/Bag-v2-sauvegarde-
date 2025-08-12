@@ -839,7 +839,7 @@ class RenderSolutionBot {
                 }
 
                 console.log(`🔧 /${interaction.commandName} par ${interaction.user.tag}`);
-                const needsClient = ['bump', 'bump-config', 'config-bump'].includes(interaction.commandName);
+                const needsClient = ['bump', 'bump-config', 'config-bump', 'bump-reminder'].includes(interaction.commandName);
                 if (needsClient) {
                     await command.execute(interaction, this.client);
                 } else {
