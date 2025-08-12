@@ -46,13 +46,15 @@ class MainRouterHandler {
         const customId = interaction.customId;
         console.log(`🔄 MainRouter traite: ${customId}`);
 
-        // Quick passthrough for moderation components if we add some later
-        if (interaction.customId && interaction.customId.startsWith('moderation_')) {
-            // Nothing yet; reserve namespace
-            return true;
-        }
+        // Les composants de modération sont gérés ci-dessous via handleModerationUI
 
         try {
+            // Gestion du menu de modération (NSFW)
+            if (customId.startsWith('moderation_')) {
+                console.log(`➡️ Routage vers Moderation UI: ${customId}`);
+                return await this.handleModerationUI(interaction, customId);
+            }
+
             // Router basé sur le préfixe du customId
             if (customId.startsWith('confession_config') || customId.startsWith('confession_')) {
                 console.log(`➡️ Routage vers ConfessionHandler: ${customId}`);
@@ -859,6 +861,101 @@ class MainRouterHandler {
             availableHandlers: Object.keys(this.handlers),
             lastUpdate: new Date().toISOString()
         };
+    }
+
+    async handleModerationUI(interaction, customId) {
+        try {
+            const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js');
+            const modManager = interaction.client.moderationManager;
+            const guildId = interaction.guild.id;
+            const cfg = await modManager.getGuildConfig(guildId);
+
+            if (customId === 'moderation_main') {
+                const embed = new EmbedBuilder()
+                    .setTitle('🔞 Modération NSFW — Menu Simple')
+                    .setDescription('Activer l\'auto-kick inactivité et l\'exigence de rôle en 2 clics')
+                    .setColor('#e91e63')
+                    .addFields(
+                        { name: 'Inactivité', value: `Etat: ${cfg.inactivity?.enabled ? '✅ Activé' : '❌ Désactivé'}\nSeuil: ${Math.round((cfg.inactivity?.thresholdMs || 30*24*60*60*1000)/(24*60*60*1000))} jours` },
+                        { name: 'Rôle requis', value: `Etat: ${cfg.roleEnforcement?.enabled ? '✅ Activé' : '❌ Désactivé'}\nNom: ${cfg.roleEnforcement?.requiredRoleName || 'non défini'}` }
+                    );
+
+                const row1 = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('moderation_toggle_inactivity').setStyle(ButtonStyle.Primary).setLabel(cfg.inactivity?.enabled ? 'Désactiver Inactivité' : 'Activer Inactivité'),
+                    new ButtonBuilder().setCustomId('moderation_toggle_role').setStyle(ButtonStyle.Secondary).setLabel(cfg.roleEnforcement?.enabled ? 'Désactiver Rôle' : 'Activer Rôle Requis')
+                );
+
+                const row2 = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_inactivity_days')
+                        .setPlaceholder('Seuil d\'inactivité (jours)')
+                        .addOptions([
+                            { label: '7 jours', value: '7' },
+                            { label: '14 jours', value: '14' },
+                            { label: '30 jours', value: '30' },
+                            { label: '60 jours', value: '60' }
+                        ])
+                );
+
+                const roles = interaction.guild.roles.cache
+                    .filter(r => r.editable && r.name !== '@everyone')
+                    .sort((a, b) => b.position - a.position)
+                    .first(25);
+
+                const row3 = roles && roles.length > 0 ? new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_required_role')
+                        .setPlaceholder('Choisir le rôle requis')
+                        .addOptions(roles.map(r => ({ label: r.name, value: r.name })))
+                ) : null;
+
+                const components = row3 ? [row1, row2, row3] : [row1, row2];
+
+                if (interaction.replied) {
+                    await interaction.followUp({ embeds: [embed], components, ephemeral: true });
+                } else {
+                    await interaction.reply({ embeds: [embed], components, ephemeral: true });
+                }
+                return true;
+            }
+
+            if (customId === 'moderation_toggle_inactivity') {
+                const enabled = !(cfg.inactivity?.enabled === true);
+                await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), enabled } });
+                await interaction.update({ content: `✅ Inactivité ${enabled ? 'activée' : 'désactivée'}`, components: [], embeds: [], ephemeral: true });
+                return true;
+            }
+
+            if (customId === 'moderation_toggle_role') {
+                const enabled = !(cfg.roleEnforcement?.enabled === true);
+                await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), enabled } });
+                await interaction.update({ content: `✅ Rôle requis ${enabled ? 'activé' : 'désactivé'}`, components: [], embeds: [], ephemeral: true });
+                return true;
+            }
+
+            if (customId === 'moderation_inactivity_days') {
+                const days = Number(interaction.values?.[0] || 30);
+                const thresholdMs = Math.max(1, days) * 24 * 60 * 60 * 1000;
+                await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), thresholdMs } });
+                await interaction.update({ content: `✅ Seuil d\'inactivité défini à ${days} jours`, components: [], embeds: [], ephemeral: true });
+                return true;
+            }
+
+            if (customId === 'moderation_required_role') {
+                const roleName = interaction.values?.[0];
+                await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleName: roleName } });
+                await interaction.update({ content: `✅ Rôle requis défini: ${roleName}`, components: [], embeds: [], ephemeral: true });
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            console.error('Erreur Moderation UI:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: '❌ Erreur menu modération.', ephemeral: true });
+            }
+            return true;
+        }
     }
 }
 

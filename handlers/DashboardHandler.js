@@ -79,7 +79,7 @@ class DashboardHandler {
 
         const row = new ActionRowBuilder().addComponents(selectMenu);
 
-        await interaction.reply({ embeds: [embed], components: [row], flags: 64 });
+        await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
     }
 
     /**

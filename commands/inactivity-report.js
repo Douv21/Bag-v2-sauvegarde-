@@ -10,6 +10,6 @@ module.exports = {
   async execute(interaction) {
     const guild = interaction.guild;
     await interaction.client.moderationManager.markActive(guild.id, interaction.user.id);
-    return interaction.reply({ content: '✅ Activité signalée. Vous ne serez pas auto-kick pour inactivité.', flags: 64 });
+    return interaction.reply({ content: '✅ Activité signalée. Vous ne serez pas auto-kick pour inactivité.', ephemeral: true });
   }
 };

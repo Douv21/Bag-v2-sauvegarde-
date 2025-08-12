@@ -16,7 +16,7 @@ module.exports = {
 
   async execute(interaction) {
     if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return interaction.reply({ content: '❌ Réservé aux administrateurs.', flags: 64 });
+      return interaction.reply({ content: '❌ Réservé aux administrateurs.', ephemeral: true });
     }
 
     const guild = interaction.guild;
@@ -39,6 +39,6 @@ module.exports = {
     if (exemptRoleNames.length > 0) updates.inactivity = { ...(updates.inactivity || {}), exemptRoleNames };
 
     await mod.setGuildConfig(guild.id, updates);
-    return interaction.reply({ content: '✅ Configuration mise à jour.', flags: 64 });
+    return interaction.reply({ content: '✅ Configuration mise à jour.', ephemeral: true });
   }
 };

@@ -95,7 +95,7 @@ class CommandHandler {
 
                     const errorMessage = {
                         content: 'Une erreur est survenue lors de l\'exécution de cette commande.',
-                        flags: 64
+                        ephemeral: true
                     };
 
                     if (interaction.replied || interaction.deferred) {
