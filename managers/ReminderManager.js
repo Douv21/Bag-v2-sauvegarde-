@@ -1,4 +1,4 @@
-const { Collection } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 class ReminderManager {
   constructor(dataManager, client) {
@@ -34,6 +34,7 @@ class ReminderManager {
       roleId: null,
       message: 'Il est temps de bumper le serveur avec DISBOARD: utilisez /bump dans ce canal.',
       intervalMs: 2 * 60 * 60 * 1000, // 2h par défaut (Disboard)
+      lastBumpAt: null,
       updatedAt: new Date()
     };
   }
@@ -85,6 +86,22 @@ class ReminderManager {
     this.timers.set(guildId, timeoutId);
   }
 
+  scheduleIn(guildId, ms) {
+    this.clearGuildTimer(guildId);
+    const timeoutId = setTimeout(() => this.tickGuild(guildId).catch(() => {}), ms);
+    this.timers.set(guildId, timeoutId);
+  }
+
+  async restartCooldown(guildId) {
+    const cfg = await this.getConfig(guildId);
+    const coll = this.dataManager.db?.collection('bumpReminders');
+    const now = new Date();
+    if (coll) {
+      await coll.updateOne({ guildId }, { $set: { lastBumpAt: now, updatedAt: now } }, { upsert: true }).catch(() => {});
+    }
+    this.scheduleIn(guildId, cfg.intervalMs || 2 * 60 * 60 * 1000);
+  }
+
   async tickGuild(guildId) {
     try {
       const cfg = await this.getConfig(guildId);
@@ -95,7 +112,21 @@ class ReminderManager {
 
       const mention = cfg.roleId ? `<@&${cfg.roleId}> ` : '';
       const content = `${mention}${cfg.message}`;
-      await channel.send({ content });
+
+      const buttons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`bump_reminder_done_${guildId}`)
+          .setLabel("J'ai bumpé")
+          .setStyle(ButtonStyle.Success)
+          .setEmoji('✅'),
+        new ButtonBuilder()
+          .setCustomId(`bump_reminder_info_${guildId}`)
+          .setLabel('Instructions')
+          .setStyle(ButtonStyle.Secondary)
+          .setEmoji('📢')
+      );
+
+      await channel.send({ content, components: [buttons] });
 
       // replanifier
       this.scheduleGuild(guildId, cfg);

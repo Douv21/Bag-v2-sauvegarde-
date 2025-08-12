@@ -48,6 +48,7 @@ const KarmaManager = require('./managers/KarmaManager');
 const MainRouterHandler = require('./handlers/MainRouterHandler');
 const CommandHandler = require('./handlers/CommandHandler');
 const ReminderManager = require('./managers/ReminderManager');
+const ReminderInteractionHandler = require('./handlers/ReminderInteractionHandler');
 
 class BagBotRender {
     constructor() {
@@ -68,6 +69,7 @@ class BagBotRender {
         this.karmaManager = new KarmaManager(this.dataManager);
         this.interactionHandler = new InteractionHandler(this.dataManager);
         this.reminderManager = new ReminderManager(this.dataManager, this.client);
+        this.reminderInteractionHandler = new ReminderInteractionHandler(this.reminderManager);
         // Optionnel: conserver config-bump uniquement pour UI? On va retirer bump complet; pas d'UI bump.
         this.mainRouterHandler = new MainRouterHandler(this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
@@ -377,6 +379,9 @@ class BagBotRender {
                     }
                     
                     console.log(`🔄 Traitement interaction: ${interaction.customId}`);
+                    // Rappels bump
+                    const reminderHandled = await this.reminderInteractionHandler.handleInteraction(interaction);
+                    if (reminderHandled) return;
                     // Router vers le MainRouterHandler
                     const handled = await this.mainRouterHandler.handleInteraction(interaction);
                     

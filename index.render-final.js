@@ -51,6 +51,7 @@ const { modalHandler } = require('./utils/modalHandler');
 const { wrapInteraction } = require('./utils/interactionWrapper');
 const DataManager = require('./managers/DataManager');
 const ReminderManager = require('./managers/ReminderManager');
+const ReminderInteractionHandler = require('./handlers/ReminderInteractionHandler');
 
 // Voice dependency report (optional, helps diagnose encryption libs on Render)
 try {
@@ -576,6 +577,7 @@ class RenderSolutionBot {
         this.coreDataManager = new DataManager();
         this.reminderManager = new ReminderManager(this.coreDataManager, this.client);
         this.client.reminderManager = this.reminderManager;
+        this.reminderInteractionHandler = new ReminderInteractionHandler(this.reminderManager);
 
         this.commands = new Collection();
         await this.loadCommands();
@@ -706,6 +708,16 @@ class RenderSolutionBot {
                         console.warn('⚠️ Erreur RadioHandler:', e?.message || e);
                     }
                     return;
+                }
+
+                // Rappels de bump (boutons)
+                if (interaction.isButton() && interaction.customId && (interaction.customId.startsWith('bump_reminder_done_') || interaction.customId.startsWith('bump_reminder_info_'))) {
+                    try {
+                        const handled = await this.reminderInteractionHandler.handleInteraction(interaction);
+                        if (handled) return;
+                    } catch (e) {
+                        console.warn('⚠️ Erreur ReminderInteractionHandler:', e?.message || e);
+                    }
                 }
 
                 await this.handleInteraction(interaction);
