@@ -933,6 +933,100 @@ class MainRouterHandler {
                 return true;
             }
 
+            // Sélection d'une fonctionnalité à configurer
+            if (customId === 'moderation_feature_select') {
+                const feature = interaction.values?.[0];
+                const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js');
+
+                const featureSelector = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_feature_select')
+                        .setPlaceholder('Choisir la fonctionnalité à configurer')
+                        .addOptions([
+                            { label: 'Autokick sans rôle', value: 'feature_role', description: 'Kick si le rôle requis est absent après délai' },
+                            { label: 'Autokick inactivité', value: 'feature_inactivity', description: 'Kick après une période d\'inactivité' }
+                        ])
+                );
+
+                if (feature === 'feature_role') {
+                    const roles = interaction.guild.roles.cache
+                        .filter(r => r.editable && r.name !== '@everyone')
+                        .sort((a, b) => b.position - a.position)
+                        .first(25);
+
+                    const embed = new EmbedBuilder()
+                        .setTitle('⚙️ Autokick sans rôle')
+                        .setColor('#e91e63')
+                        .setDescription('Définissez le rôle requis et le délai de grâce. Les membres sans ce rôle seront exclus après le délai.')
+                        .addFields(
+                            { name: 'État', value: cfg.roleEnforcement?.enabled ? '✅ Activé' : '❌ Désactivé', inline: true },
+                            { name: 'Rôle requis', value: cfg.roleEnforcement?.requiredRoleName || '—', inline: true },
+                            { name: 'Délai (jours)', value: String(Math.round((cfg.roleEnforcement?.gracePeriodMs || 0) / (24*60*60*1000))), inline: true }
+                        );
+
+                    const roleRow = new ActionRowBuilder().addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId('moderation_required_role')
+                            .setPlaceholder('Choisir le rôle requis')
+                            .addOptions((roles || []).map(r => ({ label: r.name, value: r.name })).slice(0,25))
+                    );
+
+                    const graceRow = new ActionRowBuilder().addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId('moderation_role_grace_days')
+                            .setPlaceholder('Délai rôle requis (jours)')
+                            .addOptions([
+                                { label: '2 jours', value: '2' },
+                                { label: '4 jours', value: '4' },
+                                { label: '5 jours', value: '5' },
+                                { label: '10 jours', value: '10' },
+                                { label: '20 jours', value: '20' },
+                                { label: '30 jours', value: '30' }
+                            ])
+                    );
+
+                    const toggleRow = new ActionRowBuilder().addComponents(
+                        new ButtonBuilder().setCustomId('moderation_toggle_role').setStyle(ButtonStyle.Primary).setLabel(cfg.roleEnforcement?.enabled ? 'Désactiver' : 'Activer')
+                    );
+
+                    await interaction.update({ embeds: [embed], components: [featureSelector, roleRow, graceRow, toggleRow], ephemeral: true });
+                    return true;
+                }
+
+                if (feature === 'feature_inactivity') {
+                    const embed = new EmbedBuilder()
+                        .setTitle('⚙️ Autokick inactivité')
+                        .setColor('#5865F2')
+                        .setDescription('Définissez le seuil d\'inactivité. Les membres inactifs au-delà de ce seuil seront exclus.')
+                        .addFields(
+                            { name: 'État', value: cfg.inactivity?.enabled ? '✅ Activé' : '❌ Désactivé', inline: true },
+                            { name: 'Seuil (jours)', value: String(Math.round((cfg.inactivity?.thresholdMs || 0) / (24*60*60*1000))), inline: true }
+                        );
+
+                    const daysRow = new ActionRowBuilder().addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId('moderation_inactivity_days')
+                            .setPlaceholder('Seuil d\'inactivité (jours)')
+                            .addOptions([
+                                { label: '7 jours', value: '7' },
+                                { label: '14 jours', value: '14' },
+                                { label: '30 jours', value: '30' },
+                                { label: '60 jours', value: '60' }
+                            ])
+                    );
+
+                    const toggleRow = new ActionRowBuilder().addComponents(
+                        new ButtonBuilder().setCustomId('moderation_toggle_inactivity').setStyle(ButtonStyle.Secondary).setLabel(cfg.inactivity?.enabled ? 'Désactiver' : 'Activer')
+                    );
+
+                    await interaction.update({ embeds: [embed], components: [featureSelector, daysRow, toggleRow], ephemeral: true });
+                    return true;
+                }
+
+                // Valeur inconnue, ignorer
+                return false;
+            }
+
             if (customId === 'moderation_inactivity_days') {
                 const days = Number(interaction.values?.[0] || 30);
                 const thresholdMs = Math.max(1, days) * 24 * 60 * 60 * 1000;
@@ -958,6 +1052,23 @@ class MainRouterHandler {
                 await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), thresholdMs } });
                 await interaction.update({ content: `✅ Seuil d'inactivité défini à ${months} mois (${days} jours)`, components: [], embeds: [], ephemeral: true });
                 return true;
+            }
+
+            // Nouveau: sélecteur rapide pour basculer les autokicks
+            if (customId === 'moderation_autokick_select') {
+                const action = interaction.values?.[0];
+                if (action === 'role_toggle') {
+                    const enabled = !(cfg.roleEnforcement?.enabled === true);
+                    await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), enabled } });
+                    await interaction.update({ content: `✅ Rôle requis ${enabled ? 'activé' : 'désactivé'}`, components: [], embeds: [], ephemeral: true });
+                    return true;
+                }
+                if (action === 'inactivity_toggle') {
+                    const enabled = !(cfg.inactivity?.enabled === true);
+                    await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), enabled } });
+                    await interaction.update({ content: `✅ Inactivité ${enabled ? 'activée' : 'désactivée'}`, components: [], embeds: [], ephemeral: true });
+                    return true;
+                }
             }
  
             if (customId === 'moderation_required_role') {
