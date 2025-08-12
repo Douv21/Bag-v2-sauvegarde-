@@ -922,7 +922,7 @@ class MainRouterHandler {
                     new ButtonBuilder().setCustomId('moderation_enter_role_name').setStyle(ButtonStyle.Success).setLabel('✍️ Entrer le nom du rôle')
                 );
 
-                const components = [featureRow];
+                const components = [row1, featureRow];
 
                 if (interaction.replied) {
                     await interaction.followUp({ embeds: [embed], components, ephemeral: true });
