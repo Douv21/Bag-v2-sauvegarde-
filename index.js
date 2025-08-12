@@ -228,6 +228,116 @@ class BagBotRender {
             }
         });
 
+        // Generic config endpoints for dashboard sections (economy, levels, karma, confessions, counting, autothread, shop, logs, bump, music)
+        this.app.get('/api/config/:name', async (req, res) => {
+            try {
+                const { name } = req.params;
+                const fs = require('fs');
+                const path = require('path');
+                const configPath = path.join(__dirname, 'data', 'configs', `${name}.json`);
+                if (!fs.existsSync(configPath)) {
+                    return res.json({ success: true, data: {} });
+                }
+                const raw = fs.readFileSync(configPath, 'utf8');
+                const data = JSON.parse(raw);
+                res.json({ success: true, data });
+            } catch (error) {
+                console.error('GET /api/config error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        this.app.post('/api/config/:name', async (req, res) => {
+            try {
+                const { name } = req.params;
+                const payload = req.body || {};
+                const fs = require('fs');
+                const path = require('path');
+                const dirPath = path.join(__dirname, 'data', 'configs');
+                const filePath = path.join(dirPath, `${name}.json`);
+                if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
+                const tmp = filePath + '.tmp';
+                fs.writeFileSync(tmp, JSON.stringify(payload, null, 2));
+                fs.renameSync(tmp, filePath);
+                res.json({ success: true });
+            } catch (error) {
+                console.error('POST /api/config error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Moderation endpoints per guild
+        this.app.get('/api/moderation/:guildId', async (req, res) => {
+            try {
+                const { guildId } = req.params;
+                const modAll = await this.dataManager.getData('moderation_config');
+                const cfg = modAll[guildId] || {};
+                res.json({ success: true, data: cfg });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        this.app.post('/api/moderation/:guildId', async (req, res) => {
+            try {
+                const { guildId } = req.params;
+                const body = req.body || {};
+                const all = await this.dataManager.getData('moderation_config');
+                all[guildId] = body;
+                await this.dataManager.saveData('moderation_config', all);
+                res.json({ success: true });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Guild roles listing for UI selectors
+        this.app.get('/api/guilds/:guildId/roles', async (req, res) => {
+            try {
+                const { guildId } = req.params;
+                const guild = this.client.guilds.cache.get(guildId);
+                if (!guild) return res.json({ success: true, data: [] });
+                await guild.roles.fetch();
+                const roles = guild.roles.cache
+                    .filter(r => r.editable || true)
+                    .map(r => ({ id: r.id, name: r.name, color: r.hexColor }))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                res.json({ success: true, data: roles });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Admin quick-actions from dashboard
+        this.app.post('/api/admin/clear-test-objects', async (req, res) => {
+            try {
+                console.log('🧹 clear-test-objects requested from dashboard');
+                // Optionally integrate with scripts/cleaners later
+                res.json({ success: true });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        this.app.post('/api/admin/reset-commands', async (req, res) => {
+            try {
+                console.log('🔁 reset-commands requested from dashboard');
+                // A implémenter si nécessaire: purge et re-register
+                res.json({ success: true });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        this.app.post('/api/admin/force-backup', async (req, res) => {
+            try {
+                const ts = await this.dataManager.createBackup();
+                res.json({ success: !!ts, timestamp: ts });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
         // Dashboard routes
         this.app.get('/dashboard', (req, res) => {
             res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
