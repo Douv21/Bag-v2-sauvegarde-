@@ -134,8 +134,85 @@ class BAGDashboard {
 
         // Menu mobile
         this.setupMobileMenu();
+
+        // Sélecteur de serveur
+        const selector = document.getElementById('serverSelector');
+        const refreshBtn = document.getElementById('refreshOverview');
+        if (selector) {
+            selector.addEventListener('change', () => {
+                const selectedId = selector.value || '';
+                try {
+                    localStorage.setItem('bag.selectedGuildId', selectedId);
+                } catch {}
+                this.refreshOverviewFor(selectedId);
+            });
+        }
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const selectedId = selector?.value || '';
+                this.refreshOverviewFor(selectedId);
+            });
+        }
         
         console.log('✅ Tous les événements configurés');
+    }
+
+    async refreshOverviewFor(guildId) {
+        // Ici on recharge seulement les blocs d'overview qui dépendent des données
+        try {
+            const overviewResponse = await fetch('/api/dashboard/overview');
+            if (!overviewResponse.ok) return;
+            const overview = await overviewResponse.json();
+            this.updateDashboardData(overview);
+        } catch (e) {
+            this.showNotification('Erreur lors de l\'actualisation', 'error');
+        }
+    }
+
+    async loadInitialData() {
+        try {
+            console.log('📊 Chargement des données initiales...');
+            
+            // Charger les données du dashboard
+            const overviewResponse = await fetch('/api/dashboard/overview');
+            if (overviewResponse.ok) {
+                const overview = await overviewResponse.json();
+                this.updateDashboardData(overview);
+            }
+            
+            // Charger les serveurs
+            const serversResponse = await fetch('/api/dashboard/servers');
+            if (serversResponse.ok) {
+                this.data.servers = await serversResponse.json();
+                this.updateServerCount();
+                this.populateServerSelector();
+            }
+            
+            // Charger les configurations par défaut
+            this.data.configs = { ...this.defaultConfigs };
+
+            this.data.lastUpdate = new Date();
+            this.updateHeaderStats();
+            
+            console.log('✅ Données chargées');
+            
+        } catch (error) {
+            console.error('❌ Erreur chargement données:', error);
+            this.data.configs = this.defaultConfigs;
+        }
+    }
+
+    populateServerSelector() {
+        const selector = document.getElementById('serverSelector');
+        if (!selector) return;
+        const servers = this.data.servers || [];
+        const saved = (() => { try { return localStorage.getItem('bag.selectedGuildId') || ''; } catch { return ''; } })();
+        selector.innerHTML = [
+            `<option value="">Tous les serveurs</option>`,
+            ...servers.map(s => `<option value="${s.id}">${s.name} (${s.memberCount.toLocaleString()})</option>`)
+        ].join('');
+        selector.value = servers.some(s => s.id === saved) ? saved : '';
     }
 
     switchSection(section) {
@@ -193,10 +270,7 @@ class BAGDashboard {
                     console.log('💬 Affichage de la section confessions...');
                     await this.showConfessionsSection();
                     break;
-                case 'moderation':
-                    console.log('🛡️ Affichage de la section modération...');
-                    await this.showModerationSection();
-                    break;
+
                 case 'counting':
                     console.log('🔢 Affichage de la section comptage...');
                     await this.showCountingSection();
@@ -657,7 +731,7 @@ class BAGDashboard {
         `;
     }
 
-    async showModerationSection() {
+    async showModerationSection_REMOVED() {
         const container = document.getElementById('content-container');
         const guildId = (this.data.servers?.[0]?.id) || null;
 
@@ -809,7 +883,7 @@ class BAGDashboard {
         if (!select) return;
         const q = (query || '').toLowerCase();
         for (const opt of select.options) {
-            if (!opt.value) continue; // garder l’option vide
+            if (!opt.value) continue; // garder l'option vide
             opt.hidden = q && !opt.text.toLowerCase().includes(q);
         }
     }
@@ -1414,7 +1488,7 @@ class BAGDashboard {
             console.log(`✅ Navigation: ${navLinks.length} liens trouvés`);
             
             // Test des sections
-            const sections = ['overview', 'economy', 'levels', 'karma', 'confessions', 'moderation', 'backup', 'settings'];
+            const sections = ['overview', 'economy', 'levels', 'karma', 'confessions', 'backup', 'settings'];
             let workingSections = 0;
             
             for (const section of sections) {
@@ -1502,6 +1576,7 @@ class BAGDashboard {
             if (serversResponse.ok) {
                 this.data.servers = await serversResponse.json();
                 this.updateServerCount();
+                this.populateServerSelector();
             }
             
             // Charger les configurations par défaut
@@ -1516,6 +1591,18 @@ class BAGDashboard {
             console.error('❌ Erreur chargement données:', error);
             this.data.configs = this.defaultConfigs;
         }
+    }
+
+    populateServerSelector() {
+        const selector = document.getElementById('serverSelector');
+        if (!selector) return;
+        const servers = this.data.servers || [];
+        const saved = (() => { try { return localStorage.getItem('bag.selectedGuildId') || ''; } catch { return ''; } })();
+        selector.innerHTML = [
+            `<option value="">Tous les serveurs</option>`,
+            ...servers.map(s => `<option value="${s.id}">${s.name} (${s.memberCount.toLocaleString()})</option>`)
+        ].join('');
+        selector.value = servers.some(s => s.id === saved) ? saved : '';
     }
 
     updateDashboardData(overview) {
