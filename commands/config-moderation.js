@@ -1,15 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('config-moderation')
-    .setDescription('Configurer l\'auto-kick et les règles de modération')
-    .addBooleanOption(o => o.setName('role_enforce').setDescription('Activer l\'exigence de rôle'))
-    .addStringOption(o => o.setName('role_name').setDescription('Rôle requis (nom)'))
-    .addIntegerOption(o => o.setName('role_grace_days').setDescription('Jours de délai pour obtenir le rôle').setMinValue(1).setMaxValue(60))
-    .addBooleanOption(o => o.setName('inactivity_enable').setDescription('Activer l\'auto-kick pour inactivité'))
-    .addIntegerOption(o => o.setName('inactivity_days').setDescription('Jours d\'inactivité').setMinValue(3).setMaxValue(365))
-    .addStringOption(o => o.setName('exempt_role_names').setDescription('Noms de rôles exemptés, séparés par des virgules'))
+    .setDescription('Configurer auto-kick (rôle requis) et kick pour inactivité via sélecteurs')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
 
   cooldown: 2,
@@ -21,24 +15,89 @@ module.exports = {
 
     const guild = interaction.guild;
     const mod = interaction.client.moderationManager;
+    const cfg = await mod.getGuildConfig(guild.id);
 
-    const roleEnforce = interaction.options.getBoolean('role_enforce');
-    const roleName = interaction.options.getString('role_name');
-    const roleGrace = interaction.options.getInteger('role_grace_days');
-    const inactivityEnable = interaction.options.getBoolean('inactivity_enable');
-    const inactivityDays = interaction.options.getInteger('inactivity_days');
-    const exemptRoleNames = (interaction.options.getString('exempt_role_names') || '').split(',').map(s => s.trim()).filter(Boolean);
+    // Rôles éditables (max 25)
+    const roles = guild.roles.cache
+      .filter(r => r.editable && r.name !== '@everyone')
+      .sort((a, b) => b.position - a.position)
+      .first(25);
 
-    const current = await mod.getGuildConfig(guild.id);
-    const updates = { ...current };
-    if (roleEnforce !== null) updates.roleEnforcement = { ...(updates.roleEnforcement || {}), enabled: roleEnforce };
-    if (roleName) updates.roleEnforcement = { ...(updates.roleEnforcement || {}), requiredRoleName: roleName };
-    if (roleGrace) updates.roleEnforcement = { ...(updates.roleEnforcement || {}), gracePeriodMs: roleGrace * 24 * 60 * 60 * 1000 };
-    if (inactivityEnable !== null) updates.inactivity = { ...(updates.inactivity || {}), enabled: inactivityEnable };
-    if (inactivityDays) updates.inactivity = { ...(updates.inactivity || {}), thresholdMs: inactivityDays * 24 * 60 * 60 * 1000 };
-    if (exemptRoleNames.length > 0) updates.inactivity = { ...(updates.inactivity || {}), exemptRoleNames };
+    // Embed résumé
+    const embed = new EmbedBuilder()
+      .setTitle('🛡️ Configuration Modération')
+      .setColor('#e91e63')
+      .setDescription('Sélectionnez un rôle requis et un délai, puis définissez la durée d\'inactivité pour les kicks automatiques.')
+      .addFields(
+        {
+          name: 'Rôle requis',
+          value: cfg.roleEnforcement?.requiredRoleName ? `Actuel: ${cfg.roleEnforcement.requiredRoleName}` : 'Aucun',
+          inline: true
+        },
+        {
+          name: 'Délai rôle requis',
+          value: `${Math.round((cfg.roleEnforcement?.gracePeriodMs || 7*24*60*60*1000) / (24*60*60*1000))} jours`,
+          inline: true
+        },
+        {
+          name: 'Inactivité',
+          value: `${Math.round((cfg.inactivity?.thresholdMs || 30*24*60*60*1000)/(30*24*60*60*1000))} mois`,
+          inline: true
+        }
+      );
 
-    await mod.setGuildConfig(guild.id, updates);
-    return interaction.reply({ content: '✅ Configuration mise à jour.', ephemeral: true });
+    // Sélecteur du rôle requis (valeur = nom pour compat handler actuel)
+    const roleSelect = new StringSelectMenuBuilder()
+      .setCustomId('moderation_required_role')
+      .setPlaceholder('Choisir le rôle requis')
+      .addOptions(
+        (roles || []).map(r => ({ label: r.name, value: r.name })).slice(0, 25)
+      );
+
+    // Sélecteur délai (jours) pour rôle requis
+    const graceDaysSelect = new StringSelectMenuBuilder()
+      .setCustomId('moderation_role_grace_days')
+      .setPlaceholder('Délai rôle requis (jours)')
+      .addOptions([
+        { label: '2 jours', value: '2' },
+        { label: '4 jours', value: '4' },
+        { label: '5 jours', value: '5' },
+        { label: '10 jours', value: '10' },
+        { label: '20 jours', value: '20' },
+        { label: '30 jours', value: '30' }
+      ]);
+
+    // Sélecteur inactivité (mois)
+    const inactivityMonthsSelect = new StringSelectMenuBuilder()
+      .setCustomId('moderation_inactivity_months')
+      .setPlaceholder('Kick inactivité après...')
+      .addOptions([
+        { label: '1 mois', value: '1' },
+        { label: '2 mois', value: '2' },
+        { label: '3 mois', value: '3' },
+        { label: '6 mois', value: '6' },
+        { label: '12 mois', value: '12' }
+      ]);
+
+    // Boutons Activer/Désactiver
+    const toggles = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('moderation_toggle_role')
+        .setStyle(ButtonStyle.Primary)
+        .setLabel(cfg.roleEnforcement?.enabled ? 'Désactiver Rôle Requis' : 'Activer Rôle Requis'),
+      new ButtonBuilder()
+        .setCustomId('moderation_toggle_inactivity')
+        .setStyle(ButtonStyle.Secondary)
+        .setLabel(cfg.inactivity?.enabled ? 'Désactiver Inactivité' : 'Activer Inactivité')
+    );
+
+    const rows = [
+      new ActionRowBuilder().addComponents(roleSelect),
+      new ActionRowBuilder().addComponents(graceDaysSelect),
+      new ActionRowBuilder().addComponents(inactivityMonthsSelect),
+      toggles
+    ];
+
+    return interaction.reply({ embeds: [embed], components: rows, ephemeral: true });
   }
 };

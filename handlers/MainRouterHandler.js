@@ -937,10 +937,29 @@ class MainRouterHandler {
                 const days = Number(interaction.values?.[0] || 30);
                 const thresholdMs = Math.max(1, days) * 24 * 60 * 60 * 1000;
                 await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), thresholdMs } });
-                await interaction.update({ content: `✅ Seuil d\'inactivité défini à ${days} jours`, components: [], embeds: [], ephemeral: true });
+                await interaction.update({ content: `✅ Seuil d'inactivité défini à ${days} jours`, components: [], embeds: [], ephemeral: true });
                 return true;
             }
 
+            // Nouveau: délai (jours) pour le rôle requis: 2,4,5,10,20,30
+            if (customId === 'moderation_role_grace_days') {
+                const days = Number(interaction.values?.[0] || 7);
+                const gracePeriodMs = Math.max(1, days) * 24 * 60 * 60 * 1000;
+                await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), gracePeriodMs } });
+                await interaction.update({ content: `✅ Délai du rôle requis défini à ${days} jours`, components: [], embeds: [], ephemeral: true });
+                return true;
+            }
+
+            // Nouveau: inactivité en mois: 1,2,3,6,12
+            if (customId === 'moderation_inactivity_months') {
+                const months = Number(interaction.values?.[0] || 1);
+                const days = Math.max(1, Math.round(months * 30));
+                const thresholdMs = days * 24 * 60 * 60 * 1000;
+                await modManager.setGuildConfig(guildId, { inactivity: { ...(cfg.inactivity || {}), thresholdMs } });
+                await interaction.update({ content: `✅ Seuil d'inactivité défini à ${months} mois (${days} jours)`, components: [], embeds: [], ephemeral: true });
+                return true;
+            }
+ 
             if (customId === 'moderation_required_role') {
                 const roleName = interaction.values?.[0];
                 await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleName: roleName } });
