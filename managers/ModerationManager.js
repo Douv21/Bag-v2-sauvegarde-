@@ -15,14 +15,16 @@ class ModerationManager {
       // Enforce required role after grace period
       roleEnforcement: {
         enabled: false,
-        requiredRoleId: null,
+        requiredRoleId: null, // compat ancien
+        requiredRoleName: null, // nouveau
         gracePeriodMs: 7 * 24 * 60 * 60 * 1000 // 7 jours
       },
       // Auto-kick for inactivity
       inactivity: {
         enabled: false,
         thresholdMs: 30 * 24 * 60 * 60 * 1000, // 30 jours
-        exemptRoleIds: []
+        exemptRoleIds: [], // compat ancien
+        exemptRoleNames: [] // nouveau
       },
       // Mute defaults
       mute: {
@@ -172,6 +174,14 @@ class ModerationManager {
     await this.dataManager.saveData('user_stats', stats);
   }
 
+  resolveRoleByName(guild, roleName) {
+    if (!guild || !roleName) return null;
+    const exact = guild.roles.cache.find(r => r.name === roleName);
+    if (exact) return exact;
+    const ci = guild.roles.cache.find(r => r.name.toLowerCase() === String(roleName).toLowerCase());
+    return ci || null;
+  }
+
   async checkAllGuilds() {
     for (const guild of this.client.guilds.cache.values()) {
       await this.checkGuild(guild).catch(err => console.error('Moderation check error:', err));
@@ -182,15 +192,29 @@ class ModerationManager {
     const cfg = await this.getGuildConfig(guild.id);
     const now = Date.now();
 
+    // Préparer rôles requis/exemptés (IDs à partir du nom si nécessaire)
+    let requiredRoleId = cfg.roleEnforcement?.requiredRoleId || null;
+    if (!requiredRoleId && cfg.roleEnforcement?.requiredRoleName) {
+      requiredRoleId = this.resolveRoleByName(guild, cfg.roleEnforcement.requiredRoleName)?.id || null;
+    }
+
+    const exemptRoleIdList = Array.isArray(cfg.inactivity?.exemptRoleIds) ? [...cfg.inactivity.exemptRoleIds] : [];
+    if (Array.isArray(cfg.inactivity?.exemptRoleNames) && cfg.inactivity.exemptRoleNames.length > 0) {
+      for (const name of cfg.inactivity.exemptRoleNames) {
+        const r = this.resolveRoleByName(guild, name);
+        if (r && !exemptRoleIdList.includes(r.id)) exemptRoleIdList.push(r.id);
+      }
+    }
+
     // Role enforcement
-    if (cfg.roleEnforcement?.enabled && cfg.roleEnforcement.requiredRoleId && cfg.roleEnforcement.gracePeriodMs > 0) {
+    if (cfg.roleEnforcement?.enabled && requiredRoleId && cfg.roleEnforcement.gracePeriodMs > 0) {
       const state = await this.dataManager.getData('moderation_state');
       const gState = state[guild.id] || {};
       const members = await guild.members.fetch();
       for (const member of members.values()) {
         if (member.user.bot) continue;
         if (member.permissions.has(PermissionsBitField.Flags.Administrator)) continue;
-        const hasRole = member.roles.cache.has(cfg.roleEnforcement.requiredRoleId);
+        const hasRole = member.roles.cache.has(requiredRoleId);
         if (hasRole) continue;
         const joinInfo = gState[member.id];
         const joinedAtTs = joinInfo?.joinedAt || member.joinedTimestamp || now;
@@ -209,7 +233,7 @@ class ModerationManager {
       for (const member of members.values()) {
         if (member.user.bot) continue;
         if (member.permissions.has(PermissionsBitField.Flags.Administrator)) continue;
-        if (cfg.inactivity.exemptRoleIds?.some(r => member.roles.cache.has(r))) continue;
+        if (exemptRoleIdList.some(rid => member.roles.cache.has(rid))) continue;
         const last = gStats[member.id]?.lastMessage || member.joinedTimestamp || 0;
         if (last > 0 && last < threshold) {
           await this.safeKick(member, `[Auto] Inactivité prolongée`);
