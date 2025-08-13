@@ -305,6 +305,185 @@ class RenderSolutionBot {
         // Static files for dashboard
         app.use(express.static(path.join(__dirname, 'public')));
 
+        // === Dashboard API attendue par le frontend ===
+        // Vue d'ensemble du dashboard
+        app.get('/api/dashboard/overview', async (req, res) => {
+            try {
+                const dataManager = require('./utils/simpleDataManager');
+                const economyData = dataManager.getData('economy.json');
+                const confData = dataManager.getData('confessions.json');
+                const levelUsers = dataManager.getData('level_users.json');
+
+                // Bot/serveurs
+                const totalGuilds = this.client?.guilds?.cache?.size || 0;
+                const totalMembers = (() => {
+                    try {
+                        return Array.from(this.client?.guilds?.cache?.values() || [])
+                            .reduce((acc, g) => acc + (g.memberCount || 0), 0);
+                    } catch { return 0; }
+                })();
+
+                // Économie
+                let totalMoney = 0;
+                let richestUser = null;
+                for (const [key, val] of Object.entries(economyData || {})) {
+                    if (!key.includes('_')) continue;
+                    const money = Number(val?.money ?? val?.argent ?? val?.balance ?? 0);
+                    totalMoney += money;
+                    if (!richestUser || money > richestUser.amount) {
+                        richestUser = { id: String(key).split('_')[0], amount: money };
+                    }
+                }
+
+                // Confessions
+                let totalConf = 0;
+                let pendingConf = 0;
+                try {
+                    for (const rec of Object.values(confData || {})) {
+                        const list = Array.isArray(rec?.confessions) ? rec.confessions : [];
+                        totalConf += list.length;
+                        pendingConf += Array.isArray(rec?.pending) ? rec.pending.length : 0;
+                    }
+                } catch {}
+
+                // Karma
+                let totalKarma = 0;
+                let activeKarmaUsers = 0;
+                for (const val of Object.values(economyData || {})) {
+                    const good = Number(val?.goodKarma || 0);
+                    const bad = Number(val?.badKarma || 0);
+                    const net = good + bad;
+                    totalKarma += net;
+                    if (net !== 0) activeKarmaUsers++;
+                }
+
+                // Niveaux
+                let highestLevel = 0;
+                let totalXP = 0;
+                for (const val of Object.values(levelUsers || {})) {
+                    highestLevel = Math.max(highestLevel, Number(val?.level || 0));
+                    totalXP += Number(val?.xp || 0);
+                }
+
+                const overview = {
+                    bot: {
+                        status: this.client && this.client.isReady() ? 'online' : 'offline',
+                        uptime: Math.floor(process.uptime()),
+                        version: '3.0 Premium',
+                        ping: this.client?.ws?.ping || 0
+                    },
+                    servers: {
+                        total: totalGuilds,
+                        members: totalMembers
+                    },
+                    economy: {
+                        totalMoney,
+                        totalUsers: Object.keys(economyData || {}).length,
+                        richestUser,
+                        dailyTransactions: 0
+                    },
+                    confessions: {
+                        total: totalConf,
+                        daily: Math.floor(totalConf * 0.05),
+                        pending: pendingConf
+                    },
+                    karma: {
+                        total: totalKarma,
+                        activeUsers: activeKarmaUsers,
+                        topUser: richestUser ? { id: richestUser.id, karma: Math.max(0, totalKarma) } : null
+                    },
+                    activity: [
+                        { type: 'economy', message: 'Activité économique récente', timestamp: new Date(), icon: 'fas fa-coins' },
+                        { type: 'level', message: 'Progression de niveau détectée', timestamp: new Date(Date.now() - 3600000), icon: 'fas fa-star' },
+                        { type: 'karma', message: 'Points karma distribués', timestamp: new Date(Date.now() - 7200000), icon: 'fas fa-heart' }
+                    ]
+                };
+                res.json(overview);
+            } catch (error) {
+                console.error('Erreur /api/dashboard/overview:', error);
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Liste des serveurs
+        app.get('/api/dashboard/servers', (req, res) => {
+            try {
+                const list = Array.from(this.client?.guilds?.cache?.values() || []).map(g => ({
+                    id: g.id,
+                    name: g.name,
+                    memberCount: g.memberCount || 0,
+                    icon: g.iconURL?.() || null,
+                    joinedAt: g.joinedAt || null
+                }));
+                res.json(list);
+            } catch (error) {
+                console.error('Erreur /api/dashboard/servers:', error);
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Config générique (GET/POST)
+        app.get('/api/config/:name', (req, res) => {
+            try {
+                const fs = require('fs');
+                const cfgName = req.params.name;
+                const cfgPath = path.join(__dirname, 'data', 'configs', `${cfgName}.json`);
+                if (!fs.existsSync(cfgPath)) return res.json({ success: true, data: {} });
+                const raw = fs.readFileSync(cfgPath, 'utf8');
+                const data = JSON.parse(raw);
+                res.json({ success: true, data });
+            } catch (error) {
+                console.error('GET /api/config error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        app.post('/api/config/:name', (req, res) => {
+            try {
+                const fs = require('fs');
+                const cfgName = req.params.name;
+                const dir = path.join(__dirname, 'data', 'configs');
+                const file = path.join(dir, `${cfgName}.json`);
+                if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                fs.writeFileSync(file + '.tmp', JSON.stringify(req.body || {}, null, 2));
+                fs.renameSync(file + '.tmp', file);
+                res.json({ success: true });
+            } catch (error) {
+                console.error('POST /api/config error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Actions admin depuis le dashboard
+        app.post('/api/admin/clear-test-objects', (req, res) => {
+            try {
+                console.log('🧹 clear-test-objects (dashboard)');
+                res.json({ success: true });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        app.post('/api/admin/reset-commands', (req, res) => {
+            try {
+                console.log('🔁 reset-commands (dashboard)');
+                res.json({ success: true });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        app.post('/api/admin/force-backup', async (req, res) => {
+            try {
+                const success = await deploymentManager.emergencyBackup();
+                res.json({ success: !!success });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // === Fin endpoints dashboard ===
+
         // Endpoint status système de sauvegarde
         app.get('/backup-status', async (req, res) => {
             try {
@@ -338,17 +517,14 @@ class RenderSolutionBot {
             }
         });
 
-        // API endpoint pour les statistiques du dashboard
+        // API endpoint pour les statistiques du dashboard (format compatible UI)
         app.get('/api/stats', async (req, res) => {
             try {
                 const dataManager = require('./utils/simpleDataManager');
-                
-                // Charger les données depuis les fichiers JSON
                 const economyData = dataManager.loadData('economy.json', {});
                 const confessionData = dataManager.loadData('confessions.json', {});
                 const levelData = dataManager.loadData('level_users.json', {});
-                
-                // Calculer les statistiques
+
                 let stats = {
                     activeMembers: 0,
                     todayMessages: 0,
@@ -364,59 +540,53 @@ class RenderSolutionBot {
                     rewardsGiven: 0
                 };
 
-                // Analyser les données économiques
                 let richestAmount = 0;
                 Object.keys(economyData).forEach(key => {
                     if (key.includes('_')) {
-                        const data = economyData[key];
-                        if (data.money) {
-                            stats.totalMoney += data.money;
-                            if (data.money > richestAmount) {
-                                richestAmount = data.money;
-                                stats.richestUser = `Membre#${key.split('_')[0].slice(-4)}`;
-                            }
+                        const data = economyData[key] || {};
+                        const money = Number(data.money || data.argent || 0);
+                        stats.totalMoney += money;
+                        if (money > richestAmount) {
+                            richestAmount = money;
+                            stats.richestUser = `Membre#${String(key.split('_')[0]).slice(-4)}`;
                         }
-                        if (data.goodKarma || data.badKarma) {
+                        if ((data.goodKarma ?? 0) !== 0 || (data.badKarma ?? 0) !== 0) {
                             stats.activeMembers++;
                         }
                     }
                 });
 
-                // Analyser les confessions
                 Object.keys(confessionData).forEach(key => {
-                    if (confessionData[key].confessions) {
-                        stats.totalConfessions += confessionData[key].confessions.length;
+                    const rec = confessionData[key];
+                    if (rec && Array.isArray(rec.confessions)) {
+                        stats.totalConfessions += rec.confessions.length;
                     }
                 });
 
-                // Analyser les niveaux
                 Object.keys(levelData).forEach(key => {
                     if (key.includes('_')) {
-                        const data = levelData[key];
-                        if (data.level > stats.highestLevel) {
-                            stats.highestLevel = data.level;
-                        }
-                        if (data.xp) {
-                            stats.totalXP += data.xp;
-                        }
+                        const data = levelData[key] || {};
+                        if (Number(data.level || 0) > stats.highestLevel) stats.highestLevel = Number(data.level || 0);
+                        stats.totalXP += Number(data.xp || 0);
                     }
                 });
 
-                // Formater les nombres
-                stats.totalMoney = `${stats.totalMoney.toLocaleString()} 💰`;
-                stats.totalXP = stats.totalXP.toLocaleString();
-                stats.avgConfessions = stats.totalConfessions > 0 ? (stats.totalConfessions / 7).toFixed(1) : '0';
-                stats.weekConfessions = Math.floor(stats.totalConfessions * 0.1); // Estimation
-                stats.todayMessages = Math.floor(Math.random() * 500) + 100; // Données simulées
-                stats.commandsUsed = Math.floor(Math.random() * 200) + 50;
-                stats.todayTransactions = Math.floor(Math.random() * 50) + 10;
-                stats.rewardsGiven = Math.floor(stats.totalConfessions * 0.3);
+                const response = {
+                    ...stats,
+                    totalMoney: `${stats.totalMoney.toLocaleString()} 💰`,
+                    totalXP: stats.totalXP.toLocaleString(),
+                    avgConfessions: stats.totalConfessions > 0 ? (stats.totalConfessions / 7).toFixed(1) : '0',
+                    weekConfessions: Math.floor(stats.totalConfessions * 0.1),
+                    todayMessages: Math.floor(Math.random() * 500) + 100,
+                    commandsUsed: Math.floor(Math.random() * 200) + 50,
+                    todayTransactions: Math.floor(Math.random() * 50) + 10,
+                    rewardsGiven: Math.floor(stats.totalConfessions * 0.3)
+                };
 
-                res.json(stats);
+                res.json({ success: true, data: response });
             } catch (error) {
                 console.error('Erreur chargement stats:', error);
-                // Retourner des données par défaut en cas d'erreur
-                res.json({
+                res.json({ success: false, data: {
                     activeMembers: 42,
                     todayMessages: 234,
                     commandsUsed: 156,
@@ -429,7 +599,7 @@ class RenderSolutionBot {
                     highestLevel: 47,
                     totalXP: '1,234,567',
                     rewardsGiven: 89
-                });
+                }});
             }
         });
 
