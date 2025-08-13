@@ -59,6 +59,19 @@ class BAGDashboard {
         this.init();
     }
 
+    // Retourne l'ID de serveur sélectionné dans le sélecteur (ou valeur stockée)
+    getSelectedGuildId() {
+        try {
+            const selector = document.getElementById('serverSelector');
+            const fromDom = selector?.value || '';
+            if (fromDom) return fromDom;
+            const fromStorage = localStorage.getItem('bag.selectedGuildId') || '';
+            return fromStorage || '';
+        } catch {
+            return '';
+        }
+    }
+
     async init() {
         console.log('🚀 Initialisation du BAG Dashboard Premium...');
         
@@ -145,6 +158,9 @@ class BAGDashboard {
                     localStorage.setItem('bag.selectedGuildId', selectedId);
                 } catch {}
                 this.refreshOverviewFor(selectedId);
+                if (this.currentSection === 'moderation') {
+                    this.showModerationSection();
+                }
             });
         }
         if (refreshBtn) {
@@ -737,7 +753,7 @@ class BAGDashboard {
 
     async showModerationSection() {
         const container = document.getElementById('content-container');
-        const guildId = (this.data.servers?.[0]?.id) || null;
+        const guildId = this.getSelectedGuildId() || (this.data.servers?.[0]?.id) || null;
 
         // Charger config/modération et rôles si possible
         let moderationCfg = null;
@@ -936,7 +952,8 @@ class BAGDashboard {
                 return;
             }
 
-            const res = await this.apiCall(`/api/moderation/${guildId}`, 'POST', body);
+            const targetGuildId = guildId || this.getSelectedGuildId();
+            const res = await this.apiCall(`/api/moderation/${targetGuildId}`, 'POST', body);
             if (res?.success) {
                 this.showNotification('Configuration de modération sauvegardée!', 'success');
             } else {
