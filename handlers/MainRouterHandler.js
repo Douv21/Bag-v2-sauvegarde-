@@ -192,6 +192,18 @@ class MainRouterHandler {
                 return await this.handlers.confession.showMainConfigMenu(interaction);
             }
 
+            // AouV buttons
+            if (customId === 'aouv_btn_action' || customId === 'aouv_btn_verite') {
+                console.log(`➡️ Routage vers AouV (boutons): ${customId}`);
+                try {
+                    const aouv = require('../commands/aouv.js');
+                    await aouv.handleButton(interaction, this.dataManager);
+                    return true;
+                } catch (e) {
+                    console.error('Erreur routage AouV:', e);
+                }
+            }
+
             console.log(`⚠️ CustomId non géré par le router: ${customId}`);
             return false;
 
