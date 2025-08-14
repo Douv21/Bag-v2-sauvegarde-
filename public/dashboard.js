@@ -59,6 +59,19 @@ class BAGDashboard {
         this.init();
     }
 
+    // Retourne l'ID de serveur sélectionné dans le sélecteur (ou valeur stockée)
+    getSelectedGuildId() {
+        try {
+            const selector = document.getElementById('serverSelector');
+            const fromDom = selector?.value || '';
+            if (fromDom) return fromDom;
+            const fromStorage = localStorage.getItem('bag.selectedGuildId') || '';
+            return fromStorage || '';
+        } catch {
+            return '';
+        }
+    }
+
     async init() {
         console.log('🚀 Initialisation du BAG Dashboard Premium...');
         
@@ -145,6 +158,9 @@ class BAGDashboard {
                     localStorage.setItem('bag.selectedGuildId', selectedId);
                 } catch {}
                 this.refreshOverviewFor(selectedId);
+                if (this.currentSection === 'moderation') {
+                    this.showModerationSection();
+                }
             });
         }
         if (refreshBtn) {
@@ -737,7 +753,7 @@ class BAGDashboard {
 
     async showModerationSection() {
         const container = document.getElementById('content-container');
-        const guildId = (this.data.servers?.[0]?.id) || null;
+        const guildId = this.getSelectedGuildId() || (this.data.servers?.[0]?.id) || null;
 
         // Charger config/modération et rôles si possible
         let moderationCfg = null;
@@ -936,7 +952,8 @@ class BAGDashboard {
                 return;
             }
 
-            const res = await this.apiCall(`/api/moderation/${guildId}`, 'POST', body);
+            const targetGuildId = guildId || this.getSelectedGuildId();
+            const res = await this.apiCall(`/api/moderation/${targetGuildId}`, 'POST', body);
             if (res?.success) {
                 this.showNotification('Configuration de modération sauvegardée!', 'success');
             } else {
@@ -1794,22 +1811,22 @@ class BAGDashboard {
     async loadOverviewStats() {
         try {
             const response = await this.apiCall('/api/stats');
-            if (response.success) {
-                const stats = response.data;
-                
+            const payload = response?.data || response; // compatibilité
+            if (payload) {
+                const stats = payload;
                 // Mettre à jour les éléments de l'overview
-                this.updateElement('activeMembers', stats.activeMembers || 0);
-                this.updateElement('todayMessages', stats.todayMessages || 0);
-                this.updateElement('commandsUsed', stats.commandsUsed || 0);
-                this.updateElement('totalMoney', this.formatNumber(stats.totalMoney || 0));
-                this.updateElement('todayTransactions', stats.todayTransactions || 0);
-                this.updateElement('richestUser', stats.richestUser || 'N/A');
-                this.updateElement('totalConfessions', stats.totalConfessions || 0);
-                this.updateElement('weekConfessions', stats.weekConfessions || 0);
-                this.updateElement('avgConfessions', stats.avgConfessions || 0);
-                this.updateElement('highestLevel', stats.highestLevel || 0);
-                this.updateElement('totalXP', this.formatNumber(stats.totalXP || 0));
-                this.updateElement('rewardsGiven', stats.rewardsGiven || 0);
+                this.updateElement('activeMembers', stats.activeMembers ?? 0);
+                this.updateElement('todayMessages', stats.todayMessages ?? 0);
+                this.updateElement('commandsUsed', stats.commandsUsed ?? 0);
+                this.updateElement('totalMoney', (typeof stats.totalMoney === 'string') ? stats.totalMoney : this.formatNumber(stats.totalMoney || 0));
+                this.updateElement('todayTransactions', stats.todayTransactions ?? 0);
+                this.updateElement('richestUser', stats.richestUser ?? 'N/A');
+                this.updateElement('totalConfessions', stats.totalConfessions ?? 0);
+                this.updateElement('weekConfessions', stats.weekConfessions ?? 0);
+                this.updateElement('avgConfessions', stats.avgConfessions ?? 0);
+                this.updateElement('highestLevel', stats.highestLevel ?? 0);
+                this.updateElement('totalXP', (typeof stats.totalXP === 'string') ? stats.totalXP : this.formatNumber(stats.totalXP || 0));
+                this.updateElement('rewardsGiven', stats.rewardsGiven ?? 0);
             }
         } catch (error) {
             console.error('Erreur chargement stats overview:', error);

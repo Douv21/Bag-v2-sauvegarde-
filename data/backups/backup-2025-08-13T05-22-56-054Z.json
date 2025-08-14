@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-07T20:24:10.306Z",
+  "timestamp": "2025-08-13T05:22:56.054Z",
   "deployment": "local",
   "files": {
     "economy.json": {
@@ -46,25 +46,7 @@
           1753184120446,
           1753181391406
         ],
-        "inventory": [
-          {
-            "id": 1753136861543,
-            "name": "Fouet",
-            "description": "Objet personnalisé",
-            "type": "custom",
-            "price": 50,
-            "purchasedAt": "2025-07-22T16:26:37.860Z"
-          },
-          {
-            "id": 1753136861543,
-            "name": "Fouet",
-            "description": "Objet personnalisé",
-            "type": "custom",
-            "price": 50,
-            "purchaseDate": "2025-07-26T20:57:24.399Z",
-            "from": "shop"
-          }
-        ],
+        "inventory": [],
         "xp": 6004,
         "money": 6120,
         "level": 1
@@ -98,7 +80,31 @@
             "badKarma": 0
           }
         },
+        "charmer": {
+          "enabled": true,
+          "minReward": 3,
+          "maxReward": 100,
+          "cooldown": 60000,
+          "goodKarma": 2,
+          "badKarma": 0,
+          "montant": {
+            "minAmount": 3,
+            "maxAmount": 100
+          },
+          "karma": {
+            "goodKarma": 3,
+            "badKarma": 0
+          }
+        },
         "pecher": {
+          "enabled": true,
+          "minReward": 10,
+          "maxReward": 50,
+          "cooldown": 60000,
+          "goodKarma": 1,
+          "badKarma": 0
+        },
+        "flirter": {
           "enabled": true,
           "minReward": 10,
           "maxReward": 50,
@@ -110,7 +116,16 @@
           "goodKarma": 3,
           "badKarma": 0
         },
+        "offrir": {
+          "goodKarma": 3,
+          "badKarma": 0
+        },
         "voler": {
+          "goodKarma": 0,
+          "badKarma": -3,
+          "enabled": true
+        },
+        "seduire": {
           "goodKarma": 0,
           "badKarma": -3,
           "enabled": true
@@ -123,7 +138,23 @@
           "goodKarma": 0,
           "badKarma": -5
         },
+        "coup-de-folie": {
+          "enabled": true,
+          "minReward": 1,
+          "maxReward": 300,
+          "cooldown": 480000,
+          "goodKarma": 0,
+          "badKarma": -5
+        },
         "parier": {
+          "enabled": true,
+          "minReward": 2,
+          "maxReward": 400,
+          "cooldown": 240000,
+          "goodKarma": 0,
+          "badKarma": -1
+        },
+        "oser": {
           "enabled": true,
           "minReward": 2,
           "maxReward": 400,
@@ -236,7 +267,7 @@
           "name": "Ange",
           "karmaThreshold": 50,
           "roleId": "1396547788384374884",
-          "roleName": "nouveau rôletest",
+          "roleName": "Ange",
           "duration": 24,
           "moneyReward": 2000,
           "type": "reward",
@@ -421,17 +452,6 @@
         "updatedAt": "2025-08-02T18:27:39.891Z",
         "money": 1000,
         "level": 1
-      },
-      "test123_guild456": {
-        "balance": 1000,
-        "goodKarma": 0,
-        "badKarma": 0,
-        "dailyStreak": 0,
-        "lastDaily": null,
-        "messageCount": 0,
-        "xp": 25,
-        "inventory": [],
-        "updatedAt": "2025-08-04T14:37:34.500Z"
       }
     },
     "level_users.json": {
@@ -574,16 +594,6 @@
         "totalVoiceTime": 0,
         "lastMessageTime": 0,
         "lastVoiceTime": 0
-      },
-      "guild456_test123": {
-        "userId": "test123",
-        "guildId": "guild456",
-        "xp": 25,
-        "level": 1,
-        "totalMessages": 1,
-        "totalVoiceTime": 0,
-        "lastMessageTime": 1754318254500,
-        "lastVoiceTime": 0
       }
     },
     "level_config.json": {
@@ -672,39 +682,34 @@
     "shop.json": {
       "1360897918504271882": [
         {
-          "id": "1753566068434",
-          "name": "Fouet",
-          "price": 50,
-          "description": "Amuse toi  bien",
-          "type": "custom",
-          "createdAt": "2025-07-26T21:41:08.434Z",
-          "createdBy": "943487722738311219"
+          "id": "private_24h_1754603842113",
+          "type": "private_24h",
+          "name": "Suite Privée 24h",
+          "price": 5000,
+          "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) pour 24h.",
+          "createdAt": "2025-08-07T21:57:22.113Z",
+          "createdBy": "system",
+          "category": "VIP 💎"
         },
         {
-          "id": "1753566340743",
-          "name": "Rôle: nouveau rôletest",
+          "id": "private_monthly_1754603842114",
+          "type": "private_monthly",
+          "name": "Suite Privée Mensuelle",
+          "price": 15000,
+          "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) pour 30 jours.",
+          "createdAt": "2025-08-07T21:57:22.114Z",
+          "createdBy": "system",
+          "category": "VIP 💎"
+        },
+        {
+          "id": "private_permanent_1754603842114",
+          "type": "private_permanent",
+          "name": "Suite Privée Permanente",
           "price": 50000,
-          "duration": 6,
-          "roleId": "1396547788384374884",
-          "type": "temp_role",
-          "createdAt": "2025-07-26T21:45:40.743Z",
-          "createdBy": "943487722738311219"
-        },
-        {
-          "id": "1753606461399",
-          "type": "custom",
-          "name": "Fouet",
-          "price": 50,
-          "description": "Objet personnalisé",
-          "created": "2025-07-27T08:54:21.399Z"
-        },
-        {
-          "id": "1753607865512",
-          "type": "custom",
-          "name": "Fouet",
-          "price": 500,
-          "description": "Objet personnalisé",
-          "created": "2025-07-27T09:17:45.512Z"
+          "description": "Crée un rôle et deux salons privés (texte NSFW + vocal) sans expiration.",
+          "createdAt": "2025-08-07T21:57:22.114Z",
+          "createdBy": "system",
+          "category": "VIP 💎"
         }
       ]
     },
