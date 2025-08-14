@@ -7,7 +7,7 @@ function pickRandom(list) {
 
 async function getGuildConfig(dataManager, guildId) {
 	const all = await dataManager.loadData('aouv_config.json', {});
-	return all[guildId] || { disabledBaseTruths: [], customTruths: [] };
+	return all[guildId] || { disabledBaseTruths: [], customTruths: [], allowedChannels: [] };
 }
 
 function buildPromptEmbed(text, user) {
@@ -26,7 +26,16 @@ module.exports = {
 	async execute(interaction, dataManager) {
 		if (!interaction.guild) return interaction.reply({ content: 'Serveur uniquement.', flags: 64 });
 		const guildId = interaction.guild.id;
+		const channelId = interaction.channel.id;
+
+		// Restreindre aux salons configurés pour AouV (SFW)
 		const cfg = await getGuildConfig(dataManager, guildId);
+		const allowed = Array.isArray(cfg.allowedChannels) ? cfg.allowedChannels : [];
+		if (allowed.length > 0 && !allowed.includes(channelId)) {
+			const mentions = allowed.map(id => `<#${id}>`).join(', ');
+			return interaction.reply({ content: `❌ Ce salon n'est pas configuré pour /verite. Utilisez: ${mentions}`, flags: 64 });
+		}
+
 		const disabled = new Set(cfg.disabledBaseTruths || []);
 		const base = BASE_TRUTHS.filter((_, i) => !disabled.has(i));
 		const custom = (cfg.customTruths || []).map(x => String(x || '')).filter(Boolean);
