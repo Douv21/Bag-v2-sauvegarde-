@@ -267,13 +267,16 @@ class RenderSolutionBot {
         });
 
         app.get('/health', (req, res) => {
-            // Vérifier le statut du bot Discord
             const discordStatus = this.client && this.client.isReady() ? 'connected' : 'disconnected';
-            
-            res.json({ 
-                status: 'healthy', 
+            const guildsCount = this.client && this.client.guilds && this.client.guilds.cache ? this.client.guilds.cache.size : 0;
+            const commandsCount = this.client && this.client.commands ? this.client.commands.size : 0;
+            res.json({
+                status: 'healthy',
                 discord: discordStatus,
-                timestamp: new Date().toISOString() 
+                uptime: process.uptime(),
+                guilds: guildsCount,
+                commands: commandsCount,
+                timestamp: new Date().toISOString()
             });
         });
 
@@ -409,89 +412,59 @@ class RenderSolutionBot {
             }
         });
 
-        // API endpoint pour les statistiques du dashboard (format compatible UI)
+        // API endpoint pour les statistiques du dashboard
         app.get('/api/stats', async (req, res) => {
             try {
-                const dataManager = require('./utils/simpleDataManager');
-                const economyData = dataManager.loadData('economy.json', {});
-                const confessionData = dataManager.loadData('confessions.json', {});
-                const levelData = dataManager.loadData('level_users.json', {});
+                const dm = require('./utils/simpleDataManager');
+                const guildId = req.query.guildId || null;
 
-                let stats = {
-                    activeMembers: 0,
-                    todayMessages: 0,
-                    commandsUsed: 0,
-                    totalMoney: 0,
-                    todayTransactions: 0,
-                    richestUser: 'Aucun',
-                    totalConfessions: 0,
-                    weekConfessions: 0,
-                    avgConfessions: '0',
-                    highestLevel: 0,
-                    totalXP: 0,
-                    rewardsGiven: 0
-                };
+                const economyData = dm.loadData('economy.json', {});
+                const confLogs = dm.loadData('logs/confessions.json', []);
+                const levelData = dm.loadData('level_users.json', {});
+                const metrics = dm.loadData('metrics.json', { messagesPerDay: {}, commandsPerDay: {}, guilds: {} });
 
-                let richestAmount = 0;
+                const today = new Date().toISOString().slice(0,10);
+
+                let activeMembers = 0;
+                let totalMoney = 0;
+                let totalConfessions = 0;
+                let commandsUsed = 0;
+                let todayMessages = 0;
+
                 Object.keys(economyData).forEach(key => {
-                    if (key.includes('_')) {
-                        const data = economyData[key] || {};
-                        const money = Number(data.money || data.argent || 0);
-                        stats.totalMoney += money;
-                        if (money > richestAmount) {
-                            richestAmount = money;
-                            stats.richestUser = `Membre#${String(key.split('_')[0]).slice(-4)}`;
-                        }
-                        if ((data.goodKarma ?? 0) !== 0 || (data.badKarma ?? 0) !== 0) {
-                            stats.activeMembers++;
-                        }
-                    }
+                    if (!key.includes('_')) return;
+                    if (guildId && !key.endsWith(`_${guildId}`)) return;
+                    const u = economyData[key] || {};
+                    totalMoney += Number(u.money ?? u.balance ?? 0);
+                    if ((u.goodKarma ?? 0) !== 0 || (u.badKarma ?? 0) !== 0 || (u.messageCount ?? 0) > 0) activeMembers++;
                 });
 
-                Object.keys(confessionData).forEach(key => {
-                    const rec = confessionData[key];
-                    if (rec && Array.isArray(rec.confessions)) {
-                        stats.totalConfessions += rec.confessions.length;
-                    }
-                });
+                if (Array.isArray(confLogs)) {
+                    totalConfessions = guildId ? confLogs.filter(c => c.guildId === guildId).length : confLogs.length;
+                }
 
-                Object.keys(levelData).forEach(key => {
-                    if (key.includes('_')) {
-                        const data = levelData[key] || {};
-                        if (Number(data.level || 0) > stats.highestLevel) stats.highestLevel = Number(data.level || 0);
-                        stats.totalXP += Number(data.xp || 0);
-                    }
-                });
+                if (guildId && metrics.guilds && metrics.guilds[guildId]) {
+                    todayMessages = Number(metrics.guilds[guildId]?.messagesPerDay?.[today] || 0);
+                    commandsUsed = Number(metrics.guilds[guildId]?.commandsPerDay?.[today] || 0);
+                } else {
+                    todayMessages = Number(metrics.messagesPerDay?.[today] || 0);
+                    commandsUsed = Number(metrics.commandsPerDay?.[today] || 0);
+                }
 
                 const response = {
-                    ...stats,
-                    totalMoney: `${stats.totalMoney.toLocaleString()} 💰`,
-                    totalXP: stats.totalXP.toLocaleString(),
-                    avgConfessions: stats.totalConfessions > 0 ? (stats.totalConfessions / 7).toFixed(1) : '0',
-                    weekConfessions: Math.floor(stats.totalConfessions * 0.1),
-                    todayMessages: Math.floor(Math.random() * 500) + 100,
-                    commandsUsed: Math.floor(Math.random() * 200) + 50,
-                    todayTransactions: Math.floor(Math.random() * 50) + 10,
-                    rewardsGiven: Math.floor(stats.totalConfessions * 0.3)
+                    activeMembers,
+                    todayMessages,
+                    commandsUsed,
+                    totalMoney,
+                    totalUsers: Object.keys(economyData).filter(k => k.includes('_') && (!guildId || k.endsWith(`_${guildId}`))).length,
+                    totalConfessions,
+                    totalXP: Object.values(levelData).reduce((s, v) => s + Number(v.xp || 0), 0)
                 };
 
-                res.json({ success: true, data: response });
+                res.json(response);
             } catch (error) {
                 console.error('Erreur chargement stats:', error);
-                res.json({ success: false, data: {
-                    activeMembers: 42,
-                    todayMessages: 234,
-                    commandsUsed: 156,
-                    totalMoney: '45,230 💰',
-                    todayTransactions: 23,
-                    richestUser: 'Membre#1234',
-                    totalConfessions: 89,
-                    weekConfessions: 12,
-                    avgConfessions: '1.7',
-                    highestLevel: 47,
-                    totalXP: '1,234,567',
-                    rewardsGiven: 89
-                }});
+                res.status(500).json({ error: 'stats_failed' });
             }
         });
 

@@ -26,7 +26,7 @@
         <h1>Tableau de bord — BAG v2</h1>
         <p>Version minimale affichant l’état du service et les statistiques clés du serveur.</p>
         <div class="links">
-            <a class="btn" href="/public/index.html">Accueil</a>
+            <a class="btn" href="/index.html">Accueil</a>
             <a class="btn" href="/health" target="_blank">Santé (JSON)</a>
             <a class="btn" href="/api/stats" target="_blank">Statistiques (JSON)</a>
         </div>
@@ -87,16 +87,17 @@
                 ]);
             }
 
-            if (stats.__error) {
-                statsEl.innerHTML = `<div class=\"error\">Erreur: ${stats.__error}</div>`;
+            const s = stats && stats.success === true && stats.data ? stats.data : stats;
+            if (s.__error) {
+                statsEl.innerHTML = `<div class=\"error\">Erreur: ${s.__error}</div>`;
             } else {
                 setKV(statsEl, [
-                    ['Membres actifs (24h)', stats.activeMembers ?? 0],
-                    ['Messages du jour', stats.todayMessages ?? 0],
-                    ['Commandes utilisées (jour)', stats.commandsUsed ?? 0],
-                    ['Argent total (€)', (typeof stats.totalMoney === 'number') ? stats.totalMoney.toLocaleString('fr-FR') : (stats.totalMoney ?? 0)],
-                    ['Utilisateurs total', stats.totalUsers ?? 0],
-                    ['Confessions total', stats.totalConfessions ?? 0]
+                    ['Membres actifs (24h)', s.activeMembers ?? 0],
+                    ['Messages du jour', s.todayMessages ?? 0],
+                    ['Commandes utilisées (jour)', s.commandsUsed ?? 0],
+                    ['Argent total (€)', (typeof s.totalMoney === 'number') ? s.totalMoney.toLocaleString('fr-FR') : (s.totalMoney ?? 0)],
+                    ['Utilisateurs total', s.totalUsers ?? 0],
+                    ['Confessions total', s.totalConfessions ?? 0]
                 ]);
             }
         })();
