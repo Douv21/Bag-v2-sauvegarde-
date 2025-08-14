@@ -1206,6 +1206,63 @@ class RenderSolutionBot {
                         return;
                     }
 
+                    // === AOUV NSFW MODALS ===
+                    if (interaction.customId === 'aouv_nsfw_prompt_add_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvNsfwPromptAddModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_nsfw_prompt_edit_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvNsfwPromptEditModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_nsfw_prompt_remove_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvNsfwPromptRemoveModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_nsfw_prompt_disable_base_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvNsfwPromptBaseModal(interaction, true);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_nsfw_prompt_enable_base_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvNsfwPromptBaseModal(interaction, false);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_nsfw_prompt_list_base_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvNsfwPromptListBaseModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_nsfw_prompt_override_base_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvNsfwPromptOverrideModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_nsfw_prompt_reset_override_base_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvNsfwPromptResetOverrideModal(interaction);
+                        return;
+                    }
+
                     // Gestion des modals de configuration level
                     if (interaction.customId === 'text_xp_modal') {
                         const LevelConfigHandler = require('./handlers/LevelConfigHandler');
@@ -2608,6 +2665,22 @@ class RenderSolutionBot {
                     return;
                 }
 
+                if (customId === 'aouv_nsfw_channel_add') {
+                    console.log('🎯 AouV ajout salon NSFW');
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwChannelAdd(interaction);
+                    return;
+                }
+
+                if (customId === 'aouv_nsfw_channel_remove') {
+                    console.log('🎯 AouV retrait salon NSFW');
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwChannelRemove(interaction);
+                    return;
+                }
+
                 if (customId === 'aouv_prompt_edit_select_action') {
                     console.log('🎯 AouV edit prompt (Action)');
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
@@ -2621,6 +2694,22 @@ class RenderSolutionBot {
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
                     const aouvHandler = new AouvConfigHandler(dataManager);
                     await aouvHandler.handleAouvPromptEditSelect(interaction, 'verite');
+                    return;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_edit_select_action') {
+                    console.log('🎯 AouV edit prompt NSFW (Action)');
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptEditSelect(interaction, 'action');
+                    return;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_edit_select_truth') {
+                    console.log('🎯 AouV edit prompt NSFW (Vérité)');
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptEditSelect(interaction, 'verite');
                     return;
                 }
 
@@ -2678,6 +2767,63 @@ class RenderSolutionBot {
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
                     const aouvHandler = new AouvConfigHandler(dataManager);
                     await aouvHandler.handleAouvPromptResetOverrideModal(interaction);
+                    return;
+                }
+
+                // === AOUV NSFW MODALS ===
+                if (interaction.customId === 'aouv_nsfw_prompt_add_modal') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptAddModal(interaction);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_nsfw_prompt_edit_modal') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptEditModal(interaction);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_nsfw_prompt_remove_modal') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptRemoveModal(interaction);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_nsfw_prompt_disable_base_modal') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptBaseModal(interaction, true);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_nsfw_prompt_enable_base_modal') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptBaseModal(interaction, false);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_nsfw_prompt_list_base_modal') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptListBaseModal(interaction);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_nsfw_prompt_override_base_modal') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptOverrideModal(interaction);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_nsfw_prompt_reset_override_base_modal') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptResetOverrideModal(interaction);
                     return;
                 }
             }
