@@ -26,7 +26,16 @@ class ModalHandler {
             'base_xp_modal',
             'multiplier_modal',
             'add_role_reward_modal',
-            'level_for_role'
+            'level_for_role',
+            // Modals AOUV
+            'aouv_prompt_add_modal',
+            'aouv_prompt_edit_modal',
+            'aouv_prompt_remove_modal',
+            'aouv_prompt_disable_base_modal',
+            'aouv_prompt_enable_base_modal',
+            'aouv_prompt_list_base_modal',
+            'aouv_prompt_override_base_modal',
+            'aouv_prompt_reset_override_base_modal'
         ]);
 
         // Liste des modals prévues mais non implémentées
