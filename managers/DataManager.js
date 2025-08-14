@@ -28,6 +28,7 @@ class DataManager {
             'shop': 'shop.json',
             'daily': 'daily.json',
             'daily_cooldowns': 'daily_cooldowns.json',
+            'metrics': 'metrics.json',
             
             // Système level - AJOUTÉ
             'level_users': 'level_users.json',
@@ -273,7 +274,13 @@ class DataManager {
             'warnings': {},
             'moderation_config': {},
             'moderation_state': {},
-            'logs_config': {}
+            'logs_config': {},
+            // Métriques globales (messages/commandes par jour, par guilde)
+            'metrics': {
+                messagesPerDay: {},
+                commandsPerDay: {},
+                guilds: {}
+            }
         };
 
         return defaults[type] || {};
@@ -389,19 +396,73 @@ class DataManager {
     /**
      * Statistiques globales
      */
-    async getStats() {
+    async getStats(guildIdFilter = null) {
         try {
             const users = await this.getData('users');
             const confessions = await this.getData('confessions');
             const actions = await this.getData('actions');
-            
+            const userStats = await this.getData('user_stats');
+            const metrics = await this.getData('metrics');
+
+            // Totaux (potentiellement filtrés par guilde)
+            const totalUsers = guildIdFilter
+                ? Object.keys(users).filter(k => String(k).includes(guildIdFilter)).length
+                : Object.keys(users).length;
+            const totalConfessions = Array.isArray(confessions)
+                ? confessions.length
+                : (guildIdFilter ? Object.keys(confessions || {}).filter(k => String(k).includes(guildIdFilter)).length : Object.keys(confessions || {}).length);
+            const totalActions = actions && typeof actions === 'object'
+                ? (guildIdFilter ? Object.keys(actions).filter(k => String(k).includes(guildIdFilter)).length : Object.keys(actions).length)
+                : 0;
+
+            // Membres actifs (dernières 24h) à partir de user_stats
+            const now = Date.now();
+            const oneDayMs = 24 * 60 * 60 * 1000;
+            let activeMembers = 0;
+            try {
+                const guildIds = guildIdFilter ? [guildIdFilter] : Object.keys(userStats || {});
+                for (const guildId of guildIds) {
+                    const usersMap = userStats[guildId] || {};
+                    for (const uid of Object.keys(usersMap)) {
+                        const last = usersMap[uid]?.lastMessage || 0;
+                        if (last > 0 && (now - last) <= oneDayMs) activeMembers++;
+                    }
+                }
+            } catch {}
+
+            // Messages/Commandes du jour depuis metrics
+            const todayKey = this.getTodayKey();
+            let todayMessages = (metrics?.messagesPerDay && Number(metrics.messagesPerDay[todayKey])) || 0;
+            let commandsUsed = (metrics?.commandsPerDay && Number(metrics.commandsPerDay[todayKey])) || 0;
+            if (guildIdFilter && metrics?.guilds?.[guildIdFilter]) {
+                const g = metrics.guilds[guildIdFilter];
+                todayMessages = (g.messagesPerDay && Number(g.messagesPerDay[todayKey])) || 0;
+                commandsUsed = (g.commandsPerDay && Number(g.commandsPerDay[todayKey])) || 0;
+            }
+
+            // Argent total (somme des balances des utilisateurs)
+            let totalMoney = 0;
+            if (guildIdFilter) {
+                for (const [key, u] of Object.entries(users || {})) {
+                    if (String(key).includes(guildIdFilter)) {
+                        totalMoney += (Number(u.balance) || 0);
+                    }
+                }
+            } else {
+                totalMoney = Object.values(users || {}).reduce((sum, u) => sum + (Number(u.balance) || 0), 0);
+            }
+
             return {
-                totalUsers: Object.keys(users).length,
-                totalConfessions: confessions.length,
-                totalActions: Object.keys(actions).length,
+                totalUsers,
+                totalConfessions,
+                totalActions,
                 uptime: process.uptime(),
                 memory: process.memoryUsage(),
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                activeMembers,
+                todayMessages,
+                commandsUsed,
+                totalMoney
             };
         } catch (error) {
             console.error('❌ Erreur stats:', error);
@@ -531,6 +592,62 @@ class DataManager {
             } catch (error) {
                 console.error('❌ Erreur fermeture MongoDB:', error);
             }
+        }
+    }
+
+    /**
+     * Utilitaires métriques
+     */
+    getTodayKey() {
+        try {
+            return new Date().toISOString().slice(0, 10);
+        } catch {
+            const d = new Date();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${d.getFullYear()}-${m}-${day}`;
+        }
+    }
+
+    async incrementMessageCount(guildId) {
+        try {
+            const metrics = await this.getData('metrics');
+            const today = this.getTodayKey();
+            if (!metrics.messagesPerDay) metrics.messagesPerDay = {};
+            metrics.messagesPerDay[today] = (Number(metrics.messagesPerDay[today]) || 0) + 1;
+
+            if (guildId) {
+                if (!metrics.guilds) metrics.guilds = {};
+                if (!metrics.guilds[guildId]) metrics.guilds[guildId] = { messagesPerDay: {}, commandsPerDay: {} };
+                const g = metrics.guilds[guildId];
+                if (!g.messagesPerDay) g.messagesPerDay = {};
+                g.messagesPerDay[today] = (Number(g.messagesPerDay[today]) || 0) + 1;
+            }
+
+            await this.saveData('metrics', metrics);
+        } catch (e) {
+            // silencieux
+        }
+    }
+
+    async incrementCommandCount(guildId) {
+        try {
+            const metrics = await this.getData('metrics');
+            const today = this.getTodayKey();
+            if (!metrics.commandsPerDay) metrics.commandsPerDay = {};
+            metrics.commandsPerDay[today] = (Number(metrics.commandsPerDay[today]) || 0) + 1;
+
+            if (guildId) {
+                if (!metrics.guilds) metrics.guilds = {};
+                if (!metrics.guilds[guildId]) metrics.guilds[guildId] = { messagesPerDay: {}, commandsPerDay: {} };
+                const g = metrics.guilds[guildId];
+                if (!g.commandsPerDay) g.commandsPerDay = {};
+                g.commandsPerDay[today] = (Number(g.commandsPerDay[today]) || 0) + 1;
+            }
+
+            await this.saveData('metrics', metrics);
+        } catch (e) {
+            // silencieux
         }
     }
 }

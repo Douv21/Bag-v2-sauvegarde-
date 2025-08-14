@@ -90,6 +90,11 @@ class CommandHandler {
                     } else {
                         await command.execute(interaction, this.dataManager);
                     }
+                    // Compter la commande utilisée
+                    try {
+                        const guildId = interaction.guild?.id || null;
+                        await this.dataManager.incrementCommandCount(guildId);
+                    } catch {}
                 } catch (error) {
                     console.error(`❌ Erreur commande ${interaction.commandName}:`, error);
 
