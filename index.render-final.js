@@ -2364,6 +2364,15 @@ class RenderSolutionBot {
                     return;
                 }
 
+                // Gestion des sélections de rôles pour la boutique (temporaire/permanent)
+                if (customId === 'role_temp_select' || customId === 'role_perm_select') {
+                    console.log('🎯 Sélection rôle boutique:', customId);
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleRoleSelect(interaction);
+                    return;
+                }
+
                 if (customId === 'remises_karma_select') {
                     console.log('🎯 Sélection remises karma');
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
@@ -2473,7 +2482,7 @@ class RenderSolutionBot {
                 // Ce routage est géré plus haut dans le code - supprimé pour éviter la duplication
 
                 // Ajouter handlers pour nouvelles fonctionnalités boutique
-                if (customId === 'objets_existants_select') {
+                if (customId === 'manage_objects_select') {
                     console.log('🎯 Sélection objet à modifier');
                     const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
                     const economyHandler = new EconomyConfigHandler(dataManager);
@@ -2621,7 +2630,7 @@ class RenderSolutionBot {
                                          customId === 'remises_karma_select' ||
                                          customId === 'role_temp_select' ||
                                          customId === 'role_perm_select' ||
-                                         customId === 'objets_existants_select' ||
+                                         customId === 'manage_objects_select' ||
                                          customId === 'delete_articles_select' ||
                                          customId.startsWith('aouv_');
                     
