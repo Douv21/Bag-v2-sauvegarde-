@@ -108,15 +108,16 @@ module.exports = {
 			}
 			embed.addFields(fields);
 
-			// Menus par catégorie (conserve le customId `shop_purchase`)
+			// Menus par catégorie (IDs uniques par menu)
 			const components = [];
 			const sortedForMenus = categories
 				.sort((a, b) => b[1].length - a[1].length)
 				.slice(0, 5); // Limite Discord: 5 action rows
+			let menuIndex = 0;
 
 			for (const [catName, items] of sortedForMenus) {
 				const select = new StringSelectMenuBuilder()
-					.setCustomId('shop_purchase')
+					.setCustomId(`shop_purchase_${menuIndex}`)
 					.setPlaceholder(`📂 ${catName} — sélectionner`)
 					.addOptions(
 						items.slice(0, 25).map((item) => {
@@ -133,6 +134,7 @@ module.exports = {
 						})
 					);
 				components.push(new ActionRowBuilder().addComponents(select));
+				menuIndex++;
 			}
 
 			await interaction.reply({

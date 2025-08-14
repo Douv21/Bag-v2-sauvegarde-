@@ -2373,7 +2373,7 @@ class RenderSolutionBot {
                 }
 
                 // Routage pour achats boutique avec remises automatiques
-                if (customId === 'shop_purchase') {
+                if (customId.startsWith('shop_purchase')) {
                     console.log('🎯 Routage achat boutique avec remises karma: shop_purchase');
                     await handleShopPurchase(interaction, dataManager);
                     return;
