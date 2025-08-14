@@ -26,7 +26,8 @@ class SimpleBackupManager {
             'message_rewards.json',
             'daily.json',
             'actions.json',
-            'config.json'
+            'config.json',
+            'aouv_config.json'
         ];
     }
 

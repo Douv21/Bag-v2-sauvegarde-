@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const { MongoClient } = require('mongodb');
+const dataHooks = require('../utils/dataHooks');
 
 class DataManager {
     constructor() {
@@ -205,6 +206,13 @@ class DataManager {
             
             // Mettre à jour cache
             this.cache.set(type, data);
+
+            // Déclencher sauvegarde automatique MongoDB
+            try {
+                if (dataHooks && typeof dataHooks.triggerBackup === 'function') {
+                    dataHooks.triggerBackup(`saveData_${filename}`);
+                }
+            } catch {}
             
             return true;
         } catch (error) {

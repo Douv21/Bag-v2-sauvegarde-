@@ -168,7 +168,8 @@ class DeploymentManager {
             'shop.json': {},
             'karma_config.json': { customRewards: [] },
             'karma_discounts.json': {},
-            'message_rewards.json': {}
+            'message_rewards.json': {},
+            'aouv_config.json': {}
         };
 
         for (const [filename, defaultData] of Object.entries(defaultConfigs)) {
@@ -191,7 +192,8 @@ class DeploymentManager {
         const dataDir = path.join(__dirname, '..', 'data');
         const requiredFiles = [
             'economy.json', 'confessions.json', 'counting.json',
-            'autothread.json', 'shop.json', 'karma_config.json', 'karma_discounts.json', 'message_rewards.json'
+            'autothread.json', 'shop.json', 'karma_config.json', 'karma_discounts.json', 'message_rewards.json',
+            'aouv_config.json'
         ];
 
         let allValid = true;
