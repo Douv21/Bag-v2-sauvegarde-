@@ -2608,6 +2608,22 @@ class RenderSolutionBot {
                     return;
                 }
 
+                if (customId === 'aouv_prompt_edit_select_action') {
+                    console.log('🎯 AouV edit prompt (Action)');
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptEditSelect(interaction, 'action');
+                    return;
+                }
+
+                if (customId === 'aouv_prompt_edit_select_truth') {
+                    console.log('🎯 AouV edit prompt (Vérité)');
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptEditSelect(interaction, 'verite');
+                    return;
+                }
+
                 // === AOUV MODALS ===
                 if (interaction.customId === 'aouv_prompt_add_modal') {
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');

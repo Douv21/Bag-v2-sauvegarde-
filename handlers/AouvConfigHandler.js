@@ -45,7 +45,7 @@ class AouvConfigHandler {
 
 		if (choice === 'channels') return this.showAouvChannelsMenu(interaction);
 		if (choice === 'prompt_add') return this.showAouvPromptAddModal(interaction);
-		if (choice === 'prompt_edit') return this.showAouvPromptEditModal(interaction);
+		if (choice === 'prompt_edit') return this.showAouvPromptEditPicker(interaction);
 		if (choice === 'prompt_remove') return this.showAouvPromptRemoveModal(interaction);
 		if (choice === 'prompt_list_custom') return this.showAouvPromptListCustom(interaction);
 		if (choice === 'prompt_list_base') return this.showAouvPromptListBaseModal(interaction);
@@ -73,14 +73,26 @@ class AouvConfigHandler {
 			.setMinValues(1)
 			.setMaxValues(1);
 
-		const channelRemove = new ChannelSelectMenuBuilder()
-			.setCustomId('aouv_channel_remove')
-			.setPlaceholder('Retirer un salon autorisé')
-			.addChannelTypes(ChannelType.GuildText)
-			.setMinValues(1)
-			.setMaxValues(1);
+		// Remplacer le retrait par un select listant SEULEMENT les salons configurés
+		const allowed = Array.isArray(cfg.allowedChannels) ? cfg.allowedChannels : [];
+		let removeRow = null;
+		if (allowed.length > 0) {
+			const channelRemoveSelect = new StringSelectMenuBuilder()
+				.setCustomId('aouv_channel_remove')
+				.setPlaceholder('Retirer un salon autorisé')
+				.setMinValues(1)
+				.setMaxValues(1);
+			for (const chId of allowed) {
+				const ch = interaction.guild.channels.cache.get(chId);
+				const label = ch ? `#${ch.name}` : `#${chId}`;
+				channelRemoveSelect.addOptions({ label, value: chId, description: ch ? `ID: ${chId}` : undefined });
+			}
+			removeRow = new ActionRowBuilder().addComponents(channelRemoveSelect);
+		}
 
-		await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(channelAdd), new ActionRowBuilder().addComponents(channelRemove)] });
+		const rows = [new ActionRowBuilder().addComponents(channelAdd)];
+		if (removeRow) rows.push(removeRow);
+		await interaction.update({ embeds: [embed], components: rows });
 	}
 
 	async handleAouvChannelAdd(interaction) {
@@ -113,6 +125,45 @@ class AouvConfigHandler {
 		await interaction.showModal(modal);
 	}
 
+	// Nouveau: sélecteur avant le modal d'édition
+	async showAouvPromptEditPicker(interaction) {
+		const guildId = interaction.guild.id;
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || { customActions: [], customTruths: [] };
+		const actions = Array.isArray(cfg.customActions) ? cfg.customActions : [];
+		const truths = Array.isArray(cfg.customTruths) ? cfg.customTruths : [];
+
+		const embed = new EmbedBuilder()
+			.setColor('#f1c40f')
+			.setTitle('✏️ Choisir un prompt à modifier')
+			.setDescription('Sélectionnez un prompt existant, puis le modal d\'édition s\'ouvrira pré-rempli.');
+
+		const actionSelect = new StringSelectMenuBuilder()
+			.setCustomId('aouv_prompt_edit_select_action')
+			.setPlaceholder(actions.length ? 'Choisir un prompt Action...' : 'Aucun prompt Action')
+			.setMinValues(1)
+			.setMaxValues(1)
+			.setDisabled(actions.length === 0);
+		actions.slice(0, 25).forEach((t, i) => {
+			const idx = i.toString();
+			actionSelect.addOptions({ label: t.length > 95 ? t.slice(0, 95) + '…' : t, value: idx });
+		});
+
+		const truthSelect = new StringSelectMenuBuilder()
+			.setCustomId('aouv_prompt_edit_select_truth')
+			.setPlaceholder(truths.length ? 'Choisir un prompt Vérité...' : 'Aucun prompt Vérité')
+			.setMinValues(1)
+			.setMaxValues(1)
+			.setDisabled(truths.length === 0);
+		truths.slice(0, 25).forEach((t, i) => {
+			const idx = i.toString();
+			truthSelect.addOptions({ label: t.length > 95 ? t.slice(0, 95) + '…' : t, value: idx });
+		});
+
+		const rows = [new ActionRowBuilder().addComponents(actionSelect), new ActionRowBuilder().addComponents(truthSelect)];
+		await interaction.update({ embeds: [embed], components: rows });
+	}
+
 	async showAouvPromptEditModal(interaction) {
 		const modal = new ModalBuilder().setCustomId('aouv_prompt_edit_modal').setTitle('Modifier un prompt perso');
 		modal.addComponents(
@@ -120,6 +171,23 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('index').setLabel('Indice (via liste)').setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('texte').setLabel('Nouveau contenu').setStyle(TextInputStyle.Paragraph).setRequired(true))
 		);
+		await interaction.showModal(modal);
+	}
+
+	// Nouveau: ouvrir le modal d'édition pré-rempli après sélection
+	async handleAouvPromptEditSelect(interaction, kind) {
+		const guildId = interaction.guild.id;
+		const index = parseInt(interaction.values[0], 10);
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || { customActions: [], customTruths: [] };
+		const list = kind === 'action' ? (cfg.customActions || []) : (cfg.customTruths || []);
+		const currentText = list[index] || '';
+
+		const modal = new ModalBuilder().setCustomId('aouv_prompt_edit_modal').setTitle('Modifier un prompt perso');
+		const kindInput = new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true).setValue(kind);
+		const indexInput = new TextInputBuilder().setCustomId('index').setLabel('Indice (via liste)').setStyle(TextInputStyle.Short).setRequired(true).setValue(String(index));
+		const texteInput = new TextInputBuilder().setCustomId('texte').setLabel('Nouveau contenu').setStyle(TextInputStyle.Paragraph).setRequired(true).setValue(currentText);
+		modal.addComponents(new ActionRowBuilder().addComponents(kindInput), new ActionRowBuilder().addComponents(indexInput), new ActionRowBuilder().addComponents(texteInput));
 		await interaction.showModal(modal);
 	}
 
