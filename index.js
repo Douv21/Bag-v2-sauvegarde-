@@ -506,8 +506,54 @@ class BagBotRender {
             }
         });
 
-                // Messages pour économie et auto-thread
+        // Messages pour économie et auto-thread
         this.client.on('messageCreate', async (message) => {
+            // Détection automatique du succès de bump DISBOARD pour relancer le cooldown de 2h
+            try {
+                const DISBOARD_BOT_ID = '302050872383242240';
+                if (message.author?.id === DISBOARD_BOT_ID && message.guild) {
+                    const content = (message.content || '').toLowerCase();
+                    const embedAggregate = (message.embeds || [])
+                        .map(e => {
+                            const fieldsStr = (e.fields || []).map(f => [f.name, f.value].filter(Boolean).join(' ')).join(' ');
+                            return [e.title, e.description, e.footer?.text, e.author?.name, fieldsStr].filter(Boolean).join(' ');
+                        })
+                        .join(' ')
+                        .toLowerCase();
+                    const text = `${content} ${embedAggregate}`;
+                    const successIndicators = [
+                        'bump done',
+                        'bumped this server',
+                        'you can bump again',
+                        'next bump',
+                        'bump effectué',
+                        'bump réussi',
+                        'a été bumpé',
+                        'prochain bump'
+                    ];
+                    const isSuccess = successIndicators.some(ind => text.includes(ind));
+                    if (isSuccess) {
+                        try {
+                            // Ne relance que si les rappels sont activés pour cette guilde
+                            const cfg = await this.reminderManager.getConfig(message.guild.id);
+                            if (cfg?.enabled) {
+                                await this.reminderManager.restartCooldown(message.guild.id);
+                            }
+                        } catch {}
+                        // Synchroniser le cooldown de la plateforme 'disboard' pour l'UI bump
+                        try {
+                            if (this.dataManager.db) {
+                                await this.dataManager.db.collection('bumpCooldowns').updateOne(
+                                    { guildId: message.guild.id, platform: 'disboard' },
+                                    { $set: { lastBump: Date.now(), updatedAt: new Date(), userId: null } },
+                                    { upsert: true }
+                                );
+                            }
+                        } catch {}
+                    }
+                }
+            } catch {}
+
             if (message.author.bot) return;
             
             // Gestion récompenses économiques
