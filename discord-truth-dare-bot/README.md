@@ -37,11 +37,34 @@ DISCORD_BOT_TOKEN=ton-token-ici
 - `/aouv` : Démarre le jeu dans le salon, avec deux boutons « Action » et « Vérité ». Chaque clic poste un nouveau prompt public pour l'utilisateur qui a cliqué.
 - `/action` : Envoie une action aléatoire (message unique, sans boutons).
 - `/verite` : Envoie une vérité aléatoire (message unique, sans boutons).
+- `/aouvconfig` : Commandes d’administration (réservées aux membres avec « Gérer le serveur »).
 
-## Personnalisation
+### Configuration des salons
 
-- Les listes se trouvent dans `prompts.py` (`ACTIONS` et `VERITES`).
-- Tu peux ajouter/supprimer/modifier des entrées librement.
+- `/aouvconfig channel add salon:#salon` — autorise ce salon pour le jeu.
+- `/aouvconfig channel remove salon:#salon` — retire ce salon.
+- `/aouvconfig channel list` — liste des salons autorisés.
+
+Si aucun salon n’est configuré, le jeu est autorisé dans tous les salons. Si des salons sont configurés, `/aouv` refusera ailleurs.
+
+### Gestion des prompts
+
+Prompts combinés = prompts de base (100/100) − désactivés + personnalisés du serveur.
+
+- Ajouter: `/aouvconfig prompt add kind:(action|vérité) texte:"..."`
+- Modifier: `/aouvconfig prompt edit kind:(action|vérité) prompt_id:XXXXXXXX texte:"..."`
+- Supprimer: `/aouvconfig prompt remove kind:(action|vérité) prompt_id:XXXXXXXX`
+- Lister (custom): `/aouvconfig prompt list-custom kind:(action|vérité)`
+- Désactiver base: `/aouvconfig prompt disable-base kind:(action|vérité) numero:1..n`
+- Réactiver base: `/aouvconfig prompt enable-base kind:(action|vérité) numero:1..n`
+- Lister base (paginé): `/aouvconfig prompt list-base kind:(action|vérité) page:1`
+
+Les IDs renvoyés pour les prompts personnalisés sont courts (8 hex) et propres à chaque serveur.
+
+## Données et persistance
+
+- Les configurations sont stockées en JSON dans `data/config.json` à la racine du projet (créé automatiquement).
+- Les données sont séparées par serveur (guild ID).
 
 ## Notes
 
