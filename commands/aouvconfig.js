@@ -24,7 +24,7 @@ function ensureManager(interaction) {
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('aouvconfig')
-		.setDescription('Configurer le jeu Action ou Vérité (redirigé vers /config-economie)')
+		.setDescription('Configurer le jeu Action ou Vérité (redirigé vers /config-aouv)')
 		.addSubcommandGroup(g => g
 			.setName('channel')
 			.setDescription('Gérer les salons autorisés')
@@ -75,6 +75,6 @@ module.exports = {
 		),
 
 	async execute(interaction, dataManager) {
-		return interaction.reply({ content: 'ℹ️ Cette commande est désormais regroupée sous /config-economie → "Action ou Vérité".', flags: 64 });
+		return interaction.reply({ content: 'ℹ️ Cette commande est désormais regroupée sous /config-aouv.', flags: 64 });
 	}
 };
