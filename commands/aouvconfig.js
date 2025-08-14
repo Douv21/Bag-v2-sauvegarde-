@@ -24,7 +24,7 @@ function ensureManager(interaction) {
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('aouvconfig')
-		.setDescription('Configurer le jeu Action ou Vérité')
+		.setDescription('Configurer le jeu Action ou Vérité (redirigé vers /config-aouv)')
 		.addSubcommandGroup(g => g
 			.setName('channel')
 			.setDescription('Gérer les salons autorisés')
@@ -75,87 +75,6 @@ module.exports = {
 		),
 
 	async execute(interaction, dataManager) {
-		if (!interaction.guild) return interaction.reply({ content: 'Serveur uniquement.', flags: 64 });
-		if (!ensureManager(interaction)) return interaction.reply({ content: '❌ Permission requise: Gérer le serveur.', flags: 64 });
-		const subGroup = interaction.options.getSubcommandGroup();
-		const sub = interaction.options.getSubcommand();
-		const guildId = interaction.guild.id;
-		const cfg = await getGuildCfg(dataManager, guildId);
-
-		if (subGroup === 'channel') {
-			if (sub === 'add') {
-				const ch = interaction.options.getChannel('salon', true);
-				const allowed = new Set(cfg.allowedChannels || []);
-				allowed.add(ch.id);
-				cfg.allowedChannels = Array.from(allowed);
-				await saveGuildCfg(dataManager, guildId, cfg);
-				return interaction.reply({ content: `Salon autorisé: <#${ch.id}>`, flags: 64 });
-			}
-			if (sub === 'remove') {
-				const ch = interaction.options.getChannel('salon', true);
-				cfg.allowedChannels = (cfg.allowedChannels || []).filter(id => id !== ch.id);
-				await saveGuildCfg(dataManager, guildId, cfg);
-				return interaction.reply({ content: `Salon retiré: <#${ch.id}>`, flags: 64 });
-			}
-			if (sub === 'list') {
-				const list = (cfg.allowedChannels || []).map(id => `<#${id}>`).join(', ') || '(Aucun)';
-				return interaction.reply({ content: `Salons autorisés: ${list}`, flags: 64 });
-			}
-		}
-
-		if (subGroup === 'prompt') {
-			if (sub === 'add') {
-				const kind = interaction.options.getString('kind', true);
-				const texte = interaction.options.getString('texte', true);
-				if (kind === 'action') cfg.customActions = [...(cfg.customActions || []), texte];
-				else cfg.customTruths = [...(cfg.customTruths || []), texte];
-				await saveGuildCfg(dataManager, guildId, cfg);
-				return interaction.reply({ content: 'Ajouté.', flags: 64 });
-			}
-			if (sub === 'edit') {
-				const kind = interaction.options.getString('kind', true);
-				const index = interaction.options.getInteger('index', true);
-				const texte = interaction.options.getString('texte', true);
-				if (kind === 'action') {
-					if (!Array.isArray(cfg.customActions) || index < 0 || index >= cfg.customActions.length) return interaction.reply({ content: 'Indice invalide.', flags: 64 });
-					cfg.customActions[index] = texte;
-				} else {
-					if (!Array.isArray(cfg.customTruths) || index < 0 || index >= cfg.customTruths.length) return interaction.reply({ content: 'Indice invalide.', flags: 64 });
-					cfg.customTruths[index] = texte;
-				}
-				await saveGuildCfg(dataManager, guildId, cfg);
-				return interaction.reply({ content: 'Modifié.', flags: 64 });
-			}
-			if (sub === 'remove') {
-				const kind = interaction.options.getString('kind', true);
-				const index = interaction.options.getInteger('index', true);
-				if (kind === 'action') {
-					if (!Array.isArray(cfg.customActions) || index < 0 || index >= cfg.customActions.length) return interaction.reply({ content: 'Indice invalide.', flags: 64 });
-					cfg.customActions.splice(index, 1);
-				} else {
-					if (!Array.isArray(cfg.customTruths) || index < 0 || index >= cfg.customTruths.length) return interaction.reply({ content: 'Indice invalide.', flags: 64 });
-					cfg.customTruths.splice(index, 1);
-				}
-				await saveGuildCfg(dataManager, guildId, cfg);
-				return interaction.reply({ content: 'Supprimé.', flags: 64 });
-			}
-			if (sub === 'list-custom') {
-				const a = (cfg.customActions || []).map((t, i) => `A${i}: ${t}`).join('\n') || '(Aucune action personnalisée)';
-				const v = (cfg.customTruths || []).map((t, i) => `V${i}: ${t}`).join('\n') || '(Aucune vérité personnalisée)';
-				return interaction.reply({ content: `Actions:\n${a}\n\nVérités:\n${v}`, flags: 64 });
-			}
-			if (sub === 'disable-base' || sub === 'enable-base') {
-				const kind = interaction.options.getString('kind', true);
-				const numero = interaction.options.getInteger('numero', true);
-				const idx = Math.max(1, numero) - 1;
-				const key = kind === 'action' ? 'disabledBaseActions' : 'disabledBaseTruths';
-				const set = new Set(cfg[key] || []);
-				if (sub === 'disable-base') set.add(idx);
-				else set.delete(idx);
-				cfg[key] = Array.from(set);
-				await saveGuildCfg(dataManager, guildId, cfg);
-				return interaction.reply({ content: `${sub === 'disable-base' ? 'Désactivé' : 'Réactivé'}: ${kind} #${numero}`, flags: 64 });
-			}
-		}
+		return interaction.reply({ content: 'ℹ️ Cette commande est désormais regroupée sous /config-aouv.', flags: 64 });
 	}
 };

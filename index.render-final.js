@@ -2524,6 +2524,88 @@ class RenderSolutionBot {
                         console.log('✅ Interaction économique déjà traitée, ignorée par MainRouter');
                     }
                 }
+
+                // === AOUV CONFIG ===
+                if (customId === 'aouv_main_select') {
+                    console.log('🎯 Sélection AouV');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'aouv_channel_add') {
+                    console.log('🎯 AouV ajout salon');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvChannelAdd(interaction);
+                    return;
+                }
+
+                if (customId === 'aouv_channel_remove') {
+                    console.log('🎯 AouV retrait salon');
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvChannelRemove(interaction);
+                    return;
+                }
+
+                // === AOUV MODALS ===
+                if (interaction.customId === 'aouv_prompt_add_modal') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvPromptAddModal(interaction);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_prompt_edit_modal') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvPromptEditModal(interaction);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_prompt_remove_modal') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvPromptRemoveModal(interaction);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_prompt_disable_base_modal') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvPromptBaseModal(interaction, true);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_prompt_enable_base_modal') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvPromptBaseModal(interaction, false);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_prompt_list_base_modal') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvPromptListBaseModal(interaction);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_prompt_override_base_modal') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvPromptOverrideModal(interaction);
+                    return;
+                }
+
+                if (interaction.customId === 'aouv_prompt_reset_override_base_modal') {
+                    const EconomyConfigHandler = require('./handlers/EconomyConfigHandler');
+                    const economyHandler = new EconomyConfigHandler(dataManager);
+                    await economyHandler.handleAouvPromptResetOverrideModal(interaction);
+                    return;
+                }
             }
 
         } catch (error) {
