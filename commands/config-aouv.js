@@ -34,5 +34,14 @@ module.exports = {
 
         const row = new ActionRowBuilder().addComponents(select);
         await interaction.reply({ embeds: [embed], components: [row], flags: 64 });
+
+        // Afficher immédiatement le menu AouV depuis le handler indépendant si besoin
+        try {
+            const AouvConfigHandler = require('../handlers/AouvConfigHandler');
+            const dataManager = require('../utils/simpleDataManager');
+            const aouvHandler = new AouvConfigHandler(dataManager);
+            await aouvHandler.showAouvMenu({ update: (p)=>interaction.editReply(p) });
+        } catch (_) {}
+
     }
 };
