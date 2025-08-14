@@ -12,7 +12,7 @@ module.exports = {
 		}
 
 		try {
-			const EconomyConfigHandler = require('../utils/EconomyConfigHandler');
+			const EconomyConfigHandler = require('../handlers/EconomyConfigHandler');
 			const dataManager = require('../utils/simpleDataManager');
 			const handler = new EconomyConfigHandler(dataManager);
 
