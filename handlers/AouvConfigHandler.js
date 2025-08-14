@@ -1,4 +1,4 @@
-const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ChannelSelectMenuBuilder, ChannelType, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { modalHandler } = require('../utils/modalHandler');
 
 class AouvConfigHandler {
@@ -57,11 +57,11 @@ class AouvConfigHandler {
 
 		if (choice === 'channels') return this.showAouvChannelsMenu(interaction);
 		if (choice === 'prompt_add') return this.showAouvPromptAddModal(interaction);
-		if (choice === 'prompt_edit') return this.showAouvPromptEditPicker(interaction);
-		if (choice === 'prompt_remove') return this.showAouvPromptRemoveModal(interaction);
+		if (choice === 'prompt_edit') return this.showAouvPromptEditKindPicker(interaction);
+		if (choice === 'prompt_remove') return this.showAouvPromptRemoveKindPicker(interaction);
 		if (choice === 'prompt_list_custom') return this.showAouvPromptListCustom(interaction);
-		if (choice === 'prompt_list_base') return this.showAouvPromptListBaseModal(interaction);
-		if (choice === 'prompt_override_base') return this.showAouvPromptOverrideBaseModal(interaction);
+		if (choice === 'prompt_list_base') return this.showAouvPromptListBaseMenu(interaction);
+		if (choice === 'prompt_override_base') return this.showAouvPromptOverrideBaseKindPicker(interaction);
 		if (choice === 'prompt_reset_override') return this.showAouvPromptResetOverrideModal(interaction);
 		if (choice === 'prompt_disable_base') return this.showAouvPromptToggleBase(interaction, true);
 		if (choice === 'prompt_enable_base') return this.showAouvPromptToggleBase(interaction, false);
@@ -213,6 +213,279 @@ class AouvConfigHandler {
 		await modalHandler.showModal(interaction, modal);
 	}
 
+	// === Nouvel assistant pagination ===
+	buildPaginationRow(baseId, kind, page, totalPages) {
+		const buttons = [];
+		if (page > 1) {
+			buttons.push(new ButtonBuilder().setCustomId(`${baseId}_${kind}_page_${page - 1}`).setLabel('◀️ Précédent').setStyle(ButtonStyle.Secondary));
+		}
+		if (page < totalPages) {
+			buttons.push(new ButtonBuilder().setCustomId(`${baseId}_${kind}_page_${page + 1}`).setLabel('Suivant ▶️').setStyle(ButtonStyle.Secondary));
+		}
+		return buttons.length ? [new ActionRowBuilder().addComponents(buttons)] : [];
+	}
+
+	// === EDIT personnalisés (sélection type puis liste paginée) ===
+	async showAouvPromptEditKindPicker(interaction) {
+		const embed = new EmbedBuilder()
+			.setColor('#f1c40f')
+			.setTitle('✏️ Modifier un prompt personnalisé')
+			.setDescription('Choisissez le type de prompt à modifier.');
+		const select = new StringSelectMenuBuilder()
+			.setCustomId('aouv_prompt_edit_kind_select')
+			.setPlaceholder('Choisir un type...')
+			.addOptions([
+				{ label: 'Actions', value: 'action' },
+				{ label: 'Vérités', value: 'verite' }
+			]);
+		await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+	}
+
+	async handleAouvPromptEditKindSelect(interaction) {
+		const kind = interaction.values[0];
+		return this.showAouvPromptEditListPaged(interaction, kind, 1);
+	}
+
+	async showAouvPromptEditListPaged(interaction, kind, page = 1) {
+		const guildId = interaction.guild.id;
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || { customActions: [], customTruths: [] };
+		const list = kind === 'action' ? (cfg.customActions || []) : (cfg.customTruths || []);
+		const per = 25;
+		const totalPages = Math.max(1, Math.ceil(list.length / per));
+		const start = (page - 1) * per;
+		const slice = list.slice(start, start + per);
+
+		const embed = new EmbedBuilder()
+			.setColor('#f1c40f')
+			.setTitle(`✏️ Modifier un prompt perso — ${kind === 'action' ? 'Actions' : 'Vérités'} (Page ${page}/${totalPages})`)
+			.setDescription(slice.length ? 'Sélectionnez un prompt à modifier.' : 'Aucun prompt.');
+
+		const select = new StringSelectMenuBuilder()
+			.setCustomId(kind === 'action' ? 'aouv_prompt_edit_select_action' : 'aouv_prompt_edit_select_truth')
+			.setPlaceholder(slice.length ? 'Choisir un prompt...' : 'Aucun prompt')
+			.setMinValues(1)
+			.setMaxValues(1)
+			.setDisabled(slice.length === 0);
+		slice.forEach((t, i) => {
+			const absoluteIndex = start + i;
+			const label = t.length > 95 ? t.slice(0, 95) + '…' : t;
+			select.addOptions({ label, value: String(absoluteIndex) });
+		});
+
+		const rows = [new ActionRowBuilder().addComponents(select), ...this.buildPaginationRow('aouv_prompt_edit_list', kind, page, totalPages)];
+		await interaction.update({ embeds: [embed], components: rows });
+	}
+
+	// === REMOVE personnalisés (sélection type puis liste paginée) ===
+	async showAouvPromptRemoveKindPicker(interaction) {
+		const embed = new EmbedBuilder()
+			.setColor('#e74c3c')
+			.setTitle('🗑️ Supprimer un prompt personnalisé')
+			.setDescription('Choisissez le type de prompt à supprimer.');
+		const select = new StringSelectMenuBuilder()
+			.setCustomId('aouv_prompt_remove_kind_select')
+			.setPlaceholder('Choisir un type...')
+			.addOptions([
+				{ label: 'Actions', value: 'action' },
+				{ label: 'Vérités', value: 'verite' }
+			]);
+		await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+	}
+
+	async handleAouvPromptRemoveKindSelect(interaction) {
+		const kind = interaction.values[0];
+		return this.showAouvPromptRemoveListPaged(interaction, kind, 1);
+	}
+
+	async showAouvPromptRemoveListPaged(interaction, kind, page = 1) {
+		const guildId = interaction.guild.id;
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || { customActions: [], customTruths: [] };
+		const list = kind === 'action' ? (cfg.customActions || []) : (cfg.customTruths || []);
+		const per = 25;
+		const totalPages = Math.max(1, Math.ceil(list.length / per));
+		const start = (page - 1) * per;
+		const slice = list.slice(start, start + per);
+
+		const embed = new EmbedBuilder()
+			.setColor('#e74c3c')
+			.setTitle(`🗑️ Supprimer un prompt perso — ${kind === 'action' ? 'Actions' : 'Vérités'} (Page ${page}/${totalPages})`)
+			.setDescription(slice.length ? 'Sélectionnez un prompt à supprimer.' : 'Aucun prompt.');
+
+		const select = new StringSelectMenuBuilder()
+			.setCustomId(kind === 'action' ? 'aouv_prompt_remove_select_action' : 'aouv_prompt_remove_select_truth')
+			.setPlaceholder(slice.length ? 'Choisir un prompt...' : 'Aucun prompt')
+			.setMinValues(1)
+			.setMaxValues(1)
+			.setDisabled(slice.length === 0);
+		slice.forEach((t, i) => {
+			const absoluteIndex = start + i;
+			const label = t.length > 95 ? t.slice(0, 95) + '…' : t;
+			select.addOptions({ label, value: String(absoluteIndex) });
+		});
+
+		const rows = [new ActionRowBuilder().addComponents(select), ...this.buildPaginationRow('aouv_prompt_remove_list', kind, page, totalPages)];
+		await interaction.update({ embeds: [embed], components: rows });
+	}
+
+	async handleAouvPromptRemoveSelect(interaction, kind) {
+		const guildId = interaction.guild.id;
+		const index = parseInt(interaction.values[0], 10);
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || {};
+		if (kind === 'action') {
+			if (!Array.isArray(cfg.customActions) || index < 0 || index >= cfg.customActions.length) return interaction.update({ content: '❌ Indice invalide.', embeds: [], components: [] });
+			cfg.customActions.splice(index, 1);
+		} else {
+			if (!Array.isArray(cfg.customTruths) || index < 0 || index >= cfg.customTruths.length) return interaction.update({ content: '❌ Indice invalide.', embeds: [], components: [] });
+			cfg.customTruths.splice(index, 1);
+		}
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
+		await interaction.update({ content: '✅ Supprimé.', embeds: [], components: [] });
+	}
+
+	// === LIST personnalisés (sélection type puis pagination) ===
+	async showAouvPromptListCustom(interaction) {
+		const embed = new EmbedBuilder()
+			.setColor('#3498db')
+			.setTitle('📜 Lister prompts personnalisés')
+			.setDescription('Choisissez le type à afficher.');
+		const select = new StringSelectMenuBuilder()
+			.setCustomId('aouv_prompt_list_custom_kind_select')
+			.setPlaceholder('Choisir un type...')
+			.addOptions([
+				{ label: 'Actions', value: 'action' },
+				{ label: 'Vérités', value: 'verite' }
+			]);
+		await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+	}
+
+	async handleAouvPromptListCustomKindSelect(interaction) {
+		const kind = interaction.values[0];
+		return this.showAouvPromptListCustomPaged(interaction, kind, 1);
+	}
+
+	async showAouvPromptListCustomPaged(interaction, kind, page = 1) {
+		const guildId = interaction.guild.id;
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || { customActions: [], customTruths: [] };
+		const list = kind === 'action' ? (cfg.customActions || []) : (cfg.customTruths || []);
+		const per = 20;
+		const totalPages = Math.max(1, Math.ceil(list.length / per));
+		const start = (page - 1) * per;
+		const slice = list.slice(start, start + per);
+		const lines = slice.map((t, i) => `${start + i}. ${t}`);
+		const embed = new EmbedBuilder()
+			.setColor('#3498db')
+			.setTitle(`📜 ${kind === 'action' ? 'Actions' : 'Vérités'} personnalisées (Page ${page}/${totalPages})`)
+			.setDescription(lines.length ? lines.join('\n') : '(Aucune entrée)');
+		const rows = this.buildPaginationRow('aouv_prompt_list_custom', kind, page, totalPages);
+		await interaction.update({ embeds: [embed], components: rows });
+	}
+
+	// === LIST base (sélection type puis pagination) ===
+	async showAouvPromptListBaseMenu(interaction) {
+		const embed = new EmbedBuilder()
+			.setColor('#9b59b6')
+			.setTitle('📚 Lister prompts intégrés')
+			.setDescription('Choisissez le type à afficher.');
+		const select = new StringSelectMenuBuilder()
+			.setCustomId('aouv_prompt_list_base_kind_select')
+			.setPlaceholder('Choisir un type...')
+			.addOptions([
+				{ label: 'Actions (base)', value: 'action' },
+				{ label: 'Vérités (base)', value: 'verite' }
+			]);
+		await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+	}
+
+	async handleAouvPromptListBaseKindSelect(interaction) {
+		const kind = interaction.values[0];
+		return this.showAouvPromptListBasePaged(interaction, kind, 1);
+	}
+
+	async showAouvPromptListBasePaged(interaction, kind, page = 1) {
+		const { BASE_ACTIONS, BASE_TRUTHS } = require('../utils/aouvPrompts');
+		const list = kind === 'action' ? BASE_ACTIONS : kind === 'verite' ? BASE_TRUTHS : null;
+		if (!list) return interaction.reply({ content: '❌ Type invalide.', flags: 64 });
+		const per = 20; const start = (page - 1) * per; const slice = list.slice(start, start + per);
+		const totalPages = Math.max(1, Math.ceil(list.length / per));
+		if (!slice.length) return interaction.reply({ content: 'Aucune entrée à cette page.', flags: 64 });
+		const lines = slice.map((t, i) => `${start + i + 1}. ${t}`);
+		const embed = new EmbedBuilder()
+			.setColor('#9b59b6')
+			.setTitle(`📚 ${kind === 'action' ? 'Actions' : 'Vérités'} intégrées (Page ${page}/${totalPages})`)
+			.setDescription(lines.length ? lines.join('\n') : 'Aucune entrée à cette page.');
+		const rows = this.buildPaginationRow('aouv_prompt_list_base', kind, page, totalPages);
+		await interaction.update({ embeds: [embed], components: rows });
+	}
+
+	// === OVERRIDE base (sélection type puis liste paginée avec ouverture modal pré-remplie) ===
+	async showAouvPromptOverrideBaseKindPicker(interaction) {
+		const embed = new EmbedBuilder()
+			.setColor('#f39c12')
+			.setTitle('✏️ Modifier (override) un prompt intégré')
+			.setDescription('Choisissez le type de prompt.');
+		const select = new StringSelectMenuBuilder()
+			.setCustomId('aouv_prompt_override_kind_select')
+			.setPlaceholder('Choisir un type...')
+			.addOptions([
+				{ label: 'Actions (base)', value: 'action' },
+				{ label: 'Vérités (base)', value: 'verite' }
+			]);
+		await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+	}
+
+	async handleAouvPromptOverrideKindSelect(interaction) {
+		const kind = interaction.values[0];
+		return this.showAouvPromptOverrideBaseListPaged(interaction, kind, 1);
+	}
+
+	async showAouvPromptOverrideBaseListPaged(interaction, kind, page = 1) {
+		const { BASE_ACTIONS, BASE_TRUTHS } = require('../utils/aouvPrompts');
+		const list = kind === 'action' ? BASE_ACTIONS : kind === 'verite' ? BASE_TRUTHS : [];
+		const per = 25;
+		const totalPages = Math.max(1, Math.ceil(list.length / per));
+		const start = (page - 1) * per;
+		const slice = list.slice(start, start + per);
+
+		const embed = new EmbedBuilder()
+			.setColor('#f39c12')
+			.setTitle(`✏️ Override prompt intégré — ${kind === 'action' ? 'Actions' : 'Vérités'} (Page ${page}/${totalPages})`)
+			.setDescription(slice.length ? 'Sélectionnez un prompt intégré à remplacer.' : 'Aucune entrée.');
+
+		const select = new StringSelectMenuBuilder()
+			.setCustomId(kind === 'action' ? 'aouv_prompt_override_select_action' : 'aouv_prompt_override_select_truth')
+			.setPlaceholder(slice.length ? 'Choisir un prompt (base)...' : 'Aucun prompt')
+			.setMinValues(1)
+			.setMaxValues(1)
+			.setDisabled(slice.length === 0);
+		slice.forEach((t, i) => {
+			const absoluteIndex = start + i + 1; // base is 1-indexed in UI
+			const label = t.length > 95 ? t.slice(0, 95) + '…' : t;
+			select.addOptions({ label: `${absoluteIndex}. ${label}`, value: String(absoluteIndex) });
+		});
+
+		const rows = [new ActionRowBuilder().addComponents(select), ...this.buildPaginationRow('aouv_prompt_override_list', kind, page, totalPages)];
+		await interaction.update({ embeds: [embed], components: rows });
+	}
+
+	async handleAouvPromptOverrideSelect(interaction, kind) {
+		const numero = interaction.values[0];
+		const { BASE_ACTIONS, BASE_TRUTHS } = require('../utils/aouvPrompts');
+		const baseList = kind === 'action' ? BASE_ACTIONS : BASE_TRUTHS;
+		const idx = Math.max(1, parseInt(numero, 10));
+		const currentBase = baseList[idx - 1] || '';
+
+		const modal = new ModalBuilder().setCustomId('aouv_prompt_override_base_modal').setTitle('Remplacer prompt intégré');
+		const kindInput = new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true).setValue(kind);
+		const numeroInput = new TextInputBuilder().setCustomId('numero').setLabel('Numéro (1..n) du prompt de base').setStyle(TextInputStyle.Short).setRequired(true).setValue(String(idx));
+		const texteInput = new TextInputBuilder().setCustomId('texte').setLabel('Nouveau contenu (remplacement)').setStyle(TextInputStyle.Paragraph).setRequired(true).setValue(currentBase);
+		modal.addComponents(new ActionRowBuilder().addComponents(kindInput), new ActionRowBuilder().addComponents(numeroInput), new ActionRowBuilder().addComponents(texteInput));
+		await modalHandler.showModal(interaction, modal);
+	}
+
 	// Nouveau: sélecteur avant le modal d'édition
 	async showAouvPromptEditPicker(interaction) {
 		const guildId = interaction.guild.id;
@@ -288,7 +561,7 @@ class AouvConfigHandler {
 		await modalHandler.showModal(interaction, modal);
 	}
 
-	async showAouvPromptListCustom(interaction) {
+	async showAouvPromptListCustomOld(interaction) {
 		const guildId = interaction.guild.id;
 		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { customActions: [], customTruths: [] };
