@@ -745,23 +745,37 @@ class RenderSolutionBot {
     async loadCommands() {
         try {
             console.log('📂 Chargement des commandes...');
-            const commandsPath = path.join(__dirname, 'commands');
-            const commandFiles = await fs.readdir(commandsPath);
+            const directoriesToScan = [
+                path.join(__dirname, 'commands'),
+                path.join(__dirname, 'assets')
+            ];
 
-            for (const file of commandFiles.filter(file => file.endsWith('.js'))) {
+            for (const dirPath of directoriesToScan) {
                 try {
-                    const filePath = path.join(commandsPath, file);
-                    delete require.cache[require.resolve(filePath)];
-                    const command = require(filePath);
+                    const files = await fs.readdir(dirPath);
+                    for (const file of files.filter(f => f.endsWith('.js'))) {
+                        try {
+                            const filePath = path.join(dirPath, file);
+                            delete require.cache[require.resolve(filePath)];
+                            const command = require(filePath);
 
-                    if ('data' in command && 'execute' in command) {
-                        this.commands.set(command.data.name, command);
-                        console.log(`✅ ${command.data.name}`);
-                    } else {
-                        console.log(`❌ ${file} manque data ou execute`);
+                            if ('data' in command && 'execute' in command && command.data?.name) {
+                                const name = command.data.name;
+                                if (this.commands.has(name) && dirPath.endsWith(path.sep + 'assets')) {
+                                    // Éviter les doublons: priorité au dossier commands
+                                    continue;
+                                }
+                                this.commands.set(name, command);
+                                console.log(`✅ ${name}`);
+                            } else {
+                                console.log(`❌ ${file} manque data ou execute`);
+                            }
+                        } catch (error) {
+                            console.error(`❌ Erreur ${file}:`, error.message);
+                        }
                     }
-                } catch (error) {
-                    console.error(`❌ Erreur ${file}:`, error.message);
+                } catch (dirErr) {
+                    // Le dossier peut ne pas exister; ignorer
                 }
             }
 
