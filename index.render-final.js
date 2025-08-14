@@ -38,7 +38,7 @@ try {
 
 ensureFileAndBlobPolyfills();
 
-const { Client, Collection, GatewayIntentBits, Routes, REST, EmbedBuilder } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, Routes, REST, EmbedBuilder, Partials } = require('discord.js');
 const fs = require('fs').promises;
 const path = require('path');
 const express = require('express');
@@ -704,8 +704,10 @@ class RenderSolutionBot {
                 GatewayIntentBits.GuildMessages,
                 GatewayIntentBits.MessageContent,
                 GatewayIntentBits.GuildMembers,
-                GatewayIntentBits.GuildVoiceStates
-            ]
+                GatewayIntentBits.GuildVoiceStates,
+                GatewayIntentBits.GuildModeration
+            ],
+            partials: [Partials.Channel, Partials.Message, Partials.User, Partials.GuildMember]
         });
 
         // Initialisation DataManager + ReminderManager (rappels de bump)

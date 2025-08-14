@@ -62,12 +62,17 @@ class MongoBackupManager {
             'level_config.json': 'backup_level_system_config',
             'karma_config.json': 'backup_karma_system_config',
             'staff_config.json': 'backup_staff_configuration',
+            'logs_config.json': 'backup_logs_config',
+            'moderation_config.json': 'backup_moderation_config',
+            'moderation_state.json': 'backup_moderation_state',
+            'warnings.json': 'backup_warnings',
             
             // Fichiers fonctionnalités - collections séparées
             'confessions.json': 'backup_confessions_system',
             'counting.json': 'backup_counting_game',
             'autothread.json': 'backup_autothread_config',
             'actions.json': 'backup_actions_config',
+            'shop.json': 'backup_shop_items',
             // Configurations AOUV
             'aouv_config.json': 'backup_aouv_config',
             
