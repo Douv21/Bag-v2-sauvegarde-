@@ -88,7 +88,7 @@ class AouvConfigHandler {
 		const embed = new EmbedBuilder()
 			.setColor('#2ecc71')
 			.setTitle('📺 Salons autorisés pour AouV')
-			.setDescription((cfg.allowedChannels || []).length ? (cfg.allowedChannels.map(id => `<#${id}>`).join(', ')) : 'Aucun (tous les salons autorisés)');
+			.setDescription((cfg.allowedChannels || []).length ? (cfg.allowedChannels.map(id => `<#${id}>`).join(', ')) : 'Aucun');
 
 		const channelAdd = new ChannelSelectMenuBuilder()
 			.setCustomId('aouv_channel_add')

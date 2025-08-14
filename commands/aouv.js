@@ -102,7 +102,7 @@ function resolveMode(cfg, channel) {
 		return channel.nsfw ? 'nsfw' : 'invalid_nsfw_channel';
 	}
 	// Si pas NSFW configuré pour ce salon, vérifier SFW
-	if (sfwList.length === 0) return 'sfw';
+	if (sfwList.length === 0) return 'denied';
 	return sfwList.includes(channelId) ? 'sfw' : 'denied';
 }
 
@@ -126,7 +126,7 @@ module.exports = {
 			return interaction.reply({ content: '❌ Ce salon n\'est pas marqué NSFW dans Discord. Veuillez utiliser un salon NSFW configuré pour AouV NSFW.', flags: 64 });
 		}
 		if (mode === 'denied') {
-			const sfwMentions = (cfg.allowedChannels || []).map(id => `<#${id}>`).join(', ') || '(tous)';
+			const sfwMentions = (cfg.allowedChannels || []).map(id => `<#${id}>`).join(', ') || '(aucun)';
 			const nsfwMentions = (cfg.nsfwAllowedChannels || []).map(id => `<#${id}>`).join(', ') || '(aucun)';
 			return interaction.reply({ content: `❌ Ce salon n'est pas configuré pour AouV.\nSFW: ${sfwMentions}\nNSFW: ${nsfwMentions}`, flags: 64 });
 		}
