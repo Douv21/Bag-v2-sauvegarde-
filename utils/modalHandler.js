@@ -35,7 +35,16 @@ class ModalHandler {
             'aouv_prompt_enable_base_modal',
             'aouv_prompt_list_base_modal',
             'aouv_prompt_override_base_modal',
-            'aouv_prompt_reset_override_base_modal'
+            'aouv_prompt_reset_override_base_modal',
+            // Modals AOUV NSFW
+            'aouv_nsfw_prompt_add_modal',
+            'aouv_nsfw_prompt_edit_modal',
+            'aouv_nsfw_prompt_remove_modal',
+            'aouv_nsfw_prompt_disable_base_modal',
+            'aouv_nsfw_prompt_enable_base_modal',
+            'aouv_nsfw_prompt_list_base_modal',
+            'aouv_nsfw_prompt_override_base_modal',
+            'aouv_nsfw_prompt_reset_override_base_modal'
         ]);
 
         // Liste des modals prévues mais non implémentées
@@ -89,27 +98,27 @@ class ModalHandler {
             .setTitle(title);
 
         const feedbackInput = new TextInputBuilder()
-            .setCustomId('feedback_input')
-            .setLabel('Votre feedback (optionnel)')
+            .setCustomId('feature_feedback')
+            .setLabel('Que souhaitez-vous voir dans cette fonctionnalité ?')
             .setStyle(TextInputStyle.Paragraph)
-            .setPlaceholder('Dites-nous ce que vous attendez de cette fonctionnalité...')
-            .setRequired(false)
-            .setMaxLength(1000);
+            .setRequired(true)
+            .setPlaceholder('Décrivez votre besoin...')
+            .setMinLength(10)
+            .setMaxLength(500);
 
         const contactInput = new TextInputBuilder()
-            .setCustomId('contact_input')
-            .setLabel('Comment vous contacter (optionnel)')
+            .setCustomId('contact_info')
+            .setLabel('Souhaitez-vous être contacté ? Si oui, précisez.')
             .setStyle(TextInputStyle.Short)
-            .setPlaceholder('Discord ID, email, etc.')
             .setRequired(false)
-            .setMaxLength(100);
+            .setPlaceholder('Pseudo Discord, email...');
 
         const priorityInput = new TextInputBuilder()
-            .setCustomId('priority_input')
-            .setLabel('Priorité pour vous (1-5)')
+            .setCustomId('feature_priority')
+            .setLabel('Priorité (1-5)')
             .setStyle(TextInputStyle.Short)
-            .setPlaceholder('1 = pas urgent, 5 = très urgent')
-            .setRequired(false)
+            .setRequired(true)
+            .setPlaceholder('3')
             .setMinLength(1)
             .setMaxLength(1);
 
@@ -126,10 +135,6 @@ class ModalHandler {
     async handleNotImplementedSubmission(interaction) {
         try {
             const originalCustomId = interaction.customId.replace('not_implemented_', '');
-            const feedback = interaction.fields.getTextInputValue('feedback_input') || 'Aucun feedback fourni';
-            const contact = interaction.fields.getTextInputValue('contact_input') || 'Non fourni';
-            const priority = interaction.fields.getTextInputValue('priority_input') || '3';
-
             // Logger la demande d'utilisateur
             await errorHandler.logError(
                 ErrorLevels.INFO,
@@ -137,17 +142,15 @@ class ModalHandler {
                 null,
                 {
                     userId: interaction.user.id,
-                    username: interaction.user.username,
                     guildId: interaction.guild?.id,
-                    guildName: interaction.guild?.name,
-                    originalCustomId,
-                    feedback,
-                    contact,
-                    priority: parseInt(priority) || 3
+                    customId: originalCustomId
                 }
             );
 
-            await errorHandler.respondWithError(
+            const priority = (() => {
+                try { return interaction.fields.getTextInputValue('feature_priority') || '3'; } catch (_) { return '3'; }
+            })();
+            await errorHandler.safeReply(
                 interaction,
                 ErrorLevels.INFO,
                 'Demande Enregistrée',
@@ -155,12 +158,10 @@ class ModalHandler {
                 '✅ **Votre demande a été enregistrée**\n' +
                 `📊 **Priorité attribuée :** ${priority}/5\n` +
                 '📝 **Feedback :** Transmis à l\'équipe de développement\n\n' +
-                '**Prochaines étapes :**\n' +
-                '• Votre demande sera évaluée par l\'équipe\n' +
-                '• Les fonctionnalités les plus demandées seront priorisées\n' +
-                '• Vous serez notifié des nouvelles versions\n\n' +
-                '*Merci de contribuer à l\'amélioration du bot !*'
+                'Nous vous tiendrons informé des avancées.'
             );
+
+            return true;
 
         } catch (error) {
             await errorHandler.handleCriticalError(error, {
@@ -214,7 +215,16 @@ class ModalHandler {
                 error,
                 { customId, title }
             );
-            throw error;
+
+            // Retourner un modal par défaut minimal pour éviter les crashs
+            const fallback = new ModalBuilder().setCustomId('error_modal').setTitle('Erreur');
+            const messageInput = new TextInputBuilder()
+                .setCustomId('error_message')
+                .setLabel('Une erreur est survenue lors de la création du modal')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(false);
+            fallback.addComponents(new ActionRowBuilder().addComponents(messageInput));
+            return fallback;
         }
     }
 
@@ -235,13 +245,6 @@ class ModalHandler {
                 }
             );
 
-            await errorHandler.respondWithError(
-                interaction,
-                ErrorLevels.ERROR,
-                'Erreur d\'affichage',
-                'Impossible d\'afficher le formulaire. Veuillez réessayer dans quelques instants.\n\n' +
-                'Si le problème persiste, contactez un administrateur.'
-            );
             return false;
         }
     }
