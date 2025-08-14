@@ -145,15 +145,7 @@ class BagBotRender {
         });
 
         // Routes de santé (obligatoires pour Render.com Web Service)
-        this.app.get('/', (req, res) => {
-            res.json({
-                status: 'online',
-                bot: this.client.user?.tag || 'Démarrage...',
-                uptime: process.uptime(),
-                timestamp: Date.now(),
-                service: 'BAG BOT V2 - Web Service'
-            });
-        });
+        // (endpoint racine déjà défini ci-dessus)
 
         this.app.get('/health', (req, res) => {
             const health = {
@@ -170,7 +162,8 @@ class BagBotRender {
         // API endpoints pour data
         this.app.get('/api/stats', async (req, res) => {
             try {
-                const stats = await this.dataManager.getStats();
+                const guildId = req.query.guildId || null;
+                const stats = await this.dataManager.getStats(guildId);
                 res.json(stats);
             } catch (error) {
                 res.status(500).json({ error: error.message });
@@ -312,7 +305,8 @@ class BagBotRender {
         });
 
         this.app.get('/dashboard/:guildId', (req, res) => {
-            res.redirect('/dashboard');
+            const gid = req.params.guildId;
+            res.redirect(`/dashboard?guildId=${encodeURIComponent(gid)}`);
         });
 
         // Static files for dashboard
@@ -457,6 +451,11 @@ class BagBotRender {
             try {
                 // Les commandes slash sont gérées par CommandHandler
                 if (interaction.isChatInputCommand()) {
+                    try {
+                        // Incrémenter le compteur de commandes utilisées
+                        const guildId = interaction.guild?.id || null;
+                        await this.dataManager.incrementCommandCount(guildId);
+                    } catch {}
                     return;
                 }
                 
@@ -520,6 +519,11 @@ class BagBotRender {
             // Marquer activité pour l'anti-inactivité
             try {
                 await this.moderationManager.markActive(message.guild.id, message.author.id);
+            } catch {}
+
+            // Incrémenter le compteur de messages du jour
+            try {
+                await this.dataManager.incrementMessageCount(message.guild?.id || null);
             } catch {}
         });
 

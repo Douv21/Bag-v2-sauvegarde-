@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('dashboard')
-        .setDescription('📊 Statut du tableau de bord (en reconstruction)'),
+        .setDescription('📊 Ouvre le tableau de bord du serveur (version minimale)'),
     
     async execute(interaction) {
         // Vérifier permissions admin
@@ -16,12 +16,13 @@ module.exports = {
 
         // URL du dashboard - utilise l'URL actuelle du serveur
         const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:5000';
-        const serverDashboard = `${DASHBOARD_URL}/dashboard`;
+        const guildId = interaction.guildId || interaction.guild?.id || '';
+        const serverDashboard = `${DASHBOARD_URL}/dashboard${guildId ? `?guildId=${guildId}` : ''}`;
 
         const embed = new EmbedBuilder()
-            .setTitle('📊 Dashboard en reconstruction')
-            .setDescription('Le tableau de bord est en cours de refonte. Une version minimale sera réintroduite pas à pas.')
-            .addFields({ name: 'Accès', value: `[Page placeholder](${serverDashboard})` })
+            .setTitle('📊 Tableau de bord — BAG v2')
+            .setDescription('Accès au tableau de bord minimal (statistiques temps réel).')
+            .addFields({ name: 'Lien', value: `[Ouvrir le tableau de bord](${serverDashboard})` })
             .setColor('#e53e3e')
             .setTimestamp();
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BAG Dashboard - Reconstruction</title>
+    <title>BAG v2 — Tableau de bord</title>
     <style>
         body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#0a0a0a; color:#ffffff; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; }
         .box { text-align:center; padding:2rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; max-width:760px; width:90%; }
@@ -23,30 +23,30 @@
 </head>
 <body>
     <div class="box">
-        <h1>Dashboard en reconstruction</h1>
-        <p>Version minimale (V0) affichant l'état du service et quelques statistiques. Les sections seront ajoutées progressivement.</p>
+        <h1>Tableau de bord — BAG v2</h1>
+        <p>Version minimale affichant l’état du service et les statistiques clés du serveur.</p>
         <div class="links">
             <a class="btn" href="/public/index.html">Accueil</a>
-            <a class="btn" href="/health" target="_blank">Health (JSON)</a>
-            <a class="btn" href="/api/stats" target="_blank">Stats (JSON)</a>
+            <a class="btn" href="/health" target="_blank">Santé (JSON)</a>
+            <a class="btn" href="/api/stats" target="_blank">Statistiques (JSON)</a>
         </div>
 
         <div class="grid">
             <div class="card">
-                <h3>Etat du Service</h3>
+                <h3>État du service</h3>
                 <div id="health">
                     <div class="muted">Chargement...</div>
                 </div>
             </div>
             <div class="card">
-                <h3>Statistiques</h3>
+                <h3>Statistiques serveur</h3>
                 <div id="stats">
                     <div class="muted">Chargement...</div>
                 </div>
             </div>
         </div>
 
-        <div class="muted" style="margin-top:1rem">APIs avancées du dashboard désactivées: <code>/api/dashboard/*</code></div>
+        <div class="muted" style="margin-top:1rem">Fonctions avancées du tableau de bord en cours d’ajout.</div>
     </div>
 
     <script>
@@ -67,21 +67,23 @@
         (async function init() {
             const healthEl = document.getElementById('health');
             const statsEl = document.getElementById('stats');
+            const params = new URLSearchParams(window.location.search);
+            const guildId = params.get('guildId');
 
             const [health, stats] = await Promise.all([
                 safeJson('/health'),
-                safeJson('/api/stats')
+                safeJson(guildId ? `/api/stats?guildId=${encodeURIComponent(guildId)}` : '/api/stats')
             ]);
 
             if (health.__error) {
                 healthEl.innerHTML = `<div class=\"error\">Erreur: ${health.__error}</div>`;
             } else {
                 setKV(healthEl, [
-                    ['Status', health.status || '—'],
+                    ['Statut', health.status || '—'],
                     ['Discord', health.discord || '—'],
                     ['Uptime', (typeof health.uptime === 'number') ? `${Math.floor(health.uptime/3600)}h ${Math.floor((health.uptime%3600)/60)}m` : '—'],
-                    ['Guilds', health.guilds ?? '—'],
-                    ['Commands', health.commands ?? '—']
+                    ['Serveurs (guildes)', health.guilds ?? '—'],
+                    ['Commandes chargées', health.commands ?? '—']
                 ]);
             }
 
@@ -89,10 +91,12 @@
                 statsEl.innerHTML = `<div class=\"error\">Erreur: ${stats.__error}</div>`;
             } else {
                 setKV(statsEl, [
-                    ['Membres actifs', stats.activeMembers ?? 0],
+                    ['Membres actifs (24h)', stats.activeMembers ?? 0],
                     ['Messages du jour', stats.todayMessages ?? 0],
-                    ['Commandes utilisées', stats.commandsUsed ?? 0],
-                    ['Argent total', stats.totalMoney ?? 0]
+                    ['Commandes utilisées (jour)', stats.commandsUsed ?? 0],
+                    ['Argent total (€)', (typeof stats.totalMoney === 'number') ? stats.totalMoney.toLocaleString('fr-FR') : (stats.totalMoney ?? 0)],
+                    ['Utilisateurs total', stats.totalUsers ?? 0],
+                    ['Confessions total', stats.totalConfessions ?? 0]
                 ]);
             }
         })();
