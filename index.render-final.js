@@ -2704,6 +2704,122 @@ class RenderSolutionBot {
                     return;
                 }
 
+                // ==== AOUV — selects de type pour pagination ====
+                if (customId === 'aouv_prompt_edit_kind_select') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptEditKindSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'aouv_prompt_remove_kind_select') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptRemoveKindSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'aouv_prompt_list_custom_kind_select') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptListCustomKindSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'aouv_prompt_list_base_kind_select') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptListBaseKindSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'aouv_prompt_override_kind_select') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptOverrideKindSelect(interaction);
+                    return;
+                }
+
+                // ==== AOUV — selects sur listes paginées ====
+                if (customId === 'aouv_prompt_remove_select_action') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptRemoveSelect(interaction, 'action');
+                    return;
+                }
+
+                if (customId === 'aouv_prompt_remove_select_truth') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptRemoveSelect(interaction, 'verite');
+                    return;
+                }
+
+                if (customId === 'aouv_prompt_override_select_action') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptOverrideSelect(interaction, 'action');
+                    return;
+                }
+
+                if (customId === 'aouv_prompt_override_select_truth') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvPromptOverrideSelect(interaction, 'verite');
+                    return;
+                }
+
+                // ==== AOUV — pagination boutons ====
+                if (customId.startsWith('aouv_prompt_edit_list_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.showAouvPromptEditListPaged(interaction, kind, page);
+                    return;
+                }
+
+                if (customId.startsWith('aouv_prompt_remove_list_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.showAouvPromptRemoveListPaged(interaction, kind, page);
+                    return;
+                }
+
+                if (customId.startsWith('aouv_prompt_list_custom_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.showAouvPromptListCustomPaged(interaction, kind, page);
+                    return;
+                }
+
+                if (customId.startsWith('aouv_prompt_list_base_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.showAouvPromptListBasePaged(interaction, kind, page);
+                    return;
+                }
+
+                if (customId.startsWith('aouv_prompt_override_list_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.showAouvPromptOverrideBaseListPaged(interaction, kind, page);
+                    return;
+                }
+
                 if (customId === 'aouv_channel_add') {
                     console.log('🎯 AouV ajout salon');
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
