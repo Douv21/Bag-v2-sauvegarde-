@@ -1,4 +1,5 @@
 const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+const { modalHandler } = require('../utils/modalHandler');
 
 class AouvConfigHandler {
 	constructor(dataManager) {
@@ -209,7 +210,7 @@ class AouvConfigHandler {
 		const kind = new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true);
 		const texte = new TextInputBuilder().setCustomId('texte').setLabel('Contenu du prompt').setStyle(TextInputStyle.Paragraph).setRequired(true);
 		modal.addComponents(new ActionRowBuilder().addComponents(kind), new ActionRowBuilder().addComponents(texte));
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	// Nouveau: sélecteur avant le modal d'édition
@@ -258,7 +259,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('index').setLabel('Indice (via liste)').setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('texte').setLabel('Nouveau contenu').setStyle(TextInputStyle.Paragraph).setRequired(true))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	// Nouveau: ouvrir le modal d'édition pré-rempli après sélection
@@ -275,7 +276,7 @@ class AouvConfigHandler {
 		const indexInput = new TextInputBuilder().setCustomId('index').setLabel('Indice (via liste)').setStyle(TextInputStyle.Short).setRequired(true).setValue(String(index));
 		const texteInput = new TextInputBuilder().setCustomId('texte').setLabel('Nouveau contenu').setStyle(TextInputStyle.Paragraph).setRequired(true).setValue(currentText);
 		modal.addComponents(new ActionRowBuilder().addComponents(kindInput), new ActionRowBuilder().addComponents(indexInput), new ActionRowBuilder().addComponents(texteInput));
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async showAouvPromptRemoveModal(interaction) {
@@ -284,7 +285,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('index').setLabel('Indice à supprimer').setStyle(TextInputStyle.Short).setRequired(true))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async showAouvPromptListCustom(interaction) {
@@ -302,7 +303,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('numero').setLabel('Numéro (1..n) du prompt de base').setStyle(TextInputStyle.Short).setRequired(true))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	// ---- Modals handlers ----
@@ -378,7 +379,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('page').setLabel('Page (>=1)').setStyle(TextInputStyle.Short).setRequired(false))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async handleAouvPromptListBaseModal(interaction) {
@@ -401,7 +402,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('numero').setLabel('Numéro (1..n) du prompt de base').setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('texte').setLabel('Nouveau contenu (remplacement)').setStyle(TextInputStyle.Paragraph).setRequired(true))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async showAouvPromptResetOverrideModal(interaction) {
@@ -410,7 +411,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('numero').setLabel('Numéro (1..n) du prompt de base').setStyle(TextInputStyle.Short).setRequired(true))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async handleAouvPromptOverrideModal(interaction) {
@@ -451,7 +452,7 @@ class AouvConfigHandler {
 		const kind = new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true);
 		const texte = new TextInputBuilder().setCustomId('texte').setLabel('Contenu du prompt (18+, soft)').setStyle(TextInputStyle.Paragraph).setRequired(true);
 		modal.addComponents(new ActionRowBuilder().addComponents(kind), new ActionRowBuilder().addComponents(texte));
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async showAouvNsfwPromptEditPicker(interaction) {
@@ -504,7 +505,7 @@ class AouvConfigHandler {
 		const indexInput = new TextInputBuilder().setCustomId('index').setLabel('Indice (via liste)').setStyle(TextInputStyle.Short).setRequired(true).setValue(String(index));
 		const texteInput = new TextInputBuilder().setCustomId('texte').setLabel('Nouveau contenu (18+, soft)').setStyle(TextInputStyle.Paragraph).setRequired(true).setValue(currentText);
 		modal.addComponents(new ActionRowBuilder().addComponents(kindInput), new ActionRowBuilder().addComponents(indexInput), new ActionRowBuilder().addComponents(texteInput));
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async showAouvNsfwPromptRemoveModal(interaction) {
@@ -513,7 +514,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('index').setLabel('Indice à supprimer').setStyle(TextInputStyle.Short).setRequired(true))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async showAouvNsfwPromptListCustom(interaction) {
@@ -531,7 +532,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('numero').setLabel('Numéro (1..n) du prompt NSFW de base').setStyle(TextInputStyle.Short).setRequired(true))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async showAouvNsfwPromptListBaseModal(interaction) {
@@ -540,7 +541,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('page').setLabel('Page (>=1)').setStyle(TextInputStyle.Short).setRequired(false))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async handleAouvNsfwPromptListBaseModal(interaction) {
@@ -563,7 +564,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('numero').setLabel('Numéro (1..n) du prompt NSFW de base').setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('texte').setLabel('Nouveau contenu (NSFW soft)').setStyle(TextInputStyle.Paragraph).setRequired(true))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async showAouvNsfwPromptResetOverrideModal(interaction) {
@@ -572,7 +573,7 @@ class AouvConfigHandler {
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('numero').setLabel('Numéro (1..n) du prompt NSFW de base').setStyle(TextInputStyle.Short).setRequired(true))
 		);
-		await interaction.showModal(modal);
+		await modalHandler.showModal(interaction, modal);
 	}
 
 	async handleAouvNsfwPromptAddModal(interaction) {
