@@ -476,7 +476,7 @@ class EconomyConfigHandler {
 
     async handleRoleSelect(interaction) {
         const roleId = interaction.values[0];
-        const isTemp = interaction.customId === 'role_temp_select';
+        const isTemp = interaction.customId === 'role_temp_select' || interaction.customId === 'temp_role_select';
 
         const modal = new ModalBuilder()
             .setCustomId(`role_config_modal_${roleId}_${isTemp ? 'temp' : 'perm'}`)
@@ -498,9 +498,9 @@ class EconomyConfigHandler {
                 new ActionRowBuilder().addComponents(
                     new TextInputBuilder()
                         .setCustomId('role_duration')
-                        .setLabel('Durée (en heures)')
+                        .setLabel('Durée (en jours)')
                         .setStyle(TextInputStyle.Short)
-                        .setPlaceholder('Ex: 24')
+                        .setPlaceholder('Ex: 7')
                         .setRequired(true)
                 )
             );
@@ -828,14 +828,14 @@ class EconomyConfigHandler {
                 duree = parseInt(interaction.fields.getTextInputValue('role_duration'));
             }
 
-            // Sauvegarder le rôle
-            await this.saveRoleToShop(interaction.guild.id, roleId, prix, type, duree);
-
             const role = interaction.guild.roles.cache.get(roleId);
-            const roleName = role ? role.name : 'Rôle inconnu';
+            const roleName = role ? role.name : `Rôle ${roleId}`;
+
+            // Sauvegarder le rôle
+            await this.saveRoleToShop(interaction.guild.id, roleId, prix, type, duree, roleName);
 
             await interaction.reply({
-                content: `✅ Rôle "${roleName}" ajouté à la boutique pour ${prix}💋${type === 'temp' ? ` (${duree}h)` : ' (permanent)'} !`,
+                content: `✅ Rôle "${roleName}" ajouté à la boutique pour ${prix}💋${type === 'temp' ? ` (${duree}j)` : ' (permanent)'} !`,
                 flags: 64
             });
 
@@ -848,7 +848,7 @@ class EconomyConfigHandler {
         }
     }
 
-    async saveRoleToShop(guildId, roleId, prix, type, duree = null) {
+    async saveRoleToShop(guildId, roleId, prix, type, duree = null, roleName = null) {
         const shopData = await this.dataManager.loadData('shop.json', {});
         
         if (!shopData[guildId]) shopData[guildId] = [];
@@ -857,8 +857,10 @@ class EconomyConfigHandler {
             id: Date.now().toString(),
             type: type === 'temp' ? 'temporary_role' : 'permanent_role',
             roleId: roleId,
+            name: roleName || `Rôle ${roleId}`,
             price: prix,
             duration: duree,
+            category: 'Rôles',
             created: new Date().toISOString()
         };
         
@@ -897,28 +899,33 @@ class EconomyConfigHandler {
                     }))
                 );
 
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('objets_existants_select')
-                .setPlaceholder('Sélectionner un objet à modifier...')
-                                    .addOptions(
-                        customObjects.slice(0, 20).map(obj => ({
-                            label: obj.name,
-                            description: `${obj.price}💋 - Créé le ${new Date(obj.created).toLocaleDateString()}`,
-                            value: String(obj.id)
-                        }))
-                    );
+            const selectMenuOptions = [
+                { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
+            ];
 
-            const row = new ActionRowBuilder().addComponents(selectMenu);
-
-            await interaction.update({
-                embeds: [embed],
-                components: [row]
+            // Ajouter les objets dans le menu de sélection
+            guildShop.slice(0, 20).forEach(item => {
+                const icon = (item.type === 'temporary_role' || item.type === 'temp_role') ? '⌛' : 
+                           (item.type === 'permanent_role' || item.type === 'perm_role') ? '⭐' : '🎨';
+                selectMenuOptions.push({
+                    label: `${icon} ${item.name || `Rôle ${item.roleId}`}`,
+                    description: `${item.price}💋 - Modifier cet objet`,
+                    value: item.id.toString()
+                });
             });
 
+            const selectMenu = new StringSelectMenuBuilder()
+                .setCustomId('manage_objects_select')
+                .setPlaceholder('Choisir un objet à modifier...')
+                .addOptions(selectMenuOptions);
+
+            const row = new ActionRowBuilder().addComponents(selectMenu);
+            await interaction.update({ embeds: [embed], components: [row] });
+
         } catch (error) {
-            console.error('Erreur menu objets:', error);
+            console.error('Erreur manage objets:', error);
             await interaction.update({
-                content: '❌ Erreur lors du chargement des objets.',
+                content: '❌ Erreur lors de l\'affichage des objets.',
                 embeds: [],
                 components: []
             });
@@ -1162,9 +1169,9 @@ class EconomyConfigHandler {
             if (item.type === 'temporary_role' || item.type === 'temp_role') {
                 const durationInput = new TextInputBuilder()
                     .setCustomId('item_duration')
-                    .setLabel('⏰ Durée en heures (1-365)')
+                    .setLabel('⏰ Durée en jours (1-365)')
                     .setStyle(TextInputStyle.Short)
-                    .setValue(item.duration ? item.duration.toString() : '24')
+                    .setValue(item.duration ? item.duration.toString() : '7')
                     .setRequired(true);
 
                 components.push(new ActionRowBuilder().addComponents(durationInput));
