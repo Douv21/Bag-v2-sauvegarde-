@@ -9,7 +9,7 @@ function pickRandom(list) {
 
 async function getGuildConfig(dataManager, guildId) {
 	const config = await dataManager.loadData('aouv_config.json', {});
-	return config[guildId] || { allowedChannels: [], disabledBaseActions: [], disabledBaseTruths: [], customActions: [], customTruths: [] };
+	return config[guildId] || { allowedChannels: [], disabledBaseActions: [], disabledBaseTruths: [], customActions: [], customTruths: [], baseActionOverrides: {}, baseTruthOverrides: {} };
 }
 
 async function saveGuildConfig(dataManager, guildId, partial) {
@@ -39,8 +39,14 @@ async function resolvePools(dataManager, guildId) {
 	const cfg = await getGuildConfig(dataManager, guildId);
 	const disabledA = new Set(cfg.disabledBaseActions || []);
 	const disabledT = new Set(cfg.disabledBaseTruths || []);
-	const baseA = BASE_ACTIONS.filter((_, i) => !disabledA.has(i));
-	const baseT = BASE_TRUTHS.filter((_, i) => !disabledT.has(i));
+	const overridesA = cfg.baseActionOverrides || {};
+	const overridesT = cfg.baseTruthOverrides || {};
+	const baseA = BASE_ACTIONS
+		.map((txt, i) => (overridesA[i] ? String(overridesA[i]) : txt))
+		.filter((_, i) => !disabledA.has(i));
+	const baseT = BASE_TRUTHS
+		.map((txt, i) => (overridesT[i] ? String(overridesT[i]) : txt))
+		.filter((_, i) => !disabledT.has(i));
 	const customA = (cfg.customActions || []).map(x => String(x || '')).filter(Boolean);
 	const customT = (cfg.customTruths || []).map(x => String(x || '')).filter(Boolean);
 	return {

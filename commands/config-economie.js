@@ -56,6 +56,11 @@ module.exports = {
                         label: '⚖️ Karma',
                         value: 'karma',
                         description: 'Système karma et récompenses automatiques'
+                    },
+                    {
+                        label: '🎲 Action ou Vérité',
+                        value: 'aouv',
+                        description: 'Configurer le jeu AouV (salons + prompts)'
                     }
                 ]);
 
