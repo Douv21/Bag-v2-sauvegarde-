@@ -1,0 +1,1 @@
+module.exports = require('../assets/config-confession.js');
