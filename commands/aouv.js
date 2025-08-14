@@ -88,11 +88,11 @@ module.exports = {
 		const { actions, truths } = await resolvePools(dataManager, guildId);
 		if (interaction.customId === 'aouv_btn_action') {
 			const text = (actions.length ? pickRandom(actions) : '(Aucune action configurée)');
-			return interaction.reply({ embeds: [buildPromptEmbed('action', text, interaction.user)] });
+			return interaction.reply({ embeds: [buildPromptEmbed('action', text, interaction.user)], components: [buildButtons()] });
 		}
 		if (interaction.customId === 'aouv_btn_verite') {
 			const text = (truths.length ? pickRandom(truths) : '(Aucune vérité configurée)');
-			return interaction.reply({ embeds: [buildPromptEmbed('verite', text, interaction.user)] });
+			return interaction.reply({ embeds: [buildPromptEmbed('verite', text, interaction.user)], components: [buildButtons()] });
 		}
 	}
 };
