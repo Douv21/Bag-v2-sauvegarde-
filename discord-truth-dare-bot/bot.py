@@ -2,7 +2,6 @@
 import os
 import random
 import logging
-from typing import Optional
 
 import discord
 from discord import app_commands
@@ -39,49 +38,22 @@ def build_prompt_embed(kind: str, prompt_text: str, author: discord.abc.User) ->
 
 
 class TruthDareView(discord.ui.View):
-    """Discord UI view with buttons to draw Action/Vérité prompts or stop the game."""
+    """View with two buttons to draw Action/Vérité and send a new message each time."""
 
-    def __init__(self, ephemere: bool = False) -> None:
-        super().__init__(timeout=120)
-        self.ephemere = bool(ephemere)
-
-    async def disable_all(self, interaction: discord.Interaction) -> None:
-        for item in self.children:
-            if isinstance(item, discord.ui.Button):
-                item.disabled = True
-        try:
-            await interaction.response.edit_message(view=self)
-        except discord.InteractionResponded:
-            await interaction.edit_original_response(view=self)
-        except Exception:
-            logging.exception("Failed to disable buttons on interaction")
+    def __init__(self) -> None:
+        super().__init__(timeout=900)
 
     @discord.ui.button(label="Action", emoji="🎯", style=discord.ButtonStyle.danger)
     async def draw_action(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
         prompt_text = random.choice(ACTIONS)
         embed = build_prompt_embed("action", prompt_text, interaction.user)
-        try:
-            await interaction.response.edit_message(embed=embed, view=self)
-        except discord.InteractionResponded:
-            await interaction.edit_original_response(embed=embed, view=self)
+        await interaction.response.send_message(embed=embed)
 
     @discord.ui.button(label="Vérité", emoji="💬", style=discord.ButtonStyle.primary)
     async def draw_truth(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
         prompt_text = random.choice(VERITES)
         embed = build_prompt_embed("verite", prompt_text, interaction.user)
-        try:
-            await interaction.response.edit_message(embed=embed, view=self)
-        except discord.InteractionResponded:
-            await interaction.edit_original_response(embed=embed, view=self)
-
-    @discord.ui.button(label="Stop", emoji="⛔", style=discord.ButtonStyle.secondary)
-    async def stop_view(self, interaction: discord.Interaction, _: discord.ui.Button) -> None:
-        await self.disable_all(interaction)
-
-    async def on_timeout(self) -> None:
-        # When the view times out, we cannot edit the original message without a reference here.
-        # Buttons will naturally stop responding.
-        pass
+        await interaction.response.send_message(embed=embed)
 
 
 intents = discord.Intents.default()
@@ -102,34 +74,28 @@ async def on_ready() -> None:
 
 
 @tree.command(name="action", description="Obtiens un défi 'Action' aléatoire.")
-@app_commands.describe(ephemere="Réponse visible seulement par toi (privée)")
-async def action_cmd(interaction: discord.Interaction, ephemere: Optional[bool] = False) -> None:
+async def action_cmd(interaction: discord.Interaction) -> None:
     prompt_text = random.choice(ACTIONS)
     embed = build_prompt_embed("action", prompt_text, interaction.user)
-    view = TruthDareView(ephemere=bool(ephemere))
-    await interaction.response.send_message(embed=embed, view=view, ephemeral=bool(ephemere))
+    await interaction.response.send_message(embed=embed)
 
 
 @tree.command(name="verite", description="Obtiens une question 'Vérité' aléatoire.")
-@app_commands.describe(ephemere="Réponse visible seulement par toi (privée)")
-async def verite_cmd(interaction: discord.Interaction, ephemere: Optional[bool] = False) -> None:
+async def verite_cmd(interaction: discord.Interaction) -> None:
     prompt_text = random.choice(VERITES)
     embed = build_prompt_embed("verite", prompt_text, interaction.user)
-    view = TruthDareView(ephemere=bool(ephemere))
-    await interaction.response.send_message(embed=embed, view=view, ephemeral=bool(ephemere))
+    await interaction.response.send_message(embed=embed)
 
 
-@tree.command(name="av", description="Choisis: Action ou Vérité, avec des boutons.")
-@app_commands.describe(ephemere="Réponse visible seulement par toi (privée)")
-async def av_cmd(interaction: discord.Interaction, ephemere: Optional[bool] = False) -> None:
+@tree.command(name="aouv", description="Démarre le jeu Action ou Vérité dans ce salon.")
+async def aouv_cmd(interaction: discord.Interaction) -> None:
     embed = discord.Embed(
         title="Action ou Vérité ?",
-        description="Choisis un bouton ci-dessous pour tirer un prompt.",
+        description="Clique sur un bouton ci-dessous pour tirer un prompt public dans ce salon.",
         color=COLOR_NEUTRAL,
     )
-    embed.set_footer(text="Appuie sur Stop pour désactiver les boutons.")
-    view = TruthDareView(ephemere=bool(ephemere))
-    await interaction.response.send_message(embed=embed, view=view, ephemeral=bool(ephemere))
+    view = TruthDareView()
+    await interaction.response.send_message(embed=embed, view=view)
 
 
 if __name__ == "__main__":

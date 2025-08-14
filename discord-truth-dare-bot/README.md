@@ -34,11 +34,9 @@ DISCORD_BOT_TOKEN=ton-token-ici
 
 ## Commandes
 
-- `/av` : Affiche les boutons « Action » et « Vérité ».
-- `/action` : Tire directement une action.
-- `/verite` : Tire directement une vérité.
-
-Chaque commande accepte un paramètre `ephemere` (booléen) pour rendre la réponse privée (visible uniquement par toi).
+- `/aouv` : Démarre le jeu dans le salon, avec deux boutons « Action » et « Vérité ». Chaque clic poste un nouveau prompt public pour l'utilisateur qui a cliqué.
+- `/action` : Envoie une action aléatoire (message unique, sans boutons).
+- `/verite` : Envoie une vérité aléatoire (message unique, sans boutons).
 
 ## Personnalisation
 
@@ -47,6 +45,6 @@ Chaque commande accepte un paramètre `ephemere` (booléen) pour rendre la répo
 
 ## Notes
 
-- Les boutons expirent après 2 minutes d'inactivité.
+- Les boutons expirent après 15 minutes d'inactivité sur le message initial.
 - Le bot n'a pas besoin d'intents privilégiés pour ces fonctionnalités de base.
 - Si les commandes slash n'apparaissent pas immédiatement, patiente quelques minutes ou redémarre le bot pour resynchroniser.
