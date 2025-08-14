@@ -53,6 +53,7 @@ const DataManager = require('./managers/DataManager');
 const ReminderManager = require('./managers/ReminderManager');
 const ReminderInteractionHandler = require('./handlers/ReminderInteractionHandler');
 const ModerationManager = require('./managers/ModerationManager');
+const dataHooks = require('./utils/dataHooks');
 
 // Voice dependency report (optional, helps diagnose encryption libs on Render)
 try {
@@ -709,6 +710,8 @@ class RenderSolutionBot {
 
         // Initialisation DataManager + ReminderManager (rappels de bump)
         this.coreDataManager = new DataManager();
+        try { dataHooks.installHooks(require('./utils/simpleDataManager')); } catch {}
+        try { dataHooks.installHooks(this.coreDataManager); } catch {}
         this.reminderManager = new ReminderManager(this.coreDataManager, this.client);
         this.client.reminderManager = this.reminderManager;
         this.reminderInteractionHandler = new ReminderInteractionHandler(this.reminderManager);

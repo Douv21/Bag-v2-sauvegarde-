@@ -207,7 +207,8 @@ class BackupDiagnostic {
             'autothread.json',
             'shop.json',
             'karma_config.json',
-            'message_rewards.json'
+            'message_rewards.json',
+            'aouv_config.json'
         ];
         
         let validFiles = 0;

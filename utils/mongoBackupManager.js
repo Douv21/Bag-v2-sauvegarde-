@@ -6,6 +6,7 @@ try {
     console.log('📦 Module MongoDB non disponible - mode fichier local uniquement');
     MongoClient = null;
 }
+const simpleBackup = require('./simpleBackupManager');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -67,6 +68,8 @@ class MongoBackupManager {
             'counting.json': 'backup_counting_game',
             'autothread.json': 'backup_autothread_config',
             'actions.json': 'backup_actions_config',
+            // Configurations AOUV
+            'aouv_config.json': 'backup_aouv_config',
             
             // Fichiers temporels - collections séparées
             'daily.json': 'backup_daily_system',
@@ -121,6 +124,8 @@ class MongoBackupManager {
             'counting.json': 'counting',
             'autothread.json': 'autothread',
             'shop.json': 'shop',
+            // AOUV
+            'aouv_config.json': 'aouv_config',
             
             // Configuration karma et récompenses
             'karma_config.json': 'karma',
@@ -298,6 +303,31 @@ class MongoBackupManager {
                 }
             }
 
+            // Sauvegarder aussi les collections Mongo liées au système de bump
+            try {
+                const bumpConfigs = await this.db.collection('bumpConfigs').find({}).toArray();
+                await this.db.collection('backup_bump_configs').replaceOne(
+                    { key: 'bumpConfigs' },
+                    { key: 'bumpConfigs', data: bumpConfigs, timestamp: new Date(), snapshot: true },
+                    { upsert: true }
+                );
+                backupSummary.push(`✅ bumpConfigs → backup_bump_configs (${bumpConfigs.length} docs)`);
+            } catch (e) {
+                console.log(`⚠️ Sauvegarde bumpConfigs ignorée: ${e.message}`);
+            }
+
+            try {
+                const bumpCooldowns = await this.db.collection('bumpCooldowns').find({}).toArray();
+                await this.db.collection('backup_bump_cooldowns').replaceOne(
+                    { key: 'bumpCooldowns' },
+                    { key: 'bumpCooldowns', data: bumpCooldowns, timestamp: new Date(), snapshot: true },
+                    { upsert: true }
+                );
+                backupSummary.push(`✅ bumpCooldowns → backup_bump_cooldowns (${bumpCooldowns.length} docs)`);
+            } catch (e) {
+                console.log(`⚠️ Sauvegarde bumpCooldowns ignorée: ${e.message}`);
+            }
+ 
             // Afficher le résumé détaillé
             console.log(`📤 SAUVEGARDE MONGODB TERMINÉE:`);
             console.log(`   ✅ ${backupCount} fichiers sauvegardés`);
@@ -400,6 +430,39 @@ class MongoBackupManager {
                 }
             }
 
+            // Restaurer les collections bump depuis les backups si elles sont vides
+            try {
+                const bumpCount = await this.db.collection('bumpConfigs').countDocuments({});
+                if (bumpCount === 0) {
+                    const backupDoc = await this.db.collection('backup_bump_configs').findOne({ key: 'bumpConfigs' }, { sort: { timestamp: -1 } });
+                    if (backupDoc && Array.isArray(backupDoc.data) && backupDoc.data.length > 0) {
+                        const docs = backupDoc.data.map(d => { const { _id, ...rest } = d || {}; return rest; });
+                        if (docs.length > 0) {
+                            await this.db.collection('bumpConfigs').insertMany(docs);
+                            restoreSummary.push(`✅ bumpConfigs restauré (${docs.length} docs)`);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log(`⚠️ Restauration bumpConfigs ignorée: ${e.message}`);
+            }
+
+            try {
+                const cooldownCount = await this.db.collection('bumpCooldowns').countDocuments({});
+                if (cooldownCount === 0) {
+                    const backupDoc = await this.db.collection('backup_bump_cooldowns').findOne({ key: 'bumpCooldowns' }, { sort: { timestamp: -1 } });
+                    if (backupDoc && Array.isArray(backupDoc.data) && backupDoc.data.length > 0) {
+                        const docs = backupDoc.data.map(d => { const { _id, ...rest } = d || {}; return rest; });
+                        if (docs.length > 0) {
+                            await this.db.collection('bumpCooldowns').insertMany(docs);
+                            restoreSummary.push(`✅ bumpCooldowns restauré (${docs.length} docs)`);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log(`⚠️ Restauration bumpCooldowns ignorée: ${e.message}`);
+            }
+ 
             // Afficher le résumé détaillé
             console.log(`📥 RESTAURATION MONGODB TERMINÉE:`);
             console.log(`   ✅ ${restoreCount} fichiers restaurés`);
@@ -431,18 +494,42 @@ class MongoBackupManager {
         console.log(`🕐 Sauvegarde automatique démarrée (toutes les ${intervalMinutes} minutes)`);
         
         setInterval(async () => {
-            await this.backupToMongo();
+            try {
+                const result = await this.backupToMongo();
+                if (!result || result.success === false) {
+                    await simpleBackup.performBackup();
+                }
+            } catch (e) {
+                console.log('⚠️ Fallback sauvegarde simple (erreur Mongo):', e.message);
+                try { await simpleBackup.performBackup(); } catch {}
+            }
         }, intervalMinutes * 60 * 1000);
 
         // Sauvegarde immédiate au démarrage
-        setTimeout(() => this.backupToMongo(), 5000);
+        setTimeout(async () => {
+            try {
+                const result = await this.backupToMongo();
+                if (!result || result.success === false) {
+                    await simpleBackup.performBackup();
+                }
+            } catch (e) {
+                try { await simpleBackup.performBackup(); } catch {}
+            }
+        }, 5000);
     }
 
     // SAUVEGARDE D'URGENCE (avant arrêt du processus)
     setupEmergencyBackup() {
         const emergencyBackup = async () => {
             console.log('🚨 Sauvegarde d\'urgence en cours...');
-            await this.backupToMongo();
+            try {
+                const result = await this.backupToMongo();
+                if (!result || result.success === false) {
+                    await simpleBackup.performBackup();
+                }
+            } catch (e) {
+                try { await simpleBackup.performBackup(); } catch {}
+            }
             await this.disconnect();
         };
 
