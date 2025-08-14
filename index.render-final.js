@@ -1149,6 +1149,63 @@ class RenderSolutionBot {
                         return;
                     }
 
+                    // === AOUV MODALS ===
+                    if (interaction.customId === 'aouv_prompt_add_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvPromptAddModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_prompt_edit_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvPromptEditModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_prompt_remove_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvPromptRemoveModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_prompt_disable_base_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvPromptBaseModal(interaction, true);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_prompt_enable_base_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvPromptBaseModal(interaction, false);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_prompt_list_base_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvPromptListBaseModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_prompt_override_base_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvPromptOverrideModal(interaction);
+                        return;
+                    }
+
+                    if (interaction.customId === 'aouv_prompt_reset_override_base_modal') {
+                        const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                        const aouvHandler = new AouvConfigHandler(dataManager);
+                        await aouvHandler.handleAouvPromptResetOverrideModal(interaction);
+                        return;
+                    }
+
                     // Gestion des modals de configuration level
                     if (interaction.customId === 'text_xp_modal') {
                         const LevelConfigHandler = require('./handlers/LevelConfigHandler');
