@@ -293,133 +293,25 @@ class RenderSolutionBot {
             }
         });
 
-        // Dashboard routes
+        // Dashboard routes (placeholder)
         app.get('/dashboard', (req, res) => {
             res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
         });
 
         app.get('/dashboard/:guildId', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+            res.redirect('/dashboard');
         });
 
         // Static files for dashboard
         app.use(express.static(path.join(__dirname, 'public')));
 
-        // === Dashboard API attendue par le frontend ===
-        // Vue d'ensemble du dashboard
-        app.get('/api/dashboard/overview', async (req, res) => {
-            try {
-                const dataManager = require('./utils/simpleDataManager');
-                const economyData = dataManager.getData('economy.json');
-                const confData = dataManager.getData('confessions.json');
-                const levelUsers = dataManager.getData('level_users.json');
-
-                // Bot/serveurs
-                const totalGuilds = this.client?.guilds?.cache?.size || 0;
-                const totalMembers = (() => {
-                    try {
-                        return Array.from(this.client?.guilds?.cache?.values() || [])
-                            .reduce((acc, g) => acc + (g.memberCount || 0), 0);
-                    } catch { return 0; }
-                })();
-
-                // Économie
-                let totalMoney = 0;
-                let richestUser = null;
-                for (const [key, val] of Object.entries(economyData || {})) {
-                    if (!key.includes('_')) continue;
-                    const money = Number(val?.money ?? val?.argent ?? val?.balance ?? 0);
-                    totalMoney += money;
-                    if (!richestUser || money > richestUser.amount) {
-                        richestUser = { id: String(key).split('_')[0], amount: money };
-                    }
-                }
-
-                // Confessions
-                let totalConf = 0;
-                let pendingConf = 0;
-                try {
-                    for (const rec of Object.values(confData || {})) {
-                        const list = Array.isArray(rec?.confessions) ? rec.confessions : [];
-                        totalConf += list.length;
-                        pendingConf += Array.isArray(rec?.pending) ? rec.pending.length : 0;
-                    }
-                } catch {}
-
-                // Karma
-                let totalKarma = 0;
-                let activeKarmaUsers = 0;
-                for (const val of Object.values(economyData || {})) {
-                    const good = Number(val?.goodKarma || 0);
-                    const bad = Number(val?.badKarma || 0);
-                    const net = good + bad;
-                    totalKarma += net;
-                    if (net !== 0) activeKarmaUsers++;
-                }
-
-                // Niveaux
-                let highestLevel = 0;
-                let totalXP = 0;
-                for (const val of Object.values(levelUsers || {})) {
-                    highestLevel = Math.max(highestLevel, Number(val?.level || 0));
-                    totalXP += Number(val?.xp || 0);
-                }
-
-                const overview = {
-                    bot: {
-                        status: this.client && this.client.isReady() ? 'online' : 'offline',
-                        uptime: Math.floor(process.uptime()),
-                        version: '3.0 Premium',
-                        ping: this.client?.ws?.ping || 0
-                    },
-                    servers: {
-                        total: totalGuilds,
-                        members: totalMembers
-                    },
-                    economy: {
-                        totalMoney,
-                        totalUsers: Object.keys(economyData || {}).length,
-                        richestUser,
-                        dailyTransactions: 0
-                    },
-                    confessions: {
-                        total: totalConf,
-                        daily: Math.floor(totalConf * 0.05),
-                        pending: pendingConf
-                    },
-                    karma: {
-                        total: totalKarma,
-                        activeUsers: activeKarmaUsers,
-                        topUser: richestUser ? { id: richestUser.id, karma: Math.max(0, totalKarma) } : null
-                    },
-                    activity: [
-                        { type: 'economy', message: 'Activité économique récente', timestamp: new Date(), icon: 'fas fa-coins' },
-                        { type: 'level', message: 'Progression de niveau détectée', timestamp: new Date(Date.now() - 3600000), icon: 'fas fa-star' },
-                        { type: 'karma', message: 'Points karma distribués', timestamp: new Date(Date.now() - 7200000), icon: 'fas fa-heart' }
-                    ]
-                };
-                res.json(overview);
-            } catch (error) {
-                console.error('Erreur /api/dashboard/overview:', error);
-                res.status(500).json({ error: error.message });
-            }
+        // === Dashboard API désactivée temporairement ===
+        app.get('/api/dashboard/overview', (req, res) => {
+            res.status(503).json({ error: 'dashboard_disabled' });
         });
 
-        // Liste des serveurs
         app.get('/api/dashboard/servers', (req, res) => {
-            try {
-                const list = Array.from(this.client?.guilds?.cache?.values() || []).map(g => ({
-                    id: g.id,
-                    name: g.name,
-                    memberCount: g.memberCount || 0,
-                    icon: g.iconURL?.() || null,
-                    joinedAt: g.joinedAt || null
-                }));
-                res.json(list);
-            } catch (error) {
-                console.error('Erreur /api/dashboard/servers:', error);
-                res.status(500).json({ error: error.message });
-            }
+            res.status(503).json({ error: 'dashboard_disabled' });
         });
 
         // Config générique (GET/POST)

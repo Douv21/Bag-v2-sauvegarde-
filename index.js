@@ -177,45 +177,13 @@ class BagBotRender {
             }
         });
 
-        // Dashboard API endpoints
-        this.app.get('/api/dashboard/overview', async (req, res) => {
-            try {
-                const overview = {
-                    bot: {
-                        status: this.client.readyAt ? 'online' : 'offline',
-                        uptime: Math.floor(process.uptime()),
-                        version: '3.0 Premium',
-                        ping: this.client.ws.ping || 0
-                    },
-                    servers: {
-                        total: this.client.guilds.cache.size,
-                        members: this.client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0)
-                    },
-                    economy: await this.getEconomyStats(),
-                    confessions: await this.getConfessionStats(),
-                    karma: await this.getKarmaStats(),
-                    activity: await this.getRecentActivity()
-                };
-                res.json(overview);
-            } catch (error) {
-                console.error('Error fetching dashboard overview:', error);
-                res.status(500).json({ error: 'Erreur lors de la récupération des données' });
-            }
+        // Dashboard temporairement désactivé
+        this.app.get('/api/dashboard/overview', (req, res) => {
+            res.status(503).json({ error: 'dashboard_disabled' });
         });
 
-        this.app.get('/api/dashboard/servers', async (req, res) => {
-            try {
-                const servers = this.client.guilds.cache.map(guild => ({
-                    id: guild.id,
-                    name: guild.name,
-                    memberCount: guild.memberCount,
-                    icon: guild.iconURL(),
-                    joinedAt: guild.joinedAt
-                }));
-                res.json(servers);
-            } catch (error) {
-                res.status(500).json({ error: error.message });
-            }
+        this.app.get('/api/dashboard/servers', (req, res) => {
+            res.status(503).json({ error: 'dashboard_disabled' });
         });
 
         this.app.get('/api/data/:type', async (req, res) => {
@@ -338,13 +306,13 @@ class BagBotRender {
             }
         });
 
-        // Dashboard routes
+        // Dashboard routes (placeholder)
         this.app.get('/dashboard', (req, res) => {
             res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
         });
 
         this.app.get('/dashboard/:guildId', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+            res.redirect('/dashboard');
         });
 
         // Static files for dashboard

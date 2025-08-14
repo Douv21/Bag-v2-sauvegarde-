@@ -104,7 +104,8 @@ BAG v2 est un bot Discord complet en français offrant un système de confession
   - Reset et records
 
 #### 📊 Tableau de Bord
-- `/dashboard` - Tableau de bord administratif complet du serveur
+- `/dashboard` - En reconstruction (placeholder minimal)
+- Endpoints disponibles en V0: `/health`, `/api/stats`
 
 #### 🗄️ Sauvegarde MongoDB
 - `/backup-status` - État du système de sauvegarde MongoDB

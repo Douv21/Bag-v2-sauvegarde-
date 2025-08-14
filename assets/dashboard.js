@@ -3,7 +3,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('dashboard')
-        .setDescription('📊 Tableau de bord administratif du serveur'),
+        .setDescription('📊 Statut du tableau de bord (en reconstruction)'),
     
     async execute(interaction) {
         // Vérifier permissions admin
@@ -16,33 +16,13 @@ module.exports = {
 
         // URL du dashboard - utilise l'URL actuelle du serveur
         const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:5000';
-        const serverDashboard = `${DASHBOARD_URL}/dashboard/${interaction.guildId}`;
+        const serverDashboard = `${DASHBOARD_URL}/dashboard`;
 
         const embed = new EmbedBuilder()
-            .setTitle('📊 Tableau de Bord BAG v2')
-            .setDescription('Interface d\'administration élégante et moderne pour votre serveur Discord')
-            .addFields(
-                {
-                    name: '🌐 Accès Dashboard',
-                    value: `[🚀 Ouvrir le Dashboard](${serverDashboard})`,
-                    inline: false
-                },
-                {
-                    name: '⚙️ Configuration Complète',
-                    value: '💰 **Économie** - Actions, karma, boutique\n🤐 **Confessions** - Canaux, logs, auto-threads\n🔢 **Comptage** - Mode math, records\n🔗 **Auto-Threads** - Configuration avancée',
-                    inline: true
-                },
-                {
-                    name: '📱 Interface Moderne',
-                    value: '🎨 **Design Élégant** - Style BAG premium\n📊 **Statistiques** - Temps réel\n💾 **Sauvegarde** - Instantanée\n📱 **Mobile** - Entièrement responsive',
-                    inline: true
-                }
-            )
+            .setTitle('📊 Dashboard en reconstruction')
+            .setDescription('Le tableau de bord est en cours de refonte. Une version minimale sera réintroduite pas à pas.')
+            .addFields({ name: 'Accès', value: `[Page placeholder](${serverDashboard})` })
             .setColor('#e53e3e')
-            .setFooter({ 
-                text: `Dashboard pour ${interaction.guild.name} • BAG v2`, 
-                iconURL: interaction.guild.iconURL() 
-            })
             .setTimestamp();
 
         await interaction.reply({
