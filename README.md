@@ -29,17 +29,23 @@ BAG v2 est un bot Discord complet en français offrant un système de confession
 ### Configuration
 1. Clonez ou téléchargez les fichiers du bot
 2. Installez les dépendances : `npm install`
-3. Configurez les variables d'environnement :
+3. Configurez les variables d'environnement (copiez d'abord `.env.example`):
+   ```bash
+   cp .env.example .env
+   # Éditez .env et renseignez DISCORD_TOKEN/CLIENT_ID
+   ```
+   Variables minimales:
    ```env
    DISCORD_TOKEN=votre_token_discord
    CLIENT_ID=votre_client_id
-   
-   # MongoDB (Optionnel)
-   MONGODB_USERNAME=votre_username
-   MONGODB_PASSWORD=votre_password
-   MONGODB_CLUSTER_URL=votre_cluster_url
+   PORT=5000
    ```
-4. Lancez le bot : `node index.render-final.js`
+4. Lancez le bot : `npm start`
+
+### Diagnostics musique
+- Vérifier chargement du module: `npm run diagnose:music`
+- Version yt-dlp: `npm run diag:yt-dlp`
+- Rapport audio: `npm run diag:voice`
 
 ## 🎮 Liste Complète des Commandes (28)
 

@@ -5,6 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.render-final.js",
+    "diagnose:music": "node -e \"console.log('LOAD'); require('./managers/SimpleMusicManager'); console.log('OK')\"",
+    "diag:yt-dlp": "node node_modules/@distube/yt-dlp/bin/yt-dlp --version",
+    "diag:voice": "node -e \"try{console.log(require('@discordjs/voice').generateDependencyReport())}catch(e){console.log('no-report', e?.message)}\"",
     "test": "echo \"Test passed\" && exit 0",
     "postinstall": "node scripts/install-yt-dlp.js"
   },
