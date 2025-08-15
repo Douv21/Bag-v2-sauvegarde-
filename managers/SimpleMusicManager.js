@@ -125,7 +125,7 @@ async function ensureConnection(voiceChannel) {
     state.connection.subscribe(state.player);
 
     // Gestion des événements du lecteur
-    state.player.on('error', () => {});
+    state.player.on('error', (err) => { try { console.warn('[voice] player error:', err?.message || err); } catch {} });
     state.player.on(AudioPlayerStatus.Idle, async () => {
       // Fin du morceau: passer au suivant
       try {
@@ -255,6 +255,58 @@ async function pipedGetInfo(videoId) {
   }
 }
 
+// === Fallback via play-dl (YouTube natif) ===
+let playDlModule = null;
+function getPlayDl() {
+  if (playDlModule) return playDlModule;
+  try {
+    // Chargement paresseux car play-dl peut prendre du temps à initialiser
+    // et n'est utilisé qu'en fallback.
+    playDlModule = require('play-dl');
+    try {
+      const cookie = getYouTubeCookieString();
+      if (cookie && typeof playDlModule.setToken === 'function') {
+        playDlModule.setToken({ youtube: { cookie } });
+      }
+    } catch {}
+    return playDlModule;
+  } catch (e) {
+    console.warn('[music] play-dl indisponible:', e?.message || e);
+    return null;
+  }
+}
+
+async function createResourceWithPlayDl(input, startSeconds = 0) {
+  const play = getPlayDl();
+  if (!play) throw new Error('PLAYDL_NOT_AVAILABLE');
+
+  try {
+    let url = input;
+    if (!/^https?:\/\//i.test(input)) {
+      const results = await play.search(input, { source: { youtube: 'video' }, limit: 1 });
+      if (!Array.isArray(results) || results.length === 0) throw new Error('PLAYDL_NO_RESULT');
+      url = results[0].url;
+    }
+
+    const opts = { discordPlayerCompatibility: true };
+    if (startSeconds > 0) opts.seek = startSeconds;
+
+    const stream = await play.stream(url, opts);
+    const resource = createAudioResource(stream.stream, { inputType: stream.type, inlineVolume: true });
+
+    // Récupérer un titre lisible si possible
+    let title = input;
+    try {
+      const info = await play.video_basic_info(url).catch(() => null);
+      title = info?.video_details?.title || title;
+    } catch {}
+
+    return { resource, url, title };
+  } catch (e) {
+    throw e;
+  }
+}
+
 // Helper radios: charge une fois la liste et cherche par id/nom
 let cachedRadios;
 function loadRadiosOnce() {
@@ -332,7 +384,7 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
       return { resource, url: maybeRadio.url, title: maybeRadio.name };
     }
 
-    // Recherche via yt-dlp
+    // Recherche via PIPED
     let resolved = null;
     try {
       resolved = await pipedSearchFirst(query);
@@ -350,8 +402,15 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
     } catch {}
   }
 
-  const resource = await createResourceWithPiped(url, seekSeconds);
-  return { resource, url, title };
+  // Tenter PIPED puis fallback play-dl
+  try {
+    const resourcePiped = await createResourceWithPiped(url, seekSeconds);
+    return { resource: resourcePiped.resource, url, title: resourcePiped.title || title };
+  } catch (err) {
+    console.warn('[music] échec PIPED → fallback play-dl:', err?.message || err);
+    const resourcePlayDl = await createResourceWithPlayDl(isUrl ? url : title, seekSeconds);
+    return { resource: resourcePlayDl.resource, url: resourcePlayDl.url || url, title: resourcePlayDl.title || title };
+  }
 }
 
 async function playNext(guildId) {

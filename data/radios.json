@@ -1,5 +1,5 @@
 [
-  { "id": "fip", "name": "FIP (Radio France)", "url": "http://icecast.radiofrance.fr/fip-midfi.mp3" },
+  { "id": "fip", "name": "FIP (Radio France)", "url": "https://icecast.radiofrance.fr/fip-midfi.mp3" },
   { "id": "somafm_groove", "name": "SomaFM - Groove Salad", "url": "https://ice2.somafm.com/groovesalad-128-mp3" },
   { "id": "somafm_lush", "name": "SomaFM - Lush", "url": "https://ice2.somafm.com/lush-128-mp3" },
   { "id": "somafm_drone", "name": "SomaFM - Drone Zone", "url": "https://ice2.somafm.com/dronezone-128-mp3" },
