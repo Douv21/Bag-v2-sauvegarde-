@@ -65,3 +65,5 @@ services:
         fromSecret: LAVALINK_PASSWORD
       - key: LAVALINK_SECURE
         value: "true"
+      - key: LAVALINK_NODES
+        value: '[{"name":"ajie","url":"lava-v4.ajieblogs.eu.org:443","auth":"https://dsc.gg/ajidevserver","secure":true}]'
