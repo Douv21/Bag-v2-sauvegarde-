@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, StringSelectMenuBuilder } = require('discord.js');
 
 class LogsConfigHandler {
   constructor(dataManager, logManager) {
@@ -37,53 +37,32 @@ class LogsConfigHandler {
         { name: '🎨 Thème', value: `NSFW: ${cfg.theme?.nsfwTone ? '🔞' : '🚫'} • Avatars: ${cfg.theme?.includeAvatars ? '✅' : '❌'} • Liens: ${cfg.theme?.includeJumpLinks ? '✅' : '❌'}\nFooter: ${cfg.theme?.footer || '—'}` }
       );
 
-    // Boutons en plusieurs rangées
+    // Nouvelle UI: menu de sélection de catégorie + options de thème
+    const categorySelect = new StringSelectMenuBuilder()
+      .setCustomId('logs_category_select')
+      .setPlaceholder('Choisissez une catégorie à configurer')
+      .addOptions(
+        { label: 'Messages', value: 'messages' },
+        { label: 'Modération', value: 'moderation' },
+        { label: 'Arrivées/Départs', value: 'members' },
+        { label: 'Pseudos', value: 'nicknames' },
+        { label: 'Économie', value: 'economy' },
+        { label: 'Vocaux', value: 'voice' },
+        { label: 'Rôles', value: 'roles' },
+        { label: 'Salons', value: 'channels' },
+        { label: 'Threads', value: 'threads' },
+        { label: 'Émojis', value: 'emojis' },
+        { label: 'Stickers', value: 'stickers' },
+        { label: 'Invitations', value: 'invites' },
+        { label: 'Webhooks', value: 'webhooks' },
+        { label: 'Serveur', value: 'server' },
+        { label: 'Boosts', value: 'boosts' },
+        { label: 'Événements', value: 'events' }
+      );
+
     const rows = [
+      new ActionRowBuilder().addComponents(categorySelect),
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('logs_toggle_messages').setLabel('Activer/Arrêter Messages').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_messages').setLabel('Salon Messages').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_moderation').setLabel('Activer/Arrêter Modération').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_moderation').setLabel('Salon Modération').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_members').setLabel('Activer/Arrêter Arrivées/Départs').setStyle(ButtonStyle.Secondary)
-      ),
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('logs_set_channel_members').setLabel('Salon Arrivées/Départs').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_nicknames').setLabel('Activer/Arrêter Pseudos').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_nicknames').setLabel('Salon Pseudos').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_economy').setLabel('Activer/Arrêter Économie').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_economy').setLabel('Salon Économie').setStyle(ButtonStyle.Primary)
-      ),
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('logs_toggle_voice').setLabel('Activer/Arrêter Vocaux').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_voice').setLabel('Salon Vocaux').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_roles').setLabel('Activer/Arrêter Rôles').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_roles').setLabel('Salon Rôles').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_channels').setLabel('Activer/Arrêter Salons').setStyle(ButtonStyle.Secondary)
-      ),
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('logs_set_channel_channels').setLabel('Salon pour Salons').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_threads').setLabel('Activer/Arrêter Threads').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_threads').setLabel('Salon Threads').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_emojis').setLabel('Activer/Arrêter Émojis').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_emojis').setLabel('Salon Émojis').setStyle(ButtonStyle.Primary)
-      ),
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('logs_toggle_stickers').setLabel('Activer/Arrêter Stickers').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_stickers').setLabel('Salon Stickers').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_invites').setLabel('Activer/Arrêter Invitations').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_invites').setLabel('Salon Invitations').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_webhooks').setLabel('Activer/Arrêter Webhooks').setStyle(ButtonStyle.Secondary)
-      ),
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('logs_set_channel_webhooks').setLabel('Salon Webhooks').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_server').setLabel('Activer/Arrêter Serveur').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_server').setLabel('Salon Serveur').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('logs_toggle_boosts').setLabel('Activer/Arrêter Boosts').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_boosts').setLabel('Salon Boosts').setStyle(ButtonStyle.Primary)
-      ),
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('logs_toggle_events').setLabel('Activer/Arrêter Événements').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_events').setLabel('Salon Événements').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('logs_theme_toggle_nsfw').setLabel('NSFW On/Off').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('logs_theme_toggle_avatars').setLabel('Avatars On/Off').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('logs_theme_toggle_links').setLabel('Liens On/Off').setStyle(ButtonStyle.Secondary)
@@ -104,6 +83,28 @@ class LogsConfigHandler {
 
     if (customId === 'logs_main') {
       return this.showMain(interaction);
+    }
+
+    // Sélection de catégorie -> proposer actions basiques pour cette catégorie
+    if (customId === 'logs_category_select') {
+      const category = interaction.values?.[0];
+      if (!category) return interaction.reply({ content: 'Aucune catégorie sélectionnée.', ephemeral: true });
+
+      const cfg = await this.logManager.getGuildConfig(guildId);
+      const enabled = cfg.categories[category]?.enabled ?? false;
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`logs_toggle_${category}`)
+          .setLabel(enabled ? 'Désactiver' : 'Activer')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId(`logs_set_channel_${category}`)
+          .setLabel('Définir le salon')
+          .setStyle(ButtonStyle.Primary)
+      );
+
+      return interaction.reply({ content: `Options pour ${category}`, components: [row], ephemeral: true });
     }
 
     // Toggle
