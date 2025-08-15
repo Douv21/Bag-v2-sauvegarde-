@@ -26,7 +26,8 @@
     "uuid": "^9.0.1",
     "youtube-sr": "^4.3.4",
     "ytdl-core": "^4.11.5",
-    "libsodium-wrappers": "^0.7.13"
+    "libsodium-wrappers": "^0.7.13",
+    "shoukaku": "^4.1.1"
   },
   "keywords": [
     "discord",
