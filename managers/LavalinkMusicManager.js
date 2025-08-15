@@ -49,8 +49,8 @@ function init(discordClient) {
 	if (!nodes.length) return false;
 	try {
 		shoukaku = new Shoukaku(new Connectors.DiscordJS(discordClient), nodes, {
-			resumable: true,
-			resumableTimeout: 60,
+			resume: true,
+			resumeTimeout: 60,
 			moveOnDisconnect: true,
 			userAgent: 'BAG-Bot/2.0 (Rythm-like)'
 		});
@@ -93,9 +93,8 @@ async function ensurePlayer(voiceChannel) {
 	const state = getState(guildId);
 	if (state.player) return state;
 
-	const node = shoukaku.getNode();
-	const connection = await node.joinChannel({ guildId, channelId: voiceChannel.id, shardId: voiceChannel.guild.shardId });
-	state.player = connection;
+	const player = await shoukaku.joinVoiceChannel({ guildId, channelId: voiceChannel.id, shardId: voiceChannel.guild.shardId });
+	state.player = player;
 	state.player.on('end', async () => {
 		state.current = null;
 		if (state.queue.length > 0) await playNext(guildId);
@@ -104,7 +103,8 @@ async function ensurePlayer(voiceChannel) {
 }
 
 async function resolveTrack(query) {
-	const node = shoukaku.getNode();
+	const node = shoukaku.getIdealNode();
+	if (!node) throw new Error('LAVALINK_NOT_READY');
 	const isUrl = /^https?:\/\//i.test(query);
 	const q = isUrl ? query : `ytsearch:${query}`;
 	const res = await node.rest.resolve(q);
@@ -122,7 +122,12 @@ async function playNext(guildId) {
 	const next = state.queue.shift();
 	if (!next) { state.current = null; return; }
 	state.current = next;
-	await state.player.playTrack({ track: next.track, options: { noReplace: false } });
+	const encoded = typeof next.track === 'string' ? next.track : (next.track?.encoded || next.track?.track);
+	if (encoded) {
+		await state.player.playTrack({ track: { encoded } }, false);
+	} else {
+		await state.player.playTrack({ track: { identifier: next.url || next.title } }, false);
+	}
 	try { if (state.textChannel) await state.textChannel.send({ embeds: [createNowPlayingEmbed(next)] }); } catch {}
 }
 
@@ -152,7 +157,8 @@ async function stop(guildId) {
 	const state = getState(guildId);
 	state.queue = [];
 	try { await state.player.stopTrack(); } catch {}
-	try { await state.player.disconnect(); } catch {}
+	try { await state.player.destroy(); } catch {}
+	try { await shoukaku.leaveVoiceChannel(guildId); } catch {}
 	guildIdToState.delete(guildId);
 }
 
@@ -164,7 +170,7 @@ async function skip(guildId) {
 async function setVolume(guildId, percent) {
 	const state = getState(guildId);
 	state.volume = Math.max(0, Math.min(100, Number(percent) || 0));
-	try { await state.player.setVolume(state.volume); } catch {}
+	try { await state.player.setGlobalVolume(state.volume); } catch {}
 	return state.volume;
 }
 
