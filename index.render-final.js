@@ -55,11 +55,6 @@ const ReminderInteractionHandler = require('./handlers/ReminderInteractionHandle
 const ModerationManager = require('./managers/ModerationManager');
 const dataHooks = require('./utils/dataHooks');
 
-// Voice dependency report (optional, helps diagnose encryption libs on Render)
-try {
-  const { generateDependencyReport } = require('@discordjs/voice');
-  console.info(generateDependencyReport());
-} catch {}
 
 // Handlers pour les nouvelles fonctionnalités karma
 async function handleKarmaResetComplete(interaction) {
@@ -738,7 +733,7 @@ class RenderSolutionBot {
         await this.loadCommands();
         await this.setupEventHandlers();
 
-        // Initialisation optionnelle Lavalink (façon Rythm)
+        // Initialisation Lavalink (obligatoire)
         try { require('./managers/MusicManager').configureLavalink(this.client); } catch {}
 
         try {
@@ -867,8 +862,8 @@ class RenderSolutionBot {
                     return;
                 }
 
-                // Sélecteur radio (menus)
-                if (interaction.isStringSelectMenu && interaction.isStringSelectMenu() && interaction.customId === 'radio_select') {
+                // Sélecteur radio désactivé (mode Lavalink only)
+                if (false && interaction.isStringSelectMenu && interaction.isStringSelectMenu() && interaction.customId === 'radio_select') {
                     try {
                         const { handleRadioSelect } = require('./handlers/RadioHandler');
                         await handleRadioSelect(interaction);

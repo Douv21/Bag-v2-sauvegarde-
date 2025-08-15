@@ -106,7 +106,7 @@ class BagBotRender {
             // Configuration des événements Discord
             this.setupDiscordEvents();
 
-            // Initialisation optionnelle Lavalink (façon Rythm)
+            // Initialisation Lavalink (obligatoire)
             try { MusicManagerRouter.configureLavalink(this.client); } catch {}
 
             // Connexion Discord
