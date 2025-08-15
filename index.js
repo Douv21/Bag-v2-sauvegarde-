@@ -41,6 +41,7 @@ const { Client, Collection, GatewayIntentBits, Partials, REST, Routes, MessageFl
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 
 // Gestionnaires centralisés
 const DataManager = require('./managers/DataManager');
@@ -126,6 +127,52 @@ class BagBotRender {
         // Middleware
         this.app.use(express.json());
         this.app.use(express.static(path.join(__dirname, 'public')));
+
+        // Upload images for card styles
+        const upload = multer({
+            storage: multer.memoryStorage(),
+            limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+            fileFilter: (req, file, cb) => {
+                const ok = /^(image\/png|image\/jpe?g|image\/webp)$/i.test(file.mimetype);
+                cb(ok ? null : new Error('TYPE_INVALIDE'), ok);
+            }
+        });
+
+        this.app.post('/api/upload/style-background', upload.single('image'), async (req, res) => {
+            try {
+                const style = String(req.body.style || '').trim();
+                if (!style) return res.status(400).json({ success: false, error: 'STYLE_REQUIS' });
+                if (!req.file) return res.status(400).json({ success: false, error: 'IMAGE_REQUISE' });
+
+                const ext = req.file.mimetype.includes('png') ? 'png' : (req.file.mimetype.includes('webp') ? 'webp' : 'jpg');
+                const dir = path.join(__dirname, 'assets', 'styles', style);
+                fs.mkdirSync(dir, { recursive: true });
+                const filePath = path.join(dir, `default.${ext}`);
+
+                fs.writeFileSync(filePath + '.tmp', req.file.buffer);
+                if (fs.existsSync(filePath)) fs.rmSync(filePath);
+                fs.renameSync(filePath + '.tmp', filePath);
+
+                // Update data/level_config.json so styleBackgrounds.default points to relative path
+                const cfgPath = path.join(__dirname, 'data', 'level_config.json');
+                let cfg = {};
+                try { cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8')); } catch (_) { cfg = {}; }
+                cfg.styleBackgrounds = cfg.styleBackgrounds || {};
+                cfg.styleBackgrounds[style] = cfg.styleBackgrounds[style] || {};
+                // save relative path from project root, utils/styleBackgrounds will resolve it
+                const relPath = path.join('assets', 'styles', style, `default.${ext}`);
+                cfg.styleBackgrounds[style].default = relPath;
+                fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
+                fs.writeFileSync(cfgPath + '.tmp', JSON.stringify(cfg, null, 2));
+                if (fs.existsSync(cfgPath)) fs.rmSync(cfgPath);
+                fs.renameSync(cfgPath + '.tmp', cfgPath);
+
+                res.json({ success: true, path: relPath });
+            } catch (error) {
+                console.error('POST /api/upload/style-background error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
         
         // Routes essentielles pour Render.com Web Service
         this.app.get('/health', (req, res) => {

@@ -42,6 +42,7 @@ const { Client, Collection, GatewayIntentBits, Routes, REST, EmbedBuilder, Parti
 const fs = require('fs').promises;
 const path = require('path');
 const express = require('express');
+const multer = require('multer');
 const deploymentManager = require('./utils/deploymentManager');
 const mongoBackup = require('./utils/mongoBackupManager');
 const levelManager = require('./utils/levelManager');
@@ -252,6 +253,52 @@ class RenderSolutionBot {
         const PORT = process.env.PORT || 3000;
 
         app.use(express.json());
+
+        // Upload d'images pour les styles de cartes
+        const upload = multer({
+            storage: multer.memoryStorage(),
+            limits: { fileSize: 10 * 1024 * 1024 },
+            fileFilter: (req, file, cb) => {
+                const ok = /^(image\/png|image\/jpe?g|image\/webp)$/i.test(file.mimetype);
+                cb(ok ? null : new Error('TYPE_INVALIDE'), ok);
+            }
+        });
+
+        app.post('/api/upload/style-background', upload.single('image'), async (req, res) => {
+            try {
+                const fsSync = require('fs');
+                const style = String(req.body.style || '').trim();
+                if (!style) return res.status(400).json({ success: false, error: 'STYLE_REQUIS' });
+                if (!req.file) return res.status(400).json({ success: false, error: 'IMAGE_REQUISE' });
+
+                const ext = req.file.mimetype.includes('png') ? 'png' : (req.file.mimetype.includes('webp') ? 'webp' : 'jpg');
+                const dir = path.join(__dirname, 'assets', 'styles', style);
+                fsSync.mkdirSync(dir, { recursive: true });
+                const filePath = path.join(dir, `default.${ext}`);
+
+                fsSync.writeFileSync(filePath + '.tmp', req.file.buffer);
+                if (fsSync.existsSync(filePath)) fsSync.rmSync(filePath);
+                fsSync.renameSync(filePath + '.tmp', filePath);
+
+                // MAJ data/level_config.json -> styleBackgrounds[style].default = relPath
+                const cfgPath = path.join(__dirname, 'data', 'level_config.json');
+                let cfg = {};
+                try { cfg = JSON.parse(fsSync.readFileSync(cfgPath, 'utf8')); } catch (_) { cfg = {}; }
+                cfg.styleBackgrounds = cfg.styleBackgrounds || {};
+                cfg.styleBackgrounds[style] = cfg.styleBackgrounds[style] || {};
+                const relPath = path.join('assets', 'styles', style, `default.${ext}`);
+                cfg.styleBackgrounds[style].default = relPath;
+                fsSync.mkdirSync(path.dirname(cfgPath), { recursive: true });
+                fsSync.writeFileSync(cfgPath + '.tmp', JSON.stringify(cfg, null, 2));
+                if (fsSync.existsSync(cfgPath)) fsSync.rmSync(cfgPath);
+                fsSync.renameSync(cfgPath + '.tmp', cfgPath);
+
+                res.json({ success: true, path: relPath });
+            } catch (error) {
+                console.error('POST /api/upload/style-background error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
 
         app.get('/', (req, res) => {
             res.json({
