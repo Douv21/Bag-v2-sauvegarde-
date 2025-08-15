@@ -35,3 +35,24 @@
 4. Déployer avec le fichier `render.yaml`
 
 Le bot démarre automatiquement et reste en ligne 24/7.
+
+## Cookies YouTube (yt-dlp) – éviter l’erreur 429
+
+Pour que la lecture YouTube fonctionne de manière fiable (éviter `HTTP Error 429`), fournissez des cookies valides au runtime. Trois méthodes sont supportées par le code (`utils/youtubeCookies.js` et `managers/SimpleMusicManager.js`) :
+
+1) Secret `YOUTUBE_COOKIES` (recommandé)
+- Collez l’en‑tête Cookie complet sur une seule ligne, par ex. `VISITOR_INFO1_LIVE=...; YSC=...; __Secure-3PSID=...`.
+
+2) Secret `YOUTUBE_COOKIES_B64`
+- Exportez vos cookies YouTube au format Netscape (`cookies.txt`) depuis votre navigateur, puis encodez‑les en base64 :
+```bash
+base64 -w0 cookies.txt
+```
+- Collez la valeur obtenue dans le secret `YOUTUBE_COOKIES_B64`.
+
+3) Fichier `YT_COOKIES_FILE`
+- Déposez un `cookies.txt` (format Netscape) dans le projet et réglez la variable d’environnement `YT_COOKIES_FILE` sur son chemin (par défaut `/opt/render/project/src/cookies.txt`).
+
+Notes:
+- Les cookies expirent : réexportez‑les si YouTube redemande une connexion.
+- Les salons Stage Discord nécessitent de promouvoir le bot en "Orateur" pour entendre le son.
