@@ -1,6 +1,7 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioPlayerStatus, VoiceConnectionStatus, entersState, StreamType } = require('@discordjs/voice');
 const { ChannelType, EmbedBuilder } = require('discord.js');
 const prism = require('prism-media');
+const { getYouTubeCookieString } = require('../utils/youtubeCookies');
 
 const THEME = {
   colorPrimary: '#FF2E88',
@@ -205,6 +206,40 @@ function resolveYtdlpPath() {
   throw new Error('yt-dlp binary not found. Set YTDLP_BIN or install yt-dlp.');
 }
 
+// Construit les arguments communs pour yt-dlp (UA, headers, cookies, extractor args)
+function buildYtdlpCommonArgs() {
+  const args = [];
+
+  // User-Agent + Referer
+  const ua = (process.env.YTDLP_USER_AGENT || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36').trim();
+  args.push('--user-agent', ua);
+  args.push('--add-header', 'Referer: https://www.youtube.com');
+
+  // Cookies (header prioritaire, sinon fichier)
+  try {
+    const cookieHeader = getYouTubeCookieString?.();
+    if (cookieHeader && cookieHeader.trim().length > 0) {
+      args.push('--add-header', `Cookie: ${cookieHeader}`);
+    } else {
+      const file = (process.env.YT_COOKIES_FILE || process.env.YOUTUBE_COOKIES_FILE || '').trim();
+      if (file) {
+        const fs = require('fs');
+        if (fs.existsSync(file)) args.push('--cookies', file);
+      }
+    }
+  } catch {}
+
+  // Extractor args (client alternatif pour réduire les challenges)
+  try {
+    const ytClient = (process.env.YTDLP_YT_CLIENT || 'android').trim();
+    if (ytClient) {
+      args.push('--extractor-args', `youtube:player_client=${ytClient}`);
+    }
+  } catch {}
+
+  return args;
+}
+
 // Helper radios: charge une fois la liste et cherche par id/nom
 let cachedRadios;
 function loadRadiosOnce() {
@@ -231,6 +266,7 @@ function findRadioByQuery(query) {
 async function ytdlpSearchFirst(query, retryCount = 0) {
   const bin = resolveYtdlpPath();
   const args = [
+    ...buildYtdlpCommonArgs(),
     '--force-ipv4',
     '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 10),
     '--geo-bypass',
@@ -289,6 +325,7 @@ async function ytdlpSearchFirst(query, retryCount = 0) {
 async function ytdlpGetInfo(url, retryCount = 0) {
   const bin = resolveYtdlpPath();
   const args = [
+    ...buildYtdlpCommonArgs(),
     '--force-ipv4',
     '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 10),
     '--geo-bypass',
@@ -346,6 +383,7 @@ async function ytdlpGetInfo(url, retryCount = 0) {
 async function createResourceWithYtdlp(url, startSeconds = 0) {
   const bin = resolveYtdlpPath();
   const args = [
+    ...buildYtdlpCommonArgs(),
     '--force-ipv4',
     '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 10),
     '--geo-bypass',
