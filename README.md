@@ -312,3 +312,37 @@ render/
 **Développé pour la communauté Discord française** 🇫🇷
 
 *Bot optimisé pour Render.com avec support MongoDB Atlas configurable*
+
+## Personnaliser les images de fond par style et par rôle
+
+- Éditez `data/level_config.json` et utilisez la clé `styleBackgrounds` pour définir un fond général (`default`) et des fonds par rôle (`byRole`) pour chaque style.
+- Exemples de rôles normalisés: `femme` ("Femme"), `certifie` ("Certifié"). Les noms sont normalisés en minuscules sans accents et espaces convertis en `_`.
+
+Exemple:
+
+```json
+{
+  "styleBackgrounds": {
+    "holographic": {
+      "default": "assets/background_1.jpg",
+      "byRole": {
+        "femme": "assets/background_2.png",
+        "certifie": "assets/background_3.png"
+      }
+    },
+    "gamer": {
+      "default": "assets/styles/gamer/default.jpg",
+      "byRole": {
+        "elite": "assets/styles/gamer/elite.png"
+      }
+    }
+  }
+}
+```
+
+- Vous pouvez aussi déposer des fichiers dans `assets/styles/<style>/`:
+  - `assets/styles/holographic/default.png`
+  - `assets/styles/holographic/femme.jpg`
+  - `assets/styles/holographic/certifie.webp`
+
+Le système choisit, dans l’ordre: config JSON > fichiers dans `assets/styles/<style>` > fallback holographique existant.

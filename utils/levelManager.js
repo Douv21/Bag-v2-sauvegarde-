@@ -37,6 +37,39 @@ class LevelManager {
                     channelId: null,
                     cardStyle: 'futuristic'
                 },
+                styleBackgrounds: {
+                    holographic: {
+                        default: 'assets/background_1.jpg',
+                        byRole: {
+                            femme: 'assets/background_2.png',
+                            certifie: 'assets/background_3.png'
+                        }
+                    },
+                    gamer: {
+                        default: '',
+                        byRole: {}
+                    },
+                    amour: {
+                        default: '',
+                        byRole: {}
+                    },
+                    sensuel: {
+                        default: '',
+                        byRole: {}
+                    },
+                    futuristic: {
+                        default: '',
+                        byRole: {}
+                    },
+                    elegant: {
+                        default: '',
+                        byRole: {}
+                    },
+                    minimal: {
+                        default: '',
+                        byRole: {}
+                    }
+                },
                 roleRewards: [],
                 levelFormula: {
                     baseXP: 100,
@@ -101,6 +134,15 @@ class LevelManager {
             voiceXP: { amount: 10, perMinute: 10, interval: 60000 },
             xpCooldown: 60000,
             notifications: { enabled: true, channelId: null, cardStyle: 'futuristic' },
+            styleBackgrounds: {
+                holographic: {
+                    default: 'assets/background_1.jpg',
+                    byRole: {
+                        femme: 'assets/background_2.png',
+                        certifie: 'assets/background_3.png'
+                    }
+                }
+            },
             roleRewards: [],
             levelFormula: { baseXP: 100, multiplier: 1.5 },
             leaderboard: { limit: 10 }
