@@ -245,7 +245,24 @@ async function pipedSearchFirst(query) {
     const data = await pipedFetchJson(b, `/api/v1/search?q=${encodeURIComponent(query)}&region=${encodeURIComponent(process.env.PIPED_REGION || 'FR')}`);
     if (Array.isArray(data) && data.length > 0) {
       const firstVideo = data.find(i => (i?.type || 'video') === 'video') || data[0];
-      const id = firstVideo?.id || firstVideo?.url?.split('v=')[1] || null;
+      // Robust ID extraction without unsafe split
+      let id = firstVideo?.id || null;
+      if (!id) {
+        const rawUrl = typeof firstVideo?.url === 'string' ? firstVideo.url : '';
+        try {
+          // Support absolute or path-only URLs
+          const maybeUrl = new URL(rawUrl, 'https://www.youtube.com');
+          id = maybeUrl.searchParams.get('v');
+          if (!id && /\/shorts\//.test(maybeUrl.pathname)) {
+            const m = maybeUrl.pathname.match(/\/shorts\/([a-zA-Z0-9_-]{6,})/);
+            if (m) id = m[1];
+          }
+        } catch {}
+        if (!id && rawUrl) {
+          const m = rawUrl.match(/[?&]v=([^&]+)/);
+          if (m) id = m[1];
+        }
+      }
       if (id) {
         return { id, url: `https://www.youtube.com/watch?v=${id}`, title: firstVideo?.title || query };
       }
