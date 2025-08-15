@@ -62,8 +62,9 @@ class LogManager {
   // Message logs
   async logMessageEdit(oldMessage, newMessage) {
     try {
-      if (!newMessage?.guild || newMessage.author?.bot) return;
-      const cfg = await this.getGuildConfig(newMessage.guild.id);
+      const guild = newMessage?.guild || (newMessage?.guildId ? this.client.guilds.cache.get(newMessage.guildId) : null);
+      if (!guild || newMessage.author?.bot) return;
+      const cfg = await this.getGuildConfig(guild.id);
       const cat = cfg.categories.messages;
       if (!cat?.enabled || !cat.logEdits) return;
 
@@ -71,7 +72,7 @@ class LogManager {
         .setColor(Colors.Orange)
         .setTitle('✏️ Message modifié')
         .addFields(
-          { name: 'Auteur', value: `${newMessage.author.tag} (<@${newMessage.author.id}>)`, inline: true },
+          { name: 'Auteur', value: `${newMessage.author?.tag || 'Inconnu'} (<@${newMessage.author?.id || '??'}>)`, inline: true },
           { name: 'Salon', value: `<#${newMessage.channelId}>`, inline: true }
         )
         .setTimestamp(new Date());
@@ -85,14 +86,15 @@ class LogManager {
         );
       }
 
-      await this.sendToCategory(newMessage.guild, 'messages', embed);
+      await this.sendToCategory(guild, 'messages', embed);
     } catch {}
   }
 
   async logMessageDelete(message) {
     try {
-      if (!message?.guild || message.author?.bot) return;
-      const cfg = await this.getGuildConfig(message.guild.id);
+      const guild = message?.guild || (message?.guildId ? this.client.guilds.cache.get(message.guildId) : null);
+      if (!guild || message.author?.bot) return;
+      const cfg = await this.getGuildConfig(guild.id);
       const cat = cfg.categories.messages;
       if (!cat?.enabled || !cat.logDeletes) return;
 
@@ -109,7 +111,7 @@ class LogManager {
         embed.addFields({ name: 'Contenu', value: message.content.slice(0, 1024) });
       }
 
-      await this.sendToCategory(message.guild, 'messages', embed);
+      await this.sendToCategory(guild, 'messages', embed);
     } catch {}
   }
 
