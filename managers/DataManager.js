@@ -62,7 +62,9 @@ class DataManager {
             'warnings': 'warnings.json',
             'moderation_config': 'moderation_config.json',
             'moderation_state': 'moderation_state.json',
-            'logs_config': 'logs_config.json'
+            'logs_config': 'logs_config.json',
+            // Snapshots de rôles pour logs
+            'member_roles': 'member_roles.json'
         };
 
         // Initialiser le LevelBackupManager
@@ -288,7 +290,9 @@ class DataManager {
                 messagesPerDay: {},
                 commandsPerDay: {},
                 guilds: {}
-            }
+            },
+            // Snapshots de rôles pour logs
+            'member_roles': {}
         };
 
         return defaults[type] || {};

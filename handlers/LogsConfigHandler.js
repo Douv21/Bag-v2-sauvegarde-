@@ -24,10 +24,11 @@ class LogsConfigHandler {
         { name: '🏷️ Pseudos', value: `${c.nicknames.enabled ? '✅' : '❌'} ${formatChannel(c.nicknames.channelId)}` },
         { name: '💰 Économie', value: `${c.economy.enabled ? '✅' : '❌'} ${formatChannel(c.economy.channelId)}` },
         { name: '🔊 Vocaux', value: `${c.voice?.enabled ? '✅' : '❌'} ${formatChannel(c.voice?.channelId)}` },
-        { name: '🧩 Rôles', value: `${c.roles?.enabled ? '✅' : '❌'} ${formatChannel(c.roles?.channelId)}` }
+        { name: '🧩 Rôles', value: `${c.roles?.enabled ? '✅' : '❌'} ${formatChannel(c.roles?.channelId)}` },
+        { name: '🎨 Thème', value: `NSFW: ${cfg.theme?.nsfwTone ? '🔞' : '🚫'} • Avatars: ${cfg.theme?.includeAvatars ? '✅' : '❌'} • Liens: ${cfg.theme?.includeJumpLinks ? '✅' : '❌'}\nFooter: ${cfg.theme?.footer || '—'}` }
       );
 
-    // Regrouper les boutons en 3 rangées (max 5 boutons par rangée)
+    // Regrouper les boutons en 4 rangées
     const rows = [
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('logs_toggle_messages').setLabel('Activer/Arrêter Messages').setStyle(ButtonStyle.Secondary),
@@ -48,6 +49,12 @@ class LogsConfigHandler {
         new ButtonBuilder().setCustomId('logs_set_channel_voice').setLabel('Salon Vocaux').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('logs_toggle_roles').setLabel('Activer/Arrêter Rôles').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('logs_set_channel_roles').setLabel('Salon Rôles').setStyle(ButtonStyle.Primary)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_theme_toggle_nsfw').setLabel('NSFW On/Off').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_theme_toggle_avatars').setLabel('Avatars On/Off').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_theme_toggle_links').setLabel('Liens On/Off').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_theme_footer_set').setLabel('Définir Footer par défaut').setStyle(ButtonStyle.Primary)
       )
     ];
 
@@ -94,12 +101,35 @@ class LogsConfigHandler {
       if (!channelId) return interaction.reply({ content: 'Aucun salon sélectionné.', ephemeral: true });
       await this.logManager.setCategoryConfig(guildId, category, { channelId });
       await interaction.update({ content: `Salon configuré pour ${category}: <#${channelId}>`, components: [] });
-      // Refresh main
-      const replied = interaction.message?.interaction?.user?.id === interaction.user.id;
-      if (!replied) {
-        // try to edit original ephemeral reply if exists
-      }
-      return; // main will be refreshed when user presses button again
+      return;
+    }
+
+    // Theme toggles
+    if (customId === 'logs_theme_toggle_nsfw') {
+      const cfg = await this.logManager.getGuildConfig(guildId);
+      const nsfwTone = !cfg.theme?.nsfwTone;
+      await this.logManager.setThemeConfig(guildId, { nsfwTone });
+      return this.showMain(interaction);
+    }
+
+    if (customId === 'logs_theme_toggle_avatars') {
+      const cfg = await this.logManager.getGuildConfig(guildId);
+      const includeAvatars = !cfg.theme?.includeAvatars;
+      await this.logManager.setThemeConfig(guildId, { includeAvatars });
+      return this.showMain(interaction);
+    }
+
+    if (customId === 'logs_theme_toggle_links') {
+      const cfg = await this.logManager.getGuildConfig(guildId);
+      const includeJumpLinks = !cfg.theme?.includeJumpLinks;
+      await this.logManager.setThemeConfig(guildId, { includeJumpLinks });
+      return this.showMain(interaction);
+    }
+
+    if (customId === 'logs_theme_footer_set') {
+      // Définit le footer par défaut NSFW Boys & Girls
+      await this.logManager.setThemeConfig(guildId, { footer: 'Boys & Girls 🔥 Logs' });
+      return this.showMain(interaction);
     }
 
     return false;
