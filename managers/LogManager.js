@@ -6,6 +6,113 @@ class LogManager {
     this.client = client;
   }
 
+  getDefaultTheme() {
+    return {
+      nsfwTone: true,
+      footer: 'Boys & Girls 🔥 Logs',
+      includeAvatars: true,
+      includeJumpLinks: true
+    };
+  }
+
+  humanizeDuration(ms) {
+    try {
+      if (!ms || ms <= 0) return '—';
+      const totalSeconds = Math.floor(ms / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      const parts = [];
+      if (days) parts.push(`${days}j`);
+      if (hours) parts.push(`${hours}h`);
+      if (minutes) parts.push(`${minutes}m`);
+      if (seconds && parts.length === 0) parts.push(`${seconds}s`);
+      return parts.join(' ');
+    } catch {
+      return '—';
+    }
+  }
+
+  getTagline(category) {
+    const lines = {
+      moderation: '😈 Discipline avec douceur…',
+      messages: '💋 Les mots laissent des traces.',
+      members: '🔥 Le boudoir s’agrandit… ou se vide.',
+      voice: '🎙️ Murmures en cabine.',
+      roles: '🧩 Nouveaux rôles, nouveaux jeux.',
+      nicknames: '🏷️ Un nouveau petit nom…',
+      economy: '💰 Plaisirs et récompenses.',
+      channels: '🛠️ Travaux en salon.',
+      threads: '🧵 Fils qui s’entremêlent.',
+      emojis: '😜 Grimaces et symboles.',
+      stickers: '🏷️ Autocollants sexy.',
+      invites: '✉️ Invitations au boudoir.',
+      webhooks: '🪝 Crochets malicieux.',
+      server: '🏰 Le royaume évolue.',
+      boosts: '💎 Boost de plaisir.',
+      events: '📅 Rendez-vous programmés.'
+    };
+    return lines[category] || null;
+  }
+
+  async nextCaseId(guildId) {
+    try {
+      const all = await this.dataManager.getData('logs_config');
+      const current = all[guildId] || this.getDefaultGuildConfig(guildId);
+      const next = (current.caseCounter || 0) + 1;
+      current.caseCounter = next;
+      all[guildId] = current;
+      await this.dataManager.saveData('logs_config', all);
+      return next;
+    } catch {
+      return null;
+    }
+  }
+
+  decorateEmbed(embed, guild, cfg, category, options = {}) {
+    try {
+      const theme = { ...(cfg?.theme || this.getDefaultTheme()) };
+      const footerParts = [theme.footer || 'Logs', guild?.name || ''];
+      if (options.caseId) footerParts.push(`Case #${options.caseId}`);
+      const iconURL = guild?.iconURL?.({ size: 64 });
+      embed.setFooter({ text: footerParts.filter(Boolean).join(' • '), iconURL: iconURL || null });
+
+      if (theme.includeAvatars) {
+        if (options.actorUser?.displayAvatarURL) {
+          const name = options.actorUser.tag || options.actorUser.username || 'Utilisateur';
+          embed.setAuthor({ name, iconURL: options.actorUser.displayAvatarURL({ size: 64 }) });
+        } else if (options.targetUser?.displayAvatarURL) {
+          embed.setThumbnail(options.targetUser.displayAvatarURL({ size: 128 }));
+        }
+      }
+
+      if (theme.nsfwTone) {
+        const tagline = this.getTagline(category);
+        if (tagline) {
+          const existing = embed.data?.description || null;
+          const desc = existing ? `${existing}\n\n${tagline}` : tagline;
+          embed.setDescription(desc);
+        }
+      }
+    } catch {}
+    return embed;
+  }
+
+  async setThemeConfig(guildId, partialTheme) {
+    const all = await this.dataManager.getData('logs_config');
+    const cur = all[guildId] || this.getDefaultGuildConfig(guildId);
+    cur.theme = { ...(cur.theme || this.getDefaultTheme()), ...(partialTheme || {}) };
+    all[guildId] = cur;
+    await this.dataManager.saveData('logs_config', all);
+    return cur.theme;
+  }
+
+  makeJumpLink(guildId, channelId, messageId) {
+    if (!guildId || !channelId || !messageId) return null;
+    return `https://discord.com/channels/${guildId}/${channelId}/${messageId}`;
+  }
+
   async getGuildConfig(guildId) {
     const all = await this.dataManager.getData('logs_config');
     const current = all[guildId] || this.getDefaultGuildConfig(guildId);
@@ -16,6 +123,8 @@ class LogManager {
     for (const key of Object.keys(def.categories)) {
       merged.categories[key] = { ...def.categories[key], ...(merged.categories[key] || {}) };
     }
+    merged.theme = { ...this.getDefaultTheme(), ...(current.theme || {}) };
+    merged.caseCounter = typeof current.caseCounter === 'number' ? current.caseCounter : 0;
     all[guildId] = merged;
     await this.dataManager.saveData('logs_config', all);
     return merged;
@@ -25,6 +134,8 @@ class LogManager {
     return {
       guildId,
       enabled: true,
+      theme: this.getDefaultTheme(),
+      caseCounter: 0,
       categories: {
         messages: { enabled: true, channelId: null, logEdits: true, logDeletes: true, includeContent: true },
         moderation: { enabled: true, channelId: null, logWarns: true, logMutes: true, logKicks: true, logBans: true, logUnbans: true, logPurges: true },
@@ -33,7 +144,16 @@ class LogManager {
         economy: { enabled: true, channelId: null, logDaily: true, logTransfers: true, logRewards: true, logAdminChanges: true },
         // New categories
         voice: { enabled: true, channelId: null, logJoins: true, logLeaves: true, logMoves: true, logMutes: true, logDeafens: true, logStreams: true, logCameras: true },
-        roles: { enabled: true, channelId: null, logMemberChanges: true, logRoleCreate: true, logRoleDelete: true, logRoleUpdate: true }
+        roles: { enabled: true, channelId: null, logMemberChanges: true, logRoleCreate: true, logRoleDelete: true, logRoleUpdate: true },
+        channels: { enabled: true, channelId: null, logCreates: true, logDeletes: true, logUpdates: true },
+        threads: { enabled: true, channelId: null, logCreates: true, logDeletes: true, logUpdates: true, logArchived: true, logUnarchived: true, logLocked: true, logUnlocked: true },
+        emojis: { enabled: true, channelId: null, logCreates: true, logDeletes: true, logUpdates: true },
+        stickers: { enabled: true, channelId: null, logCreates: true, logDeletes: true, logUpdates: true },
+        invites: { enabled: true, channelId: null, logCreates: true, logDeletes: true },
+        webhooks: { enabled: true, channelId: null, logUpdates: true },
+        server: { enabled: true, channelId: null, logUpdates: true },
+        boosts: { enabled: true, channelId: null, logStart: true, logEnd: true },
+        events: { enabled: true, channelId: null, logCreates: true, logUpdates: true, logDeletes: true }
       }
     };
   }
@@ -74,7 +194,12 @@ class LogManager {
       if (!channelId) return;
       const channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
       if (!channel) return;
-      const payload = { embeds: [embed], ...options };
+
+      // Décoration de thème centralisée
+      const decor = options.__decor || {};
+      this.decorateEmbed(embed, guild, cfg, category, decor);
+
+      const payload = { embeds: [embed], ...(options.__decor ? {} : options) };
       await channel.send(payload).catch(() => {});
     } catch {}
   }
@@ -126,7 +251,15 @@ class LogManager {
         );
       }
 
-      await this.sendToCategory(guild, 'messages', embed);
+      // Lien direct
+      try {
+        if (cfg.theme?.includeJumpLinks) {
+          const link = this.makeJumpLink(guild.id, newMessage.channelId, newMessage.id);
+          if (link) embed.addFields({ name: 'Lien', value: `[Voir le message](${link})` });
+        }
+      } catch {}
+
+      await this.sendToCategory(guild, 'messages', embed, { __decor: { actorUser: newMessage.author } });
     } catch {}
   }
 
@@ -161,7 +294,6 @@ class LogManager {
             return ct.startsWith('image/') || name.match(/\.(png|jpe?g|gif|webp)$/);
           });
           if (imageAtts.length > 0) {
-            // Show first image as preview and list others as links
             embed.setImage(imageAtts[0].proxyURL || imageAtts[0].url);
             const links = imageAtts.map((a, idx) => `[image_${idx + 1}](${a.url})`).join(' • ');
             embed.addFields({ name: 'Images', value: links.slice(0, 1024) });
@@ -174,7 +306,15 @@ class LogManager {
         }
       } catch {}
 
-      await this.sendToCategory(guild, 'messages', embed);
+      // Lien direct
+      try {
+        if (cfg.theme?.includeJumpLinks && message.id) {
+          const link = this.makeJumpLink(guild.id, message.channelId, message.id);
+          if (link) embed.addFields({ name: 'Lien', value: `[Voir le message](${link})` });
+        }
+      } catch {}
+
+      await this.sendToCategory(guild, 'messages', embed, { __decor: { actorUser: message.author } });
     } catch {}
   }
 
@@ -194,7 +334,7 @@ class LogManager {
         )
         .setTimestamp(new Date());
 
-      await this.sendToCategory(member.guild, 'members', embed);
+      await this.sendToCategory(member.guild, 'members', embed, { __decor: { targetUser: member.user } });
     } catch {}
   }
 
@@ -217,7 +357,7 @@ class LogManager {
         if (rolesStr) embed.addFields({ name: 'Rôles', value: rolesStr.slice(0, 1024) });
       } catch {}
 
-      await this.sendToCategory(member.guild, 'members', embed);
+      await this.sendToCategory(member.guild, 'members', embed, { __decor: { targetUser: member.user } });
     } catch {}
   }
 
@@ -241,7 +381,7 @@ class LogManager {
         )
         .setTimestamp(new Date());
 
-      await this.sendToCategory(newMember.guild, 'nicknames', embed);
+      await this.sendToCategory(newMember.guild, 'nicknames', embed, { __decor: { targetUser: newMember.user } });
     } catch {}
   }
 
@@ -276,7 +416,7 @@ class LogManager {
       if (removed.length > 0) embed.addFields({ name: 'Retirés', value: removedStr.slice(0, 1024) });
 
       await this.updateMemberRolesSnapshot(newMember);
-      await this.sendToCategory(newMember.guild, 'roles', embed);
+      await this.sendToCategory(newMember.guild, 'roles', embed, { __decor: { targetUser: newMember.user } });
     } catch {}
   }
 
@@ -357,7 +497,7 @@ class LogManager {
             { name: 'Salon', value: `<#${newChannel.id}>`, inline: true }
           )
           .setTimestamp(new Date());
-        await this.sendToCategory(guild, 'voice', embed);
+        await this.sendToCategory(guild, 'voice', embed, { __decor: { actorUser: member.user } });
       } else if (oldChannel && !newChannel && cat.logLeaves) {
         const embed = new EmbedBuilder()
           .setColor(0x7f8c8d)
@@ -367,7 +507,7 @@ class LogManager {
             { name: 'Salon', value: `<#${oldChannel.id}>`, inline: true }
           )
           .setTimestamp(new Date());
-        await this.sendToCategory(guild, 'voice', embed);
+        await this.sendToCategory(guild, 'voice', embed, { __decor: { actorUser: member.user } });
       } else if (oldChannel && newChannel && oldChannel.id !== newChannel.id && cat.logMoves) {
         const embed = new EmbedBuilder()
           .setColor(Colors.Blurple)
@@ -378,7 +518,7 @@ class LogManager {
             { name: 'Vers', value: `<#${newChannel.id}>`, inline: true }
           )
           .setTimestamp(new Date());
-        await this.sendToCategory(guild, 'voice', embed);
+        await this.sendToCategory(guild, 'voice', embed, { __decor: { actorUser: member.user } });
       }
 
       // Toggles
@@ -399,7 +539,7 @@ class LogManager {
             { name: 'Salon', value: `${(newChannel || oldChannel) ? `<#${(newChannel || oldChannel).id}>` : '—'}`, inline: true }
           )
           .setTimestamp(new Date());
-        await this.sendToCategory(guild, 'voice', embed);
+        await this.sendToCategory(guild, 'voice', embed, { __decor: { actorUser: member.user } });
       }
     } catch {}
   }
@@ -410,6 +550,7 @@ class LogManager {
       const cfg = await this.getGuildConfig(guild.id);
       const cat = cfg.categories.moderation;
       if (!cat?.enabled || !cat.logWarns) return;
+      const caseId = await this.nextCaseId(guild.id);
       const embed = new EmbedBuilder()
         .setColor(Colors.Yellow)
         .setTitle('⚠️ Avertissement')
@@ -419,7 +560,7 @@ class LogManager {
           { name: 'Raison', value: reason || 'Aucune' }
         )
         .setTimestamp(new Date());
-      await this.sendToCategory(guild, 'moderation', embed);
+      await this.sendToCategory(guild, 'moderation', embed, { __decor: { actorUser: moderatorUser, targetUser, caseId } });
     } catch {}
   }
 
@@ -428,17 +569,18 @@ class LogManager {
       const cfg = await this.getGuildConfig(member.guild.id);
       const cat = cfg.categories.moderation;
       if (!cat?.enabled || !cat.logMutes) return;
+      const caseId = await this.nextCaseId(member.guild.id);
       const embed = new EmbedBuilder()
         .setColor(Colors.DarkGold)
         .setTitle('🔇 Mute')
         .addFields(
           { name: 'Utilisateur', value: `${member.user.tag} (<@${member.id}>)`, inline: true },
           { name: 'Modérateur', value: `${moderatorUser?.tag || 'AutoMod'}`, inline: true },
-          { name: 'Durée', value: durationMs ? `${Math.round(durationMs / 60000)} min` : '—', inline: true },
+          { name: 'Durée', value: durationMs ? this.humanizeDuration(durationMs) : '—', inline: true },
           { name: 'Raison', value: reason || 'Aucune' }
         )
         .setTimestamp(new Date());
-      await this.sendToCategory(member.guild, 'moderation', embed);
+      await this.sendToCategory(member.guild, 'moderation', embed, { __decor: { actorUser: moderatorUser, targetUser: member.user, caseId } });
     } catch {}
   }
 
@@ -447,6 +589,7 @@ class LogManager {
       const cfg = await this.getGuildConfig(member.guild.id);
       const cat = cfg.categories.moderation;
       if (!cat?.enabled || !cat.logMutes) return;
+      const caseId = await this.nextCaseId(member.guild.id);
       const embed = new EmbedBuilder()
         .setColor(Colors.Green)
         .setTitle('🔈 Unmute')
@@ -456,7 +599,7 @@ class LogManager {
           { name: 'Raison', value: reason || 'Aucune' }
         )
         .setTimestamp(new Date());
-      await this.sendToCategory(member.guild, 'moderation', embed);
+      await this.sendToCategory(member.guild, 'moderation', embed, { __decor: { actorUser: moderatorUser, targetUser: member.user, caseId } });
     } catch {}
   }
 
@@ -465,6 +608,7 @@ class LogManager {
       const cfg = await this.getGuildConfig(member.guild.id);
       const cat = cfg.categories.moderation;
       if (!cat?.enabled || !cat.logKicks) return;
+      const caseId = await this.nextCaseId(member.guild.id);
       const embed = new EmbedBuilder()
         .setColor(Colors.Red)
         .setTitle('👢 Expulsion')
@@ -480,7 +624,7 @@ class LogManager {
         const rolesStr = roles && roles.size > 0 ? roles.map(r => `<@&${r.id}>`).join(' ') : null;
         if (rolesStr) embed.addFields({ name: 'Rôles', value: rolesStr.slice(0, 1024) });
       } catch {}
-      await this.sendToCategory(member.guild, 'moderation', embed);
+      await this.sendToCategory(member.guild, 'moderation', embed, { __decor: { actorUser: moderatorUser, targetUser: member.user, caseId } });
     } catch {}
   }
 
@@ -489,6 +633,7 @@ class LogManager {
       const cfg = await this.getGuildConfig(guild.id);
       const cat = cfg.categories.moderation;
       if (!cat?.enabled || !cat.logBans) return;
+      const caseId = await this.nextCaseId(guild.id);
       const embed = new EmbedBuilder()
         .setColor(Colors.DarkRed)
         .setTitle('🔨 Ban')
@@ -506,7 +651,7 @@ class LogManager {
           embed.addFields({ name: 'Rôles (au ban)', value: rolesStr.slice(0, 1024) });
         }
       } catch {}
-      await this.sendToCategory(guild, 'moderation', embed);
+      await this.sendToCategory(guild, 'moderation', embed, { __decor: { actorUser: moderatorUser, targetUser: user, caseId } });
     } catch {}
   }
 
@@ -515,6 +660,7 @@ class LogManager {
       const cfg = await this.getGuildConfig(guild.id);
       const cat = cfg.categories.moderation;
       if (!cat?.enabled || !cat.logUnbans) return;
+      const caseId = await this.nextCaseId(guild.id);
       const embed = new EmbedBuilder()
         .setColor(Colors.Green)
         .setTitle('♻️ Unban')
@@ -523,7 +669,7 @@ class LogManager {
           { name: 'Modérateur', value: `${moderatorUser?.tag || 'AutoMod'}`, inline: true }
         )
         .setTimestamp(new Date());
-      await this.sendToCategory(guild, 'moderation', embed);
+      await this.sendToCategory(guild, 'moderation', embed, { __decor: { actorUser: moderatorUser, targetUser: user, caseId } });
     } catch {}
   }
 
@@ -532,6 +678,7 @@ class LogManager {
       const cfg = await this.getGuildConfig(channel.guild.id);
       const cat = cfg.categories.moderation;
       if (!cat?.enabled || !cat.logPurges) return;
+      const caseId = await this.nextCaseId(channel.guild.id);
       const embed = new EmbedBuilder()
         .setColor(0x95a5a6)
         .setTitle('🧹 Purge de messages')
@@ -541,7 +688,7 @@ class LogManager {
           { name: 'Nombre', value: `${count || '—'}`, inline: true }
         )
         .setTimestamp(new Date());
-      await this.sendToCategory(channel.guild, 'moderation', embed);
+      await this.sendToCategory(channel.guild, 'moderation', embed, { __decor: { actorUser: moderatorUser, caseId } });
     } catch {}
   }
 
@@ -560,7 +707,7 @@ class LogManager {
           { name: 'Détail', value: parts || '—' }
         )
         .setTimestamp(new Date());
-      await this.sendToCategory(guild, 'economy', embed);
+      await this.sendToCategory(guild, 'economy', embed, { __decor: { actorUser: user } });
     } catch {}
   }
 
@@ -578,7 +725,7 @@ class LogManager {
           { name: 'Montant', value: `${amount}💋`, inline: true }
         )
         .setTimestamp(new Date());
-      await this.sendToCategory(guild, 'economy', embed);
+      await this.sendToCategory(guild, 'economy', embed, { __decor: { actorUser: fromUser, targetUser: toUser } });
     } catch {}
   }
 
@@ -596,7 +743,7 @@ class LogManager {
           { name: 'Modérateur', value: `${moderatorUser?.tag || '—'}`, inline: true }
         )
         .setTimestamp(new Date());
-      await this.sendToCategory(guild, 'economy', embed);
+      await this.sendToCategory(guild, 'economy', embed, { __decor: { actorUser: moderatorUser, targetUser } });
     } catch {}
   }
 
@@ -614,7 +761,7 @@ class LogManager {
           { name: 'Modérateur', value: `${moderatorUser?.tag || '—'}`, inline: true }
         )
         .setTimestamp(new Date());
-      await this.sendToCategory(guild, 'economy', embed);
+      await this.sendToCategory(guild, 'economy', embed, { __decor: { actorUser: moderatorUser, targetUser } });
     } catch {}
   }
 
@@ -632,9 +779,412 @@ class LogManager {
           { name: 'Salon', value: `<#${message.channel.id}>`, inline: true }
         )
         .setTimestamp(new Date());
-      await this.sendToCategory(message.guild, 'economy', embed);
+      await this.sendToCategory(message.guild, 'economy', embed, { __decor: { actorUser: message.author } });
     } catch {}
   }
+
+	// === Channels ===
+	async logChannelCreate(channel) {
+		try {
+			const guild = channel.guild;
+			if (!guild) return;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.channels;
+			if (!cat?.enabled || !cat.logCreates) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Green)
+				.setTitle('📺 Salon créé')
+				.addFields(
+					{ name: 'Salon', value: channel.isTextBased?.() ? `<#${channel.id}>` : `${channel.name} (${channel.id})`, inline: true },
+					{ name: 'Type', value: `${channel.type}`, inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'channels', embed);
+		} catch {}
+	}
+
+	async logChannelDelete(channel) {
+		try {
+			const guild = channel.guild;
+			if (!guild) return;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.channels;
+			if (!cat?.enabled || !cat.logDeletes) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.DarkRed)
+				.setTitle('🗑️ Salon supprimé')
+				.addFields(
+					{ name: 'Nom', value: `${channel.name || '—'}`, inline: true },
+					{ name: 'Type', value: `${channel.type}`, inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'channels', embed);
+		} catch {}
+	}
+
+	async logChannelUpdate(oldChannel, newChannel) {
+		try {
+			const guild = newChannel.guild;
+			if (!guild) return;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.channels;
+			if (!cat?.enabled || !cat.logUpdates) return;
+			const changes = [];
+			if (oldChannel.name !== newChannel.name) changes.push({ name: 'Nom', value: `${oldChannel.name} → ${newChannel.name}` });
+			if (typeof oldChannel.topic !== 'undefined' && oldChannel.topic !== newChannel.topic) changes.push({ name: 'Sujet', value: `${oldChannel.topic || '—'} → ${newChannel.topic || '—'}` });
+			if (typeof oldChannel.nsfw !== 'undefined' && oldChannel.nsfw !== newChannel.nsfw) changes.push({ name: 'NSFW', value: `${oldChannel.nsfw ? 'Oui' : 'Non'} → ${newChannel.nsfw ? 'Oui' : 'Non'}` });
+			if (typeof oldChannel.rateLimitPerUser !== 'undefined' && oldChannel.rateLimitPerUser !== newChannel.rateLimitPerUser) changes.push({ name: 'Slowmode', value: `${oldChannel.rateLimitPerUser || 0}s → ${newChannel.rateLimitPerUser || 0}s` });
+			if (changes.length === 0) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Blurple)
+				.setTitle('✏️ Salon modifié')
+				.addFields(
+					{ name: 'Salon', value: newChannel.isTextBased?.() ? `<#${newChannel.id}>` : `${newChannel.name} (${newChannel.id})` },
+					...changes.slice(0, 24)
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'channels', embed);
+		} catch {}
+	}
+
+	// === Threads ===
+	async logThreadCreate(thread) {
+		try {
+			const guild = thread.guild;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.threads;
+			if (!cat?.enabled || !cat.logCreates) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Green)
+				.setTitle('🧵 Thread créé')
+				.addFields(
+					{ name: 'Thread', value: `<#${thread.id}>`, inline: true },
+					{ name: 'Salon parent', value: thread.parentId ? `<#${thread.parentId}>` : '—', inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'threads', embed);
+		} catch {}
+	}
+
+	async logThreadDelete(thread) {
+		try {
+			const guild = thread.guild;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.threads;
+			if (!cat?.enabled || !cat.logDeletes) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.DarkRed)
+				.setTitle('🧵 Thread supprimé')
+				.addFields(
+					{ name: 'Nom', value: `${thread.name || '—'}`, inline: true },
+					{ name: 'Salon parent', value: thread.parentId ? `<#${thread.parentId}>` : '—', inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'threads', embed);
+		} catch {}
+	}
+
+	async logThreadUpdate(oldThread, newThread) {
+		try {
+			const guild = newThread.guild;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.threads;
+			if (!cat?.enabled || !cat.logUpdates) return;
+			const changes = [];
+			if (oldThread.name !== newThread.name) changes.push({ name: 'Nom', value: `${oldThread.name} → ${newThread.name}` });
+			if (oldThread.archived !== newThread.archived) changes.push({ name: 'Archive', value: `${oldThread.archived ? 'Archivé' : 'Ouvert'} → ${newThread.archived ? 'Archivé' : 'Ouvert'}` });
+			if (oldThread.locked !== newThread.locked) changes.push({ name: 'Verrou', value: `${oldThread.locked ? 'Verrouillé' : 'Déverrouillé'} → ${newThread.locked ? 'Verrouillé' : 'Déverrouillé'}` });
+			if (changes.length === 0) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Blurple)
+				.setTitle('✏️ Thread modifié')
+				.addFields(
+					{ name: 'Thread', value: `<#${newThread.id}>` },
+					...changes.slice(0, 24)
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'threads', embed);
+		} catch {}
+	}
+
+	// === Emojis ===
+	async logEmojiCreate(emoji) {
+		try {
+			const guild = emoji.guild;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.emojis;
+			if (!cat?.enabled || !cat.logCreates) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Green)
+				.setTitle('😜 Émoji créé')
+				.addFields(
+					{ name: 'Émoji', value: `<:${emoji.name}:${emoji.id}> (${emoji.name})`, inline: true },
+					{ name: 'Animé', value: emoji.animated ? 'Oui' : 'Non', inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'emojis', embed);
+		} catch {}
+	}
+
+	async logEmojiDelete(emoji) {
+		try {
+			const guild = emoji.guild;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.emojis;
+			if (!cat?.enabled || !cat.logDeletes) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.DarkRed)
+				.setTitle('🗑️ Émoji supprimé')
+				.addFields(
+					{ name: 'Émoji', value: `${emoji.name} (${emoji.id})`, inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'emojis', embed);
+		} catch {}
+	}
+
+	async logEmojiUpdate(oldEmoji, newEmoji) {
+		try {
+			const guild = newEmoji.guild;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.emojis;
+			if (!cat?.enabled || !cat.logUpdates) return;
+			const changes = [];
+			if (oldEmoji.name !== newEmoji.name) changes.push({ name: 'Nom', value: `${oldEmoji.name} → ${newEmoji.name}` });
+			if (changes.length === 0) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Blurple)
+				.setTitle('✏️ Émoji modifié')
+				.addFields(
+					{ name: 'Émoji', value: `<:${newEmoji.name}:${newEmoji.id}>` },
+					...changes.slice(0, 24)
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'emojis', embed);
+		} catch {}
+	}
+
+	// === Stickers ===
+	async logStickerCreate(sticker) {
+		try {
+			const guild = sticker.guild;
+			if (!guild) return;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.stickers;
+			if (!cat?.enabled || !cat.logCreates) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Green)
+				.setTitle('🏷️ Sticker créé')
+				.addFields(
+					{ name: 'Sticker', value: `${sticker.name} (${sticker.id})`, inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'stickers', embed);
+		} catch {}
+	}
+
+	async logStickerDelete(sticker) {
+		try {
+			const guild = sticker.guild;
+			if (!guild) return;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.stickers;
+			if (!cat?.enabled || !cat.logDeletes) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.DarkRed)
+				.setTitle('🗑️ Sticker supprimé')
+				.addFields(
+					{ name: 'Sticker', value: `${sticker.name} (${sticker.id})`, inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'stickers', embed);
+		} catch {}
+	}
+
+	async logStickerUpdate(oldSticker, newSticker) {
+		try {
+			const guild = newSticker.guild;
+			if (!guild) return;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.stickers;
+			if (!cat?.enabled || !cat.logUpdates) return;
+			const changes = [];
+			if (oldSticker.name !== newSticker.name) changes.push({ name: 'Nom', value: `${oldSticker.name} → ${newSticker.name}` });
+			if (changes.length === 0) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Blurple)
+				.setTitle('✏️ Sticker modifié')
+				.addFields(
+					{ name: 'Sticker', value: `${newSticker.name} (${newSticker.id})` },
+					...changes.slice(0, 24)
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'stickers', embed);
+		} catch {}
+	}
+
+	// === Invites ===
+	async logInviteCreate(invite) {
+		try {
+			const guild = invite.guild;
+			if (!guild) return;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.invites;
+			if (!cat?.enabled || !cat.logCreates) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Green)
+				.setTitle('✉️ Invitation créée')
+				.addFields(
+					{ name: 'Code', value: invite.code || '—', inline: true },
+					{ name: 'Salon', value: invite.channelId ? `<#${invite.channelId}>` : '—', inline: true },
+					{ name: 'Par', value: invite.inviter ? `${invite.inviter.tag} (<@${invite.inviter.id}>)` : '—', inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'invites', embed, { __decor: { actorUser: invite.inviter } });
+		} catch {}
+	}
+
+	async logInviteDelete(invite) {
+		try {
+			const guild = invite.guild;
+			if (!guild) return;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.invites;
+			if (!cat?.enabled || !cat.logDeletes) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.DarkRed)
+				.setTitle('🗑️ Invitation supprimée')
+				.addFields(
+					{ name: 'Code', value: invite.code || '—', inline: true },
+					{ name: 'Salon', value: invite.channelId ? `<#${invite.channelId}>` : '—', inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'invites', embed);
+		} catch {}
+	}
+
+	// === Webhooks ===
+	async logWebhookUpdate(channel) {
+		try {
+			const guild = channel.guild;
+			if (!guild) return;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.webhooks;
+			if (!cat?.enabled || !cat.logUpdates) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Orange)
+				.setTitle('🪝 Webhooks mis à jour')
+				.addFields(
+					{ name: 'Salon', value: channel.isTextBased?.() ? `<#${channel.id}>` : `${channel.name} (${channel.id})` }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'webhooks', embed);
+		} catch {}
+	}
+
+	// === Server (Guild) ===
+	async logGuildUpdate(oldGuild, newGuild) {
+		try {
+			const cfg = await this.getGuildConfig(newGuild.id);
+			const cat = cfg.categories.server;
+			if (!cat?.enabled || !cat.logUpdates) return;
+			const changes = [];
+			if (oldGuild.name !== newGuild.name) changes.push({ name: 'Nom', value: `${oldGuild.name} → ${newGuild.name}` });
+			if (oldGuild.icon !== newGuild.icon) changes.push({ name: 'Icône', value: `${oldGuild.icon ? 'Oui' : 'Non'} → ${newGuild.icon ? 'Oui' : 'Non'}` });
+			if (oldGuild.vanityURLCode !== newGuild.vanityURLCode) changes.push({ name: 'Vanity URL', value: `${oldGuild.vanityURLCode || '—'} → ${newGuild.vanityURLCode || '—'}` });
+			if (changes.length === 0) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Blurple)
+				.setTitle('🏰 Serveur modifié')
+				.addFields(...changes.slice(0, 24))
+				.setTimestamp(new Date());
+			await this.sendToCategory(newGuild, 'server', embed);
+		} catch {}
+	}
+
+	// === Boosts ===
+	async logBoostStart(member) {
+		try {
+			const cfg = await this.getGuildConfig(member.guild.id);
+			const cat = cfg.categories.boosts;
+			if (!cat?.enabled || !cat.logStart) return;
+			const embed = new EmbedBuilder()
+				.setColor(0x9b59b6)
+				.setTitle('💎 Boost activé')
+				.addFields({ name: 'Membre', value: `${member.user.tag} (<@${member.id}>)` })
+				.setTimestamp(new Date());
+			await this.sendToCategory(member.guild, 'boosts', embed, { __decor: { actorUser: member.user } });
+		} catch {}
+	}
+
+	async logBoostEnd(member) {
+		try {
+			const cfg = await this.getGuildConfig(member.guild.id);
+			const cat = cfg.categories.boosts;
+			if (!cat?.enabled || !cat.logEnd) return;
+			const embed = new EmbedBuilder()
+				.setColor(0x8e44ad)
+				.setTitle('💔 Boost terminé')
+				.addFields({ name: 'Membre', value: `${member.user.tag} (<@${member.id}>)` })
+				.setTimestamp(new Date());
+			await this.sendToCategory(member.guild, 'boosts', embed, { __decor: { targetUser: member.user } });
+		} catch {}
+	}
+
+	// === Scheduled Events ===
+	async logScheduledEventCreate(evt) {
+		try {
+			const guild = evt.guild;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.events;
+			if (!cat?.enabled || !cat.logCreates) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Green)
+				.setTitle('📅 Événement créé')
+				.addFields(
+					{ name: 'Nom', value: `${evt.name}`, inline: true },
+					{ name: 'Début', value: evt.scheduledStartAt ? `<t:${Math.floor(evt.scheduledStartAt.getTime()/1000)}:F>` : '—', inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'events', embed);
+		} catch {}
+	}
+
+	async logScheduledEventUpdate(oldEvt, newEvt) {
+		try {
+			const guild = newEvt.guild;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.events;
+			if (!cat?.enabled || !cat.logUpdates) return;
+			const changes = [];
+			if (oldEvt.name !== newEvt.name) changes.push({ name: 'Nom', value: `${oldEvt.name} → ${newEvt.name}` });
+			if (oldEvt.scheduledStartAt?.getTime() !== newEvt.scheduledStartAt?.getTime()) changes.push({ name: 'Début', value: `${oldEvt.scheduledStartAt ? `<t:${Math.floor(oldEvt.scheduledStartAt.getTime()/1000)}:F>` : '—'} → ${newEvt.scheduledStartAt ? `<t:${Math.floor(newEvt.scheduledStartAt.getTime()/1000)}:F>` : '—'}` });
+			if (changes.length === 0) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.Blurple)
+				.setTitle('✏️ Événement modifié')
+				.addFields(...changes.slice(0, 24))
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'events', embed);
+		} catch {}
+	}
+
+	async logScheduledEventDelete(evt) {
+		try {
+			const guild = evt.guild;
+			const cfg = await this.getGuildConfig(guild.id);
+			const cat = cfg.categories.events;
+			if (!cat?.enabled || !cat.logDeletes) return;
+			const embed = new EmbedBuilder()
+				.setColor(Colors.DarkRed)
+				.setTitle('🗑️ Événement supprimé')
+				.addFields(
+					{ name: 'Nom', value: `${evt.name}`, inline: true }
+				)
+				.setTimestamp(new Date());
+			await this.sendToCategory(guild, 'events', embed);
+		} catch {}
+	}
 }
 
 module.exports = LogManager;

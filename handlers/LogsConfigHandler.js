@@ -24,10 +24,20 @@ class LogsConfigHandler {
         { name: '🏷️ Pseudos', value: `${c.nicknames.enabled ? '✅' : '❌'} ${formatChannel(c.nicknames.channelId)}` },
         { name: '💰 Économie', value: `${c.economy.enabled ? '✅' : '❌'} ${formatChannel(c.economy.channelId)}` },
         { name: '🔊 Vocaux', value: `${c.voice?.enabled ? '✅' : '❌'} ${formatChannel(c.voice?.channelId)}` },
-        { name: '🧩 Rôles', value: `${c.roles?.enabled ? '✅' : '❌'} ${formatChannel(c.roles?.channelId)}` }
+        { name: '🧩 Rôles', value: `${c.roles?.enabled ? '✅' : '❌'} ${formatChannel(c.roles?.channelId)}` },
+        { name: '📺 Salons', value: `${c.channels?.enabled ? '✅' : '❌'} ${formatChannel(c.channels?.channelId)}` },
+        { name: '🧵 Threads', value: `${c.threads?.enabled ? '✅' : '❌'} ${formatChannel(c.threads?.channelId)}` },
+        { name: '😜 Émojis', value: `${c.emojis?.enabled ? '✅' : '❌'} ${formatChannel(c.emojis?.channelId)}` },
+        { name: '🏷️ Stickers', value: `${c.stickers?.enabled ? '✅' : '❌'} ${formatChannel(c.stickers?.channelId)}` },
+        { name: '✉️ Invitations', value: `${c.invites?.enabled ? '✅' : '❌'} ${formatChannel(c.invites?.channelId)}` },
+        { name: '🪝 Webhooks', value: `${c.webhooks?.enabled ? '✅' : '❌'} ${formatChannel(c.webhooks?.channelId)}` },
+        { name: '🏰 Serveur', value: `${c.server?.enabled ? '✅' : '❌'} ${formatChannel(c.server?.channelId)}` },
+        { name: '💎 Boosts', value: `${c.boosts?.enabled ? '✅' : '❌'} ${formatChannel(c.boosts?.channelId)}` },
+        { name: '📅 Événements', value: `${c.events?.enabled ? '✅' : '❌'} ${formatChannel(c.events?.channelId)}` },
+        { name: '🎨 Thème', value: `NSFW: ${cfg.theme?.nsfwTone ? '🔞' : '🚫'} • Avatars: ${cfg.theme?.includeAvatars ? '✅' : '❌'} • Liens: ${cfg.theme?.includeJumpLinks ? '✅' : '❌'}\nFooter: ${cfg.theme?.footer || '—'}` }
       );
 
-    // Regrouper les boutons en 3 rangées (max 5 boutons par rangée)
+    // Boutons en plusieurs rangées
     const rows = [
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('logs_toggle_messages').setLabel('Activer/Arrêter Messages').setStyle(ButtonStyle.Secondary),
@@ -47,7 +57,39 @@ class LogsConfigHandler {
         new ButtonBuilder().setCustomId('logs_toggle_voice').setLabel('Activer/Arrêter Vocaux').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('logs_set_channel_voice').setLabel('Salon Vocaux').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('logs_toggle_roles').setLabel('Activer/Arrêter Rôles').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_roles').setLabel('Salon Rôles').setStyle(ButtonStyle.Primary)
+        new ButtonBuilder().setCustomId('logs_set_channel_roles').setLabel('Salon Rôles').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('logs_toggle_channels').setLabel('Activer/Arrêter Salons').setStyle(ButtonStyle.Secondary)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_set_channel_channels').setLabel('Salon pour Salons').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('logs_toggle_threads').setLabel('Activer/Arrêter Threads').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_set_channel_threads').setLabel('Salon Threads').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('logs_toggle_emojis').setLabel('Activer/Arrêter Émojis').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_set_channel_emojis').setLabel('Salon Émojis').setStyle(ButtonStyle.Primary)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_toggle_stickers').setLabel('Activer/Arrêter Stickers').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_set_channel_stickers').setLabel('Salon Stickers').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('logs_toggle_invites').setLabel('Activer/Arrêter Invitations').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_set_channel_invites').setLabel('Salon Invitations').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('logs_toggle_webhooks').setLabel('Activer/Arrêter Webhooks').setStyle(ButtonStyle.Secondary)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_set_channel_webhooks').setLabel('Salon Webhooks').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('logs_toggle_server').setLabel('Activer/Arrêter Serveur').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_set_channel_server').setLabel('Salon Serveur').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('logs_toggle_boosts').setLabel('Activer/Arrêter Boosts').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_set_channel_boosts').setLabel('Salon Boosts').setStyle(ButtonStyle.Primary)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_toggle_events').setLabel('Activer/Arrêter Événements').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_set_channel_events').setLabel('Salon Événements').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('logs_theme_toggle_nsfw').setLabel('NSFW On/Off').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_theme_toggle_avatars').setLabel('Avatars On/Off').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_theme_toggle_links').setLabel('Liens On/Off').setStyle(ButtonStyle.Secondary)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_theme_footer_set').setLabel('Définir Footer par défaut').setStyle(ButtonStyle.Primary)
       )
     ];
 
@@ -94,12 +136,35 @@ class LogsConfigHandler {
       if (!channelId) return interaction.reply({ content: 'Aucun salon sélectionné.', ephemeral: true });
       await this.logManager.setCategoryConfig(guildId, category, { channelId });
       await interaction.update({ content: `Salon configuré pour ${category}: <#${channelId}>`, components: [] });
-      // Refresh main
-      const replied = interaction.message?.interaction?.user?.id === interaction.user.id;
-      if (!replied) {
-        // try to edit original ephemeral reply if exists
-      }
-      return; // main will be refreshed when user presses button again
+      return;
+    }
+
+    // Theme toggles
+    if (customId === 'logs_theme_toggle_nsfw') {
+      const cfg = await this.logManager.getGuildConfig(guildId);
+      const nsfwTone = !cfg.theme?.nsfwTone;
+      await this.logManager.setThemeConfig(guildId, { nsfwTone });
+      return this.showMain(interaction);
+    }
+
+    if (customId === 'logs_theme_toggle_avatars') {
+      const cfg = await this.logManager.getGuildConfig(guildId);
+      const includeAvatars = !cfg.theme?.includeAvatars;
+      await this.logManager.setThemeConfig(guildId, { includeAvatars });
+      return this.showMain(interaction);
+    }
+
+    if (customId === 'logs_theme_toggle_links') {
+      const cfg = await this.logManager.getGuildConfig(guildId);
+      const includeJumpLinks = !cfg.theme?.includeJumpLinks;
+      await this.logManager.setThemeConfig(guildId, { includeJumpLinks });
+      return this.showMain(interaction);
+    }
+
+    if (customId === 'logs_theme_footer_set') {
+      // Définit le footer par défaut NSFW Boys & Girls
+      await this.logManager.setThemeConfig(guildId, { footer: 'Boys & Girls 🔥 Logs' });
+      return this.showMain(interaction);
     }
 
     return false;

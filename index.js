@@ -709,6 +709,51 @@ class BagBotRender {
             try { await this.logManager.logRoleUpdate(oldRole, newRole); } catch {}
         });
 
+        // Logs channels create/delete/update
+		this.client.on('channelCreate', async (channel) => { try { await this.logManager.logChannelCreate(channel); } catch {} });
+		this.client.on('channelDelete', async (channel) => { try { await this.logManager.logChannelDelete(channel); } catch {} });
+		this.client.on('channelUpdate', async (oldChannel, newChannel) => { try { await this.logManager.logChannelUpdate(oldChannel, newChannel); } catch {} });
+
+		// Logs threads
+		this.client.on('threadCreate', async (thread) => { try { await this.logManager.logThreadCreate(thread); } catch {} });
+		this.client.on('threadDelete', async (thread) => { try { await this.logManager.logThreadDelete(thread); } catch {} });
+		this.client.on('threadUpdate', async (oldThread, newThread) => { try { await this.logManager.logThreadUpdate(oldThread, newThread); } catch {} });
+
+		// Logs emojis
+		this.client.on('emojiCreate', async (emoji) => { try { await this.logManager.logEmojiCreate(emoji); } catch {} });
+		this.client.on('emojiDelete', async (emoji) => { try { await this.logManager.logEmojiDelete(emoji); } catch {} });
+		this.client.on('emojiUpdate', async (oldEmoji, newEmoji) => { try { await this.logManager.logEmojiUpdate(oldEmoji, newEmoji); } catch {} });
+
+		// Logs stickers
+		this.client.on('stickerCreate', async (sticker) => { try { await this.logManager.logStickerCreate(sticker); } catch {} });
+		this.client.on('stickerDelete', async (sticker) => { try { await this.logManager.logStickerDelete(sticker); } catch {} });
+		this.client.on('stickerUpdate', async (oldSticker, newSticker) => { try { await this.logManager.logStickerUpdate(oldSticker, newSticker); } catch {} });
+
+		// Logs invites
+		this.client.on('inviteCreate', async (invite) => { try { await this.logManager.logInviteCreate(invite); } catch {} });
+		this.client.on('inviteDelete', async (invite) => { try { await this.logManager.logInviteDelete(invite); } catch {} });
+
+		// Logs webhooks (via channel pins)
+		this.client.on('webhookUpdate', async (channel) => { try { await this.logManager.logWebhookUpdate(channel); } catch {} });
+
+		// Logs serveur (guild update)
+		this.client.on('guildUpdate', async (oldGuild, newGuild) => { try { await this.logManager.logGuildUpdate(oldGuild, newGuild); } catch {} });
+
+		// Logs boosts
+		this.client.on('guildMemberUpdate', async (oldMember, newMember) => {
+			try {
+				const before = oldMember.premiumSinceTimestamp || oldMember.premiumSince || oldMember.premiumSinceWeb || null;
+				const after = newMember.premiumSinceTimestamp || newMember.premiumSince || newMember.premiumSinceWeb || null;
+				if (!before && after) { try { await this.logManager.logBoostStart(newMember); } catch {} }
+				if (before && !after) { try { await this.logManager.logBoostEnd(newMember); } catch {} }
+			} catch {}
+		});
+
+		// Logs événements planifiés
+		this.client.on('guildScheduledEventCreate', async (event) => { try { await this.logManager.logScheduledEventCreate(event); } catch {} });
+		this.client.on('guildScheduledEventUpdate', async (oldEvent, newEvent) => { try { await this.logManager.logScheduledEventUpdate(oldEvent, newEvent); } catch {} });
+		this.client.on('guildScheduledEventDelete', async (event) => { try { await this.logManager.logScheduledEventDelete(event); } catch {} });
+
         // Gestion des erreurs
         this.client.on('error', (error) => {
             console.error('❌ Erreur Discord:', error);
