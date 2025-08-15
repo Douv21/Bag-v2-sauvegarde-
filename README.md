@@ -144,6 +144,7 @@ BAG v2 est un bot Discord complet en français offrant un système de confession
 - **Rôles Temporaires** : Achat de rôles avec durée limitée
 - **Rôles Permanents** : Achat de rôles définitifs
 - **Remises Karma** : Réductions basées sur le karma net de l'utilisateur
+- **Suites Privées** : Création automatique (rôle + salons). Expiration et nettoyage gérés automatiquement (voir `SUITES_PRIVEES_EXPIRATION.md`).
 
 ## 🤐 Système de Confessions
 
