@@ -18,7 +18,7 @@ module.exports = {
 					{ name: 'AutoThread', value: 'autothread' }
 				)
 		)
-		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
+		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
 	async execute(interaction) {
 		if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {

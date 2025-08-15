@@ -4,10 +4,10 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('config-logs')
 		.setDescription('Configuration du système de logs (Admin uniquement)')
-		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
+		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
 	async execute(interaction) {
-		if (!interaction.member.permissions.has('Administrator')) {
+		if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
 			return await interaction.reply({ content: '❌ Vous devez être administrateur pour utiliser cette commande.', flags: 64 });
 		}
 
