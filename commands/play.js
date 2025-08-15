@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, ChannelType, PermissionsBitField } = require('discord.js');
-const { playCommand, THEME } = require('../managers/MusicManager');
+const { playCommand, THEME, getGuildColor } = require('../managers/MusicManager');
+const { EmbedBuilder } = require('discord.js');
+const { buildControls } = require('../handlers/MusicControls');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -36,6 +38,18 @@ module.exports = {
       const track = await playCommand(voiceChannel, query, interaction.channel, interaction.user);
       const title = track?.title || track?.query || query;
       const msg = `🎵 Ajouté à la file: ${title}`;
+
+      // Envoyer un lecteur musique dans le salon texte
+      try {
+        const color = getGuildColor(interaction.guild);
+        const embed = new EmbedBuilder()
+          .setColor(color)
+          .setTitle('🎶 Lecteur musique')
+          .setDescription(`▶️ ${title}\nDemandé par <@${interaction.user.id}>`)
+          .setFooter({ text: THEME.footer });
+        const components = buildControls();
+        await interaction.channel.send({ embeds: [embed], components }).catch(() => {});
+      } catch {}
 
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ content: msg }).catch(() => {});

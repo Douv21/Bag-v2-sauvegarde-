@@ -730,6 +730,36 @@ class BagBotRender {
         // Logs voice events
         this.client.on('voiceStateUpdate', async (oldState, newState) => {
             try { await this.logManager.logVoiceState(oldState, newState); } catch {}
+            try {
+                const guild = newState.guild || oldState.guild;
+                if (!guild) return;
+                const me = guild.members.me || guild.members.cache.get(this.client.user.id);
+                if (!me) return;
+
+                // Determine affected channel (left or joined)
+                const leftChannel = oldState.channelId && oldState.channelId !== newState.channelId ? oldState.channel : null;
+                const joinedChannel = newState.channelId && oldState.channelId !== newState.channelId ? newState.channel : null;
+                const checkChannels = [leftChannel, joinedChannel].filter(Boolean);
+
+                // If nothing changed, also check current channel if any
+                if (checkChannels.length === 0 && newState.channel) checkChannels.push(newState.channel);
+
+                const { stop, getQueueInfo } = require('./managers/MusicManager');
+
+                for (const channel of checkChannels) {
+                    try {
+                        if (!channel || channel.guild.id !== guild.id) continue;
+                        // Only act for the channel where the bot is connected
+                        const meInThisChannel = channel.members?.has(me.id);
+                        if (!meInThisChannel) continue;
+                        const nonBotMembers = channel.members.filter(m => !m.user.bot);
+                        if (nonBotMembers.size === 0) {
+                            // No humans left: clear queue and disconnect
+                            try { await stop(guild.id); } catch {}
+                        }
+                    } catch {}
+                }
+            } catch {}
         });
 
                 // Enregistrer la date d'arrivée pour l'application des rôles obligatoires

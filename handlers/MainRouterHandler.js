@@ -54,7 +54,15 @@ class MainRouterHandler {
                 return await this.handleModerationUI(interaction, customId);
             }
 
-                        // Router basé sur le préfixe du customId
+            // Contrôles musique
+            if (customId.startsWith('music_')) {
+                console.log(`➡️ Routage vers MusicControls: ${customId}`);
+                const MusicControls = require('./MusicControls');
+                await MusicControls.handleButton(interaction);
+                return true;
+            }
+
+            // Router basé sur le préfixe du customId
             if (customId.startsWith('confession_config') || customId.startsWith('confession_')) {
                 console.log(`➡️ Routage vers ConfessionHandler: ${customId}`);
                 return await this.routeToConfessionHandler(interaction, customId);
