@@ -2251,6 +2251,14 @@ class RenderSolutionBot {
                         return;
                     }
                     
+                    // Modals style_backgrounds (images par style & rôle)
+                    if (interaction.customId.startsWith('style_backgrounds_modal_') || interaction.customId.startsWith('style_backgrounds_default_modal_')) {
+                        const LevelConfigHandler = require('./handlers/LevelConfigHandler');
+                        const levelHandler = new LevelConfigHandler();
+                        await levelHandler.handleStyleBackgroundsAction(interaction, interaction.customId);
+                        return;
+                    }
+
                     // Autres modals...
                     const MainRouterHandler = require('./handlers/MainRouterHandler');
                     const router = new MainRouterHandler(dataManager);
@@ -2398,7 +2406,10 @@ class RenderSolutionBot {
                     customId === 'level_notification_channel' ||
                     customId === 'level_card_style' ||
                     customId === 'remove_role_reward' ||
-                    customId === 'add_role_reward_select') {
+                    customId === 'add_role_reward_select' ||
+                    customId === 'style_backgrounds_style' ||
+                    customId.startsWith('style_backgrounds_role_') ||
+                    customId.startsWith('style_backgrounds_actions_')) {
                     
                     console.log('🎯 Routage sous-menu niveau:', customId);
                     const LevelConfigHandler = require('./handlers/LevelConfigHandler');
@@ -2491,6 +2502,9 @@ class RenderSolutionBot {
                             modal.addComponents(new ActionRowBuilder().addComponents(levelInput));
                             await interaction.showModal(modal);
                             
+                        } else if (customId === 'style_backgrounds_style' || customId.startsWith('style_backgrounds_role_') || customId.startsWith('style_backgrounds_actions_')) {
+                            await levelHandler.handleStyleBackgroundsAction(interaction, customId);
+                            return;
                         } else {
                             const selectedValue = interaction.values[0];
                             
