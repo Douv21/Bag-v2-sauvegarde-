@@ -105,7 +105,7 @@ https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=27
 Le bot s'enregistrera automatiquement avec les commandes:
 - `/confess` - Confessions anonymes
 - `/economie` - Profil économique  
-- `/config` - Configuration (Admin)
+- `/config-economie`, `/config-level`, `/config-confession`, `/config-moderation`, `/config-logs` - Configuration (Admin)
 - `/stats` - Statistiques
 
 ## 🔍 Monitoring & Maintenance

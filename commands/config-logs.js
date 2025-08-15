@@ -4,10 +4,11 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('config-logs')
 		.setDescription('Configuration du système de logs (Admin uniquement)')
-		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
 
 	async execute(interaction) {
-		if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+		// Harmoniser la vérification des permissions avec les autres commandes
+		if (!interaction.member.permissions.has('Administrator')) {
 			return await interaction.reply({ content: '❌ Vous devez être administrateur pour utiliser cette commande.', flags: 64 });
 		}
 
@@ -18,6 +19,11 @@ module.exports = {
 
 			const logManager = new LogManager(dataManager, interaction.client);
 			const handler = new LogsConfigHandler(dataManager, logManager);
+
+			// Répondre d'abord en éphémère pour éviter l'expiration
+			if (!interaction.replied && !interaction.deferred) {
+				await interaction.reply({ content: '⚙️ Ouverture du menu de configuration des logs...', flags: 64 });
+			}
 
 			await handler.showMain(interaction);
 		} catch (error) {
