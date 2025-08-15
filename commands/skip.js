@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType } = require('discord.js');
-const { skip } = require('../managers/SimpleMusicManager');
+const { skip } = require('../managers/MusicManager');
 
 module.exports = {
   data: new SlashCommandBuilder()

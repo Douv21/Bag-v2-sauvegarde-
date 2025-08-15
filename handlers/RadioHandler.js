@@ -1,7 +1,7 @@
 const { ActionRowBuilder, StringSelectMenuBuilder, ChannelType, PermissionsBitField } = require('discord.js');
 const path = require('path');
 const fs = require('fs');
-const { playRadio } = require('../managers/SimpleMusicManager');
+const { playRadio } = require('../managers/MusicManager');
 
 function loadRadios() {
   try {

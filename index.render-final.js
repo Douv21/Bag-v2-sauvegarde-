@@ -738,6 +738,9 @@ class RenderSolutionBot {
         await this.loadCommands();
         await this.setupEventHandlers();
 
+        // Initialisation optionnelle Lavalink (façon Rythm)
+        try { require('./managers/MusicManager').configureLavalink(this.client); } catch {}
+
         try {
             await this.client.login(process.env.DISCORD_TOKEN);
         } catch (error) {
