@@ -37,7 +37,7 @@ const ensureFileAndBlobPolyfills = () => {
 
 ensureFileAndBlobPolyfills();
 
-const { Client, Collection, GatewayIntentBits, Partials, REST, Routes, MessageFlags } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, Partials, REST, Routes, MessageFlags, AuditLogEvent, PermissionFlagsBits } = require('discord.js');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -591,20 +591,106 @@ class BagBotRender {
 
                 // Départ membre
         this.client.on('guildMemberRemove', async (member) => {
-            try { await this.logManager.logMemberLeave(member); } catch {}
+            try {
+                let isKick = false;
+                let moderatorUser = null;
+                let reason = null;
+                try {
+                    const me = member.guild?.members?.me;
+                    if (me?.permissions?.has(PermissionFlagsBits.ViewAuditLog)) {
+                        const logs = await member.guild.fetchAuditLogs({ type: AuditLogEvent.MemberKick, limit: 1 });
+                        const entry = logs?.entries?.first();
+                        if (entry && entry.target?.id === member.id && (Date.now() - entry.createdTimestamp) < 10000) {
+                            isKick = true;
+                            moderatorUser = entry.executor || null;
+                            reason = entry.reason || null;
+                        }
+                    }
+                } catch {}
+
+                if (isKick) {
+                    try { await this.logManager.logKick(member, moderatorUser, reason); } catch {}
+                } else {
+                    try { await this.logManager.logMemberLeave(member); } catch {}
+                }
+            } catch {}
         });
 
         // Changement de pseudo
         this.client.on('guildMemberUpdate', async (oldMember, newMember) => {
-            try { await this.logManager.logNicknameChange(oldMember, newMember); } catch {}
+            try {
+                const beforeTs = oldMember.communicationDisabledUntilTimestamp || null;
+                const afterTs = newMember.communicationDisabledUntilTimestamp || null;
+
+                if (beforeTs !== afterTs) {
+                    let moderatorUser = null;
+                    let reason = null;
+                    try {
+                        const me = newMember.guild?.members?.me;
+                        if (me?.permissions?.has(PermissionFlagsBits.ViewAuditLog)) {
+                            const logs = await newMember.guild.fetchAuditLogs({ type: AuditLogEvent.MemberUpdate, limit: 5 });
+                            const entry = logs?.entries?.find(e =>
+                                e?.target?.id === newMember.id &&
+                                (Date.now() - e.createdTimestamp) < 15000 &&
+                                Array.isArray(e.changes) &&
+                                e.changes.some(ch => ch.key === 'communication_disabled_until')
+                            );
+                            if (entry) {
+                                moderatorUser = entry.executor || null;
+                                reason = entry.reason || null;
+                            }
+                        }
+                    } catch {}
+
+                    if (!beforeTs && afterTs) {
+                        const durationMs = Math.max(0, afterTs - Date.now());
+                        try { await this.logManager.logMute(newMember, moderatorUser, durationMs, reason); } catch {}
+                    } else if (beforeTs && !afterTs) {
+                        try { await this.logManager.logUnmute(newMember, moderatorUser, reason); } catch {}
+                    } else if (beforeTs && afterTs && beforeTs !== afterTs) {
+                        const durationMs = Math.max(0, afterTs - Date.now());
+                        try { await this.logManager.logMute(newMember, moderatorUser, durationMs, reason); } catch {}
+                    }
+                }
+
+                try { await this.logManager.logNicknameChange(oldMember, newMember); } catch {}
+            } catch {}
         });
 
         // Ban/Unban
         this.client.on('guildBanAdd', async (ban) => {
-            try { await this.logManager.logBan(ban.guild, ban.user, ban.reason); } catch {}
+            try {
+                let moderatorUser = null;
+                let reason = ban.reason || null;
+                try {
+                    const me = ban.guild?.members?.me;
+                    if (me?.permissions?.has(PermissionFlagsBits.ViewAuditLog)) {
+                        const logs = await ban.guild.fetchAuditLogs({ type: AuditLogEvent.MemberBanAdd, limit: 1 });
+                        const entry = logs?.entries?.first();
+                        if (entry && entry.target?.id === ban.user.id && (Date.now() - entry.createdTimestamp) < 10000) {
+                            moderatorUser = entry.executor || null;
+                            if (!reason) reason = entry.reason || null;
+                        }
+                    }
+                } catch {}
+                try { await this.logManager.logBan(ban.guild, ban.user, reason, moderatorUser); } catch {}
+            } catch {}
         });
         this.client.on('guildBanRemove', async (ban) => {
-            try { await this.logManager.logUnban(ban.guild, ban.user); } catch {}
+            try {
+                let moderatorUser = null;
+                try {
+                    const me = ban.guild?.members?.me;
+                    if (me?.permissions?.has(PermissionFlagsBits.ViewAuditLog)) {
+                        const logs = await ban.guild.fetchAuditLogs({ type: AuditLogEvent.MemberBanRemove, limit: 1 });
+                        const entry = logs?.entries?.first();
+                        if (entry && entry.target?.id === ban.user.id && (Date.now() - entry.createdTimestamp) < 10000) {
+                            moderatorUser = entry.executor || null;
+                        }
+                    }
+                } catch {}
+                try { await this.logManager.logUnban(ban.guild, ban.user, moderatorUser); } catch {}
+            } catch {}
         });
 
         // Gestion des erreurs
