@@ -1,0 +1,49 @@
+# Commandes accessibles à tous les membres
+
+- `/action`: Tire une Action aléatoire (jeu AouV).
+- `/after-dark`: Bonus de plaisir selon l’heure (NSFW).
+- `/aouv`: Démarre le jeu Action ou Vérité dans le salon.
+- `/aphrodisiaque`: Offrir un aphrodisiaque à un membre (NSFW).
+- `/aguicher`: Aguicher un membre pour gagner du plaisir (NSFW).
+- `/baiser`: Baiser un membre (NSFW).
+- `/boutique`: Accéder à la boutique du serveur (NSFW).
+- `/caresser`: Caresser un membre (NSFW).
+- `/confess`: Envoyer une confession anonyme (dans les salons autorisés).
+- `/crime`: Commettre un crime pour beaucoup de plaisir (très risqué 😈).
+- `/daily`: Récupérer votre récompense quotidienne.
+- `/defier`: Lancer un défi osé pour beaucoup de plaisir (risqué 😈).
+- `/diagnostics`: Affiche des informations de diagnostic du bot (overview, stats, modals).
+- `/donner`: Donner du plaisir à un membre.
+- `/economie`: Voir votre profil Boys & Girls.
+- `/embrasser`: Embrasser un membre (NSFW).
+- `/fuck`: Fuck un membre (NSFW).
+- `/inactivity-report`: Se mettre en pause pour éviter l’auto‑kick d’inactivité.
+- `/je-suis-actif`: Signaler votre activité pour éviter l’auto‑kick.
+- `/karma`: Classement karma du serveur.
+- `/leaderboard`: Afficher le classement des niveaux.
+- `/level`: Afficher votre niveau et progression XP.
+- `/massage`: Faire un massage à un membre (NSFW).
+- `/nowplaying`: Affiche le morceau en cours (musique).
+- `/objet`: Gérer vos objets de boutique (offrir, supprimer, interaction).
+- `/oser`: Oser pour gagner du plaisir (action pimentée 😈).
+- `/parier` (ancien): Ancienne version de pari (si présente).
+- `/pecher`: Pêcher pour gagner du plaisir (action standard 😇).
+- `/play`: Joue une musique ou une radio.
+- `/profil-carte`: Génère une carte de profil personnalisée.
+- `/profil-utilisateur`: Profil utilisateur avec carte personnalisée.
+- `/queue`: Affiche la file d’attente musique.
+- `/radio`: Ouvre un sélecteur de radios en direct.
+- `/resume`: Relance la lecture musicale.
+- `/pause`: Met la lecture en pause.
+- `/seek`: Aller à un temps spécifique dans la musique.
+- `/seduire`: Séduire un membre (NSFW).
+- `/seduire-mass`: Séduire la foule (très risqué 😈).
+- `/skip`: Passer au morceau suivant.
+- `/stats`: Statistiques du bot.
+- `/stop`: Arrêter la musique et vider la file.
+- `/striptease`: Faire un striptease (NSFW).
+- `/topplaisir`: Classement des membres avec le plus de plaisir 💋.
+- `/travailler`: Travailler pour gagner du plaisir (action standard).
+- `/verite`: Tire une Vérité aléatoire.
+- `/voler`: Voler du plaisir à un membre (risqué 😈).
+- `/volume`: Ajuste le volume de la musique.
