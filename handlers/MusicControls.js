@@ -40,9 +40,6 @@ async function handleButton(interaction) {
       case 'music_toggle': {
         const info = getQueueInfo(interaction.guildId);
         if (info?.current) {
-          // Déterminer l'état via tentative: Discord ne donne pas directement l'état ici
-          // On alterne: si un morceau existe on toggle en reprenant ou en pausant
-          // On tente une pause puis si aucune erreur, message pause; sinon resume
           try {
             await pause(interaction.guildId);
             msg = '⏸️ Lecture en pause.';

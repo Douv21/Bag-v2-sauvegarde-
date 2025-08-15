@@ -4,7 +4,7 @@ const { getQueueInfo, createNowPlayingEmbed } = require('../managers/MusicManage
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('nowplaying')
-    .setDescription('Affiche le morceau en cours')
+    .setDescription('Affiche le morceau en cours (Lavalink)')
     .setDMPermission(false),
 
   cooldown: 2,

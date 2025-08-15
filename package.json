@@ -8,7 +8,7 @@
     "diagnose:music": "node -e \"console.log('LOAD'); require('./managers/SimpleMusicManager'); console.log('OK')\"",
     "diag:yt-dlp": "node node_modules/@distube/yt-dlp/bin/yt-dlp --version",
     "diag:voice": "node -e \"try{console.log(require('@discordjs/voice').generateDependencyReport())}catch(e){console.log('no-report', e?.message)}\"",
-    "diag:lavalink": "node -e \"try{const M=require('./managers/LavalinkMusicManager');console.log('configured',!!(process.env.LAVALINK_HOST||process.env.LAVALINK_NODES));console.log('has lib',!!require('shoukaku'));}catch(e){console.log('no shoukaku',e?.message)}\"",
+    "diag:lavalink": "node -e \"try{const M=require('./managers/LavalinkMusicManager');console.log('configured',!!(process.env.LAVALINK_HOST||process.env.LAVALINK_NODES));console.log('has lib',!!require('shoukaku'));}catch(e){console.log('no shoukaku',e?.message)}\"", 
     "test": "echo \"Test passed\" && exit 0",
     "postinstall": "node scripts/install-yt-dlp.js"
   },
@@ -18,13 +18,8 @@
     "express": "^4.21.2",
     "mongodb": "^6.18.0",
     "sharp": "^0.34.3",
-    "@discordjs/voice": "^0.17.0",
-    "@discordjs/opus": "^0.9.0",
-    "opusscript": "^0.0.8",
-    "ffmpeg-static": "^5.2.0",
     "is-ci": "^3.0.1",
     "libsodium-wrappers": "^0.7.13",
-    "play-dl": "^1.9.7",
     "shoukaku": "^4.1.1"
   },
   "engines": {

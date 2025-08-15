@@ -43,14 +43,14 @@ BAG v2 est un bot Discord complet en français offrant un système de confession
 4. Lancez le bot : `npm start`
 
 ### Diagnostics musique
-- Vérifier chargement du module: `npm run diagnose:music`
+- Vérifier Lavalink: `npm run diag:lavalink`
 - Version yt-dlp: `npm run diag:yt-dlp`
 - Rapport audio: `npm run diag:voice`
 - Vérifier Lavalink: `npm run diag:lavalink`
 
 ## 🎵 Option Rythm-like (Lavalink + Shoukaku)
 
-Par défaut, le bot utilise `@discordjs/voice` + `ffmpeg` + `play-dl`. Vous pouvez activer un système de lecture façon Rythm (Lavalink) en fournissant les variables d’environnement suivantes:
+Le bot utilise Lavalink (Shoukaku). Fournissez les variables d’environnement suivantes:
 
 - Configuration simple:
 ```env
@@ -67,7 +67,7 @@ LAVALINK_NODES=[
 ]
 ```
 
-Le routeur `managers/MusicManager` bascule automatiquement sur Lavalink si configuré, sinon garde le système actuel. Les commandes existantes (`/play`, `/pause`, `/skip`, `/stop`, `/queue`, `/volume`, `/nowplaying`) restent inchangées.
+Le routeur `managers/MusicManager` utilise uniquement Lavalink. Commandes: `/play`, `/pause`, `/skip`, `/stop`, `/queue`, `/volume`, `/nowplaying`.
 
 Exemple (nœud public sécurisé):
 ```env
