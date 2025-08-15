@@ -50,6 +50,7 @@ const CommandHandler = require('./handlers/CommandHandler');
 const ReminderManager = require('./managers/ReminderManager');
 const ReminderInteractionHandler = require('./handlers/ReminderInteractionHandler');
 const ModerationManager = require('./managers/ModerationManager');
+const MusicManagerRouter = require('./managers/MusicManager');
 
 class BagBotRender {
     constructor() {
@@ -104,7 +105,10 @@ class BagBotRender {
             
             // Configuration des événements Discord
             this.setupDiscordEvents();
-            
+
+            // Initialisation optionnelle Lavalink (façon Rythm)
+            try { MusicManagerRouter.configureLavalink(this.client); } catch {}
+
             // Connexion Discord
             await this.client.login(process.env.DISCORD_TOKEN);
             

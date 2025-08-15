@@ -1,5 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField } = require('discord.js');
-const { pause, resume, skip, stop, setVolume, getQueueInfo, createNowPlayingEmbed } = require('../managers/SimpleMusicManager');
+const { pause, resume, skip, stop, setVolume, getQueueInfo, createNowPlayingEmbed } = require('../managers/MusicManager');
 
 function buildControls() {
   const row1 = new ActionRowBuilder().addComponents(

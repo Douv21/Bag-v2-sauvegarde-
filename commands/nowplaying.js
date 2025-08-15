@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType } = require('discord.js');
-const { getQueueInfo, createNowPlayingEmbed } = require('../managers/SimpleMusicManager');
+const { getQueueInfo, createNowPlayingEmbed } = require('../managers/MusicManager');
 
 module.exports = {
   data: new SlashCommandBuilder()

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType, PermissionsBitField } = require('discord.js');
-const { playCommand, THEME } = require('../managers/SimpleMusicManager');
+const { playCommand, THEME } = require('../managers/MusicManager');
 const { buildRadioSelector } = require('../handlers/RadioHandler');
 
 module.exports = {
