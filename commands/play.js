@@ -30,6 +30,10 @@ module.exports = {
       return interaction.reply({ content: '❌ Je n’ai pas les permissions pour me connecter/parler ici.', ephemeral: true });
     }
 
+    // Vérifier les permissions du salon texte pour afficher le lecteur (embed + boutons)
+    const textPerms = interaction.channel?.permissionsFor(me);
+    const canSendPlayer = !!textPerms && textPerms.has(PermissionsBitField.Flags.SendMessages) && textPerms.has(PermissionsBitField.Flags.EmbedLinks);
+
     const query = interaction.options.getString('terme', true).trim();
 
     try {
@@ -37,19 +41,27 @@ module.exports = {
 
       const track = await playCommand(voiceChannel, query, interaction.channel, interaction.user);
       const title = track?.title || track?.query || query;
-      const msg = `🎵 Ajouté à la file: ${title}`;
 
-      // Envoyer un lecteur musique dans le salon texte
-      try {
-        const color = getGuildColor(interaction.guild);
-        const embed = new EmbedBuilder()
-          .setColor(color)
-          .setTitle('🎶 Lecteur musique')
-          .setDescription(`▶️ ${title}\nDemandé par <@${interaction.user.id}>`)
-          .setFooter({ text: THEME.footer });
-        const components = buildControls();
-        await interaction.channel.send({ embeds: [embed], components }).catch(() => {});
-      } catch {}
+      // Message final (ephemeral)
+      const msgParts = [`🎵 Ajouté à la file: ${title}`];
+      if (!canSendPlayer) {
+        msgParts.push('ℹ️ Je ne peux pas afficher le lecteur dans ce salon (permissions manquantes: Envoyer des messages + Intégrer des liens).');
+      }
+      const msg = msgParts.join('\n');
+
+      // Envoyer un lecteur musique dans le salon texte si possible
+      if (canSendPlayer) {
+        try {
+          const color = getGuildColor(interaction.guild);
+          const embed = new EmbedBuilder()
+            .setColor(color)
+            .setTitle('🎶 Lecteur musique')
+            .setDescription(`▶️ ${title}\nDemandé par <@${interaction.user.id}>`)
+            .setFooter({ text: THEME.footer });
+          const components = buildControls();
+          await interaction.channel.send({ embeds: [embed], components }).catch(() => {});
+        } catch {}
+      }
 
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ content: msg }).catch(() => {});
