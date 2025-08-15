@@ -56,8 +56,8 @@ module.exports = {
       const errorMsg = String(err?.message || err || 'Erreur inconnue');
       let friendly;
       
-      if (errorMsg.startsWith('TIMEOUT_')) {
-        friendly = '⏰ Timeout lors de la récupération du flux. Réessaie dans un instant.';
+      if (errorMsg.startsWith('TIMEOUT_') || errorMsg === 'TIMEOUT_PIPED_FETCH') {
+        friendly = '⏰ Timeout lors de la récupération du flux (Piped). Réessaie dans un instant ou utilise un autre terme/lien.';
       } else if (errorMsg === 'BOT_NOT_CONNECTED') {
         friendly = '🤖 Le bot n\'est pas connecté à Discord. Contacte un administrateur.';
       } else if (errorMsg === 'INVALID_VOICE_ADAPTER') {

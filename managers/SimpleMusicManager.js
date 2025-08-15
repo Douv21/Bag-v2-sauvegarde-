@@ -201,7 +201,7 @@ function getPipedInstances() {
 
 async function pipedFetchJson(base, pathname) {
   const abort = new AbortController();
-  const timeout = setTimeout(() => abort.abort(), Number(process.env.PIPED_TIMEOUT || 8000));
+  const timeout = setTimeout(() => abort.abort(), Number(process.env.PIPED_TIMEOUT || 15000));
   try {
     const url = `${base.replace(/\/$/, '')}${pathname}`;
     const res = await fetch(url, {
@@ -213,6 +213,12 @@ async function pipedFetchJson(base, pathname) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
+  } catch (err) {
+    const msg = String(err?.message || err || '');
+    if (err?.name === 'AbortError' || msg.toLowerCase().includes('aborted')) {
+      throw new Error('TIMEOUT_PIPED_FETCH');
+    }
+    throw err;
   } finally {
     clearTimeout(timeout);
   }
@@ -220,32 +226,33 @@ async function pipedFetchJson(base, pathname) {
 
 async function pipedSearchFirst(query) {
   const bases = getPipedInstances();
-  for (const b of bases) {
-    try {
-      const data = await pipedFetchJson(b, `/api/v1/search?q=${encodeURIComponent(query)}&region=${encodeURIComponent(process.env.PIPED_REGION || 'FR')}`);
-      if (Array.isArray(data) && data.length > 0) {
-        const firstVideo = data.find(i => (i?.type || 'video') === 'video') || data[0];
-        const id = firstVideo?.id || firstVideo?.url?.split('v=')[1] || null;
-        if (id) {
-          return { id, url: `https://www.youtube.com/watch?v=${id}`, title: firstVideo?.title || query };
-        }
+  const tasks = bases.map(b => (async () => {
+    const data = await pipedFetchJson(b, `/api/v1/search?q=${encodeURIComponent(query)}&region=${encodeURIComponent(process.env.PIPED_REGION || 'FR')}`);
+    if (Array.isArray(data) && data.length > 0) {
+      const firstVideo = data.find(i => (i?.type || 'video') === 'video') || data[0];
+      const id = firstVideo?.id || firstVideo?.url?.split('v=')[1] || null;
+      if (id) {
+        return { id, url: `https://www.youtube.com/watch?v=${id}`, title: firstVideo?.title || query };
       }
-    } catch (e) {
-      // try next instance
     }
+    throw new Error('EMPTY_RESULT');
+  })());
+  try {
+    return await Promise.any(tasks);
+  } catch {
+    throw new Error('piped search failed');
   }
-  throw new Error('piped search failed');
 }
 
 async function pipedGetInfo(videoId) {
   const bases = getPipedInstances();
-  for (const b of bases) {
-    try {
-      const info = await pipedFetchJson(b, `/api/v1/streams/${encodeURIComponent(videoId)}`);
-      if (info && (info.audioStreams || info.title)) return { ...info, _base: b };
-    } catch {}
+  const tasks = bases.map(b => pipedFetchJson(b, `/api/v1/streams/${encodeURIComponent(videoId)}`));
+  try {
+    const info = await Promise.any(tasks);
+    return info && (info.audioStreams || info.title) ? info : (() => { throw new Error('NO_INFO'); })();
+  } catch {
+    throw new Error('piped info failed');
   }
-  throw new Error('piped info failed');
 }
 
 // Helper radios: charge une fois la liste et cherche par id/nom

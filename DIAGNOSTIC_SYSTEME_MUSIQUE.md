@@ -120,6 +120,10 @@ Le système affiche maintenant des messages clairs :
 2. **Tester une commande** : `/play test music`
 3. **Vérifier les permissions** sur le serveur Discord
 4. **Optionnel** : Configurer les cookies YouTube pour éviter les limitations
+- Utiliser PIPED (YouTube sans cookies) avec variables:
+  - `PIPED_BASE_URL` (optionnel, par défaut `https://piped.video`)
+  - `PIPED_TIMEOUT` (ms, par défaut 15000)
+  - `PIPED_REGION` (code pays, par défaut FR)
 
 ## 📊 **Résumé**
 

@@ -51,3 +51,9 @@ services:
         fromSecret: YOUTUBE_COOKIES
       - key: YT_COOKIES_FILE
         value: /opt/render/project/src/cookies.txt
+      - key: PIPED_TIMEOUT
+        value: "15000"
+      - key: PIPED_REGION
+        value: FR
+      - key: PIPED_BASE_URL
+        value: https://piped.video
