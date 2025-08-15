@@ -581,12 +581,18 @@ class BagBotRender {
             try { await this.logManager.logMessageDelete(message); } catch {}
         });
 
+        // Logs voice events
+        this.client.on('voiceStateUpdate', async (oldState, newState) => {
+            try { await this.logManager.logVoiceState(oldState, newState); } catch {}
+        });
+
                 // Enregistrer la date d'arrivée pour l'application des rôles obligatoires
         this.client.on('guildMemberAdd', async (member) => {
             try {
                 await this.moderationManager.recordJoin(member.guild.id, member.id);
             } catch {}
             try { await this.logManager.logMemberJoin(member); } catch {}
+            try { await this.logManager.updateMemberRolesSnapshot(member); } catch {}
         });
 
                 // Départ membre
@@ -654,6 +660,7 @@ class BagBotRender {
                 }
 
                 try { await this.logManager.logNicknameChange(oldMember, newMember); } catch {}
+                try { await this.logManager.logMemberRoleChanges(oldMember, newMember); } catch {}
             } catch {}
         });
 
@@ -691,6 +698,17 @@ class BagBotRender {
                 } catch {}
                 try { await this.logManager.logUnban(ban.guild, ban.user, moderatorUser); } catch {}
             } catch {}
+        });
+
+        // Role create/delete/update
+        this.client.on('roleCreate', async (role) => {
+            try { await this.logManager.logRoleCreate(role); } catch {}
+        });
+        this.client.on('roleDelete', async (role) => {
+            try { await this.logManager.logRoleDelete(role); } catch {}
+        });
+        this.client.on('roleUpdate', async (oldRole, newRole) => {
+            try { await this.logManager.logRoleUpdate(oldRole, newRole); } catch {}
         });
 
         // Gestion des erreurs
