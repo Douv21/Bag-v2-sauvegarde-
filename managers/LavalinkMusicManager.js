@@ -98,7 +98,11 @@ function init(discordClient) {
 }
 
 function isReady() {
-	return !!shoukaku && !!clientRef;
+	try {
+		return !!shoukaku && !!clientRef && !!shoukaku.getIdealNode();
+	} catch (_) {
+		return false;
+	}
 }
 
 const guildIdToState = new Map();
