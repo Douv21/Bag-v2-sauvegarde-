@@ -7,7 +7,7 @@ module.exports = {
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
 
 	async execute(interaction) {
-		if (!interaction.member.permissions.has('Administrator')) {
+		if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
 			return await interaction.reply({ content: '❌ Vous devez être administrateur pour utiliser cette commande.', flags: 64 });
 		}
 
@@ -21,7 +21,10 @@ module.exports = {
 
 			// Ouvrir le menu principal de modération
 			await interaction.reply({ content: '⚙️ Ouverture du menu de modération...', flags: 64 });
-			await interaction.client.emit('interactionCreate', { ...interaction, customId: 'moderation_main', isButton: () => true, isStringSelectMenu: () => false, isModalSubmit: () => false });
+			const MainRouterHandler = require('../handlers/MainRouterHandler');
+			const dataManager = require('../utils/simpleDataManager');
+			const router = new MainRouterHandler(dataManager);
+			await router.handleModerationUI(interaction, 'moderation_main');
 		} catch (error) {
 			console.error('Erreur /config-moderation:', error);
 			if (interaction.replied || interaction.deferred) {
