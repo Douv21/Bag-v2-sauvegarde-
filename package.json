@@ -20,7 +20,8 @@
     "sharp": "^0.34.3",
     "is-ci": "^3.0.1",
     "libsodium-wrappers": "^0.7.13",
-    "shoukaku": "^4.1.1"
+    "shoukaku": "^4.1.1",
+    "multer": "^1.4.5-lts.1"
   },
   "engines": {
     "node": "18.x"
