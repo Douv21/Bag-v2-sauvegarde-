@@ -69,6 +69,14 @@ LAVALINK_NODES=[
 
 Le routeur `managers/MusicManager` bascule automatiquement sur Lavalink si configuré, sinon garde le système actuel. Les commandes existantes (`/play`, `/pause`, `/skip`, `/stop`, `/queue`, `/volume`, `/nowplaying`) restent inchangées.
 
+Exemple (nœud public sécurisé):
+```env
+LAVALINK_HOST=lava-v4.ajieblogs.eu.org
+LAVALINK_PORT=443
+LAVALINK_PASSWORD=https://dsc.gg/ajidevserver
+LAVALINK_SECURE=true
+```
+
 ## 🎮 Liste Complète des Commandes (28)
 
 ### 👤 Commandes Utilisateur (14)

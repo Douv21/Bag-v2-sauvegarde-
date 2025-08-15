@@ -62,6 +62,6 @@ services:
       - key: LAVALINK_PORT
         value: "443"
       - key: LAVALINK_PASSWORD
-        value: https://dsc.gg/ajidevserver
+        fromSecret: LAVALINK_PASSWORD
       - key: LAVALINK_SECURE
         value: "true"
