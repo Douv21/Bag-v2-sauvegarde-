@@ -474,6 +474,26 @@ class BagBotRender {
                     }
                     
                     console.log(`🔄 Traitement interaction: ${interaction.customId}`);
+
+                    // Routage prioritaire: configuration des images par style & rôle
+                    try {
+                        const id = interaction.customId || '';
+                        if (
+                            id === 'style_backgrounds_style' ||
+                            id.startsWith('style_backgrounds_role_') ||
+                            id.startsWith('style_backgrounds_actions_') ||
+                            id.startsWith('style_backgrounds_modal_') ||
+                            id.startsWith('style_backgrounds_default_modal_')
+                        ) {
+                            const LevelConfigHandler = require('./handlers/LevelConfigHandler');
+                            const levelHandler = new LevelConfigHandler();
+                            await levelHandler.handleStyleBackgroundsAction(interaction, id);
+                            return;
+                        }
+                    } catch (styleRouteError) {
+                        console.error('❌ Erreur routage style_backgrounds:', styleRouteError);
+                    }
+
                     // Rappels bump désactivés (pas de boutons)
                     // Router vers le MainRouterHandler
                     const handled = await this.mainRouterHandler.handleInteraction(interaction);
