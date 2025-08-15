@@ -8,11 +8,17 @@ class LogManager {
 
   async getGuildConfig(guildId) {
     const all = await this.dataManager.getData('logs_config');
-    if (!all[guildId]) {
-      all[guildId] = this.getDefaultGuildConfig(guildId);
-      await this.dataManager.saveData('logs_config', all);
+    const current = all[guildId] || this.getDefaultGuildConfig(guildId);
+    // Merge in any new categories/fields introduced after initial creation
+    const def = this.getDefaultGuildConfig(guildId);
+    const merged = { ...current };
+    merged.categories = { ...def.categories, ...(current.categories || {}) };
+    for (const key of Object.keys(def.categories)) {
+      merged.categories[key] = { ...def.categories[key], ...(merged.categories[key] || {}) };
     }
-    return all[guildId];
+    all[guildId] = merged;
+    await this.dataManager.saveData('logs_config', all);
+    return merged;
   }
 
   getDefaultGuildConfig(guildId) {
@@ -24,7 +30,10 @@ class LogManager {
         moderation: { enabled: true, channelId: null, logWarns: true, logMutes: true, logKicks: true, logBans: true, logUnbans: true, logPurges: true },
         members: { enabled: true, channelId: null, logJoins: true, logLeaves: true },
         nicknames: { enabled: true, channelId: null },
-        economy: { enabled: true, channelId: null, logDaily: true, logTransfers: true, logRewards: true, logAdminChanges: true }
+        economy: { enabled: true, channelId: null, logDaily: true, logTransfers: true, logRewards: true, logAdminChanges: true },
+        // New categories
+        voice: { enabled: true, channelId: null, logJoins: true, logLeaves: true, logMoves: true, logMutes: true, logDeafens: true, logStreams: true, logCameras: true },
+        roles: { enabled: true, channelId: null, logMemberChanges: true, logRoleCreate: true, logRoleDelete: true, logRoleUpdate: true }
       }
     };
   }
@@ -46,17 +55,48 @@ class LogManager {
     return cfg.categories[category];
   }
 
-  async sendToCategory(guild, category, embed) {
+  async sendToCategory(guild, category, embed, options = {}) {
     try {
       if (!guild) return;
       const cfg = await this.getGuildConfig(guild.id);
       if (!cfg.enabled) return;
       const cat = cfg.categories[category];
-      if (!cat || !cat.enabled || !cat.channelId) return;
-      const channel = guild.channels.cache.get(cat.channelId) || await guild.channels.fetch(cat.channelId).catch(() => null);
+      if (!cat || !cat.enabled) return;
+      // Fallback to another configured channel if this category has no channel set yet
+      let channelId = cat.channelId;
+      if (!channelId) {
+        const fallbackOrder = ['moderation', 'members', 'messages', 'economy', 'nicknames'];
+        for (const key of fallbackOrder) {
+          const c = cfg.categories[key];
+          if (c && c.enabled && c.channelId) { channelId = c.channelId; break; }
+        }
+      }
+      if (!channelId) return;
+      const channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
       if (!channel) return;
-      await channel.send({ embeds: [embed] }).catch(() => {});
+      const payload = { embeds: [embed], ...options };
+      await channel.send(payload).catch(() => {});
     } catch {}
+  }
+
+  // === Utilities for role snapshots ===
+  async updateMemberRolesSnapshot(member) {
+    try {
+      const all = await this.dataManager.getData('member_roles');
+      if (!all[member.guild.id]) all[member.guild.id] = {};
+      const roleIds = member.roles.cache.filter(r => r.editable || true).map(r => r.id).filter(id => id !== member.guild.id);
+      all[member.guild.id][member.id] = { roleIds, updatedAt: Date.now() };
+      await this.dataManager.saveData('member_roles', all);
+    } catch {}
+  }
+
+  async getMemberRolesSnapshot(guildId, userId) {
+    try {
+      const all = await this.dataManager.getData('member_roles');
+      return all[guildId]?.[userId]?.roleIds || [];
+    } catch {
+      return [];
+    }
   }
 
   // Message logs
@@ -111,6 +151,29 @@ class LogManager {
         embed.addFields({ name: 'Contenu', value: message.content.slice(0, 1024) });
       }
 
+      // Attachments (images in particular)
+      try {
+        const atts = Array.from((message.attachments || new Map()).values());
+        if (atts.length > 0) {
+          const imageAtts = atts.filter(a => {
+            const ct = (a.contentType || '').toLowerCase();
+            const name = (a.name || '').toLowerCase();
+            return ct.startsWith('image/') || name.match(/\.(png|jpe?g|gif|webp)$/);
+          });
+          if (imageAtts.length > 0) {
+            // Show first image as preview and list others as links
+            embed.setImage(imageAtts[0].proxyURL || imageAtts[0].url);
+            const links = imageAtts.map((a, idx) => `[image_${idx + 1}](${a.url})`).join(' • ');
+            embed.addFields({ name: 'Images', value: links.slice(0, 1024) });
+          }
+          const other = atts.filter(a => !imageAtts.includes(a));
+          if (other.length > 0) {
+            const filesList = other.map(a => `[${a.name}](${a.url})`).join(' • ');
+            embed.addFields({ name: 'Fichiers', value: filesList.slice(0, 1024) });
+          }
+        }
+      } catch {}
+
       await this.sendToCategory(guild, 'messages', embed);
     } catch {}
   }
@@ -147,6 +210,13 @@ class LogManager {
         .addFields({ name: 'Membre', value: `${member.user?.tag || 'Inconnu'} (<@${member.id}>)` })
         .setTimestamp(new Date());
 
+      // Include roles held
+      try {
+        const roles = member.roles?.cache?.filter(r => r.id !== member.guild.id) || null;
+        const rolesStr = roles && roles.size > 0 ? roles.map(r => `<@&${r.id}>`).join(' ') : null;
+        if (rolesStr) embed.addFields({ name: 'Rôles', value: rolesStr.slice(0, 1024) });
+      } catch {}
+
       await this.sendToCategory(member.guild, 'members', embed);
     } catch {}
   }
@@ -172,6 +242,165 @@ class LogManager {
         .setTimestamp(new Date());
 
       await this.sendToCategory(newMember.guild, 'nicknames', embed);
+    } catch {}
+  }
+
+  // Roles (member role changes)
+  async logMemberRoleChanges(oldMember, newMember) {
+    try {
+      const cfg = await this.getGuildConfig(newMember.guild.id);
+      const cat = cfg.categories.roles;
+      if (!cat?.enabled || !cat.logMemberChanges) return;
+
+      const before = new Set(oldMember.roles.cache.keys());
+      const after = new Set(newMember.roles.cache.keys());
+      before.delete(newMember.guild.id); // remove @everyone
+      after.delete(newMember.guild.id);
+
+      const added = [...after].filter(id => !before.has(id));
+      const removed = [...before].filter(id => !after.has(id));
+      if (added.length === 0 && removed.length === 0) return;
+
+      const addedStr = added.map(id => `<@&${id}>`).join(' ');
+      const removedStr = removed.map(id => `<@&${id}>`).join(' ');
+
+      const embed = new EmbedBuilder()
+        .setColor(added.length > 0 ? Colors.Green : Colors.Red)
+        .setTitle('🧩 Rôles modifiés')
+        .addFields(
+          { name: 'Membre', value: `${newMember.user.tag} (<@${newMember.id}>)` }
+        )
+        .setTimestamp(new Date());
+
+      if (added.length > 0) embed.addFields({ name: 'Ajoutés', value: addedStr.slice(0, 1024) });
+      if (removed.length > 0) embed.addFields({ name: 'Retirés', value: removedStr.slice(0, 1024) });
+
+      await this.updateMemberRolesSnapshot(newMember);
+      await this.sendToCategory(newMember.guild, 'roles', embed);
+    } catch {}
+  }
+
+  async logRoleCreate(role) {
+    try {
+      const cfg = await this.getGuildConfig(role.guild.id);
+      const cat = cfg.categories.roles;
+      if (!cat?.enabled || !cat.logRoleCreate) return;
+      const embed = new EmbedBuilder()
+        .setColor(Colors.Green)
+        .setTitle('➕ Rôle créé')
+        .addFields(
+          { name: 'Rôle', value: `<@&${role.id}> (${role.name})`, inline: true },
+          { name: 'Couleur', value: role.hexColor || '—', inline: true }
+        )
+        .setTimestamp(new Date());
+      await this.sendToCategory(role.guild, 'roles', embed);
+    } catch {}
+  }
+
+  async logRoleDelete(role) {
+    try {
+      const cfg = await this.getGuildConfig(role.guild.id);
+      const cat = cfg.categories.roles;
+      if (!cat?.enabled || !cat.logRoleDelete) return;
+      const embed = new EmbedBuilder()
+        .setColor(Colors.DarkRed)
+        .setTitle('🗑️ Rôle supprimé')
+        .addFields(
+          { name: 'Rôle', value: `${role.name} (${role.id})` }
+        )
+        .setTimestamp(new Date());
+      await this.sendToCategory(role.guild, 'roles', embed);
+    } catch {}
+  }
+
+  async logRoleUpdate(oldRole, newRole) {
+    try {
+      const cfg = await this.getGuildConfig(newRole.guild.id);
+      const cat = cfg.categories.roles;
+      if (!cat?.enabled || !cat.logRoleUpdate) return;
+      const changes = [];
+      if (oldRole.name !== newRole.name) changes.push({ name: 'Nom', value: `${oldRole.name} → ${newRole.name}` });
+      if (oldRole.hexColor !== newRole.hexColor) changes.push({ name: 'Couleur', value: `${oldRole.hexColor} → ${newRole.hexColor}` });
+      if (changes.length === 0) return;
+      const embed = new EmbedBuilder()
+        .setColor(Colors.Blurple)
+        .setTitle('✏️ Rôle modifié')
+        .addFields(
+          { name: 'Rôle', value: `<@&${newRole.id}> (${newRole.name})` },
+          ...changes.slice(0, 24)
+        )
+        .setTimestamp(new Date());
+      await this.sendToCategory(newRole.guild, 'roles', embed);
+    } catch {}
+  }
+
+  // Voice
+  async logVoiceState(oldState, newState) {
+    try {
+      const member = newState.member || oldState.member;
+      const guild = (member && member.guild) || newState.guild || oldState.guild;
+      if (!guild || !member || member.user?.bot) return;
+      const cfg = await this.getGuildConfig(guild.id);
+      const cat = cfg.categories.voice;
+      if (!cat?.enabled) return;
+
+      const oldChannel = oldState.channel;
+      const newChannel = newState.channel;
+
+      // Join / Leave / Move
+      if (!oldChannel && newChannel && cat.logJoins) {
+        const embed = new EmbedBuilder()
+          .setColor(Colors.Green)
+          .setTitle('🔊 Rejoint un vocal')
+          .addFields(
+            { name: 'Membre', value: `${member.user.tag} (<@${member.id}>)`, inline: true },
+            { name: 'Salon', value: `<#${newChannel.id}>`, inline: true }
+          )
+          .setTimestamp(new Date());
+        await this.sendToCategory(guild, 'voice', embed);
+      } else if (oldChannel && !newChannel && cat.logLeaves) {
+        const embed = new EmbedBuilder()
+          .setColor(0x7f8c8d)
+          .setTitle('🚪 Quitté un vocal')
+          .addFields(
+            { name: 'Membre', value: `${member.user.tag} (<@${member.id}>)`, inline: true },
+            { name: 'Salon', value: `<#${oldChannel.id}>`, inline: true }
+          )
+          .setTimestamp(new Date());
+        await this.sendToCategory(guild, 'voice', embed);
+      } else if (oldChannel && newChannel && oldChannel.id !== newChannel.id && cat.logMoves) {
+        const embed = new EmbedBuilder()
+          .setColor(Colors.Blurple)
+          .setTitle('➡️ Déplacement vocal')
+          .addFields(
+            { name: 'Membre', value: `${member.user.tag} (<@${member.id}>)` },
+            { name: 'De', value: `<#${oldChannel.id}>`, inline: true },
+            { name: 'Vers', value: `<#${newChannel.id}>`, inline: true }
+          )
+          .setTimestamp(new Date());
+        await this.sendToCategory(guild, 'voice', embed);
+      }
+
+      // Toggles
+      const toggles = [];
+      if (cat.logMutes && oldState.serverMute !== newState.serverMute) toggles.push({ t: newState.serverMute ? '🔇 Mute serveur' : '🔈 Unmute serveur' });
+      if (cat.logDeafens && oldState.serverDeaf !== newState.serverDeaf) toggles.push({ t: newState.serverDeaf ? '🔕 Deaf serveur' : '🔔 Undeaf serveur' });
+      if (cat.logMutes && oldState.selfMute !== newState.selfMute) toggles.push({ t: newState.selfMute ? '🤫 Auto-mute' : '🗣️ Auto-unmute' });
+      if (cat.logDeafens && oldState.selfDeaf !== newState.selfDeaf) toggles.push({ t: newState.selfDeaf ? '🙉 Auto-deaf' : '👂 Auto-undeaf' });
+      if (cat.logStreams && oldState.streaming !== newState.streaming) toggles.push({ t: newState.streaming ? '📢 Stream ON' : '📵 Stream OFF' });
+      if (cat.logCameras && oldState.selfVideo !== newState.selfVideo) toggles.push({ t: newState.selfVideo ? '🎥 Caméra ON' : '📷 Caméra OFF' });
+
+      for (const change of toggles) {
+        const embed = new EmbedBuilder()
+          .setColor(Colors.Orange)
+          .setTitle(change.t)
+          .addFields(
+            { name: 'Membre', value: `${member.user.tag} (<@${member.id}>)`, inline: true },
+            { name: 'Salon', value: `${(newChannel || oldChannel) ? `<#${(newChannel || oldChannel).id}>` : '—'}`, inline: true }
+          )
+          .setTimestamp(new Date());
+        await this.sendToCategory(guild, 'voice', embed);
+      }
     } catch {}
   }
 
@@ -245,6 +474,12 @@ class LogManager {
           { name: 'Raison', value: reason || 'Aucune' }
         )
         .setTimestamp(new Date());
+      // Add roles held at time of kick
+      try {
+        const roles = member.roles?.cache?.filter(r => r.id !== member.guild.id) || null;
+        const rolesStr = roles && roles.size > 0 ? roles.map(r => `<@&${r.id}>`).join(' ') : null;
+        if (rolesStr) embed.addFields({ name: 'Rôles', value: rolesStr.slice(0, 1024) });
+      } catch {}
       await this.sendToCategory(member.guild, 'moderation', embed);
     } catch {}
   }
@@ -263,6 +498,14 @@ class LogManager {
           { name: 'Raison', value: reason || 'Aucune' }
         )
         .setTimestamp(new Date());
+      // Try include roles snapshot at time of ban
+      try {
+        const roleIds = await this.getMemberRolesSnapshot(guild.id, user.id);
+        if (Array.isArray(roleIds) && roleIds.length > 0) {
+          const rolesStr = roleIds.map(id => `<@&${id}>`).join(' ');
+          embed.addFields({ name: 'Rôles (au ban)', value: rolesStr.slice(0, 1024) });
+        }
+      } catch {}
       await this.sendToCategory(guild, 'moderation', embed);
     } catch {}
   }

@@ -20,7 +20,9 @@ class LogsConfigHandler {
         { name: '🛡️ Modération', value: `${c.moderation.enabled ? '✅' : '❌'} <#${c.moderation.channelId || 'non-configuré'}>` },
         { name: '👥 Arrivées/Départs', value: `${c.members.enabled ? '✅' : '❌'} <#${c.members.channelId || 'non-configuré'}>` },
         { name: '🏷️ Pseudos', value: `${c.nicknames.enabled ? '✅' : '❌'} <#${c.nicknames.channelId || 'non-configuré'}>` },
-        { name: '💰 Économie', value: `${c.economy.enabled ? '✅' : '❌'} <#${c.economy.channelId || 'non-configuré'}>` }
+        { name: '💰 Économie', value: `${c.economy.enabled ? '✅' : '❌'} <#${c.economy.channelId || 'non-configuré'}>` },
+        { name: '🔊 Vocaux', value: `${c.voice?.enabled ? '✅' : '❌'} <#${c.voice?.channelId || 'non-configuré'}>` },
+        { name: '🧩 Rôles', value: `${c.roles?.enabled ? '✅' : '❌'} <#${c.roles?.channelId || 'non-configuré'}>` }
       );
 
     const rows = [
@@ -43,6 +45,14 @@ class LogsConfigHandler {
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('logs_toggle_economy').setLabel('Activer/Arrêter Économie').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('logs_set_channel_economy').setLabel('Salon Économie').setStyle(ButtonStyle.Primary)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_toggle_voice').setLabel('Activer/Arrêter Vocaux').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_set_channel_voice').setLabel('Salon Vocaux').setStyle(ButtonStyle.Primary)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_toggle_roles').setLabel('Activer/Arrêter Rôles').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('logs_set_channel_roles').setLabel('Salon Rôles').setStyle(ButtonStyle.Primary)
       )
     ];
 

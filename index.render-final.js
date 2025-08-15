@@ -994,6 +994,7 @@ class RenderSolutionBot {
         });
 
         this.client.on('voiceStateUpdate', async (oldState, newState) => {
+            try { if (this.logManager) await this.logManager.logVoiceState(oldState, newState); } catch {}
             await this.handleVoiceXP(oldState, newState);
         });
 
@@ -1010,6 +1011,7 @@ class RenderSolutionBot {
         this.client.on('guildMemberAdd', async (member) => {
             try { if (this.moderationManager) await this.moderationManager.recordJoin(member.guild.id, member.id); } catch {}
             try { if (this.logManager) await this.logManager.logMemberJoin(member); } catch {}
+            try { if (this.logManager) await this.logManager.updateMemberRolesSnapshot(member); } catch {}
         });
         this.client.on('guildMemberRemove', async (member) => {
             try {
@@ -1084,7 +1086,19 @@ class RenderSolutionBot {
 
                 // Logs de changement de pseudo (existant)
                 try { if (this.logManager) await this.logManager.logNicknameChange(oldMember, newMember); } catch {}
+                try { if (this.logManager) await this.logManager.logMemberRoleChanges(oldMember, newMember); } catch {}
             } catch {}
+        });
+
+        // Rôles (création/suppression/mise à jour)
+        this.client.on('roleCreate', async (role) => {
+            try { if (this.logManager) await this.logManager.logRoleCreate(role); } catch {}
+        });
+        this.client.on('roleDelete', async (role) => {
+            try { if (this.logManager) await this.logManager.logRoleDelete(role); } catch {}
+        });
+        this.client.on('roleUpdate', async (oldRole, newRole) => {
+            try { if (this.logManager) await this.logManager.logRoleUpdate(oldRole, newRole); } catch {}
         });
 
         // Ban / Unban
