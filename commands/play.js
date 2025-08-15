@@ -58,6 +58,10 @@ module.exports = {
       
       if (errorMsg.startsWith('TIMEOUT_') || errorMsg === 'TIMEOUT_PIPED_FETCH') {
         friendly = '⏰ Timeout lors de la récupération du flux (Piped). Réessaie dans un instant ou utilise un autre terme/lien.';
+      } else if (errorMsg === 'piped search failed' || errorMsg === 'piped info failed') {
+        friendly = '❌ Erreur Piped: recherche/infos YouTube indisponibles. Réessaie, change d’instance (`PIPED_BASE_URL`) ou fournis un lien YouTube direct.';
+      } else if (errorMsg === 'PIPED_NO_AUDIO' || errorMsg === 'PIPED_NO_URL') {
+        friendly = '❌ Flux audio introuvable pour cette ressource. Réessaie avec un autre résultat ou un autre lien.';
       } else if (errorMsg === 'BOT_NOT_CONNECTED') {
         friendly = '🤖 Le bot n\'est pas connecté à Discord. Contacte un administrateur.';
       } else if (errorMsg === 'INVALID_VOICE_ADAPTER') {
