@@ -11,8 +11,7 @@
 - `/ban` (Administrateur): Bannir un membre
   - Options: `membre` (User, requis), `raison` (String)
 
-- `/bump-reminder` (Gérer le serveur): Configurer les rappels de bump
-  - Sous-commandes: `enable`, `disable`, `set-channel(channel)`, `set-interval(heures)`, `set-message(message)`, `set-role(role)`, `status`
+- Rappels de bump: automatiques, 2h après chaque bump DISBOARD détecté (pas de commande). Configurez le canal via la base de données si nécessaire.
 
 - `/clear-commands` (Administrateur): Supprimer commandes Discord (guild/global/all)
   - Options: `type` (Choix: guild|global|all, requis), `confirmation` (Boolean, requis)
