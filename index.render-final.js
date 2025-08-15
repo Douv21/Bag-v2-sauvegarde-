@@ -734,10 +734,10 @@ class RenderSolutionBot {
         await this.setupEventHandlers();
 
         // Initialisation Lavalink (obligatoire)
-        try { require('./managers/MusicManager').configureLavalink(this.client); } catch {}
-
         try {
             await this.client.login(process.env.DISCORD_TOKEN);
+            // Initialisation Lavalink (après connexion Discord)
+            try { require('./managers/MusicManager').configureLavalink(this.client); } catch {}
         } catch (error) {
             console.error('❌ Erreur connexion Discord:', error);
             console.log('🌐 Le serveur web continue de fonctionner sans Discord');
