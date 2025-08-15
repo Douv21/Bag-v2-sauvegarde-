@@ -878,14 +878,10 @@ class RenderSolutionBot {
                     return;
                 }
 
-                // Rappels de bump (boutons)
+                // Rappels de bump: plus de boutons à gérer (rappel automatique uniquement)
                 if (interaction.isButton() && interaction.customId && (interaction.customId.startsWith('bump_reminder_done_') || interaction.customId.startsWith('bump_reminder_info_'))) {
-                    try {
-                        const handled = await this.reminderInteractionHandler.handleInteraction(interaction);
-                        if (handled) return;
-                    } catch (e) {
-                        console.warn('⚠️ Erreur ReminderInteractionHandler:', e?.message || e);
-                    }
+                    // Ignoré: logique désactivée
+                    return;
                 }
 
                 await this.handleInteraction(interaction);
@@ -952,10 +948,7 @@ class RenderSolutionBot {
                     const isSuccess = successIndicators.some(ind => text.includes(ind));
                     if (isSuccess) {
                         try {
-                            const cfg = await this.reminderManager.getConfig(message.guild.id);
-                            if (cfg?.enabled) {
-                                await this.reminderManager.restartCooldown(message.guild.id);
-                            }
+                            await this.reminderManager.restartCooldown(message.guild.id, message.channel.id);
                         } catch {}
                         try {
                             if (this.coreDataManager?.db) {
@@ -1190,7 +1183,7 @@ class RenderSolutionBot {
                 }
 
                 console.log(`🔧 /${interaction.commandName} par ${interaction.user.tag}`);
-                const needsClient = ['bump', 'bump-config', 'config-bump', 'bump-reminder'].includes(interaction.commandName);
+                const needsClient = ['bump', 'bump-config', 'config-bump'].includes(interaction.commandName);
                 if (needsClient) {
                     await command.execute(interaction, this.client);
                 } else {

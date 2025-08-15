@@ -71,7 +71,7 @@ class BagBotRender {
         this.karmaManager = new KarmaManager(this.dataManager);
         this.interactionHandler = new InteractionHandler(this.dataManager);
         this.reminderManager = new ReminderManager(this.dataManager, this.client);
-        this.reminderInteractionHandler = new ReminderInteractionHandler(this.reminderManager);
+        this.reminderInteractionHandler = new ReminderInteractionHandler(this.reminderManager); // neutralisé
                 this.moderationManager = new ModerationManager(this.dataManager, this.client);
         const LogManager = require('./managers/LogManager');
         this.logManager = new LogManager(this.dataManager, this.client);
@@ -474,9 +474,7 @@ class BagBotRender {
                     }
                     
                     console.log(`🔄 Traitement interaction: ${interaction.customId}`);
-                    // Rappels bump
-                    const reminderHandled = await this.reminderInteractionHandler.handleInteraction(interaction);
-                    if (reminderHandled) return;
+                    // Rappels bump désactivés (pas de boutons)
                     // Router vers le MainRouterHandler
                     const handled = await this.mainRouterHandler.handleInteraction(interaction);
                     
@@ -538,11 +536,7 @@ class BagBotRender {
                     const isSuccess = successIndicators.some(ind => text.includes(ind));
                     if (isSuccess) {
                         try {
-                            // Ne relance que si les rappels sont activés pour cette guilde
-                            const cfg = await this.reminderManager.getConfig(message.guild.id);
-                            if (cfg?.enabled) {
-                                await this.reminderManager.restartCooldown(message.guild.id);
-                            }
+                            await this.reminderManager.restartCooldown(message.guild.id, message.channel.id);
                         } catch {}
                         // Synchroniser le cooldown de la plateforme 'disboard' pour l'UI bump
                         try {
