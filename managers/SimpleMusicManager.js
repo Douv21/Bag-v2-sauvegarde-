@@ -185,6 +185,21 @@ function getYoutubeIdFromUrl(u) {
   return null;
 }
 
+// Nouveau: si on reçoit une URL de résultats YouTube, en extraire le terme de recherche
+function getYoutubeSearchQueryFromUrl(u) {
+  try {
+    if (!u) return null;
+    const url = new URL(u);
+    const isYoutubeHost = /(^|\.)youtube\.com$|(^|\.)music\.youtube\.com$|(^|\.)m\.youtube\.com$/i.test(url.hostname);
+    if (!isYoutubeHost) return null;
+    if (url.pathname.includes('/results')) {
+      const q = url.searchParams.get('search_query');
+      return q && q.trim() ? q.trim() : null;
+    }
+  } catch {}
+  return null;
+}
+
 function getPipedInstances() {
   const custom = (process.env.PIPED_BASE_URL || '').trim();
   const list = [];
@@ -334,7 +349,8 @@ async function createResourceWithPiped(input, startSeconds = 0) {
     let id = isYouTubeUrl(input) ? getYoutubeIdFromUrl(input) : null;
     let title = input;
     if (!id) {
-      const s = await pipedSearchFirst(input);
+      const normalizedQuery = getYoutubeSearchQueryFromUrl(input) || input;
+      const s = await pipedSearchFirst(normalizedQuery);
       id = s.id;
       title = s.title || title;
     }
