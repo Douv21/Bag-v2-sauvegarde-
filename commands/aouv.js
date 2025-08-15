@@ -93,18 +93,18 @@ async function resolvePools(dataManager, guildId, mode) {
 	};
 }
 
-function resolveMode(cfg, channel) {
-	const channelId = channel.id;
-	const nsfwSet = new Set(cfg.nsfwAllowedChannels || []);
-	const sfwList = Array.isArray(cfg.allowedChannels) ? cfg.allowedChannels : [];
-	const isNsfwConfigured = nsfwSet.has(channelId);
-	if (isNsfwConfigured) {
-		return channel.nsfw ? 'nsfw' : 'invalid_nsfw_channel';
+	function resolveMode(cfg, channel) {
+		const channelId = channel.id;
+		const nsfwSet = new Set(cfg.nsfwAllowedChannels || []);
+		const sfwList = Array.isArray(cfg.allowedChannels) ? cfg.allowedChannels : [];
+		if (nsfwSet.has(channelId)) {
+			return channel.nsfw ? 'nsfw' : 'invalid_nsfw_channel';
+		}
+		if (sfwList.includes(channelId)) {
+			return 'sfw';
+		}
+		return 'denied';
 	}
-	// Si pas NSFW configuré pour ce salon, vérifier SFW
-	if (sfwList.length === 0) return 'sfw';
-	return sfwList.includes(channelId) ? 'sfw' : 'denied';
-}
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -126,7 +126,7 @@ module.exports = {
 			return interaction.reply({ content: '❌ Ce salon n\'est pas marqué NSFW dans Discord. Veuillez utiliser un salon NSFW configuré pour AouV NSFW.', flags: 64 });
 		}
 		if (mode === 'denied') {
-			const sfwMentions = (cfg.allowedChannels || []).map(id => `<#${id}>`).join(', ') || '(tous)';
+			const sfwMentions = (cfg.allowedChannels || []).map(id => `<#${id}>`).join(', ') || '(aucun)';
 			const nsfwMentions = (cfg.nsfwAllowedChannels || []).map(id => `<#${id}>`).join(', ') || '(aucun)';
 			return interaction.reply({ content: `❌ Ce salon n'est pas configuré pour AouV.\nSFW: ${sfwMentions}\nNSFW: ${nsfwMentions}`, flags: 64 });
 		}

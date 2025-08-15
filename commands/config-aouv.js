@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -6,10 +6,10 @@ module.exports = {
         .setDescription('Configuration complète du jeu Action ou Vérité (Admin uniquement)')
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
-    async execute(interaction) {
-        if (!interaction.member.permissions.has('Administrator')) {
-            return await interaction.reply({ content: '❌ Vous devez être administrateur pour utiliser cette commande.', flags: 64 });
-        }
+    	async execute(interaction) {
+		if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+			return await interaction.reply({ content: '❌ Vous devez être administrateur pour utiliser cette commande.', flags: 64 });
+		}
 
         const embed = new EmbedBuilder()
             .setColor('#5865F2')
