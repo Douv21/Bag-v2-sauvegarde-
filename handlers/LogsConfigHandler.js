@@ -27,32 +27,25 @@ class LogsConfigHandler {
         { name: '🧩 Rôles', value: `${c.roles?.enabled ? '✅' : '❌'} ${formatChannel(c.roles?.channelId)}` }
       );
 
+    // Regrouper les boutons en 3 rangées (max 5 boutons par rangée)
     const rows = [
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('logs_toggle_messages').setLabel('Activer/Arrêter Messages').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_messages').setLabel('Salon Messages').setStyle(ButtonStyle.Primary)
-      ),
-      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_set_channel_messages').setLabel('Salon Messages').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('logs_toggle_moderation').setLabel('Activer/Arrêter Modération').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_moderation').setLabel('Salon Modération').setStyle(ButtonStyle.Primary)
+        new ButtonBuilder().setCustomId('logs_set_channel_moderation').setLabel('Salon Modération').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('logs_toggle_members').setLabel('Activer/Arrêter Arrivées/Départs').setStyle(ButtonStyle.Secondary)
       ),
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('logs_toggle_members').setLabel('Activer/Arrêter Arrivées/Départs').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_members').setLabel('Salon Arrivées/Départs').setStyle(ButtonStyle.Primary)
-      ),
-      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_set_channel_members').setLabel('Salon Arrivées/Départs').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('logs_toggle_nicknames').setLabel('Activer/Arrêter Pseudos').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_nicknames').setLabel('Salon Pseudos').setStyle(ButtonStyle.Primary)
-      ),
-      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_set_channel_nicknames').setLabel('Salon Pseudos').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('logs_toggle_economy').setLabel('Activer/Arrêter Économie').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('logs_set_channel_economy').setLabel('Salon Économie').setStyle(ButtonStyle.Primary)
       ),
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('logs_toggle_voice').setLabel('Activer/Arrêter Vocaux').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('logs_set_channel_voice').setLabel('Salon Vocaux').setStyle(ButtonStyle.Primary)
-      ),
-      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('logs_set_channel_voice').setLabel('Salon Vocaux').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('logs_toggle_roles').setLabel('Activer/Arrêter Rôles').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('logs_set_channel_roles').setLabel('Salon Rôles').setStyle(ButtonStyle.Primary)
       )
