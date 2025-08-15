@@ -44,17 +44,17 @@ class LevelCardGenerator {
             let svgContent;
             
             if (style === 'gamer') {
-                svgContent = this.createGamerSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData);
+                svgContent = await this.createGamerSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData);
             } else if (style === 'amour') {
-                svgContent = this.createAmourSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData);
+                svgContent = await this.createAmourSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData);
             } else if (style === 'sensuel') {
-                svgContent = this.createSensuelSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData);
+                svgContent = await this.createSensuelSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData);
             } else if (style === 'holographic') {
                 svgContent = await this.createHolographicSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData, user.roles || []);
             } else {
                 // Styles par défaut existants
                 const theme = this.getTheme(style);
-                svgContent = this.createLevelUpSVG(user, userLevel, oldLevel, newLevel, roleReward, theme, style, progressData);
+                svgContent = await this.createLevelUpSVG(user, userLevel, oldLevel, newLevel, roleReward, theme, style, progressData);
             }
             
             // Convertir SVG en PNG avec Sharp
@@ -124,46 +124,10 @@ class LevelCardGenerator {
         const fs = require('fs');
         const path = require('path');
         
-        // Déterminer quelle image utiliser selon les rôles
-        let imagePath;
-        let imageFormat = 'jpeg';
-        
-        // Debug: afficher tous les rôles de l'utilisateur
-        console.log(`🎭 NOTIFICATION - Rôles reçus pour ${user.displayName}:`, userRoles);
-        console.log(`🎭 NOTIFICATION - Noms des rôles:`, userRoles.map(role => role.name));
-        
-        // Extraire les noms des rôles utilisateur en minuscules
-        const roleNames = userRoles.map(role => role.name.toLowerCase());
-        console.log(`🎭 NOTIFICATION - Noms des rôles (minuscules):`, roleNames);
-        
-        // Vérifier les rôles pour choisir l'image appropriée - priorité "certifié" sur "femme"
-        if (roleNames.includes('certifié')) {
-            imagePath = path.join(__dirname, '../assets/background_3.png');
-            imageFormat = 'png';
-            console.log('🎨 NOTIFICATION: Utilisation image certifié (background_3.png) pour la carte');
-        } else if (roleNames.includes('femme')) {
-            imagePath = path.join(__dirname, '../assets/background_2.png');
-            imageFormat = 'png';
-            console.log('🎨 NOTIFICATION: Utilisation image femme (background_2.png) pour la carte');
-        } else {
-            imagePath = path.join(__dirname, '../assets/background_1.jpg');
-            imageFormat = 'jpeg';
-            console.log('🎨 NOTIFICATION: Utilisation image par défaut (background_1.jpg) pour la carte');
-        }
-        
-        // Essayer de charger l'image appropriée
-        let bgImage = '';
-        try {
-            if (fs.existsSync(imagePath)) {
-                const imageBuffer = fs.readFileSync(imagePath);
-                bgImage = `data:image/${imageFormat};base64,${imageBuffer.toString('base64')}`;
-                console.log(`✅ Image de fond chargée: ${bgImage.length} chars (${imageFormat})`);
-            } else {
-                console.log(`❌ Image non trouvée: ${imagePath}`);
-            }
-        } catch (error) {
-            console.log('⚠️ Erreur chargement image de fond:', error.message);
-        }
+        // Déterminer l'image selon le style et les rôles via utilitaire générique
+        const { resolveBackgroundImage } = require('./styleBackgrounds');
+        const bgImage = await resolveBackgroundImage('holographic', userRoles);
+        console.log(`🎨 NOTIFICATION: Résolution image holographique => ${bgImage ? 'OK' : 'AUCUNE (fallback pur SVG)'}`);
 
         return `
         <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
@@ -194,7 +158,7 @@ class LevelCardGenerator {
             
             <!-- Background Image ou Holographique -->
             ${bgImage ? `
-                <image href="${bgImage}" x="0" y="0" width="800" height="400" preserveAspectRatio="xMidYMid slice" opacity="1"/>
+                <image href="${bgImage}" x="0" y="0" width="800" height="400" preserveAspectRatio="xMidYMid slice"/>
                 <rect width="800" height="400" fill="url(#holoPattern)" opacity="0.2"/>
             ` : `
                 <rect width="800" height="400" fill="url(#holoBg)"/>
@@ -268,7 +232,9 @@ class LevelCardGenerator {
         </svg>`;
     }
 
-    createGamerSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData) {
+    async createGamerSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData) {
+        const { resolveBackgroundImage } = require('./styleBackgrounds');
+        const bgImage = await resolveBackgroundImage('gamer', user.roles || []);
         return `
         <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -292,9 +258,14 @@ class LevelCardGenerator {
                 </pattern>
             </defs>
             
-            <!-- Animated Background -->
+            <!-- Background Image or gradient -->
+            ${bgImage ? `
+            <image href="${bgImage}" x="0" y="0" width="800" height="400" preserveAspectRatio="xMidYMid slice"/>
+            <rect width="800" height="400" fill="url(#circuitPattern)" opacity="0.25"/>
+            ` : `
             <rect width="800" height="400" fill="url(#gamerBg)"/>
             <rect width="800" height="400" fill="url(#circuitPattern)" opacity="0.4"/>
+            `}
             
             <!-- Cyberpunk borders -->
             <rect x="10" y="10" width="780" height="380" fill="none" stroke="#00ff88" stroke-width="4" rx="25" filter="url(#neonGlow)"/>
@@ -347,7 +318,9 @@ class LevelCardGenerator {
         </svg>`;
     }
 
-    createAmourSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData) {
+    async createAmourSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData) {
+        const { resolveBackgroundImage } = require('./styleBackgrounds');
+        const bgImage = await resolveBackgroundImage('amour', user.roles || []);
         return `
         <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -368,9 +341,14 @@ class LevelCardGenerator {
                 </pattern>
             </defs>
             
-            <!-- Background -->
+            <!-- Background Image or gradient -->
+            ${bgImage ? `
+            <image href="${bgImage}" x="0" y="0" width="800" height="400" preserveAspectRatio="xMidYMid slice"/>
+            <rect width="800" height="400" fill="url(#heartPattern)" opacity="0.3"/>
+            ` : `
             <rect width="800" height="400" fill="url(#amourBg)"/>
             <rect width="800" height="400" fill="url(#heartPattern)"/>
+            `}
             
             <!-- Elegant borders -->
             <rect x="10" y="10" width="780" height="380" fill="none" stroke="#ff69b4" stroke-width="2" rx="25" filter="url(#softGlow)"/>
@@ -421,7 +399,9 @@ class LevelCardGenerator {
         </svg>`;
     }
 
-    createSensuelSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData) {
+    async createSensuelSVG(user, userLevel, oldLevel, newLevel, roleReward, progressData) {
+        const { resolveBackgroundImage } = require('./styleBackgrounds');
+        const bgImage = await resolveBackgroundImage('sensuel', user.roles || []);
         return `
         <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -448,9 +428,14 @@ class LevelCardGenerator {
                 </pattern>
             </defs>
             
-            <!-- Luxury Background -->
+            <!-- Luxury Background or image -->
+            ${bgImage ? `
+            <image href="${bgImage}" x="0" y="0" width="800" height="400" preserveAspectRatio="xMidYMid slice"/>
+            <rect width="800" height="400" fill="url(#velvetPattern)" opacity="0.25"/>
+            ` : `
             <rect width="800" height="400" fill="url(#sensuelBg)"/>
             <rect width="800" height="400" fill="url(#velvetPattern)"/>
+            `}
             
             <!-- Golden luxury borders -->
             <rect x="8" y="8" width="784" height="384" fill="none" stroke="url(#goldAccent)" stroke-width="4" rx="30" filter="url(#luxuryGlow)"/>
@@ -505,10 +490,12 @@ class LevelCardGenerator {
         </svg>`;
     }
 
-    createLevelUpSVG(user, userLevel, oldLevel, newLevel, roleReward, theme, style = 'futuristic', progressData) {
+    async createLevelUpSVG(user, userLevel, oldLevel, newLevel, roleReward, theme, style = 'futuristic', progressData) {
         const nextLevelXP = this.calculateXPForLevel(newLevel + 1);
         const currentLevelXP = this.calculateXPForLevel(newLevel);
         const progress = ((userLevel.xp - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100;
+        const { resolveBackgroundImage } = require('./styleBackgrounds');
+        const bgImage = await resolveBackgroundImage(style, user.roles || []);
         
         return `
         <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
@@ -530,8 +517,13 @@ class LevelCardGenerator {
                 </filter>
             </defs>
             
+            ${bgImage ? `
+            <image href="${bgImage}" x="0" y="0" width="800" height="400" preserveAspectRatio="xMidYMid slice"/>
+            <rect width="800" height="400" fill="url(#bgGradient)" opacity="0.25"/>
+            ` : `
             <rect width="800" height="400" fill="${theme.background}"/>
             <rect width="800" height="400" fill="url(#bgGradient)"/>
+            `}
             <rect x="10" y="10" width="780" height="380" fill="none" stroke="${theme.accent}" stroke-width="2" rx="20"/>
             
             <rect x="200" y="50" width="400" height="60" fill="${theme.accent}" opacity="0.2" rx="30"/>
