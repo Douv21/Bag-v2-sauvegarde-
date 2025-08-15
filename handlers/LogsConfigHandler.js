@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
 
 class LogsConfigHandler {
   constructor(dataManager, logManager) {
@@ -11,18 +11,20 @@ class LogsConfigHandler {
     const cfg = await this.logManager.getGuildConfig(guildId);
     const c = cfg.categories;
 
+    const formatChannel = (id) => id ? `<#${id}>` : 'non-configuré';
+
     const embed = new EmbedBuilder()
       .setColor('#00bcd4')
       .setTitle('🧾 Configuration des Logs')
       .setDescription('Configurez les salons et l’activation des catégories. Les logs de confessions restent dans le menu `config-confession`.')
       .addFields(
-        { name: '📝 Messages', value: `${c.messages.enabled ? '✅' : '❌'} <#${c.messages.channelId || 'non-configuré'}> • Éditions: ${c.messages.logEdits ? '✅' : '❌'} • Suppressions: ${c.messages.logDeletes ? '✅' : '❌'}` },
-        { name: '🛡️ Modération', value: `${c.moderation.enabled ? '✅' : '❌'} <#${c.moderation.channelId || 'non-configuré'}>` },
-        { name: '👥 Arrivées/Départs', value: `${c.members.enabled ? '✅' : '❌'} <#${c.members.channelId || 'non-configuré'}>` },
-        { name: '🏷️ Pseudos', value: `${c.nicknames.enabled ? '✅' : '❌'} <#${c.nicknames.channelId || 'non-configuré'}>` },
-        { name: '💰 Économie', value: `${c.economy.enabled ? '✅' : '❌'} <#${c.economy.channelId || 'non-configuré'}>` },
-        { name: '🔊 Vocaux', value: `${c.voice?.enabled ? '✅' : '❌'} <#${c.voice?.channelId || 'non-configuré'}>` },
-        { name: '🧩 Rôles', value: `${c.roles?.enabled ? '✅' : '❌'} <#${c.roles?.channelId || 'non-configuré'}>` }
+        { name: '📝 Messages', value: `${c.messages.enabled ? '✅' : '❌'} ${formatChannel(c.messages.channelId)} • Éditions: ${c.messages.logEdits ? '✅' : '❌'} • Suppressions: ${c.messages.logDeletes ? '✅' : '❌'}` },
+        { name: '🛡️ Modération', value: `${c.moderation.enabled ? '✅' : '❌'} ${formatChannel(c.moderation.channelId)}` },
+        { name: '👥 Arrivées/Départs', value: `${c.members.enabled ? '✅' : '❌'} ${formatChannel(c.members.channelId)}` },
+        { name: '🏷️ Pseudos', value: `${c.nicknames.enabled ? '✅' : '❌'} ${formatChannel(c.nicknames.channelId)}` },
+        { name: '💰 Économie', value: `${c.economy.enabled ? '✅' : '❌'} ${formatChannel(c.economy.channelId)}` },
+        { name: '🔊 Vocaux', value: `${c.voice?.enabled ? '✅' : '❌'} ${formatChannel(c.voice?.channelId)}` },
+        { name: '🧩 Rôles', value: `${c.roles?.enabled ? '✅' : '❌'} ${formatChannel(c.roles?.channelId)}` }
       );
 
     const rows = [
@@ -85,7 +87,8 @@ class LogsConfigHandler {
         .setCustomId(`logs_channel_select_${category}`)
         .setPlaceholder('Choisissez un salon pour les logs')
         .setMinValues(1)
-        .setMaxValues(1);
+        .setMaxValues(1)
+        .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement);
 
       const row = new ActionRowBuilder().addComponents(picker);
       return interaction.reply({ content: `Sélectionnez le salon pour ${category}`, components: [row], ephemeral: true });
