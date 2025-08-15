@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType } = require('discord.js');
-const { getQueueInfo, createNowPlayingEmbed } = require('../managers/MusicManager');
+const { getQueueInfo, createNowPlayingEmbed, updatePlayerMessage } = require('../managers/MusicManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -20,10 +20,12 @@ module.exports = {
     const info = getQueueInfo(interaction.guildId);
     const song = info?.current;
     if (!song) {
+      try { await updatePlayerMessage(interaction.guildId); } catch {}
       return interaction.reply({ content: '😴 Aucun morceau en cours.', ephemeral: true });
     }
 
     const embed = createNowPlayingEmbed(song, interaction.guild);
     await interaction.reply({ embeds: [embed], ephemeral: true }).catch(() => {});
+    try { await updatePlayerMessage(interaction.guildId); } catch {}
   }
 };

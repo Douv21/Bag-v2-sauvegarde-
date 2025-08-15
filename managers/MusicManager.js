@@ -65,6 +65,17 @@ function createNowPlayingEmbed(track, guild) {
   return Lavalink.createNowPlayingEmbed(track, guild);
 }
 
+// Persistent player helpers (no strict lavalink readiness required)
+async function updatePlayerMessage(guildId) {
+  try { return await lavalink?.updatePlayerMessage(guildId); } catch { return false; }
+}
+async function registerPlayerMessage(guildId, messageId) {
+  try { return await lavalink?.registerPlayerMessage(guildId, messageId); } catch { return false; }
+}
+function setPlayerChannel(guildId, textChannel) {
+  try { return lavalink?.setPlayerChannel?.(guildId, textChannel); } catch { return false; }
+}
+
 const THEME = Lavalink.THEME;
 
 module.exports = {
@@ -80,4 +91,7 @@ module.exports = {
   createNowPlayingEmbed,
   THEME,
   getGuildColor: Lavalink.getGuildColor,
+  updatePlayerMessage,
+  registerPlayerMessage,
+  setPlayerChannel,
 };

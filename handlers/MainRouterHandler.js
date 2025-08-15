@@ -57,6 +57,12 @@ class MainRouterHandler {
             // Contrôles musique
             if (customId.startsWith('music_')) {
                 console.log(`➡️ Routage vers MusicControls: ${customId}`);
+                try {
+                    const { registerPlayerMessage } = require('../managers/MusicManager');
+                    if (interaction.message && interaction.guildId) {
+                        await registerPlayerMessage(interaction.guildId, interaction.message.id);
+                    }
+                } catch {}
                 const MusicControls = require('./MusicControls');
                 await MusicControls.handleButton(interaction);
                 return true;
@@ -246,12 +252,12 @@ class MainRouterHandler {
                 console.log('Appel handleConfessionChannelsConfig...');
                 await handler.handleConfessionChannelsConfig(interaction);
                 return true;
-                
+            
             case 'confession_autothread_config':
                 console.log('Appel handleAutoThreadConfig...');
                 await handler.handleAutoThreadConfig(interaction);
                 return true;
-                
+            
             case 'confession_logs_config':
                 console.log('Appel handleLogsConfig...');
                 await handler.handleLogsConfig(interaction);
@@ -1246,7 +1252,7 @@ class MainRouterHandler {
                 const roleName = role?.name || roleId;
                 const updated = await modManager.setGuildConfig(guildId, { roleEnforcement: { ...(cfg.roleEnforcement || {}), requiredRoleId: roleId, requiredRoleName: roleName } });
 
-                // Rerender feature view with updated readiness
+                // Rerender feature view with readiness
                 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, RoleSelectMenuBuilder } = require('discord.js');
                 const featureSelector = new ActionRowBuilder().addComponents(
                     new StringSelectMenuBuilder()
