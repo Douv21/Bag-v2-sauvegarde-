@@ -30,6 +30,20 @@ let shoukaku = null;
 let nodes = [];
 let clientRef = null;
 
+function getGuildColor(guild) {
+	try {
+		const me = guild?.members?.me;
+		const meColor = me?.displayColor || 0;
+		if (meColor && meColor !== 0) return meColor;
+		const topColored = guild?.roles?.cache
+			?.filter(r => (r?.color || 0) !== 0)
+			?.sort((a, b) => b.position - a.position)
+			?.first();
+		if (topColored) return topColored.color;
+	} catch (_) {}
+	return THEME.colorPrimary;
+}
+
 function shouldUsePublicFallback() {
 	return process.env.LAVALINK_DISABLE_PUBLIC !== 'true' && process.env.LAVALINK_DISABLE_PUBLIC !== '1';
 }
@@ -159,8 +173,12 @@ function getState(guildId) {
 	return state;
 }
 
-function createNowPlayingEmbed(track) {
-	return new EmbedBuilder().setColor(THEME.colorPrimary).setTitle('▶️ Lecture').setDescription(`**${track.title || track.query}**\nDemandé par <@${track.requestedBy?.id || track.requestedBy}>`).setFooter({ text: THEME.footer });
+function createNowPlayingEmbed(track, guild) {
+	return new EmbedBuilder()
+		.setColor(getGuildColor(guild))
+		.setTitle('▶️ Lecture')
+		.setDescription(`**${track.title || track.query}**\nDemandé par <@${track.requestedBy?.id || track.requestedBy}>`)
+		.setFooter({ text: THEME.footer });
 }
 
 async function ensurePlayer(voiceChannel) {
@@ -176,6 +194,7 @@ async function ensurePlayer(voiceChannel) {
 
 	const player = await shoukaku.joinVoiceChannel({ guildId, channelId: voiceChannel.id, shardId: voiceChannel.guild.shardId });
 	state.player = player;
+	state.voiceChannelId = voiceChannel.id;
 	state.player.on('end', async () => {
 		state.current = null;
 		if (state.queue.length > 0) await playNext(guildId);
@@ -212,7 +231,9 @@ async function playNext(guildId) {
 	} else {
 		await state.player.playTrack({ track: { identifier: next.url || next.title } }, false);
 	}
-	try { if (state.textChannel) await state.textChannel.send({ embeds: [createNowPlayingEmbed(next)] }); } catch {}
+	try {
+		if (state.textChannel) await state.textChannel.send({ embeds: [createNowPlayingEmbed(next, state.textChannel.guild)] });
+	} catch {}
 }
 
 async function playCommand(voiceChannel, query, textChannel, requestedBy) {
@@ -282,4 +303,5 @@ module.exports = {
 	createNowPlayingEmbed,
 	THEME,
 	__getConfiguredNodesPreview: getConfiguredNodesPreview,
+	getGuildColor,
 };

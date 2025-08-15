@@ -61,8 +61,8 @@ function getQueueInfo(guildId) {
   return lavalink.getQueueInfo(guildId);
 }
 
-function createNowPlayingEmbed(track) {
-  return Lavalink.createNowPlayingEmbed(track);
+function createNowPlayingEmbed(track, guild) {
+  return Lavalink.createNowPlayingEmbed(track, guild);
 }
 
 const THEME = Lavalink.THEME;
@@ -79,4 +79,5 @@ module.exports = {
   getQueueInfo,
   createNowPlayingEmbed,
   THEME,
+  getGuildColor: Lavalink.getGuildColor,
 };

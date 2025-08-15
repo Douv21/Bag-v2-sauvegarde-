@@ -23,7 +23,7 @@ module.exports = {
       return interaction.reply({ content: '😴 Aucun morceau en cours.', ephemeral: true });
     }
 
-    const embed = createNowPlayingEmbed(song);
+    const embed = createNowPlayingEmbed(song, interaction.guild);
     await interaction.reply({ embeds: [embed], ephemeral: true }).catch(() => {});
   }
 };

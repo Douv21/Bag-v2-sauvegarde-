@@ -80,7 +80,7 @@ async function handleButton(interaction) {
         if (!song) {
           msg = '😶 Aucun morceau en cours.';
         } else {
-          const embed = createNowPlayingEmbed(song);
+          const embed = createNowPlayingEmbed(song, interaction.guild);
           return interaction.reply({ embeds: [embed], ephemeral: true }).catch(() => {});
         }
         break;
