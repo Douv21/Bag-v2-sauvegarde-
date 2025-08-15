@@ -2878,7 +2878,7 @@ class RenderSolutionBot {
 
                 // ==== AOUV — pagination boutons ====
                 if (customId.startsWith('aouv_prompt_edit_list_')) {
-                    const parts = customId.split('_');
+                    const parts = String(customId || '').split('_');
                     const kind = parts[parts.length - 3];
                     const page = parseInt(parts[parts.length - 1], 10) || 1;
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
@@ -2888,7 +2888,7 @@ class RenderSolutionBot {
                 }
 
                 if (customId.startsWith('aouv_prompt_remove_list_')) {
-                    const parts = customId.split('_');
+                    const parts = String(customId || '').split('_');
                     const kind = parts[parts.length - 3];
                     const page = parseInt(parts[parts.length - 1], 10) || 1;
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
@@ -2898,7 +2898,7 @@ class RenderSolutionBot {
                 }
 
                 if (customId.startsWith('aouv_prompt_list_custom_')) {
-                    const parts = customId.split('_');
+                    const parts = String(customId || '').split('_');
                     const kind = parts[parts.length - 3];
                     const page = parseInt(parts[parts.length - 1], 10) || 1;
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
@@ -2908,7 +2908,7 @@ class RenderSolutionBot {
                 }
 
                 if (customId.startsWith('aouv_prompt_list_base_')) {
-                    const parts = customId.split('_');
+                    const parts = String(customId || '').split('_');
                     const kind = parts[parts.length - 3];
                     const page = parseInt(parts[parts.length - 1], 10) || 1;
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
@@ -2918,7 +2918,7 @@ class RenderSolutionBot {
                 }
 
                 if (customId.startsWith('aouv_prompt_override_list_')) {
-                    const parts = customId.split('_');
+                    const parts = String(customId || '').split('_');
                     const kind = parts[parts.length - 3];
                     const page = parseInt(parts[parts.length - 1], 10) || 1;
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
