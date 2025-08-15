@@ -169,75 +169,83 @@ function isYouTubeUrl(u) {
   return /(?:youtube\.com|youtu\.be)\//i.test(u || '');
 }
 
-function resolveYtdlpPath() {
-  if (process.env.YTDLP_BIN && process.env.YTDLP_BIN.trim().length > 0) return process.env.YTDLP_BIN.trim();
-
-  // Prefer system binaries first
-  const candidates = [];
-  const exe = process.platform === 'win32' ? ['yt-dlp.exe', 'youtube-dl.exe'] : ['yt-dlp', 'youtube-dl'];
-
-  // PATH resolution via spawnSync
-  for (const name of exe) {
-    try {
-      const which = process.platform === 'win32' ? 'where' : 'which';
-      const r = spawnSync(which, [name], { encoding: 'utf8' });
-      if (r.status === 0 && r.stdout) {
-        const p = r.stdout.split(/\r?\n/).find(Boolean);
-        if (p && fs.existsSync(p)) return p.trim();
-      }
-    } catch {}
-  }
-
-  // Local bin in project
-  const localBins = [
-    path.join(__dirname, '..', 'bin', exe[0]),
-    path.join(__dirname, '..', 'node_modules', '.bin', exe[0])
-  ];
-  for (const p of localBins) {
-    if (fs.existsSync(p)) return p;
-  }
-
-  // As last resort, Distube’s vendored binary (can be disabled)
-  if (process.env.YTDLP_DISABLE_DISTUBE !== '1' && process.env.YTDLP_DISABLE_DISTUBE !== 'true') {
-    return path.join(__dirname, '..', 'node_modules', '@distube', 'yt-dlp', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
-  }
-
-  // Nothing found
-  throw new Error('yt-dlp binary not found. Set YTDLP_BIN or install yt-dlp.');
+// Ajout PIPED: fournisseur alternatif sans yt-dlp
+function getYoutubeIdFromUrl(u) {
+  try {
+    if (!u) return null;
+    const url = new URL(u);
+    if (url.hostname.includes('youtu.be')) {
+      const id = url.pathname.split('/').filter(Boolean)[0];
+      return id || null;
+    }
+    if (url.searchParams.get('v')) return url.searchParams.get('v');
+    const match = url.pathname.match(/\/shorts\/([a-zA-Z0-9_-]{6,})/);
+    if (match) return match[1];
+  } catch {}
+  return null;
 }
 
-// Construit les arguments communs pour yt-dlp (UA, headers, cookies, extractor args)
-function buildYtdlpCommonArgs() {
-  const args = [];
+function getPipedInstances() {
+  const custom = (process.env.PIPED_BASE_URL || '').trim();
+  const list = [];
+  if (custom) list.push(custom);
+  list.push(
+    'https://piped.video',
+    'https://pipedapi.kavin.rocks',
+    'https://piped.privacy.com.de',
+    'https://piped.projectsegfau.lt'
+  );
+  // Dé-dupliquer
+  return Array.from(new Set(list));
+}
 
-  // User-Agent + Referer
-  const ua = (process.env.YTDLP_USER_AGENT || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36').trim();
-  args.push('--user-agent', ua);
-  args.push('--add-header', 'Referer: https://www.youtube.com');
-
-  // Cookies (header prioritaire, sinon fichier)
+async function pipedFetchJson(base, pathname) {
+  const abort = new AbortController();
+  const timeout = setTimeout(() => abort.abort(), Number(process.env.PIPED_TIMEOUT || 8000));
   try {
-    const cookieHeader = getYouTubeCookieString?.();
-    if (cookieHeader && cookieHeader.trim().length > 0) {
-      args.push('--add-header', `Cookie: ${cookieHeader}`);
-    } else {
-      const file = (process.env.YT_COOKIES_FILE || process.env.YOUTUBE_COOKIES_FILE || '').trim();
-      if (file) {
-        const fs = require('fs');
-        if (fs.existsSync(file)) args.push('--cookies', file);
+    const url = `${base.replace(/\/$/, '')}${pathname}`;
+    const res = await fetch(url, {
+      headers: {
+        'accept': 'application/json',
+        'user-agent': process.env.YTDLP_USER_AGENT || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+      },
+      signal: abort.signal
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function pipedSearchFirst(query) {
+  const bases = getPipedInstances();
+  for (const b of bases) {
+    try {
+      const data = await pipedFetchJson(b, `/api/v1/search?q=${encodeURIComponent(query)}&region=${encodeURIComponent(process.env.PIPED_REGION || 'FR')}`);
+      if (Array.isArray(data) && data.length > 0) {
+        const firstVideo = data.find(i => (i?.type || 'video') === 'video') || data[0];
+        const id = firstVideo?.id || firstVideo?.url?.split('v=')[1] || null;
+        if (id) {
+          return { id, url: `https://www.youtube.com/watch?v=${id}`, title: firstVideo?.title || query };
+        }
       }
+    } catch (e) {
+      // try next instance
     }
-  } catch {}
+  }
+  throw new Error('piped search failed');
+}
 
-  // Extractor args (client alternatif pour réduire les challenges)
-  try {
-    const ytClient = (process.env.YTDLP_YT_CLIENT || 'android').trim();
-    if (ytClient) {
-      args.push('--extractor-args', `youtube:player_client=${ytClient}`);
-    }
-  } catch {}
-
-  return args;
+async function pipedGetInfo(videoId) {
+  const bases = getPipedInstances();
+  for (const b of bases) {
+    try {
+      const info = await pipedFetchJson(b, `/api/v1/streams/${encodeURIComponent(videoId)}`);
+      if (info && (info.audioStreams || info.title)) return { ...info, _base: b };
+    } catch {}
+  }
+  throw new Error('piped info failed');
 }
 
 // Helper radios: charge une fois la liste et cherche par id/nom
@@ -262,173 +270,45 @@ function findRadioByQuery(query) {
   return radios.find(r => r?.id?.toLowerCase() === q || r?.name?.toLowerCase() === q) || null;
 }
 
-// Fallback: recherche via yt-dlp (ytsearch1:query)
-async function ytdlpSearchFirst(query, retryCount = 0) {
-  const bin = resolveYtdlpPath();
-  const args = [
-    ...buildYtdlpCommonArgs(),
-    '--force-ipv4',
-    '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 10),
-    '--geo-bypass',
-    '--retries', '2',
-    '--fragment-retries', '2',
-    '--default-search', 'ytsearch1',
-    '-j', query
-  ];
-  if (process.env.YTDLP_NO_CHECK_CERT === '1' || process.env.YTDLP_NO_CHECK_CERT === 'true') {
-    args.unshift('--no-check-certificates');
-  }
-  
+async function createResourceWithPiped(input, startSeconds = 0) {
   try {
-    return await new Promise((resolve, reject) => {
-    const proc = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '';
-    let stderr = '';
-    const killTimer = setTimeout(() => {
-      try { proc.kill('SIGKILL'); } catch {}
-      reject(new Error('yt-dlp search timeout'));
-    }, 25000);
-    proc.stdout.on('data', (d) => { stdout += d.toString(); });
-    proc.stderr.on('data', (d) => { stderr += d.toString(); });
-    proc.on('error', (e) => {
-      clearTimeout(killTimer);
-      reject(e);
-    });
-    proc.on('close', (code) => {
-      clearTimeout(killTimer);
-      if (code === 0 && stdout.trim().length > 0) {
-        try {
-          // yt-dlp peut renvoyer plusieurs lignes JSON; on prend la dernière non vide
-          const lines = stdout.trim().split(/\r?\n/).filter(Boolean);
-          const last = lines[lines.length - 1];
-          const data = JSON.parse(last);
-          const url = data.webpage_url || data.url;
-          const title = data.title || query;
-          if (url) return resolve({ url, title });
-        } catch (e) {
-          return reject(e);
-        }
-      }
-      reject(new Error(stderr.trim() || `yt-dlp search failed (code ${code})`));
-    });
-    });
-  } catch (error) {
-    if (retryCount < 2) {
-      console.warn(`[music] yt-dlp retry ${retryCount + 1}/2 for: ${query}`);
-      await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-      return ytdlpSearchFirst(query, retryCount + 1);
+    let id = isYouTubeUrl(input) ? getYoutubeIdFromUrl(input) : null;
+    let title = input;
+    if (!id) {
+      const s = await pipedSearchFirst(input);
+      id = s.id;
+      title = s.title || title;
     }
-    throw error;
-  }
-}
+    const info = await pipedGetInfo(id);
+    title = info?.title || title;
+    const audios = Array.isArray(info?.audioStreams) ? info.audioStreams : [];
+    if (audios.length === 0) throw new Error('PIPED_NO_AUDIO');
+    // Choisir le flux audio au plus haut débit
+    const best = audios.slice().sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
+    const url = best?.url || audios[0]?.url;
+    if (!url) throw new Error('PIPED_NO_URL');
 
-async function ytdlpGetInfo(url, retryCount = 0) {
-  const bin = resolveYtdlpPath();
-  const args = [
-    ...buildYtdlpCommonArgs(),
-    '--force-ipv4',
-    '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 10),
-    '--geo-bypass',
-    '--retries', '2',
-    '--fragment-retries', '2',
-    '--no-warnings',
-    '--skip-download',
-    '-j',
-    url
-  ];
-  if (process.env.YTDLP_NO_CHECK_CERT === '1' || process.env.YTDLP_NO_CHECK_CERT === 'true') {
-    args.unshift('--no-check-certificates');
-  }
-
-  try {
-    return await new Promise((resolve, reject) => {
-      const proc = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-      let stdout = '';
-      let stderr = '';
-      const killTimer = setTimeout(() => {
-        try { proc.kill('SIGKILL'); } catch {}
-        reject(new Error('yt-dlp info timeout'));
-      }, 25000);
-      proc.stdout.on('data', (d) => { stdout += d.toString(); });
-      proc.stderr.on('data', (d) => { stderr += d.toString(); });
-      proc.on('error', (e) => {
-        clearTimeout(killTimer);
-        reject(e);
-      });
-      proc.on('close', (code) => {
-        clearTimeout(killTimer);
-        if (code === 0 && stdout.trim().length > 0) {
-          try {
-            const lines = stdout.trim().split(/\r?\n/).filter(Boolean);
-            const last = lines[lines.length - 1];
-            const data = JSON.parse(last);
-            return resolve(data);
-          } catch (e) {
-            return reject(e);
-          }
-        }
-        reject(new Error(stderr.trim() || `yt-dlp info failed (code ${code})`));
-      });
-    });
-  } catch (error) {
-    if (retryCount < 2) {
-      console.warn(`[music] yt-dlp retry ${retryCount + 1}/2 for info: ${url}`);
-      await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-      return ytdlpGetInfo(url, retryCount + 1);
+    const ffmpegArgs = [
+      '-hide_banner', '-loglevel', 'error',
+      '-reconnect', '1',
+      '-reconnect_streamed', '1',
+      '-reconnect_delay_max', '5'
+    ];
+    if (startSeconds > 0) {
+      ffmpegArgs.push('-ss', String(startSeconds));
     }
-    throw error;
-  }
-}
-
-async function createResourceWithYtdlp(url, startSeconds = 0) {
-  const bin = resolveYtdlpPath();
-  const args = [
-    ...buildYtdlpCommonArgs(),
-    '--force-ipv4',
-    '--socket-timeout', String(process.env.YTDLP_SOCKET_TIMEOUT || 10),
-    '--geo-bypass',
-    '--retries', '2',
-    '--fragment-retries', '2',
-    '-f', 'bestaudio/best',
-    '--no-playlist',
-    '-o', '-',
-    '-q',
-    '--no-warnings',
-    url
-  ];
-
-  let ytdlp;
-  try {
-    ytdlp = spawn(bin, args, { stdio: ['ignore', 'pipe', 'ignore'] });
-  } catch (spawnErr) {
-    // If spawn fails (e.g., ENOENT), try fallback names directly
-    const fallbackExe = process.platform === 'win32' ? ['yt-dlp.exe', 'youtube-dl.exe'] : ['yt-dlp', 'youtube-dl'];
-    for (const name of fallbackExe) {
-      try {
-        ytdlp = spawn(name, args, { stdio: ['ignore', 'pipe', 'ignore'] });
-        break;
-      } catch {}
-    }
-    if (!ytdlp) throw spawnErr;
-  }
-
-  const ffmpegArgs = [
-    '-hide_banner', '-loglevel', 'error',
-  ];
-  if (startSeconds > 0) {
-    ffmpegArgs.push('-ss', String(startSeconds));
-  }
-  ffmpegArgs.push(
-    '-i', 'pipe:0',
-    '-analyzeduration', '0',
-    '-f', 's16le', '-ar', '48000', '-ac', '2'
-  );
+    ffmpegArgs.push(
+      '-i', url,
+      '-analyzeduration', '0',
+      '-f', 's16le', '-ar', '48000', '-ac', '2'
+    );
 
     const ffmpeg = new prism.FFmpeg({ args: ffmpegArgs });
- 
-  ytdlp.stdout.pipe(ffmpeg);
-  const resource = createAudioResource(ffmpeg, { inputType: StreamType.Raw, inlineVolume: true });
-  return resource;
+    const resource = createAudioResource(ffmpeg, { inputType: StreamType.Raw, inlineVolume: true });
+    return { resource, url: `https://www.youtube.com/watch?v=${id}`, title };
+  } catch (e) {
+    throw e;
+  }
 }
 
 async function createResourceFromQuery(query, seekSeconds = 0) {
@@ -448,9 +328,9 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
     // Recherche via yt-dlp
     let resolved = null;
     try {
-      resolved = await ytdlpSearchFirst(query);
+      resolved = await pipedSearchFirst(query);
     } catch (e) {
-      console.warn(`[music] yt-dlp search failed: ${e.message}`);
+      console.warn(`[music] piped search failed: ${e.message}`);
       // Dernier recours: créer une entrée avec juste la query
       resolved = { url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, title: query };
     }
@@ -458,12 +338,12 @@ async function createResourceFromQuery(query, seekSeconds = 0) {
     title = resolved.title;
   } else {
     try {
-      const info = await ytdlpGetInfo(url).catch(() => null);
+      const info = await pipedGetInfo(getYoutubeIdFromUrl(url)).catch(() => null);
       title = info?.title || title;
     } catch {}
   }
 
-  const resource = await createResourceWithYtdlp(url, seekSeconds);
+  const resource = await createResourceWithPiped(url, seekSeconds);
   return { resource, url, title };
 }
 
@@ -521,9 +401,9 @@ async function playCommand(voiceChannel, query, textChannel, requestedBy) {
   if (!track.url) {
     let resolved = null;
     try {
-      resolved = await ytdlpSearchFirst(query);
+      resolved = await pipedSearchFirst(query);
     } catch (e) {
-      console.warn(`[music] yt-dlp search failed: ${e.message}`);
+      console.warn(`[music] piped search failed: ${e.message}`);
       // Dernier recours avec juste la query
       resolved = { url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, title: query };
     }
@@ -531,7 +411,7 @@ async function playCommand(voiceChannel, query, textChannel, requestedBy) {
     track.title = resolved.title;
   } else {
     try {
-      const info = await ytdlpGetInfo(track.url).catch(() => null);
+      const info = await pipedGetInfo(getYoutubeIdFromUrl(track.url)).catch(() => null);
       track.title = info?.title || null;
     } catch {}
   }
