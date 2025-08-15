@@ -3144,6 +3144,119 @@ class RenderSolutionBot {
                     await aouvHandler.handleAouvNsfwPromptResetOverrideModal(interaction);
                     return;
                 }
+
+                // Gestion des sélecteurs et modals style_backgrounds_*
+                if (interaction.customId === 'style_backgrounds_style' && interaction.values && interaction.values.length) {
+                    const style = interaction.values[0];
+                    const roleRow = new ActionRowBuilder().addComponents(
+                        new RoleSelectMenuBuilder()
+                            .setCustomId(`style_backgrounds_role_${style}`)
+                            .setPlaceholder('Sélectionner un rôle à mapper...')
+                            .setMinValues(1)
+                            .setMaxValues(1)
+                    );
+                    const editRow = new ActionRowBuilder().addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId(`style_backgrounds_actions_${style}`)
+                            .setPlaceholder('Choisir une action...')
+                            .addOptions([
+                                { label: 'Définir image par défaut', value: 'set_default' },
+                                { label: 'Supprimer image par défaut', value: 'remove_default' },
+                                { label: 'Lister mappings', value: 'list' },
+                                { label: 'Retour', value: 'back' }
+                            ])
+                    );
+                    await interaction.update({
+                        content: `Style sélectionné: ${style}\n— Choisissez un rôle à associer, ou une action.`,
+                        embeds: [],
+                        components: [roleRow, editRow]
+                    });
+                    return;
+                }
+
+                if (interaction.customId.startsWith('style_backgrounds_role_')) {
+                    const style = interaction.customId.replace('style_backgrounds_role_', '');
+                    const roleId = interaction.values?.[0];
+                    const role = interaction.guild.roles.cache.get(roleId);
+                    const modal = new ModalBuilder()
+                        .setCustomId(`style_backgrounds_modal_${style}_${roleId}`)
+                        .setTitle(`Image pour ${role?.name || roleId} (${style})`);
+                    const input = new TextInputBuilder()
+                        .setCustomId('image_path_or_url')
+                        .setLabel('URL ou chemin local (ex: assets/styles/.../femme.png)')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true)
+                        .setMaxLength(512);
+                    modal.addComponents(new ActionRowBuilder().addComponents(input));
+                    await interaction.showModal(modal);
+                    return;
+                }
+
+                if (interaction.isModalSubmit && interaction.isModalSubmit() && interaction.customId.startsWith('style_backgrounds_modal_')) {
+                    const parts = interaction.customId.split('_');
+                    const style = parts[3];
+                    const roleId = parts[4];
+                    const imageValue = interaction.fields.getTextInputValue('image_path_or_url');
+                    const role = interaction.guild.roles.cache.get(roleId);
+                    const roleKey = require('./utils/styleBackgrounds').normalizeRoleName(role?.name || roleId);
+                    config.styleBackgrounds = config.styleBackgrounds || {};
+                    config.styleBackgrounds[style] = config.styleBackgrounds[style] || { default: '', byRole: {} };
+                    config.styleBackgrounds[style].byRole[roleKey] = imageValue;
+                    levelManager.saveConfig(config);
+                    await interaction.reply({ content: `✅ Image associée au rôle ${role?.name || roleId} pour le style ${style}.`, ephemeral: true });
+                    return;
+                }
+
+                if (interaction.customId.startsWith('style_backgrounds_actions_') && interaction.values && interaction.values.length) {
+                    const style = interaction.customId.replace('style_backgrounds_actions_', '');
+                    const action = interaction.values[0];
+                    if (action === 'set_default') {
+                        const modal = new ModalBuilder()
+                            .setCustomId(`style_backgrounds_default_modal_${style}`)
+                            .setTitle(`Image par défaut (${style})`);
+                        const input = new TextInputBuilder()
+                            .setCustomId('default_image')
+                            .setLabel('URL ou chemin local pour l\'image par défaut')
+                            .setStyle(TextInputStyle.Short)
+                            .setRequired(true)
+                            .setMaxLength(512);
+                        modal.addComponents(new ActionRowBuilder().addComponents(input));
+                        await interaction.showModal(modal);
+                        return;
+                    }
+                    if (action === 'remove_default') {
+                        config.styleBackgrounds = config.styleBackgrounds || {};
+                        config.styleBackgrounds[style] = config.styleBackgrounds[style] || { default: '', byRole: {} };
+                        config.styleBackgrounds[style].default = '';
+                        levelManager.saveConfig(config);
+                        await interaction.update({ content: `🗑️ Image par défaut supprimée pour ${style}.`, embeds: [], components: [] });
+                        return;
+                    }
+                    if (action === 'list') {
+                        const styleCfg = (config.styleBackgrounds || {})[style] || { default: '', byRole: {} };
+                        const list = [
+                            `Par défaut: ${styleCfg.default || '—'}`,
+                            ...Object.entries(styleCfg.byRole || {}).map(([k, v]) => `• ${k} → ${v}`)
+                        ].join('\n');
+                        await interaction.update({ content: `📋 Mappings pour ${style} :\n${list}`, embeds: [], components: [] });
+                        return;
+                    }
+                    if (action === 'back') {
+                        await levelHandler.showNotificationsConfig({ ...interaction, update: (o) => interaction.update(o) });
+                        return;
+                    }
+                }
+
+                if (interaction.isModalSubmit && interaction.isModalSubmit() && interaction.customId.startsWith('style_backgrounds_default_modal_')) {
+                    const style = interaction.customId.replace('style_backgrounds_default_modal_', '');
+                    const imageValue = interaction.fields.getTextInputValue('default_image');
+                    config.styleBackgrounds = config.styleBackgrounds || {};
+                    config.styleBackgrounds[style] = config.styleBackgrounds[style] || { default: '', byRole: {} };
+                    config.styleBackgrounds[style].default = imageValue;
+                    levelManager.saveConfig(config);
+                    await interaction.reply({ content: `✅ Image par défaut définie pour le style ${style}.`, ephemeral: true });
+                    return;
+                }
             }
 
         } catch (error) {
@@ -3487,7 +3600,7 @@ class RenderSolutionBot {
     }
 
     async handleNotificationConfigAction(interaction, selectedValue, levelHandler) {
-        const { ActionRowBuilder, ChannelSelectMenuBuilder, StringSelectMenuBuilder } = require('discord.js');
+        const { ActionRowBuilder, ChannelSelectMenuBuilder, StringSelectMenuBuilder, RoleSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder } = require('discord.js');
         const levelManager = require('./utils/levelManager');
         const config = levelManager.loadConfig();
 
@@ -3554,11 +3667,130 @@ class RenderSolutionBot {
                 });
                 break;
 
+            case 'style_backgrounds':
+                {
+                    const styles = ['holographic','gamer','amour','sensuel','futuristic','elegant','minimal','gaming'];
+                    const styleSelect = new ActionRowBuilder().addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId('style_backgrounds_style')
+                            .setPlaceholder('Choisir un style...')
+                            .addOptions(styles.map(s => ({ label: s, value: s })))
+                    );
+                    await interaction.update({
+                        content: '🖼️ Sélectionnez un style pour configurer les images (par rôle et par défaut):',
+                        embeds: [],
+                        components: [styleSelect]
+                    });
+                }
+                break;
+
             default:
                 await interaction.reply({
                     content: '❌ Action non reconnue.',
                     flags: 64
                 });
+        }
+
+        // Gestion des sélecteurs et modals style_backgrounds_*
+        if (interaction.customId === 'style_backgrounds_style' && interaction.values && interaction.values.length) {
+            const style = interaction.values[0];
+            const roleRow = new ActionRowBuilder().addComponents(
+                new RoleSelectMenuBuilder()
+                    .setCustomId(`style_backgrounds_role_${style}`)
+                    .setPlaceholder('Sélectionner un rôle à mapper...')
+                    .setMinValues(1)
+                    .setMaxValues(1)
+            );
+            const editRow = new ActionRowBuilder().addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId(`style_backgrounds_actions_${style}`)
+                    .setPlaceholder('Choisir une action...')
+                    .addOptions([
+                        { label: 'Définir image par défaut', value: 'set_default' },
+                        { label: 'Supprimer image par défaut', value: 'remove_default' },
+                        { label: 'Lister mappings', value: 'list' },
+                        { label: 'Retour', value: 'back' }
+                    ])
+            );
+            await interaction.update({
+                content: `Style sélectionné: ${style}\n— Choisissez un rôle à associer, ou une action.`,
+                embeds: [],
+                components: [roleRow, editRow]
+            });
+            return;
+        }
+
+        if (interaction.customId.startsWith('style_backgrounds_role_')) {
+            const style = interaction.customId.replace('style_backgrounds_role_', '');
+            const roleId = interaction.values?.[0];
+            const role = interaction.guild.roles.cache.get(roleId);
+            const modal = new ModalBuilder()
+                .setCustomId(`style_backgrounds_modal_${style}_${roleId}`)
+                .setTitle(`Image pour ${role?.name || roleId} (${style})`);
+            const input = new TextInputBuilder()
+                .setCustomId('image_path_or_url')
+                .setLabel('URL ou chemin local (ex: assets/styles/.../femme.png)')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+                .setMaxLength(512);
+            modal.addComponents(new ActionRowBuilder().addComponents(input));
+            await interaction.showModal(modal);
+            return;
+        }
+
+        if (interaction.isModalSubmit && interaction.isModalSubmit() && interaction.customId.startsWith('style_backgrounds_modal_')) {
+            const parts = interaction.customId.split('_');
+            const style = parts[3];
+            const roleId = parts[4];
+            const imageValue = interaction.fields.getTextInputValue('image_path_or_url');
+            const role = interaction.guild.roles.cache.get(roleId);
+            const roleKey = require('./utils/styleBackgrounds').normalizeRoleName(role?.name || roleId);
+            config.styleBackgrounds = config.styleBackgrounds || {};
+            config.styleBackgrounds[style] = config.styleBackgrounds[style] || { default: '', byRole: {} };
+            config.styleBackgrounds[style].byRole[roleKey] = imageValue;
+            levelManager.saveConfig(config);
+            await interaction.reply({ content: `✅ Image associée au rôle ${role?.name || roleId} pour le style ${style}.`, ephemeral: true });
+            return;
+        }
+
+        if (interaction.customId.startsWith('style_backgrounds_actions_') && interaction.values && interaction.values.length) {
+            const style = interaction.customId.replace('style_backgrounds_actions_', '');
+            const action = interaction.values[0];
+            if (action === 'set_default') {
+                const modal = new ModalBuilder()
+                    .setCustomId(`style_backgrounds_default_modal_${style}`)
+                    .setTitle(`Image par défaut (${style})`);
+                const input = new TextInputBuilder()
+                    .setCustomId('default_image')
+                    .setLabel('URL ou chemin local pour l\'image par défaut')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(512);
+                modal.addComponents(new ActionRowBuilder().addComponents(input));
+                await interaction.showModal(modal);
+                return;
+            }
+            if (action === 'remove_default') {
+                config.styleBackgrounds = config.styleBackgrounds || {};
+                config.styleBackgrounds[style] = config.styleBackgrounds[style] || { default: '', byRole: {} };
+                config.styleBackgrounds[style].default = '';
+                levelManager.saveConfig(config);
+                await interaction.update({ content: `🗑️ Image par défaut supprimée pour ${style}.`, embeds: [], components: [] });
+                return;
+            }
+            if (action === 'list') {
+                const styleCfg = (config.styleBackgrounds || {})[style] || { default: '', byRole: {} };
+                const list = [
+                    `Par défaut: ${styleCfg.default || '—'}`,
+                    ...Object.entries(styleCfg.byRole || {}).map(([k, v]) => `• ${k} → ${v}`)
+                ].join('\n');
+                await interaction.update({ content: `📋 Mappings pour ${style} :\n${list}`, embeds: [], components: [] });
+                return;
+            }
+            if (action === 'back') {
+                await levelHandler.showNotificationsConfig({ ...interaction, update: (o) => interaction.update(o) });
+                return;
+            }
         }
     }
 
