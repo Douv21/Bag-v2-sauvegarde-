@@ -4,7 +4,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('config-aouv')
         .setDescription('Configuration complète du jeu Action ou Vérité (Admin uniquement)')
-        .setDefaultMemberPermissions('0'),
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async execute(interaction) {
         if (!interaction.member.permissions.has('Administrator')) {
