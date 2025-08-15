@@ -57,3 +57,11 @@ services:
         value: FR
       - key: PIPED_BASE_URL
         value: https://piped.video
+      - key: LAVALINK_HOST
+        value: lava-v4.ajieblogs.eu.org
+      - key: LAVALINK_PORT
+        value: "443"
+      - key: LAVALINK_PASSWORD
+        value: https://dsc.gg/ajidevserver
+      - key: LAVALINK_SECURE
+        value: "true"
