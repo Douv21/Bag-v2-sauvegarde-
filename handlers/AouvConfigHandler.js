@@ -88,7 +88,7 @@ class AouvConfigHandler {
 		const embed = new EmbedBuilder()
 			.setColor('#2ecc71')
 			.setTitle('📺 Salons autorisés pour AouV')
-			.setDescription((cfg.allowedChannels || []).length ? (cfg.allowedChannels.map(id => `<#${id}>`).join(', ')) : 'Aucun (tous les salons autorisés)');
+			.setDescription((cfg.allowedChannels || []).length ? (cfg.allowedChannels.map(id => `<#${id}>`).join(', ')) : 'Aucun (aucun salon autorisé)');
 
 		const channelAdd = new ChannelSelectMenuBuilder()
 			.setCustomId('aouv_channel_add')
@@ -149,7 +149,7 @@ class AouvConfigHandler {
 		const embed = new EmbedBuilder()
 			.setColor('#e91e63')
 			.setTitle('🔞 Salons NSFW autorisés pour AouV')
-			.setDescription((cfg.nsfwAllowedChannels || []).length ? (cfg.nsfwAllowedChannels.map(id => `<#${id}>`).join(', ')) : 'Aucun');
+			.setDescription((cfg.nsfwAllowedChannels || []).length ? (cfg.nsfwAllowedChannels.map(id => `<#${id}>`).join(', ')) : 'Aucun (aucun salon NSFW autorisé)');
 
 		const channelAdd = new ChannelSelectMenuBuilder()
 			.setCustomId('aouv_nsfw_channel_add')

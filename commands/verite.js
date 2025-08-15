@@ -28,12 +28,12 @@ module.exports = {
 		const guildId = interaction.guild.id;
 		const channelId = interaction.channel.id;
 
-		// Restreindre aux salons configurés pour AouV (SFW)
+		// Restreindre strictement aux salons configurés pour AouV (SFW)
 		const cfg = await getGuildConfig(dataManager, guildId);
 		const allowed = Array.isArray(cfg.allowedChannels) ? cfg.allowedChannels : [];
-		if (allowed.length > 0 && !allowed.includes(channelId)) {
-			const mentions = allowed.map(id => `<#${id}>`).join(', ');
-			return interaction.reply({ content: `❌ Ce salon n'est pas configuré pour /verite. Utilisez: ${mentions}`, flags: 64 });
+		if (!allowed.includes(channelId)) {
+			const mentions = allowed.length ? allowed.map(id => `<#${id}>`).join(', ') : '(aucun)';
+			return interaction.reply({ content: `❌ Ce salon n'est pas configuré pour /verite. Salons autorisés: ${mentions}`, flags: 64 });
 		}
 
 		const disabled = new Set(cfg.disabledBaseTruths || []);
