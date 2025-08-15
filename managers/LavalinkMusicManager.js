@@ -39,6 +39,8 @@ function getPublicFallbackNodes() {
 		{ name: 'ajie-v4', url: 'lava-v4.ajieblogs.eu.org:443', auth: 'https://dsc.gg/ajidevserver', secure: true },
 		{ name: 'creavite-us1', url: 'us1.lavalink.creavite.co:20080', auth: 'auto.creavite.co', secure: false },
 		{ name: 'v4-lavalink-rocks', url: 'v4.lavalink.rocks:443', auth: 'horizxon.tech', secure: true },
+		{ name: 'darren-v4', url: 'lavalink.darrennathanael.com:443', auth: 'www.darrennathanael.com', secure: true },
+		{ name: 'lava-link', url: 'lava.link:80', auth: 'youshallnotpass', secure: false },
 	];
 }
 
@@ -105,6 +107,47 @@ function isReady() {
 	}
 }
 
+// New: wait for at least one node to be ready within a timeout
+async function waitForReady(timeoutMs = 8000) {
+	if (isReady()) return true;
+	return await new Promise((resolve) => {
+		let finished = false;
+		const done = (value) => { if (!finished) { finished = true; cleanup(); resolve(value); } };
+		const onReady = () => done(true);
+		const onAny = () => {};
+		const cleanup = () => {
+			try { shoukaku?.off('ready', onReady); } catch {}
+			try { shoukaku?.off('error', onAny); } catch {}
+			try { shoukaku?.off('close', onAny); } catch {}
+			try { shoukaku?.off('disconnect', onAny); } catch {}
+		};
+		try {
+			shoukaku?.on('ready', onReady);
+			shoukaku?.on('error', onAny);
+			shoukaku?.on('close', onAny);
+			shoukaku?.on('disconnect', onAny);
+		} catch {}
+		const to = setTimeout(() => done(isReady()), Math.max(1000, timeoutMs));
+	});
+}
+
+let reconnecting = false;
+async function tryEnsureConnection(timeoutMs = 8000) {
+	if (isReady()) return true;
+	if (!clientRef) return false;
+	if (reconnecting) return await waitForReady(timeoutMs);
+	reconnecting = true;
+	try {
+		try { shoukaku?.removeAllListeners(); } catch {}
+		shoukaku = null;
+		const ok = init(clientRef);
+		if (!ok) return false;
+		return await waitForReady(timeoutMs);
+	} finally {
+		reconnecting = false;
+	}
+}
+
 const guildIdToState = new Map();
 
 function getState(guildId) {
@@ -121,6 +164,9 @@ function createNowPlayingEmbed(track) {
 }
 
 async function ensurePlayer(voiceChannel) {
+	if (!isReady()) {
+		await tryEnsureConnection(10000);
+	}
 	if (!isReady()) throw new Error('LAVALINK_NOT_READY');
 	if (!voiceChannel || ![ChannelType.GuildVoice, ChannelType.GuildStageVoice].includes(voiceChannel.type)) throw new Error('NOT_IN_VOICE');
 
@@ -138,6 +184,9 @@ async function ensurePlayer(voiceChannel) {
 }
 
 async function resolveTrack(query) {
+	if (!isReady()) {
+		await tryEnsureConnection(10000);
+	}
 	const node = shoukaku.getIdealNode();
 	if (!node) throw new Error('LAVALINK_NOT_READY');
 	const isUrl = /^https?:\/\//i.test(query);
