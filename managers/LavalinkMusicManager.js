@@ -7,7 +7,18 @@ try {
 	Connectors = null;
 }
 
-const { EmbedBuilder, ChannelType } = require('discord.js');
+let EmbedBuilder, ChannelType;
+try {
+	({ EmbedBuilder, ChannelType } = require('discord.js'));
+} catch (_) {
+	EmbedBuilder = class {
+		setColor() { return this; }
+		setTitle() { return this; }
+		setDescription() { return this; }
+		setFooter() { return this; }
+	};
+	ChannelType = { GuildVoice: 2, GuildStageVoice: 13 };
+}
 
 const THEME = {
 	colorPrimary: '#FF2E88',
@@ -19,8 +30,20 @@ let shoukaku = null;
 let nodes = [];
 let clientRef = null;
 
+function shouldUsePublicFallback() {
+	return process.env.LAVALINK_DISABLE_PUBLIC !== 'true' && process.env.LAVALINK_DISABLE_PUBLIC !== '1';
+}
+
+function getPublicFallbackNodes() {
+	return [
+		{ name: 'ajie-v4', url: 'lava-v4.ajieblogs.eu.org:443', auth: 'https://dsc.gg/ajidevserver', secure: true },
+		{ name: 'creavite-us1', url: 'us1.lavalink.creavite.co:20080', auth: 'auto.creavite.co', secure: false },
+		{ name: 'v4-lavalink-rocks', url: 'v4.lavalink.rocks:443', auth: 'horizxon.tech', secure: true },
+	];
+}
+
 function isConfigured() {
-	return !!(process.env.LAVALINK_NODES || process.env.LAVALINK_HOST);
+	return !!(process.env.LAVALINK_NODES || process.env.LAVALINK_HOST) || shouldUsePublicFallback();
 }
 
 function parseNodesFromEnv() {
@@ -41,11 +64,19 @@ function parseNodesFromEnv() {
 	return [];
 }
 
+function getConfiguredNodesPreview() {
+	const envNodes = parseNodesFromEnv();
+	if (envNodes.length) return { nodes: envNodes, source: 'env' };
+	if (shouldUsePublicFallback()) return { nodes: getPublicFallbackNodes(), source: 'public' };
+	return { nodes: [], source: 'none' };
+}
+
 function init(discordClient) {
 	if (!isConfigured()) return false;
 	if (!Shoukaku || !Connectors) return false;
 	clientRef = discordClient;
 	nodes = parseNodesFromEnv();
+	if (!nodes.length && shouldUsePublicFallback()) nodes = getPublicFallbackNodes();
 	if (!nodes.length) return false;
 	try {
 		shoukaku = new Shoukaku(new Connectors.DiscordJS(discordClient), nodes, {
@@ -197,4 +228,5 @@ module.exports = {
 	getQueueInfo,
 	createNowPlayingEmbed,
 	THEME,
+	__getConfiguredNodesPreview: getConfiguredNodesPreview,
 };
