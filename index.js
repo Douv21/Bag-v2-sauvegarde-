@@ -244,14 +244,29 @@ class BagBotRender {
         this.app.get('/api/config/:name', async (req, res) => {
             try {
                 const { name } = req.params;
+                const knownRootFiles = {
+                    'economy': 'economy.json',
+                    'level_config': 'level_config.json',
+                    'karma_config': 'karma_config.json',
+                    'confessions': 'confessions.json',
+                    'moderation_config': 'moderation_config.json'
+                };
                 const fs = require('fs');
                 const path = require('path');
-                const configPath = path.join(__dirname, 'data', 'configs', `${name}.json`);
-                if (!fs.existsSync(configPath)) {
-                    return res.json({ success: true, data: {} });
+                let data = {};
+                if (knownRootFiles[name]) {
+                    // Lire depuis data/<file>.json
+                    data = await this.dataManager.loadData(knownRootFiles[name], {});
+                } else {
+                    // Fallback vers data/configs/<name>.json
+                    const configPath = path.join(__dirname, 'data', 'configs', `${name}.json`);
+                    if (fs.existsSync(configPath)) {
+                        const raw = fs.readFileSync(configPath, 'utf8');
+                        data = JSON.parse(raw);
+                    } else {
+                        data = {};
+                    }
                 }
-                const raw = fs.readFileSync(configPath, 'utf8');
-                const data = JSON.parse(raw);
                 res.json({ success: true, data });
             } catch (error) {
                 console.error('GET /api/config error:', error);
@@ -265,15 +280,81 @@ class BagBotRender {
                 const payload = req.body || {};
                 const fs = require('fs');
                 const path = require('path');
-                const dirPath = path.join(__dirname, 'data', 'configs');
-                const filePath = path.join(dirPath, `${name}.json`);
-                if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
-                const tmp = filePath + '.tmp';
-                fs.writeFileSync(tmp, JSON.stringify(payload, null, 2));
-                fs.renameSync(tmp, filePath);
-                res.json({ success: true });
+                const knownRootFiles = {
+                    'economy': 'economy.json',
+                    'level_config': 'level_config.json',
+                    'karma_config': 'karma_config.json',
+                    'confessions': 'confessions.json',
+                    'moderation_config': 'moderation_config.json'
+                };
+
+                if (knownRootFiles[name]) {
+                    // Écrire dans data/<file>.json via DataManager (atomique + répertoires)
+                    const ok = await this.dataManager.saveRawFile(knownRootFiles[name], payload);
+                    if (!ok) throw new Error('WRITE_FAILED');
+                    // Nettoyer le cache si pertinent
+                    try { this.dataManager.clearCache(name); } catch {}
+                    return res.json({ success: true });
+                } else {
+                    // Fallback: data/configs/<name>.json
+                    const dirPath = path.join(__dirname, 'data', 'configs');
+                    const filePath = path.join(dirPath, `${name}.json`);
+                    if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
+                    const tmp = filePath + '.tmp';
+                    fs.writeFileSync(tmp, JSON.stringify(payload, null, 2));
+                    fs.renameSync(tmp, filePath);
+                    return res.json({ success: true });
+                }
             } catch (error) {
                 console.error('POST /api/config error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Aggregated configs for dashboard preload
+        this.app.get('/api/configs', async (req, res) => {
+            try {
+                const economyConfig = await this.dataManager.loadData('economy.json', {});
+                const levelConfig = await this.dataManager.loadData('level_config.json', {});
+                const karmaConfig = await this.dataManager.loadData('karma_config.json', {});
+                const confessionConfig = await this.dataManager.loadData('confessions.json', {});
+
+                const configs = {
+                    economy: {
+                        dailyReward: economyConfig.dailyReward || 100,
+                        workReward: economyConfig.workReward || { min: 50, max: 200 },
+                        crimeReward: economyConfig.crimeReward || { min: 100, max: 500 },
+                        crimeFail: economyConfig.crimeFail || { min: 20, max: 100 },
+                        betLimit: economyConfig.betLimit || 1000,
+                        interestRate: economyConfig.interestRate || 0.02
+                    },
+                    levels: {
+                        textXP: levelConfig.textXP || { min: 5, max: 15, cooldown: 60000 },
+                        voiceXP: levelConfig.voiceXP || { amount: 10, interval: 60000, perMinute: 10 },
+                        notifications: levelConfig.notifications || { enabled: true, channelId: null, cardStyle: 'holographic' },
+                        roleRewards: levelConfig.roleRewards || {},
+                        levelFormula: levelConfig.levelFormula || { baseXP: 100, multiplier: 1.5 },
+                        leaderboard: levelConfig.leaderboard || { limit: 10 }
+                    },
+                    karma: {
+                        dailyBonus: karmaConfig.dailyBonus || 5,
+                        messageReward: karmaConfig.messageReward || 1,
+                        confessionReward: karmaConfig.confessionReward || 10,
+                        maxKarma: karmaConfig.maxKarma || 1000,
+                        discounts: karmaConfig.discounts || []
+                    },
+                    confessions: {
+                        channelId: confessionConfig.channelId || null,
+                        moderationEnabled: confessionConfig.moderationEnabled !== false,
+                        autoDelete: confessionConfig.autoDelete || false,
+                        minLength: confessionConfig.minLength || 10,
+                        maxLength: confessionConfig.maxLength || 2000
+                    }
+                };
+
+                res.json({ success: true, data: configs });
+            } catch (error) {
+                console.error('GET /api/configs error:', error);
                 res.status(500).json({ success: false, error: error.message });
             }
         });
