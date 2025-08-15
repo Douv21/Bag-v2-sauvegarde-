@@ -1,5 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField } = require('discord.js');
-const { pause, resume, skip, stop, setVolume, getQueueInfo, createNowPlayingEmbed } = require('../managers/MusicManager');
+const { pause, resume, skip, stop, setVolume, getQueueInfo, createNowPlayingEmbed, updatePlayerMessage } = require('../managers/MusicManager');
 
 function buildControls() {
   const row1 = new ActionRowBuilder().addComponents(
@@ -88,6 +88,8 @@ async function handleButton(interaction) {
       default:
         msg = '❔ Action inconnue.';
     }
+
+    try { await updatePlayerMessage(interaction.guildId); } catch {}
 
     if (msg) {
       await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});

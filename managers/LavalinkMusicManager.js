@@ -167,7 +167,7 @@ const guildIdToState = new Map();
 function getState(guildId) {
 	let state = guildIdToState.get(guildId);
 	if (!state) {
-		state = { player: null, queue: [], current: null, volume: 100, textChannel: null };
+		state = { player: null, queue: [], current: null, volume: 100, textChannel: null, playerMessageId: null };
 		guildIdToState.set(guildId, state);
 	}
 	return state;
@@ -179,6 +179,53 @@ function createNowPlayingEmbed(track, guild) {
 		.setTitle('▶️ Lecture')
 		.setDescription(`**${track.title || track.query}**\nDemandé par <@${track.requestedBy?.id || track.requestedBy}>`)
 		.setFooter({ text: THEME.footer });
+}
+
+// Persistent player message helpers
+function createPlayerEmbed(state) {
+	const guild = state.textChannel?.guild;
+	const base = new EmbedBuilder().setColor(getGuildColor(guild)).setTitle('🎶 Lecteur musique').setFooter({ text: THEME.footer });
+	if (state.current) {
+		const title = state.current.title || state.current.query || 'Lecture en cours';
+		base.setDescription(`▶️ ${title}\nVolume: ${state.volume}%`);
+	} else {
+		base.setDescription(`⏹️ Aucune lecture en cours\nVolume: ${state.volume}%`);
+	}
+	return base;
+}
+
+async function updatePlayerMessage(guildId) {
+	try {
+		const state = getState(guildId);
+		if (!state.textChannel || !state.playerMessageId) return false;
+		let msg = null;
+		try {
+			msg = await state.textChannel.messages.fetch(state.playerMessageId);
+		} catch (_) {
+			state.playerMessageId = null;
+			return false;
+		}
+		const embed = createPlayerEmbed(state);
+		await msg.edit({ embeds: [embed], components: msg.components });
+		return true;
+	} catch (_) {
+		return false;
+	}
+}
+
+async function registerPlayerMessage(guildId, messageId) {
+	try {
+		const state = getState(guildId);
+		state.playerMessageId = messageId;
+		if (state.textChannel) {
+			try { const m = await state.textChannel.messages.fetch(messageId); try { await m.pin().catch(() => {}); } catch {} } catch {}
+		}
+		// Initial render
+		await updatePlayerMessage(guildId);
+		return true;
+	} catch (_) {
+		return false;
+	}
 }
 
 async function ensurePlayer(voiceChannel) {
@@ -198,6 +245,7 @@ async function ensurePlayer(voiceChannel) {
 	state.player.on('end', async () => {
 		state.current = null;
 		if (state.queue.length > 0) await playNext(guildId);
+		try { await updatePlayerMessage(guildId); } catch {}
 	});
 	return state;
 }
@@ -223,7 +271,7 @@ async function resolveTrack(query) {
 async function playNext(guildId) {
 	const state = getState(guildId);
 	const next = state.queue.shift();
-	if (!next) { state.current = null; return; }
+	if (!next) { state.current = null; try { await updatePlayerMessage(guildId); } catch {} return; }
 	state.current = next;
 	const encoded = typeof next.track === 'string' ? next.track : (next.track?.encoded || next.track?.track);
 	if (encoded) {
@@ -232,7 +280,13 @@ async function playNext(guildId) {
 		await state.player.playTrack({ track: { identifier: next.url || next.title } }, false);
 	}
 	try {
-		if (state.textChannel) await state.textChannel.send({ embeds: [createNowPlayingEmbed(next, state.textChannel.guild)] });
+		if (state.textChannel) {
+			if (state.playerMessageId) {
+				await updatePlayerMessage(guildId);
+			} else {
+				await state.textChannel.send({ embeds: [createNowPlayingEmbed(next, state.textChannel.guild)] });
+			}
+		}
 	} catch {}
 }
 
@@ -245,17 +299,20 @@ async function playCommand(voiceChannel, query, textChannel, requestedBy) {
 	const wasIdle = !state.current;
 	state.queue.push(...mapped);
 	if (wasIdle) await playNext(voiceChannel.guild.id);
+	try { await updatePlayerMessage(voiceChannel.guild.id); } catch {}
 	return mapped[0];
 }
 
 async function pause(guildId) {
 	const state = getState(guildId);
 	await state.player.setPaused(true);
+	try { await updatePlayerMessage(guildId); } catch {}
 }
 
 async function resume(guildId) {
 	const state = getState(guildId);
 	await state.player.setPaused(false);
+	try { await updatePlayerMessage(guildId); } catch {}
 }
 
 async function stop(guildId) {
@@ -264,24 +321,29 @@ async function stop(guildId) {
 	try { await state.player.stopTrack(); } catch {}
 	try { await state.player.destroy(); } catch {}
 	try { await shoukaku.leaveVoiceChannel(guildId); } catch {}
-	guildIdToState.delete(guildId);
+	state.player = null;
+	state.current = null;
+	try { await updatePlayerMessage(guildId); } catch {}
 }
 
 async function skip(guildId) {
 	const state = getState(guildId);
 	await state.player.stopTrack();
+	try { await updatePlayerMessage(guildId); } catch {}
 }
 
 async function setVolume(guildId, percent) {
 	const state = getState(guildId);
 	state.volume = Math.max(0, Math.min(100, Number(percent) || 0));
 	try { await state.player.setGlobalVolume(state.volume); } catch {}
+	try { await updatePlayerMessage(guildId); } catch {}
 	return state.volume;
 }
 
 async function seek(guildId, seconds) {
 	const state = getState(guildId);
 	await state.player.seekTo(Math.max(0, seconds || 0) * 1000);
+	try { await updatePlayerMessage(guildId); } catch {}
 }
 
 function getQueueInfo(guildId) {
@@ -304,4 +366,6 @@ module.exports = {
 	THEME,
 	__getConfiguredNodesPreview: getConfiguredNodesPreview,
 	getGuildColor,
+	updatePlayerMessage,
+	registerPlayerMessage,
 };

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType, PermissionsBitField } = require('discord.js');
-const { playCommand, THEME, getGuildColor } = require('../managers/MusicManager');
+const { playCommand, THEME, getGuildColor, registerPlayerMessage } = require('../managers/MusicManager');
 const { EmbedBuilder } = require('discord.js');
 const { buildControls } = require('../handlers/MusicControls');
 
@@ -59,7 +59,11 @@ module.exports = {
             .setDescription(`▶️ ${title}\nDemandé par <@${interaction.user.id}>`)
             .setFooter({ text: THEME.footer });
           const components = buildControls();
-          await interaction.channel.send({ embeds: [embed], components }).catch(() => {});
+          const m = await interaction.channel.send({ embeds: [embed], components }).catch(() => null);
+          if (m && m.id) {
+            try { await m.pin().catch(() => {}); } catch {}
+            try { await registerPlayerMessage(interaction.guildId, m.id); } catch {}
+          }
         } catch {}
       }
 
