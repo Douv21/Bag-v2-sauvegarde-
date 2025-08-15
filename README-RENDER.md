@@ -56,3 +56,15 @@ base64 -w0 cookies.txt
 Notes:
 - Les cookies expirent : réexportez‑les si YouTube redemande une connexion.
 - Les salons Stage Discord nécessitent de promouvoir le bot en "Orateur" pour entendre le son.
+
+### Lecture via PIPED (YouTube proxy sans cookies)
+
+Dans les environnements où YouTube bloque ou rate souvent, la lecture passe par **Piped**.
+
+Variables supportées (déjà ajoutées à `render.yaml`):
+
+- `PIPED_BASE_URL`: instance par défaut (ex: `https://piped.video`)
+- `PIPED_TIMEOUT`: timeout des requêtes réseau (ms)
+- `PIPED_REGION`: région des résultats (ex: `FR`)
+
+Si vous voyez `⏰ Timeout lors de la récupération du flux (Piped)`, changez d'instance via `PIPED_BASE_URL` ou réessayez.
