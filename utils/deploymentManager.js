@@ -169,7 +169,8 @@ class DeploymentManager {
             'karma_config.json': { customRewards: [] },
             'karma_discounts.json': {},
             'message_rewards.json': {},
-            'aouv_config.json': {}
+            'aouv_config.json': {},
+            'member_locations.json': {}
         };
 
         for (const [filename, defaultData] of Object.entries(defaultConfigs)) {

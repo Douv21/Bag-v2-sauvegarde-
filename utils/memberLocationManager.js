@@ -51,7 +51,7 @@ class MemberLocationManager {
         return Number.isFinite(n) && n >= -180 && n <= 180;
     }
 
-    setLocation(userId, guildId, latitude, longitude, address = null) {
+    setLocation(userId, guildId, latitude, longitude, address = null, city = null, preference = null) {
         if (!userId || !guildId) throw new Error('USER_AND_GUILD_REQUIRED');
         if (!MemberLocationManager.isValidLatitude(latitude)) throw new Error('INVALID_LATITUDE');
         if (!MemberLocationManager.isValidLongitude(longitude)) throw new Error('INVALID_LONGITUDE');
@@ -64,6 +64,8 @@ class MemberLocationManager {
             lat: Number(latitude),
             lng: Number(longitude),
             address: address ? String(address) : null,
+            city: city ? String(city) : null,
+            preference: preference ? String(preference) : null,
             updatedAt: new Date().toISOString()
         };
         locations[key] = record;

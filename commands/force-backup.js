@@ -56,7 +56,7 @@ module.exports = {
                 embed.setDescription('🎯 Toutes les données utilisateur et configurations ont été sauvegardées vers MongoDB.');
                 embed.addFields({
                     name: '📁 Fichiers Sauvegardés',
-                    value: '• `economy.json` - Données économiques\n• `confessions.json` - Confessions\n• `counting.json` - Système comptage\n• `autothread.json` - Auto-thread\n• `shop.json` - Boutique\n• `karma_config.json` - Configuration karma\n• `message_rewards.json` - Récompenses messages',
+                    value: '• `economy.json` - Données économiques\n• `confessions.json` - Confessions\n• `counting.json` - Système comptage\n• `autothread.json` - Auto-thread\n• `shop.json` - Boutique\n• `karma_config.json` - Configuration karma\n• `message_rewards.json` - Récompenses messages\n• `member_locations.json` - Localisation des membres',
                     inline: false
                 });
             } else {

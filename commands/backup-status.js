@@ -79,7 +79,7 @@ module.exports = {
             if (connected) {
                 embed.addFields({
                     name: '📦 Collections Disponibles',
-                    value: '`users`, `economy`, `confessions`, `counting`, `autothread`, `shop`, `karma`, `configs`',
+                    value: '`users`, `economy`, `confessions`, `counting`, `autothread`, `shop`, `karma`, `configs`, `backup_member_locations`',
                     inline: false
                 });
             }
