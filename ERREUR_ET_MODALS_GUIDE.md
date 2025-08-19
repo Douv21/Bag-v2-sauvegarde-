@@ -100,23 +100,10 @@ const result = await modalHandler.handleModalSubmission(interaction);
 const { implemented, planned } = modalHandler.getAvailableModals();
 ```
 
-## 📊 Commande de Diagnostics
+## 📊 Suivi et Monitoring
 
-Une nouvelle commande `/diagnostics` a été ajoutée pour monitorer le système :
+Le suivi de l'état du système et des modals se fait via le système de logs centralisé et les métriques internes. Consultez les logs pour :
 
-### Sous-commandes
-
-- `/diagnostics erreurs [heures]` - Statistiques d'erreurs
-- `/diagnostics modals` - État des modals implémentées/planifiées
-- `/diagnostics system` - Informations système générales
-
-### Exemple d'utilisation
-
-```
-/diagnostics erreurs heures:24
-```
-
-Affiche :
 - Nombre total d'événements
 - Répartition par niveau (critique, erreur, warning, info)
 - Indicateurs de santé du système
@@ -208,7 +195,7 @@ Le système calcule automatiquement des indicateurs de santé :
 
 - **Rotation automatique** : Garde les 1000 derniers logs
 - **Sauvegarde** : `data/error_logs.json`
-- **Analyse** : Disponible via `/diagnostics erreurs`
+- **Analyse** : Disponible via le système de logs et d'outils internes
 
 ### Surveillance
 
@@ -237,7 +224,7 @@ if (stats.critical > 0) {
 
 Pour toute question concernant ce système :
 
-1. Utilisez `/diagnostics` pour vérifier l'état
+1. Consultez l'état via les logs et métriques internes
 2. Consultez les logs d'erreurs
 3. Vérifiez les modals implémentées vs planifiées
 4. Contactez l'équipe de développement avec les informations de diagnostic
