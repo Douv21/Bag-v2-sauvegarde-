@@ -1040,3 +1040,111 @@ class ModerationManager {
 }
 
 module.exports = ModerationManager;
+
+
+  // ========== CONFIGURATION DE SÉCURITÉ ==========
+
+  getDefaultSecurityConfig(guildId) {
+    return {
+      guildId,
+      enabled: true,
+      autoAlerts: {
+        enabled: true,
+        alertChannelId: null,
+        mentionModerators: false,
+        moderatorRoleId: null
+      },
+      thresholds: {
+        lowRisk: 20,
+        mediumRisk: 40, 
+        highRisk: 70,
+        criticalRisk: 85,
+        alertThreshold: 50,
+        multiAccountAlert: 60
+      },
+      accessControl: {
+        enabled: false,
+        accountAgeGate: {
+          enabled: false,
+          minimumAgeDays: 7,
+          action: "QUARANTINE"
+        },
+        riskGate: {
+          enabled: false,
+          maxAllowedScore: 30,
+          action: "ADMIN_APPROVAL"
+        },
+        quarantineRoleId: null,
+        quarantineRoleName: "Quarantaine",
+        verifiedRoleId: null,
+        verifiedRoleName: "Vérifié",
+        quarantineChannelId: null,
+        adminApproval: {
+          enabled: true,
+          timeoutMinutes: 60,
+          defaultAction: "KICK"
+        }
+      },
+      detection: {
+        accountAgeCheck: true,
+        accountAgeThresholdDays: 7,
+        multiAccountCheck: true,
+        raidDetection: true,
+        auditLogCheck: true,
+        genderAnalysis: true
+      },
+      whitelist: {
+        userIds: [],
+        roleIds: [],
+        roleNames: []
+      }
+    };
+  }
+
+  async getSecurityConfig(guildId) {
+    try {
+      const config = await this.dataManager.getData("security_config");
+      return config[guildId] || this.getDefaultSecurityConfig(guildId);
+    } catch (error) {
+      return this.getDefaultSecurityConfig(guildId);
+    }
+  }
+
+  async updateSecurityConfig(guildId, updates) {
+    try {
+      const config = await this.dataManager.getData("security_config");
+      const currentConfig = config[guildId] || this.getDefaultSecurityConfig(guildId);
+      config[guildId] = this.deepMerge(currentConfig, updates);
+      await this.dataManager.saveData("security_config", config);
+      return config[guildId];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  deepMerge(target, source) {
+    const result = { ...target };
+    for (const key in source) {
+      if (source[key] && typeof source[key] === "object" && !Array.isArray(source[key])) {
+        result[key] = this.deepMerge(result[key] || {}, source[key]);
+      } else {
+        result[key] = source[key];
+      }
+    }
+    return result;
+  }
+
+  async isUserWhitelisted(guildId, userId, member = null) {
+    try {
+      const config = await this.getSecurityConfig(guildId);
+      if (config.whitelist.userIds.includes(userId)) return true;
+      if (member) {
+        for (const roleId of config.whitelist.roleIds) {
+          if (member.roles.cache.has(roleId)) return true;
+        }
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }

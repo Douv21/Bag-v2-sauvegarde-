@@ -52,6 +52,7 @@ const ReminderManager = require('./managers/ReminderManager');
 const ReminderInteractionHandler = require('./handlers/ReminderInteractionHandler');
 const ModerationManager = require('./managers/ModerationManager');
 const MusicManagerRouter = require('./managers/MusicManager');
+const SecurityButtonHandler = require('./handlers/SecurityButtonHandler');
 
 class BagBotRender {
     constructor() {
@@ -77,6 +78,7 @@ class BagBotRender {
                 this.moderationManager = new ModerationManager(this.dataManager, this.client);
         const LogManager = require('./managers/LogManager');
         this.logManager = new LogManager(this.dataManager, this.client);
+        this.securityButtonHandler = new SecurityButtonHandler(this.moderationManager);
         // Optionnel: conserver config-bump uniquement pour UI? On va retirer bump complet; pas d'UI bump.
         this.mainRouterHandler = new MainRouterHandler(this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
@@ -604,6 +606,11 @@ class BagBotRender {
                     
                     console.log(`🔄 Traitement interaction: ${interaction.customId}`);
 
+                    // Gestion des boutons de sécurité
+                    if (interaction.isButton() && interaction.customId.startsWith('security_')) {
+                        return this.securityButtonHandler.handleSecurityButton(interaction);
+                    }
+
                     // Routage prioritaire: configuration des images par style & rôle
                     try {
                         const id = interaction.customId || '';
@@ -771,7 +778,7 @@ class BagBotRender {
             try { await this.logManager.logMemberJoin(member); } catch {}
             try { await this.logManager.updateMemberRolesSnapshot(member); } catch {}
             
-            // Vérification de sécurité automatique
+            // Vérification de sécurité et contrôle d'accès automatique
             try {
                 await this.performSecurityCheck(member);
             } catch (error) {
@@ -1066,93 +1073,214 @@ class BagBotRender {
      */
     async performSecurityCheck(member) {
         try {
-            const user = member.user;
-            const guild = member.guild;
+            const config = await this.moderationManager.getSecurityConfig(member.guild.id);
             
-            // Effectuer les analyses de base
+            // Si le système n'est pas activé, ne rien faire
+            if (!config.enabled) return;
+
+            // Vérifier si l'utilisateur est whitelisté
+            if (await this.moderationManager.isUserWhitelisted(member.guild.id, member.user.id, member)) {
+                console.log(`✅ Membre whitelisté: ${member.user.tag}`);
+                return;
+            }
+
+            // Si le contrôle d'accès est activé, utiliser le nouveau système
+            if (config.accessControl?.enabled) {
+                return this.processNewMemberAccess(member);
+            }
+
+            // Sinon, utiliser le système d'alertes simple
             const [securityAnalysis, raidCheck, multiAccountCheck] = await Promise.all([
-                this.moderationManager.analyzeUserSecurity(guild, user),
-                this.moderationManager.checkRaidIndicators(guild, user),
-                this.moderationManager.detectMultiAccounts(guild, user)
+                this.moderationManager.analyzeUserSecurity(member.guild, member.user),
+                this.moderationManager.checkRaidIndicators(member.guild, member.user),
+                this.moderationManager.detectMultiAccounts(member.guild, member.user)
             ]);
 
-            // Calculer le score de risque total
             let totalRiskScore = securityAnalysis.riskScore;
             if (multiAccountCheck.confidence >= 70) totalRiskScore += 25;
             else if (multiAccountCheck.confidence >= 50) totalRiskScore += 15;
 
-            // Seuils d'alerte
-            const shouldAlert = totalRiskScore >= 50 || raidCheck.isRaidSuspect || multiAccountCheck.confidence >= 60;
-
-            if (shouldAlert) {
-                // Chercher un canal de logs/alertes
-                const logChannel = await this.findSecurityLogChannel(guild);
+            // Envoyer alerte si seuil dépassé
+            if (totalRiskScore >= config.thresholds.alertThreshold || 
+                raidCheck.isRaidSuspect || 
+                multiAccountCheck.confidence >= config.thresholds.multiAccountAlert) {
                 
-                if (logChannel) {
-                    const embed = new EmbedBuilder()
-                        .setTitle('🚨 ALERTE SÉCURITÉ - Nouveau membre suspect')
-                        .setThumbnail(user.displayAvatarURL({ dynamic: true }))
-                        .setColor(0xff6b6b)
-                        .setTimestamp();
-
-                    embed.addFields({
-                        name: '👤 Membre',
-                        value: `${user.tag} (${user.id})\n<@${user.id}>`,
-                        inline: true
-                    });
-
-                    embed.addFields({
-                        name: '⚠️ Niveau de risque',
-                        value: `**${securityAnalysis.riskLevel}** (${totalRiskScore}/100)`,
-                        inline: true
-                    });
-
-                    // Alertes principales
-                    let alertText = '';
-                    if (raidCheck.isRaidSuspect) {
-                        alertText += `🚨 **SUSPECT DE RAID** (${raidCheck.confidence}%)\n`;
-                    }
-                    if (multiAccountCheck.totalSuspects > 0) {
-                        alertText += `🔍 **${multiAccountCheck.totalSuspects} MULTI-COMPTES** (${multiAccountCheck.confidence}%)\n`;
-                    }
-                    if (securityAnalysis.flags.length > 0) {
-                        alertText += `🚩 ${securityAnalysis.flags.slice(0, 3).join(', ')}\n`;
-                    }
-
-                    embed.addFields({
-                        name: '🚨 Alertes',
-                        value: alertText.slice(0, 1024),
-                        inline: false
-                    });
-
-                    // Actions recommandées
-                    let actionText = '';
-                    if (totalRiskScore >= 80) {
-                        actionText = '🚨 **BAN IMMÉDIAT RECOMMANDÉ**\n⚡ `/ban @' + user.tag + '`';
-                    } else if (totalRiskScore >= 60) {
-                        actionText = '⚠️ **SURVEILLANCE RENFORCÉE**\n👀 `/verifier @' + user.tag + '`';
-                    } else {
-                        actionText = '👀 **SURVEILLANCE NORMALE**\n🔍 Vérifier périodiquement';
-                    }
-
-                    embed.addFields({
-                        name: '💡 Actions recommandées',
-                        value: actionText,
-                        inline: false
-                    });
-
-                    embed.setFooter({
-                        text: 'Système de sécurité automatique • Utilisez /verifier pour plus de détails'
-                    });
-
-                    await logChannel.send({ embeds: [embed] });
-                    console.log(`🚨 Alerte sécurité envoyée pour ${user.tag} dans ${guild.name}`);
-                }
+                await this.sendSecurityAlert(member, securityAnalysis, {
+                    totalScore: totalRiskScore,
+                    raidCheck,
+                    multiAccountCheck
+                });
             }
 
         } catch (error) {
             console.error('Erreur vérification sécurité automatique:', error);
         }
+    }
+
+    async processNewMemberAccess(member) {
+        try {
+            const config = await this.moderationManager.getSecurityConfig(member.guild.id);
+            
+            // Effectuer l'analyse complète
+            const [securityAnalysis, multiAccountCheck, raidCheck] = await Promise.all([
+                this.moderationManager.analyzeUserSecurity(member.guild, member.user),
+                this.moderationManager.detectMultiAccounts(member.guild, member.user),
+                this.moderationManager.checkRaidIndicators(member.guild, member.user)
+            ]);
+
+            let totalScore = securityAnalysis.riskScore;
+            if (multiAccountCheck.confidence >= 70) totalScore += 25;
+            else if (multiAccountCheck.confidence >= 50) totalScore += 15;
+
+            const accountAge = Math.floor((Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24));
+            
+            // Vérifier l'âge du compte
+            if (config.accessControl.accountAgeGate?.enabled && 
+                accountAge < config.accessControl.accountAgeGate.minimumAgeDays) {
+                return this.handleAccessDenied(member, 'AGE_TOO_LOW', {
+                    action: config.accessControl.accountAgeGate.action,
+                    reason: `Compte trop récent (${accountAge}j < ${config.accessControl.accountAgeGate.minimumAgeDays}j)`,
+                    score: totalScore
+                });
+            }
+
+            // Vérifier le score de risque
+            if (config.accessControl.riskGate?.enabled && 
+                totalScore > config.accessControl.riskGate.maxAllowedScore) {
+                return this.handleAccessDenied(member, 'RISK_TOO_HIGH', {
+                    action: config.accessControl.riskGate.action,
+                    reason: `Score de risque élevé (${totalScore}/${config.accessControl.riskGate.maxAllowedScore})`,
+                    score: totalScore,
+                    multiAccounts: multiAccountCheck.totalSuspects,
+                    raidSuspect: raidCheck.isRaidSuspect
+                });
+            }
+
+            // Accès accordé automatiquement
+            await this.grantAccess(member, 'Vérifications passées');
+
+        } catch (error) {
+            console.error('Erreur traitement accès:', error);
+        }
+    }
+
+    async handleAccessDenied(member, reason, details) {
+        const action = details.action;
+
+        switch (action) {
+            case 'QUARANTINE':
+                return this.quarantineMember(member, reason, details);
+            case 'ADMIN_APPROVAL':
+                return this.requestAdminApproval(member, reason, details);
+            case 'KICK':
+                return this.autoKickMember(member, reason, details);
+            case 'BAN':
+                return this.autoBanMember(member, reason, details);
+            default:
+                return this.sendSecurityAlert(member, reason, details);
+        }
+    }
+
+    async requestAdminApproval(member, reason, details) {
+        const alertChannel = await this.findSecurityLogChannel(member.guild);
+        if (!alertChannel) return;
+
+        const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setTitle('👨‍💼 APPROBATION ADMIN REQUISE')
+            .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+            .setColor(0xff922b)
+            .setTimestamp();
+
+        embed.addFields({
+            name: '👤 Nouveau membre',
+            value: `${member.user.tag}\n<@${member.user.id}>`,
+            inline: true
+        });
+
+        embed.addFields({
+            name: '⚠️ Problème',
+            value: `**Raison :** ${details.reason}\n**Score :** ${details.score}/100`,
+            inline: true
+        });
+
+        if (details.multiAccounts > 0) {
+            embed.addFields({
+                name: '🔍 Multi-comptes',
+                value: `${details.multiAccounts} suspect(s)`,
+                inline: true
+            });
+        }
+
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`security_approve_${member.user.id}`)
+                    .setLabel('✅ Approuver')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId(`security_deny_${member.user.id}`)
+                    .setLabel('❌ Refuser')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId(`security_quarantine_${member.user.id}`)
+                    .setLabel('🔒 Quarantaine')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId(`security_details_${member.user.id}`)
+                    .setLabel('🔍 Détails')
+                    .setStyle(ButtonStyle.Primary)
+            );
+
+        const config = await this.moderationManager.getSecurityConfig(member.guild.id);
+        let content = '';
+        if (config.autoAlerts?.mentionModerators && config.autoAlerts?.moderatorRoleId) {
+            content = `<@&${config.autoAlerts.moderatorRoleId}> **Approbation requise**`;
+        }
+
+        await alertChannel.send({ content, embeds: [embed], components: [row] });
+        console.log(`👨‍💼 Approbation demandée: ${member.user.tag}`);
+    }
+
+    async quarantineMember(member, reason, details) {
+        const config = await this.moderationManager.getSecurityConfig(member.guild.id);
+        
+        // Ajouter rôle de quarantaine
+        if (config.accessControl?.quarantineRoleId) {
+            const role = member.guild.roles.cache.get(config.accessControl.quarantineRoleId);
+            if (role) {
+                await member.roles.add(role, `Quarantaine auto: ${details.reason}`);
+            }
+        }
+
+        // Notifier le membre
+        try {
+            await member.send(
+                `🔒 **Quarantaine de sécurité - ${member.guild.name}**\n\n` +
+                `Votre accès est temporairement limité.\n` +
+                `**Raison :** ${details.reason}\n` +
+                `**Score :** ${details.score}/100\n\n` +
+                `Un admin va examiner votre cas.`
+            );
+        } catch {}
+
+        await this.notifyAdminsQuarantine(member, reason, details);
+        console.log(`🔒 Quarantaine: ${member.user.tag}`);
+    }
+
+    async grantAccess(member, reason) {
+        const config = await this.moderationManager.getSecurityConfig(member.guild.id);
+        
+        // Ajouter rôle vérifié
+        if (config.accessControl?.verifiedRoleId) {
+            const role = member.guild.roles.cache.get(config.accessControl.verifiedRoleId);
+            if (role) {
+                await member.roles.add(role, `Accès accordé: ${reason}`);
+            }
+        }
+
+        console.log(`✅ Accès accordé: ${member.user.tag} - ${reason}`);
     }
 
     /**
