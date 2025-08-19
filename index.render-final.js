@@ -343,14 +343,14 @@ class RenderSolutionBot {
         const memberLocationManager = require('./utils/memberLocationManager');
 
         // POST /ajouter-carte
-        // body: { userId, guildId, lat, lng, address? }
+        // body: { userId, guildId, lat, lng, address?, city?, preference? }
         app.post('/ajouter-carte', async (req, res) => {
             try {
-                const { userId, guildId, lat, latitude, lng, longitude, address } = req.body || {};
+                const { userId, guildId, lat, latitude, lng, longitude, address, city, preference } = req.body || {};
                 const latValue = latitude ?? lat;
                 const lngValue = longitude ?? lng;
                 if (!userId || !guildId) return res.status(400).json({ success: false, error: 'USER_AND_GUILD_REQUIRED' });
-                const record = memberLocationManager.setLocation(String(userId), String(guildId), Number(latValue), Number(lngValue), address);
+                const record = memberLocationManager.setLocation(String(userId), String(guildId), Number(latValue), Number(lngValue), address, city, preference);
                 res.json({ success: true, location: record });
             } catch (error) {
                 const code = error && error.message;
