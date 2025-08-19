@@ -62,7 +62,7 @@ Le système fonctionne maintenant de la façon suivante :
 ## 🔄 Prochaines Étapes
 
 1. **Déploiement** : Le fichier `index.render.js` peut maintenant être utilisé en production
-2. **Monitoring** : Utiliser `/diagnostics modals` pour suivre les demandes utilisateurs
+2. **Monitoring** : Suivre les demandes utilisateurs via les logs et métriques internes
 3. **Développement** : Prioriser les modals les plus demandées selon les feedbacks
 
 ## 🚀 Impact

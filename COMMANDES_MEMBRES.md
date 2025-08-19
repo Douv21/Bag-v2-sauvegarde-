@@ -12,7 +12,6 @@
 - `/crime`: Commettre un crime pour beaucoup de plaisir (très risqué 😈).
 - `/daily`: Récupérer votre récompense quotidienne.
 - `/defier`: Lancer un défi osé pour beaucoup de plaisir (risqué 😈).
-- `/diagnostics`: Affiche des informations de diagnostic du bot (overview, stats, modals).
 - `/donner`: Donner du plaisir à un membre.
 - `/economie`: Voir votre profil Boys & Girls.
 - `/embrasser`: Embrasser un membre (NSFW).
@@ -30,7 +29,6 @@
 - `/pecher`: Pêcher pour gagner du plaisir (action standard 😇).
 - `/play`: Joue une musique ou une radio.
 - `/profil-carte`: Génère une carte de profil personnalisée.
-- `/profil-utilisateur`: Profil utilisateur avec carte personnalisée.
 - `/queue`: Affiche la file d’attente musique.
 - `/radio`: Ouvre un sélecteur de radios en direct.
 - `/resume`: Relance la lecture musicale.
