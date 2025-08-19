@@ -42,7 +42,7 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      await interaction.deferReply();
+      await interaction.deferReply({ ephemeral: true });
 
       const memberLocationManager = require('../utils/memberLocationManager');
       const guildId = interaction.guildId;
@@ -106,14 +106,11 @@ module.exports = {
         }
         if (nearby.length > 10) lines.push(`… et ${nearby.length - 10} autres.`);
       }
-
       const content = lines.join('\n');
-
       if (attachment) {
         return interaction.editReply({ content, files: [attachment] });
-      } else {
-        return interaction.editReply(content);
       }
+      return interaction.editReply(content);
     } catch (error) {
       return interaction.editReply('Une erreur est survenue.');
     }
