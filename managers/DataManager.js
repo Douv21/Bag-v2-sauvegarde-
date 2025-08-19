@@ -63,6 +63,10 @@ class DataManager {
             'moderation_config': 'moderation_config.json',
             'moderation_state': 'moderation_state.json',
             'logs_config': 'logs_config.json',
+            // Vérification
+            'verification_config': 'verification_config.json',
+            'verification_state': 'verification_state.json',
+            'global_flags': 'global_flags.json',
             // Snapshots de rôles pour logs
             'member_roles': 'member_roles.json'
         };
@@ -285,6 +289,10 @@ class DataManager {
             'moderation_config': {},
             'moderation_state': {},
             'logs_config': {},
+            // Verification defaults
+            'verification_config': {},
+            'verification_state': {},
+            'global_flags': {},
             // Métriques globales (messages/commandes par jour, par guilde)
             'metrics': {
                 messagesPerDay: {},

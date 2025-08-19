@@ -76,6 +76,8 @@ class BagBotRender {
                 this.moderationManager = new ModerationManager(this.dataManager, this.client);
         const LogManager = require('./managers/LogManager');
         this.logManager = new LogManager(this.dataManager, this.client);
+        const VerificationManager = require('./managers/VerificationManager');
+        this.verificationManager = new VerificationManager(this.dataManager, this.client, this.logManager);
         // Optionnel: conserver config-bump uniquement pour UI? On va retirer bump complet; pas d'UI bump.
         this.mainRouterHandler = new MainRouterHandler(this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
@@ -84,6 +86,7 @@ class BagBotRender {
         this.client.reminderManager = this.reminderManager;
         this.client.moderationManager = this.moderationManager;
         this.client.logManager = this.logManager;
+        this.client.verificationManager = this.verificationManager;
 
         // Collections
         this.client.commands = new Collection();
@@ -769,6 +772,7 @@ class BagBotRender {
             } catch {}
             try { await this.logManager.logMemberJoin(member); } catch {}
             try { await this.logManager.updateMemberRolesSnapshot(member); } catch {}
+            try { await this.verificationManager.autoVerifyOnJoin(member); } catch {}
         });
 
                 // Départ membre

@@ -837,6 +837,15 @@ class RenderSolutionBot {
             console.warn('⚠️ Échec initialisation LogManager:', e?.message || e);
         }
 
+        // Initialiser et attacher le gestionnaire de vérification
+        try {
+            const VerificationManager = require('./managers/VerificationManager');
+            this.verificationManager = new VerificationManager(this.coreDataManager, this.client, this.logManager);
+            this.client.verificationManager = this.verificationManager;
+        } catch (e) {
+            console.warn('⚠️ Échec initialisation VerificationManager:', e?.message || e);
+        }
+
         this.commands = new Collection();
         await this.loadCommands();
         await this.setupEventHandlers();
@@ -968,6 +977,18 @@ class RenderSolutionBot {
                         console.warn('⚠️ Erreur MusicControls:', e?.message || e);
                     }
                     return;
+                }
+
+                // Boutons de vérification
+                if (interaction.isButton() && interaction.customId && interaction.customId.startsWith('verify:')) {
+                    try {
+                        if (this.verificationManager) {
+                            const handled = await this.verificationManager.handleButtonInteraction(interaction);
+                            if (handled) return;
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ Erreur VerificationManager:', e?.message || e);
+                    }
                 }
 
                 // Sélecteur radio désactivé (mode Lavalink only)
@@ -1135,6 +1156,7 @@ class RenderSolutionBot {
             try { if (this.moderationManager) await this.moderationManager.recordJoin(member.guild.id, member.id); } catch {}
             try { if (this.logManager) await this.logManager.logMemberJoin(member); } catch {}
             try { if (this.logManager) await this.logManager.updateMemberRolesSnapshot(member); } catch {}
+            try { if (this.verificationManager) await this.verificationManager.autoVerifyOnJoin(member); } catch {}
         });
         this.client.on('guildMemberRemove', async (member) => {
             try {
