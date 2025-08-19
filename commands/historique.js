@@ -22,17 +22,23 @@ module.exports = {
     }
 
     try {
-      // Récupérer l'historique global
+      // Récupérer l'historique global (cross-serveur du bot)
       const globalHistory = await mod.getGlobalModerationHistory(user.id);
       
       // Récupérer les warnings locaux du serveur actuel
       const localWarnings = await mod.getWarnings(interaction.guild.id, user.id);
+      
+      // Récupérer l'historique via Discord Audit Log (toutes actions sur ce serveur)
+      const auditHistory = await mod.getDiscordAuditHistory(interaction.guild, user.id);
 
+      // Calculer le total d'actions pour la couleur
+      const totalActions = globalHistory.length + auditHistory.bans.length + auditHistory.kicks.length + auditHistory.mutes.length;
+      
       // Créer l'embed de réponse
       const embed = new EmbedBuilder()
         .setTitle(`📋 Historique de modération - ${user.tag}`)
         .setThumbnail(user.displayAvatarURL({ dynamic: true }))
-        .setColor(globalHistory.length > 0 ? 0xff6b6b : 0x51cf66)
+        .setColor(totalActions > 0 ? 0xff6b6b : 0x51cf66)
         .setTimestamp();
 
       // Section historique cross-serveur
@@ -112,7 +118,74 @@ module.exports = {
       } else {
         embed.addFields({
           name: '✅ Aucun historique cross-serveur',
-          value: 'Ce membre n\'a aucun historique de modération enregistré sur d\'autres serveurs.',
+          value: 'Ce membre n\'a aucun historique de modération enregistré sur d\'autres serveurs où ce bot est présent.',
+          inline: false
+        });
+      }
+
+      // Section historique Audit Log Discord (serveur actuel)
+      const totalAuditActions = auditHistory.bans.length + auditHistory.kicks.length + auditHistory.mutes.length;
+      
+      if (totalAuditActions > 0) {
+        // Combiner toutes les actions de l'audit log
+        const allAuditActions = [
+          ...auditHistory.bans,
+          ...auditHistory.kicks,
+          ...auditHistory.mutes
+        ].sort((a, b) => b.timestamp - a.timestamp);
+
+        let auditText = `**${totalAuditActions} action(s) trouvée(s) sur ce serveur (tous bots confondus):**\n\n`;
+        
+        // Afficher les 8 actions les plus récentes
+        const recentAuditActions = allAuditActions.slice(0, 8);
+        for (const action of recentAuditActions) {
+          const date = new Date(action.timestamp);
+          const dateStr = date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+          
+          const timeStr = date.toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          const emoji = {
+            ban: '🔨',
+            kick: '👢',
+            mute: '🔇'
+          }[action.action] || '❓';
+
+          auditText += `${emoji} **${action.action.toUpperCase()}** - ${dateStr} ${timeStr}\n`;
+          auditText += `👮 **Par:** ${action.executor}\n`;
+          auditText += `📝 **Raison:** ${action.reason}\n`;
+          if (action.duration) {
+            auditText += `⏱️ **Jusqu'à:** ${new Date(action.duration).toLocaleString('fr-FR')}\n`;
+          }
+          auditText += '\n';
+        }
+
+        if (allAuditActions.length > 8) {
+          auditText += `*Et ${allAuditActions.length - 8} autre(s) action(s)...*`;
+        }
+
+        embed.addFields({
+          name: '🏛️ Historique Discord (ce serveur)',
+          value: auditText.slice(0, 1024),
+          inline: false
+        });
+
+        // Statistiques audit log
+        embed.addFields({
+          name: '📊 Statistiques serveur actuel',
+          value: `**Bans:** ${auditHistory.bans.length} | **Kicks:** ${auditHistory.kicks.length} | **Mutes:** ${auditHistory.mutes.length}`,
+          inline: false
+        });
+      } else {
+        embed.addFields({
+          name: '🏛️ Historique Discord (ce serveur)',
+          value: 'Aucune action de modération trouvée dans l\'Audit Log Discord pour ce membre.',
           inline: false
         });
       }
@@ -153,8 +226,26 @@ module.exports = {
 
       // Footer informatif
       embed.setFooter({
-        text: 'Historique cross-serveur • Données partagées entre serveurs utilisant ce bot'
+        text: '🤖 Historique cross-serveur (bot) + 🏛️ Audit Log Discord (ce serveur) • Limité aux 90 derniers jours'
       });
+
+      // Ajouter une note explicative
+      if (totalActions === 0) {
+        embed.addFields({
+          name: 'ℹ️ Information importante',
+          value: '**Limitations du système :**\n' +
+                 '• **Cross-serveur :** Seulement les serveurs où ce bot est installé\n' +
+                 '• **Audit Log :** Seulement ce serveur, tous bots confondus (90 jours max)\n' +
+                 '• **APIs tierces :** Carl-bot, MEE6, etc. ne partagent pas leurs données',
+          inline: false
+        });
+      } else {
+        embed.addFields({
+          name: 'ℹ️ Sources des données',
+          value: '🤖 **Cross-serveur :** Serveurs avec ce bot\n🏛️ **Audit Log :** Actions sur ce serveur (tous bots)',
+          inline: false
+        });
+      }
 
       return interaction.reply({ embeds: [embed], flags: 64 });
 

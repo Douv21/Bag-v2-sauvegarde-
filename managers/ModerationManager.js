@@ -419,6 +419,111 @@ class ModerationManager {
     if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
     return `${seconds}s`;
   }
+
+  /**
+   * Récupérer l'historique de modération d'un utilisateur via Discord Audit Log
+   * @param {Guild} guild - Le serveur Discord
+   * @param {string} userId - ID de l'utilisateur
+   * @returns {Object} Historique de modération du serveur
+   */
+  async getDiscordAuditHistory(guild, userId) {
+    try {
+      const history = {
+        bans: [],
+        kicks: [],
+        mutes: [],
+        warnings: [] // Note: Discord ne track pas les warnings dans l'audit log
+      };
+
+      // Vérifier les permissions
+      if (!guild.members.me?.permissions.has('ViewAuditLog')) {
+        console.warn('❌ Permission ViewAuditLog manquante pour récupérer l\'audit log');
+        return history;
+      }
+
+      // Récupérer les bans (90 derniers jours maximum)
+      try {
+        const banLogs = await guild.fetchAuditLogs({
+          type: 22, // MEMBER_BAN_ADD
+          limit: 100
+        });
+
+        for (const entry of banLogs.entries.values()) {
+          if (entry.target?.id === userId) {
+            history.bans.push({
+              action: 'ban',
+              reason: entry.reason || 'Aucune raison fournie',
+              executor: entry.executor?.tag || 'Inconnu',
+              executorId: entry.executor?.id || null,
+              timestamp: entry.createdTimestamp,
+              source: 'Discord Audit Log'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Erreur récupération bans audit log:', error);
+      }
+
+      // Récupérer les kicks
+      try {
+        const kickLogs = await guild.fetchAuditLogs({
+          type: 20, // MEMBER_KICK
+          limit: 100
+        });
+
+        for (const entry of kickLogs.entries.values()) {
+          if (entry.target?.id === userId) {
+            history.kicks.push({
+              action: 'kick',
+              reason: entry.reason || 'Aucune raison fournie',
+              executor: entry.executor?.tag || 'Inconnu',
+              executorId: entry.executor?.id || null,
+              timestamp: entry.createdTimestamp,
+              source: 'Discord Audit Log'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Erreur récupération kicks audit log:', error);
+      }
+
+      // Récupérer les timeouts/mutes
+      try {
+        const timeoutLogs = await guild.fetchAuditLogs({
+          type: 24, // MEMBER_UPDATE (pour les timeouts)
+          limit: 100
+        });
+
+        for (const entry of timeoutLogs.entries.values()) {
+          if (entry.target?.id === userId && entry.changes) {
+            // Vérifier si c'est un timeout
+            const timeoutChange = entry.changes.find(change => 
+              change.key === 'communication_disabled_until'
+            );
+            
+            if (timeoutChange && timeoutChange.new) {
+              history.mutes.push({
+                action: 'mute',
+                reason: entry.reason || 'Aucune raison fournie',
+                executor: entry.executor?.tag || 'Inconnu',
+                executorId: entry.executor?.id || null,
+                timestamp: entry.createdTimestamp,
+                source: 'Discord Audit Log',
+                duration: timeoutChange.new
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erreur récupération mutes audit log:', error);
+      }
+
+      return history;
+    } catch (error) {
+      console.error('Erreur générale audit log:', error);
+      return { bans: [], kicks: [], mutes: [], warnings: [] };
+    }
+  }
 }
 
 module.exports = ModerationManager;

@@ -62,7 +62,8 @@ class BagBotRender {
                 GatewayIntentBits.GuildMessages,
                 GatewayIntentBits.MessageContent,
                 GatewayIntentBits.GuildMembers,
-                GatewayIntentBits.GuildVoiceStates
+                GatewayIntentBits.GuildVoiceStates,
+                GatewayIntentBits.GuildModeration
             ],
             partials: [Partials.Channel, Partials.Message, Partials.User, Partials.GuildMember]
         });
