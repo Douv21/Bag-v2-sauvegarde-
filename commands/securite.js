@@ -31,6 +31,8 @@ module.exports = {
       // Analyser la sécurité du membre
       const analysis = await mod.analyzeUserSecurity(interaction.guild, user);
       const raidCheck = await mod.checkRaidIndicators(interaction.guild, user);
+      const multiAccountCheck = await mod.detectMultiAccounts(interaction.guild, user);
+      const genderInfo = await mod.analyzeGenderInfo(user);
 
       // Couleurs selon le niveau de risque
       const colors = {
@@ -82,12 +84,58 @@ module.exports = {
         });
       }
 
+      // Informations sur le genre détecté
+      if (genderInfo.detected !== 'UNKNOWN') {
+        const genderEmojis = {
+          MALE: '👨',
+          FEMALE: '👩',
+          NON_BINARY: '🧑'
+        };
+        
+        const genderNames = {
+          MALE: 'Masculin',
+          FEMALE: 'Féminin',
+          NON_BINARY: 'Non-binaire'
+        };
+
+        embed.addFields({
+          name: '👤 Genre détecté',
+          value: `${genderEmojis[genderInfo.detected]} **${genderNames[genderInfo.detected]}**\n` +
+                 `**Confiance :** ${genderInfo.confidence}%\n` +
+                 `**Source :** ${genderInfo.sources.join(', ') || 'Analyse automatique'}`,
+          inline: true
+        });
+      }
+
       // Drapeaux de risque
       if (analysis.flags.length > 0) {
         const flagsText = analysis.flags.slice(0, 10).join('\n');
         embed.addFields({
           name: '🚩 Indicateurs de risque',
           value: flagsText.slice(0, 1024),
+          inline: false
+        });
+      }
+
+      // Détection de multi-comptes
+      if (multiAccountCheck.totalSuspects > 0) {
+        let multiText = `**${multiAccountCheck.totalSuspects} compte(s) suspect(s) détecté(s)**\n`;
+        multiText += `**Confiance :** ${multiAccountCheck.confidence}%\n\n`;
+        
+        // Afficher les 3 comptes les plus suspects
+        const topSuspects = multiAccountCheck.suspiciousAccounts.slice(0, 3);
+        for (const suspect of topSuspects) {
+          multiText += `👤 **${suspect.user.tag}** (${suspect.similarity}%)\n`;
+          multiText += `└ ${suspect.reasons.slice(0, 2).join(', ')}\n`;
+        }
+
+        if (multiAccountCheck.totalSuspects > 3) {
+          multiText += `\n*Et ${multiAccountCheck.totalSuspects - 3} autre(s)...*`;
+        }
+
+        embed.addFields({
+          name: '🔍 Multi-comptes détectés',
+          value: multiText.slice(0, 1024),
           inline: false
         });
       }

@@ -782,6 +782,261 @@ class ModerationManager {
       return [];
     }
   }
+
+  /**
+   * Détecter les potentiels multi-comptes d'un utilisateur
+   * @param {Guild} guild - Le serveur Discord
+   * @param {User} user - L'utilisateur à analyser
+   * @returns {Object} Analyse des multi-comptes
+   */
+  async detectMultiAccounts(guild, user) {
+    try {
+      const analysis = {
+        suspiciousAccounts: [],
+        confidence: 0,
+        indicators: [],
+        totalSuspects: 0
+      };
+
+      const members = await guild.members.fetch();
+      const targetMember = members.get(user.id);
+      if (!targetMember) return analysis;
+
+      // 1. Recherche par similarité de noms
+      const username = user.username.toLowerCase();
+      const displayName = user.displayName?.toLowerCase() || username;
+      
+      for (const [memberId, member] of members) {
+        if (memberId === user.id) continue; // Ignorer l'utilisateur lui-même
+        
+        const otherUsername = member.user.username.toLowerCase();
+        const otherDisplayName = member.user.displayName?.toLowerCase() || otherUsername;
+        
+        let similarity = 0;
+        let reasons = [];
+
+        // Noms très similaires
+        if (this.calculateStringSimilarity(username, otherUsername) > 0.7) {
+          similarity += 30;
+          reasons.push('Nom d\'utilisateur très similaire');
+        }
+
+        // Noms avec patterns (user1, user2, etc.)
+        const numberPattern = /\d+$/;
+        const baseUsername = username.replace(numberPattern, '');
+        const otherBaseUsername = otherUsername.replace(numberPattern, '');
+        
+        if (baseUsername.length > 3 && baseUsername === otherBaseUsername) {
+          similarity += 25;
+          reasons.push('Pattern de nom identique avec numéros différents');
+        }
+
+        // 2. Comptes créés à des moments proches
+        const timeDiff = Math.abs(user.createdTimestamp - member.user.createdTimestamp);
+        const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+        
+        if (daysDiff < 1) {
+          similarity += 20;
+          reasons.push('Comptes créés à moins de 24h d\'intervalle');
+        } else if (daysDiff < 7) {
+          similarity += 10;
+          reasons.push('Comptes créés dans la même semaine');
+        }
+
+        // 3. Jointure sur le serveur à des moments proches
+        if (targetMember.joinedTimestamp && member.joinedTimestamp) {
+          const joinDiff = Math.abs(targetMember.joinedTimestamp - member.joinedTimestamp);
+          const joinMinutes = joinDiff / (1000 * 60);
+          
+          if (joinMinutes < 30) {
+            similarity += 15;
+            reasons.push('Ont rejoint le serveur à moins de 30min d\'intervalle');
+          }
+        }
+
+        // 4. Avatars par défaut identiques
+        if (!user.avatar && !member.user.avatar) {
+          similarity += 5;
+          reasons.push('Aucun avatar personnalisé (les deux)');
+        }
+
+        // 5. Même discriminateur (ancien système)
+        if (user.discriminator && member.user.discriminator && 
+            user.discriminator === member.user.discriminator && 
+            user.discriminator !== '0') {
+          similarity += 10;
+          reasons.push('Même discriminateur Discord');
+        }
+
+        // Ajouter à la liste si suffisamment suspect
+        if (similarity >= 25) {
+          analysis.suspiciousAccounts.push({
+            user: member.user,
+            similarity,
+            reasons,
+            accountAge: Math.floor((Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24)),
+            joinedAt: member.joinedTimestamp
+          });
+        }
+      }
+
+      // Trier par niveau de suspicion
+      analysis.suspiciousAccounts.sort((a, b) => b.similarity - a.similarity);
+      analysis.totalSuspects = analysis.suspiciousAccounts.length;
+
+      // Calculer la confiance globale
+      if (analysis.totalSuspects > 0) {
+        const maxSimilarity = Math.max(...analysis.suspiciousAccounts.map(a => a.similarity));
+        analysis.confidence = Math.min(maxSimilarity, 100);
+        
+        if (analysis.totalSuspects >= 3) {
+          analysis.confidence += 20;
+          analysis.indicators.push(`${analysis.totalSuspects} comptes suspects détectés`);
+        } else if (analysis.totalSuspects >= 2) {
+          analysis.confidence += 10;
+          analysis.indicators.push(`${analysis.totalSuspects} comptes suspects détectés`);
+        }
+      }
+
+      return analysis;
+    } catch (error) {
+      console.error('Erreur détection multi-comptes:', error);
+      return {
+        suspiciousAccounts: [],
+        confidence: 0,
+        indicators: ['❌ Erreur lors de l\'analyse'],
+        totalSuspects: 0
+      };
+    }
+  }
+
+  /**
+   * Calculer la similarité entre deux chaînes de caractères
+   * @param {string} str1 - Première chaîne
+   * @param {string} str2 - Deuxième chaîne
+   * @returns {number} Similarité entre 0 et 1
+   */
+  calculateStringSimilarity(str1, str2) {
+    if (str1 === str2) return 1;
+    if (str1.length < 2 || str2.length < 2) return 0;
+
+    const bigrams1 = this.getBigrams(str1);
+    const bigrams2 = this.getBigrams(str2);
+    
+    const intersection = bigrams1.filter(bigram => bigrams2.includes(bigram));
+    const union = [...new Set([...bigrams1, ...bigrams2])];
+    
+    return intersection.length / union.length;
+  }
+
+  /**
+   * Obtenir les bigrammes d'une chaîne
+   * @param {string} str - Chaîne à analyser
+   * @returns {Array} Liste des bigrammes
+   */
+  getBigrams(str) {
+    const bigrams = [];
+    for (let i = 0; i < str.length - 1; i++) {
+      bigrams.push(str.substring(i, i + 2));
+    }
+    return bigrams;
+  }
+
+  /**
+   * Analyser les informations de profil Discord pour détecter le genre
+   * @param {User} user - L'utilisateur à analyser
+   * @returns {Object} Informations sur le genre détecté
+   */
+  async analyzeGenderInfo(user) {
+    try {
+      const genderInfo = {
+        detected: 'UNKNOWN',
+        confidence: 0,
+        sources: [],
+        pronouns: null,
+        indicators: []
+      };
+
+      // 1. Tenter de récupérer le profil complet (si disponible)
+      try {
+        // Note: Discord ne fournit pas directement les pronoms via l'API bot
+        // Mais on peut analyser d'autres éléments du profil
+        
+        // Analyser le nom d'utilisateur pour des indices
+        const username = user.username.toLowerCase();
+        const displayName = user.displayName?.toLowerCase() || username;
+        
+        // Patterns masculins
+        const malePatterns = [
+          /\b(mr|monsieur|homme|mec|gars|boy|man|male|he|him|il)\b/i,
+          /\b(papa|père|dad|father|bro|brother|frère)\b/i
+        ];
+        
+        // Patterns féminins
+        const femalePatterns = [
+          /\b(mme|madame|mlle|mademoiselle|femme|fille|girl|woman|female|she|her|elle)\b/i,
+          /\b(maman|mère|mom|mother|sis|sister|sœur)\b/i
+        ];
+
+        // Patterns non-binaires
+        const nonBinaryPatterns = [
+          /\b(they|them|iel|non.?binary|nb|enby)\b/i
+        ];
+
+        // Vérifier les patterns dans le nom
+        for (const pattern of malePatterns) {
+          if (pattern.test(username) || pattern.test(displayName)) {
+            genderInfo.detected = 'MALE';
+            genderInfo.confidence += 30;
+            genderInfo.indicators.push('Indicateur masculin dans le nom');
+            genderInfo.sources.push('Nom d\'utilisateur');
+            break;
+          }
+        }
+
+        for (const pattern of femalePatterns) {
+          if (pattern.test(username) || pattern.test(displayName)) {
+            genderInfo.detected = 'FEMALE';
+            genderInfo.confidence += 30;
+            genderInfo.indicators.push('Indicateur féminin dans le nom');
+            genderInfo.sources.push('Nom d\'utilisateur');
+            break;
+          }
+        }
+
+        for (const pattern of nonBinaryPatterns) {
+          if (pattern.test(username) || pattern.test(displayName)) {
+            genderInfo.detected = 'NON_BINARY';
+            genderInfo.confidence += 30;
+            genderInfo.indicators.push('Indicateur non-binaire dans le nom');
+            genderInfo.sources.push('Nom d\'utilisateur');
+            break;
+          }
+        }
+
+      } catch (error) {
+        console.error('Erreur analyse genre:', error);
+      }
+
+      // 2. Analyser l'avatar pour des indices visuels (basique)
+      if (user.avatar) {
+        genderInfo.indicators.push('Avatar personnalisé présent');
+        genderInfo.sources.push('Avatar');
+        // Note: L'analyse d'image nécessiterait une IA spécialisée
+      }
+
+      return genderInfo;
+    } catch (error) {
+      console.error('Erreur analyse informations genre:', error);
+      return {
+        detected: 'UNKNOWN',
+        confidence: 0,
+        sources: [],
+        pronouns: null,
+        indicators: ['❌ Erreur lors de l\'analyse']
+      };
+    }
+  }
 }
 
 module.exports = ModerationManager;

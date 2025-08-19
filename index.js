@@ -770,6 +770,13 @@ class BagBotRender {
             } catch {}
             try { await this.logManager.logMemberJoin(member); } catch {}
             try { await this.logManager.updateMemberRolesSnapshot(member); } catch {}
+            
+            // Vérification de sécurité automatique
+            try {
+                await this.performSecurityCheck(member);
+            } catch (error) {
+                console.error('Erreur vérification sécurité nouveau membre:', error);
+            }
         });
 
                 // Départ membre
