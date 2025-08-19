@@ -58,6 +58,9 @@ class ModerationManager {
     });
     await this.dataManager.saveData('warnings', warnings);
 
+    // Ajouter à l'historique global cross-serveur
+    await this.addToGlobalHistory(userId, guildId, 'warn', reason, moderatorId);
+
     try {
       const guild = this.client.guilds.cache.get(guildId);
       const targetUser = await this.client.users.fetch(userId).catch(() => null);
@@ -89,6 +92,12 @@ class ModerationManager {
     async muteMember(member, durationMs, reason, moderatorUser = null) {
     const ms = Math.min(Math.max(durationMs || 0, 0), 28 * 24 * 60 * 60 * 1000); // Max 28 jours
     await member.timeout(ms > 0 ? ms : 60 * 1000, reason || 'Muted');
+    
+    // Ajouter à l'historique global
+    try {
+      await this.addMuteToHistory(member.user.id, member.guild.id, reason, moderatorUser?.id, ms);
+    } catch {}
+    
     try { if (this.client.logManager) await this.client.logManager.logMute(member, moderatorUser, ms, reason); } catch {}
   }
 
@@ -290,6 +299,12 @@ class ModerationManager {
     try {
       await member.send(`Vous avez été exclu de ${member.guild.name} : ${reason}`).catch(() => {});
       await member.kick(reason).catch(() => {});
+      
+      // Ajouter à l'historique global
+      try {
+        await this.addKickToHistory(member.user.id, member.guild.id, reason, null);
+      } catch {}
+      
       try { if (this.client.logManager) await this.client.logManager.logKick(member, null, reason); } catch {}
     } catch {}
   }
@@ -302,6 +317,107 @@ class ModerationManager {
   stopScheduler() {
     if (this.scheduler) clearInterval(this.scheduler);
     this.scheduler = null;
+  }
+
+  // ========== MÉTHODES POUR L'HISTORIQUE CROSS-SERVEUR ==========
+
+  /**
+   * Ajouter une action de modération à l'historique global
+   * @param {string} userId - ID de l'utilisateur
+   * @param {string} guildId - ID du serveur
+   * @param {string} type - Type d'action ('warn', 'ban', 'kick', 'mute')
+   * @param {string} reason - Raison de l'action
+   * @param {string} moderatorId - ID du modérateur
+   */
+  async addToGlobalHistory(userId, guildId, type, reason, moderatorId) {
+    try {
+      const history = await this.dataManager.getData('global_moderation_history');
+      if (!history[userId]) history[userId] = [];
+      
+      const guild = this.client.guilds.cache.get(guildId);
+      const guildName = guild ? guild.name : `Serveur inconnu (${guildId})`;
+      
+      history[userId].push({
+        type,
+        reason: reason || 'Aucun motif fourni',
+        moderatorId,
+        guildId,
+        guildName,
+        timestamp: Date.now()
+      });
+
+      await this.dataManager.saveData('global_moderation_history', history);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout à l\'historique global:', error);
+    }
+  }
+
+  /**
+   * Récupérer l'historique de modération global d'un utilisateur
+   * @param {string} userId - ID de l'utilisateur
+   * @returns {Array} Historique de modération
+   */
+  async getGlobalModerationHistory(userId) {
+    try {
+      const history = await this.dataManager.getData('global_moderation_history');
+      return history[userId] || [];
+    } catch (error) {
+      console.error('Erreur lors de la récupération de l\'historique global:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Ajouter un ban à l'historique global
+   * @param {string} userId - ID de l'utilisateur banni
+   * @param {string} guildId - ID du serveur
+   * @param {string} reason - Raison du ban
+   * @param {string} moderatorId - ID du modérateur
+   */
+  async addBanToHistory(userId, guildId, reason, moderatorId) {
+    await this.addToGlobalHistory(userId, guildId, 'ban', reason, moderatorId);
+  }
+
+  /**
+   * Ajouter un kick à l'historique global
+   * @param {string} userId - ID de l'utilisateur kické
+   * @param {string} guildId - ID du serveur
+   * @param {string} reason - Raison du kick
+   * @param {string} moderatorId - ID du modérateur
+   */
+  async addKickToHistory(userId, guildId, reason, moderatorId) {
+    await this.addToGlobalHistory(userId, guildId, 'kick', reason, moderatorId);
+  }
+
+  /**
+   * Ajouter un mute à l'historique global
+   * @param {string} userId - ID de l'utilisateur muté
+   * @param {string} guildId - ID du serveur
+   * @param {string} reason - Raison du mute
+   * @param {string} moderatorId - ID du modérateur
+   * @param {number} duration - Durée en millisecondes
+   */
+  async addMuteToHistory(userId, guildId, reason, moderatorId, duration) {
+    await this.addToGlobalHistory(userId, guildId, 'mute', `${reason} (Durée: ${this.formatDuration(duration)})`, moderatorId);
+  }
+
+  /**
+   * Formater une durée en millisecondes en texte lisible
+   * @param {number} ms - Durée en millisecondes
+   * @returns {string} Durée formatée
+   */
+  formatDuration(ms) {
+    if (!ms || ms <= 0) return 'Permanent';
+    
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days}j ${hours % 24}h`;
+    if (hours > 0) return `${hours}h ${minutes % 60}m`;
+    if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+    return `${seconds}s`;
   }
 }
 
