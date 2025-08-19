@@ -88,6 +88,8 @@ class MongoBackupManager {
             'stability_reports.json': 'backup_stability_reports',
             'mobile_restart_alert.json': 'backup_mobile_alerts',
             'mobile_test.json': 'backup_mobile_test_data',
+            // Localisation membres
+            'member_locations.json': 'backup_member_locations',
             
             // Fichiers objets - collections séparées
             'gifted_objects.json': 'backup_gifted_objects',
@@ -118,6 +120,7 @@ class MongoBackupManager {
             // Données économiques et utilisateurs
             'economy.json': 'economy',
             'users.json': 'users',
+            'member_locations.json': 'member_locations',
             'user_stats.json': 'user_stats',
             
             // Configuration système de niveaux

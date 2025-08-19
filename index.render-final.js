@@ -339,6 +339,67 @@ class RenderSolutionBot {
             }
         });
 
+        // Localisation des membres
+        const memberLocationManager = require('./utils/memberLocationManager');
+
+        // POST /ajouter-carte
+        // body: { userId, guildId, lat, lng, address? }
+        app.post('/ajouter-carte', async (req, res) => {
+            try {
+                const { userId, guildId, lat, latitude, lng, longitude, address } = req.body || {};
+                const latValue = latitude ?? lat;
+                const lngValue = longitude ?? lng;
+                if (!userId || !guildId) return res.status(400).json({ success: false, error: 'USER_AND_GUILD_REQUIRED' });
+                const record = memberLocationManager.setLocation(String(userId), String(guildId), Number(latValue), Number(lngValue), address);
+                res.json({ success: true, location: record });
+            } catch (error) {
+                const code = error && error.message;
+                if (code === 'INVALID_LATITUDE' || code === 'INVALID_LONGITUDE') {
+                    return res.status(400).json({ success: false, error: code });
+                }
+                console.error('POST /ajouter-carte error:', error);
+                res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
+            }
+        });
+
+        // GET /membre-proche
+        // query: guildId, lat/lng or userId; radiusKm?, limit?
+        app.get('/membre-proche', async (req, res) => {
+            try {
+                const guildId = String(req.query.guildId || '').trim();
+                if (!guildId) return res.status(400).json({ success: false, error: 'GUILD_REQUIRED' });
+
+                const userId = req.query.userId ? String(req.query.userId) : null;
+                const radiusKm = req.query.radiusKm ? Number(req.query.radiusKm) : 50;
+                const limit = req.query.limit ? Number(req.query.limit) : 50;
+
+                let lat = req.query.lat ?? req.query.latitude;
+                let lng = req.query.lng ?? req.query.longitude;
+
+                if ((lat == null || lng == null) && userId) {
+                    const selfLoc = memberLocationManager.getLocation(userId, guildId);
+                    if (selfLoc) {
+                        lat = selfLoc.lat;
+                        lng = selfLoc.lng;
+                    }
+                }
+
+                if (lat == null || lng == null) {
+                    return res.status(400).json({ success: false, error: 'COORDINATES_REQUIRED' });
+                }
+
+                const results = memberLocationManager.findNearby(guildId, Number(lat), Number(lng), Number.isFinite(radiusKm) ? radiusKm : 50, Number.isFinite(limit) ? limit : 50);
+                res.json({ success: true, count: results.length, members: results });
+            } catch (error) {
+                const code = error && error.message;
+                if (code === 'INVALID_LATITUDE' || code === 'INVALID_LONGITUDE') {
+                    return res.status(400).json({ success: false, error: code });
+                }
+                console.error('GET /membre-proche error:', error);
+                res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
+            }
+        });
+
         // Dashboard routes (placeholder)
         app.get('/dashboard', (req, res) => {
             res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
