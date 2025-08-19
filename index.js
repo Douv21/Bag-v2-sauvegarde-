@@ -1060,6 +1060,136 @@ class BagBotRender {
         }
     }
 
+    /**
+     * Effectuer une vérification de sécurité automatique sur un nouveau membre
+     * @param {GuildMember} member - Le nouveau membre
+     */
+    async performSecurityCheck(member) {
+        try {
+            const user = member.user;
+            const guild = member.guild;
+            
+            // Effectuer les analyses de base
+            const [securityAnalysis, raidCheck, multiAccountCheck] = await Promise.all([
+                this.moderationManager.analyzeUserSecurity(guild, user),
+                this.moderationManager.checkRaidIndicators(guild, user),
+                this.moderationManager.detectMultiAccounts(guild, user)
+            ]);
+
+            // Calculer le score de risque total
+            let totalRiskScore = securityAnalysis.riskScore;
+            if (multiAccountCheck.confidence >= 70) totalRiskScore += 25;
+            else if (multiAccountCheck.confidence >= 50) totalRiskScore += 15;
+
+            // Seuils d'alerte
+            const shouldAlert = totalRiskScore >= 50 || raidCheck.isRaidSuspect || multiAccountCheck.confidence >= 60;
+
+            if (shouldAlert) {
+                // Chercher un canal de logs/alertes
+                const logChannel = await this.findSecurityLogChannel(guild);
+                
+                if (logChannel) {
+                    const embed = new EmbedBuilder()
+                        .setTitle('🚨 ALERTE SÉCURITÉ - Nouveau membre suspect')
+                        .setThumbnail(user.displayAvatarURL({ dynamic: true }))
+                        .setColor(0xff6b6b)
+                        .setTimestamp();
+
+                    embed.addFields({
+                        name: '👤 Membre',
+                        value: `${user.tag} (${user.id})\n<@${user.id}>`,
+                        inline: true
+                    });
+
+                    embed.addFields({
+                        name: '⚠️ Niveau de risque',
+                        value: `**${securityAnalysis.riskLevel}** (${totalRiskScore}/100)`,
+                        inline: true
+                    });
+
+                    // Alertes principales
+                    let alertText = '';
+                    if (raidCheck.isRaidSuspect) {
+                        alertText += `🚨 **SUSPECT DE RAID** (${raidCheck.confidence}%)\n`;
+                    }
+                    if (multiAccountCheck.totalSuspects > 0) {
+                        alertText += `🔍 **${multiAccountCheck.totalSuspects} MULTI-COMPTES** (${multiAccountCheck.confidence}%)\n`;
+                    }
+                    if (securityAnalysis.flags.length > 0) {
+                        alertText += `🚩 ${securityAnalysis.flags.slice(0, 3).join(', ')}\n`;
+                    }
+
+                    embed.addFields({
+                        name: '🚨 Alertes',
+                        value: alertText.slice(0, 1024),
+                        inline: false
+                    });
+
+                    // Actions recommandées
+                    let actionText = '';
+                    if (totalRiskScore >= 80) {
+                        actionText = '🚨 **BAN IMMÉDIAT RECOMMANDÉ**\n⚡ `/ban @' + user.tag + '`';
+                    } else if (totalRiskScore >= 60) {
+                        actionText = '⚠️ **SURVEILLANCE RENFORCÉE**\n👀 `/verifier @' + user.tag + '`';
+                    } else {
+                        actionText = '👀 **SURVEILLANCE NORMALE**\n🔍 Vérifier périodiquement';
+                    }
+
+                    embed.addFields({
+                        name: '💡 Actions recommandées',
+                        value: actionText,
+                        inline: false
+                    });
+
+                    embed.setFooter({
+                        text: 'Système de sécurité automatique • Utilisez /verifier pour plus de détails'
+                    });
+
+                    await logChannel.send({ embeds: [embed] });
+                    console.log(`🚨 Alerte sécurité envoyée pour ${user.tag} dans ${guild.name}`);
+                }
+            }
+
+        } catch (error) {
+            console.error('Erreur vérification sécurité automatique:', error);
+        }
+    }
+
+    /**
+     * Trouver le canal de logs de sécurité
+     * @param {Guild} guild - Le serveur Discord
+     * @returns {TextChannel|null} Canal trouvé ou null
+     */
+    async findSecurityLogChannel(guild) {
+        try {
+            // Chercher d'abord le canal configuré
+            const config = await this.moderationManager.getGuildConfig(guild.id);
+            if (config.logsChannelId) {
+                const logChannel = guild.channels.cache.get(config.logsChannelId);
+                if (logChannel) return logChannel;
+            }
+
+            // Chercher des canaux avec des noms typiques
+            const logChannelNames = [
+                'sécurité', 'security', 'alertes', 'alerts', 
+                'modération', 'moderation', 'logs', 'audit'
+            ];
+
+            for (const channelName of logChannelNames) {
+                const channel = guild.channels.cache.find(ch => 
+                    ch.name.toLowerCase().includes(channelName) && ch.isTextBased()
+                );
+                if (channel) return channel;
+            }
+
+            // En dernier recours, chercher le canal système
+            return guild.systemChannel;
+        } catch (error) {
+            console.error('Erreur recherche canal logs:', error);
+            return null;
+        }
+    }
+
     startWebServer() {
         this.app.listen(this.port, '0.0.0.0', () => {
             console.log(`🌐 Serveur Web actif sur port ${this.port}`);
