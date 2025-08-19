@@ -524,6 +524,264 @@ class ModerationManager {
       return { bans: [], kicks: [], mutes: [], warnings: [] };
     }
   }
+
+  // ========== SYSTÈME DE SÉCURITÉ ET DÉTECTION DE RISQUES ==========
+
+  /**
+   * Analyser le niveau de risque d'un membre
+   * @param {Guild} guild - Le serveur Discord
+   * @param {User} user - L'utilisateur à analyser
+   * @returns {Object} Analyse de sécurité complète
+   */
+  async analyzeUserSecurity(guild, user) {
+    try {
+      const analysis = {
+        userId: user.id,
+        username: user.tag,
+        riskLevel: 'LOW', // LOW, MEDIUM, HIGH, CRITICAL
+        riskScore: 0, // 0-100
+        flags: [],
+        details: {},
+        recommendations: []
+      };
+
+      // 1. Analyse du compte Discord
+      const accountAge = Date.now() - user.createdTimestamp;
+      const accountAgeDays = Math.floor(accountAge / (1000 * 60 * 60 * 24));
+      
+      analysis.details.accountAge = {
+        days: accountAgeDays,
+        created: new Date(user.createdTimestamp).toLocaleDateString('fr-FR')
+      };
+
+      // Compte très récent = risque
+      if (accountAgeDays < 7) {
+        analysis.riskScore += 30;
+        analysis.flags.push('🚨 Compte très récent (< 7 jours)');
+      } else if (accountAgeDays < 30) {
+        analysis.riskScore += 15;
+        analysis.flags.push('⚠️ Compte récent (< 30 jours)');
+      }
+
+      // 2. Analyse du profil
+      if (!user.avatar) {
+        analysis.riskScore += 10;
+        analysis.flags.push('👤 Pas d\'avatar personnalisé');
+      }
+
+      // Nom d'utilisateur suspect
+      const suspiciousPatterns = [
+        /discord/i, /admin/i, /mod/i, /bot/i, /official/i,
+        /\d{4,}/, // Beaucoup de chiffres
+        /(.)\1{3,}/, // Caractères répétés
+        /[^\w\s-]/g // Caractères spéciaux excessifs
+      ];
+
+      for (const pattern of suspiciousPatterns) {
+        if (pattern.test(user.username)) {
+          analysis.riskScore += 5;
+          analysis.flags.push('📝 Nom d\'utilisateur suspect');
+          break;
+        }
+      }
+
+      // 3. Historique de modération global (notre bot)
+      const globalHistory = await this.getGlobalModerationHistory(user.id);
+      analysis.details.globalHistory = globalHistory;
+
+      if (globalHistory.length > 0) {
+        const bans = globalHistory.filter(h => h.type === 'ban').length;
+        const kicks = globalHistory.filter(h => h.type === 'kick').length;
+        const warns = globalHistory.filter(h => h.type === 'warn').length;
+        const mutes = globalHistory.filter(h => h.type === 'mute').length;
+
+        analysis.details.moderationStats = { bans, kicks, warns, mutes };
+
+        // Calcul du score basé sur l'historique
+        analysis.riskScore += bans * 25; // Ban = très grave
+        analysis.riskScore += kicks * 15; // Kick = grave
+        analysis.riskScore += warns * 5;  // Warn = modéré
+        analysis.riskScore += mutes * 8;  // Mute = modéré-grave
+
+        if (bans > 0) {
+          analysis.flags.push(`🔨 ${bans} ban(s) sur d'autres serveurs`);
+        }
+        if (kicks > 2) {
+          analysis.flags.push(`👢 ${kicks} kick(s) répétés`);
+        }
+        if (warns > 5) {
+          analysis.flags.push(`⚠️ ${warns} avertissement(s) accumulés`);
+        }
+      }
+
+      // 4. Historique Discord Audit Log (serveur actuel)
+      const auditHistory = await this.getDiscordAuditHistory(guild, user.id);
+      analysis.details.auditHistory = auditHistory;
+
+      const totalAuditActions = auditHistory.bans.length + auditHistory.kicks.length + auditHistory.mutes.length;
+      if (totalAuditActions > 0) {
+        analysis.riskScore += auditHistory.bans.length * 20;
+        analysis.riskScore += auditHistory.kicks.length * 12;
+        analysis.riskScore += auditHistory.mutes.length * 6;
+
+        if (auditHistory.bans.length > 0) {
+          analysis.flags.push(`🔨 ${auditHistory.bans.length} ban(s) sur ce serveur`);
+        }
+        if (auditHistory.kicks.length > 1) {
+          analysis.flags.push(`👢 ${auditHistory.kicks.length} kick(s) sur ce serveur`);
+        }
+      }
+
+      // 5. Analyse du comportement sur le serveur
+      const member = await guild.members.fetch(user.id).catch(() => null);
+      if (member) {
+        const joinAge = Date.now() - member.joinedTimestamp;
+        const joinAgeDays = Math.floor(joinAge / (1000 * 60 * 60 * 24));
+        
+        analysis.details.serverJoin = {
+          days: joinAgeDays,
+          joined: new Date(member.joinedTimestamp).toLocaleDateString('fr-FR')
+        };
+
+        // Membre qui rejoint/quitte souvent
+        if (joinAgeDays < 1) {
+          analysis.riskScore += 5;
+          analysis.flags.push('🆕 Nouveau membre (< 24h)');
+        }
+
+        // Vérifier les rôles suspects ou manque de rôles
+        if (member.roles.cache.size <= 1) { // Seulement @everyone
+          analysis.riskScore += 3;
+          analysis.flags.push('🎭 Aucun rôle attribué');
+        }
+      }
+
+      // 6. Déterminer le niveau de risque final
+      if (analysis.riskScore >= 70) {
+        analysis.riskLevel = 'CRITICAL';
+        analysis.recommendations.push('🚨 Surveillance immédiate recommandée');
+        analysis.recommendations.push('🔒 Considérer un ban préventif');
+      } else if (analysis.riskScore >= 45) {
+        analysis.riskLevel = 'HIGH';
+        analysis.recommendations.push('⚠️ Surveillance renforcée');
+        analysis.recommendations.push('🎭 Limiter les permissions');
+      } else if (analysis.riskScore >= 20) {
+        analysis.riskLevel = 'MEDIUM';
+        analysis.recommendations.push('👀 Surveillance normale');
+        analysis.recommendations.push('📋 Vérifier régulièrement');
+      } else {
+        analysis.riskLevel = 'LOW';
+        analysis.recommendations.push('✅ Membre semble fiable');
+      }
+
+      return analysis;
+    } catch (error) {
+      console.error('Erreur analyse sécurité:', error);
+      return {
+        userId: user.id,
+        username: user.tag,
+        riskLevel: 'UNKNOWN',
+        riskScore: 0,
+        flags: ['❌ Erreur lors de l\'analyse'],
+        details: {},
+        recommendations: ['🔧 Réessayer l\'analyse']
+      };
+    }
+  }
+
+  /**
+   * Vérifier si un membre présente des signes de raid/spam
+   * @param {Guild} guild - Le serveur Discord
+   * @param {User} user - L'utilisateur à vérifier
+   * @returns {Object} Analyse anti-raid
+   */
+  async checkRaidIndicators(guild, user) {
+    const indicators = {
+      isRaidSuspect: false,
+      confidence: 0,
+      reasons: []
+    };
+
+    try {
+      // 1. Compte très récent
+      const accountAge = Date.now() - user.createdTimestamp;
+      const accountAgeMinutes = Math.floor(accountAge / (1000 * 60));
+      
+      if (accountAgeMinutes < 60) {
+        indicators.confidence += 40;
+        indicators.reasons.push('Compte créé il y a moins d\'1 heure');
+      } else if (accountAgeMinutes < 1440) { // 24h
+        indicators.confidence += 20;
+        indicators.reasons.push('Compte créé il y a moins de 24h');
+      }
+
+      // 2. Nom générique ou pattern de bot
+      const genericPatterns = [
+        /^[a-z]+\d{3,}$/i, // lettres + chiffres
+        /^user\d+$/i,
+        /^member\d+$/i,
+        /^test\d+$/i,
+        /^discord/i
+      ];
+
+      for (const pattern of genericPatterns) {
+        if (pattern.test(user.username)) {
+          indicators.confidence += 25;
+          indicators.reasons.push('Nom d\'utilisateur générique/suspect');
+          break;
+        }
+      }
+
+      // 3. Pas d'avatar = souvent des comptes jetables
+      if (!user.avatar) {
+        indicators.confidence += 15;
+        indicators.reasons.push('Aucun avatar personnalisé');
+      }
+
+      // 4. Vérifier les jointures récentes similaires
+      const recentJoins = await this.getRecentJoins(guild, 60); // 1 heure
+      const similarAccounts = recentJoins.filter(member => {
+        const otherAge = Date.now() - member.user.createdTimestamp;
+        const otherAgeMinutes = Math.floor(otherAge / (1000 * 60));
+        return otherAgeMinutes < 1440 && member.user.id !== user.id; // Comptes < 24h
+      });
+
+      if (similarAccounts.length >= 3) {
+        indicators.confidence += 30;
+        indicators.reasons.push(`${similarAccounts.length} autres comptes récents ont rejoint récemment`);
+      }
+
+      indicators.isRaidSuspect = indicators.confidence >= 50;
+
+      return indicators;
+    } catch (error) {
+      console.error('Erreur vérification raid:', error);
+      return indicators;
+    }
+  }
+
+  /**
+   * Récupérer les membres qui ont rejoint récemment
+   * @param {Guild} guild - Le serveur Discord
+   * @param {number} minutesAgo - Minutes en arrière
+   * @returns {Array} Liste des membres récents
+   */
+  async getRecentJoins(guild, minutesAgo = 60) {
+    try {
+      const cutoff = Date.now() - (minutesAgo * 60 * 1000);
+      const members = await guild.members.fetch();
+      
+      return members.filter(member => 
+        member.joinedTimestamp && member.joinedTimestamp > cutoff
+      ).map(member => ({
+        user: member.user,
+        joinedAt: member.joinedTimestamp
+      }));
+    } catch (error) {
+      console.error('Erreur récupération membres récents:', error);
+      return [];
+    }
+  }
 }
 
 module.exports = ModerationManager;
