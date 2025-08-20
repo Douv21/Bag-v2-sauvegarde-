@@ -4,6 +4,7 @@
  */
 
 const { REST, Routes } = require('discord.js');
+try { require('dotenv').config(); } catch {}
 const fs = require('fs');
 const path = require('path');
 
@@ -58,7 +59,21 @@ async function forceRegisterCommands() {
         
         // 2. Supprimer les anciennes commandes
         console.log('🗑️ Suppression des anciennes commandes...');
-        await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: [] });
+        const targetGuildId = (process.env.GUILD_ID || '').trim();
+        const isGuildTarget = Boolean(targetGuildId);
+
+        if (isGuildTarget) {
+            console.log(`   🧭 Cible guilde: ${targetGuildId}`);
+            await rest.put(
+                Routes.applicationGuildCommands(process.env.CLIENT_ID, targetGuildId),
+                { body: [] }
+            );
+        } else {
+            await rest.put(
+                Routes.applicationCommands(process.env.CLIENT_ID),
+                { body: [] }
+            );
+        }
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         // 3. Enregistrement avec retry
@@ -72,7 +87,9 @@ async function forceRegisterCommands() {
             
             try {
                 const result = await rest.put(
-                    Routes.applicationCommands(process.env.CLIENT_ID),
+                    isGuildTarget
+                        ? Routes.applicationGuildCommands(process.env.CLIENT_ID, targetGuildId)
+                        : Routes.applicationCommands(process.env.CLIENT_ID),
                     { body: commands }
                 );
                 
@@ -99,7 +116,11 @@ async function forceRegisterCommands() {
         console.log('🔍 Vérification finale...');
         await new Promise(resolve => setTimeout(resolve, 5000));
         
-        const registeredCommands = await rest.get(Routes.applicationCommands(process.env.CLIENT_ID));
+        const registeredCommands = await rest.get(
+            isGuildTarget
+                ? Routes.applicationGuildCommands(process.env.CLIENT_ID, targetGuildId)
+                : Routes.applicationCommands(process.env.CLIENT_ID)
+        );
         console.log(`📊 Commandes confirmées sur Discord: ${registeredCommands.length}`);
         
         // Vérifier arc-en-ciel spécifiquement
