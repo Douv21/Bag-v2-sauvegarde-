@@ -120,7 +120,17 @@ class RoleManager {
      * Crée un nouveau rôle personnalisé
      */
     async createCustomRole(guild, options) {
-        const { name, color, category, description, emoji, mentionable = false } = options;
+        const { 
+            name, 
+            color, 
+            category, 
+            description, 
+            emoji, 
+            mentionable = false,
+            gradientColors = null,
+            style = 'default',
+            rarity = 'common'
+        } = options;
         
         try {
             // Créer le rôle Discord
@@ -141,6 +151,9 @@ class RoleManager {
                 description: description || 'Aucune description',
                 emoji: emoji || null,
                 color: color || '#99AAB5',
+                gradientColors: gradientColors,
+                style: style,
+                rarity: rarity,
                 createdAt: Date.now(),
                 memberCount: 0
             };
@@ -329,9 +342,14 @@ class RoleManager {
                 if (roleInfo && discordRole) {
                     const emoji = roleInfo.emoji || '•';
                     const memberCount = discordRole.members.size;
-                    roleList += `${emoji} **${roleInfo.name}** - ${memberCount} membre(s)\n`;
+                    const rarityEmoji = this.getRarityEmoji(roleInfo.rarity);
+                    const gradientInfo = roleInfo.gradientColors ? 
+                        ` 🌈` : '';
+                    
+                    roleList += `${emoji} **${roleInfo.name}**${rarityEmoji}${gradientInfo} - ${memberCount} membre(s)\n`;
                     if (roleInfo.description !== 'Aucune description') {
-                        roleList += `  └ *${roleInfo.description}*\n`;
+                        const shortDesc = roleInfo.description.split('\n')[0]; // Première ligne seulement
+                        roleList += `  └ *${shortDesc}*\n`;
                     }
                 }
             }
@@ -375,6 +393,20 @@ class RoleManager {
         }
 
         return embed;
+    }
+
+    /**
+     * Obtient l'emoji de rareté
+     */
+    getRarityEmoji(rarity) {
+        const rarityEmojis = {
+            'mythic': ' ⚜️',
+            'legendary': ' 🌟',
+            'epic': ' 💎',
+            'rare': ' ✨',
+            'common': ''
+        };
+        return rarityEmojis[rarity] || '';
     }
 
     /**

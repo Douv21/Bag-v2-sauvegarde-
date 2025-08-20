@@ -148,6 +148,16 @@ module.exports = {
                         .setDescription('Forcer la création même si des rôles existent déjà')
                         .setRequired(false)
                 )
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('gradient')
+                .setDescription('🌈 Installer des rôles uniques avec dégradés (Admin)')
+                .addBooleanOption(option =>
+                    option.setName('force')
+                        .setDescription('Forcer la création même si des rôles existent déjà')
+                        .setRequired(false)
+                )
         ),
 
     async execute(interaction) {
@@ -192,6 +202,9 @@ module.exports = {
                     break;
                 case 'setup':
                     await this.handleSetup(interaction, roleManager);
+                    break;
+                case 'gradient':
+                    await this.handleGradient(interaction, roleManager);
                     break;
                 default:
                     await interaction.reply({
@@ -623,6 +636,126 @@ module.exports = {
                 .setColor('#FF0000')
                 .setTitle('❌ Erreur d\'Initialisation')
                 .setDescription(`Une erreur s'est produite lors de l'initialisation:\n\`\`\`${error.message}\`\`\``)
+                .setTimestamp();
+
+            await interaction.editReply({ embeds: [errorEmbed] });
+        }
+    },
+
+    async handleGradient(interaction, roleManager) {
+        // Vérifier les permissions admin
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
+            return await interaction.reply({
+                content: '❌ Vous devez avoir la permission "Gérer les rôles" pour installer les rôles dégradés.',
+                ephemeral: true
+            });
+        }
+
+        const force = interaction.options.getBoolean('force') || false;
+        
+        // Vérifier si des rôles existent déjà
+        const { roles } = roleManager.getRoleData(interaction.guild.id);
+        const existingRoles = Object.keys(roles.roles).length;
+        
+        if (existingRoles > 0 && !force) {
+            const { getGradientRolesStats } = require('../utils/gradientRoles');
+            const stats = getGradientRolesStats();
+            
+            const embed = new EmbedBuilder()
+                .setColor('#FF6600')
+                .setTitle('⚠️ Rôles Existants Détectés')
+                .setDescription(`Ce serveur a déjà **${existingRoles}** rôle(s) personnalisé(s).\n\nUtilisez \`force: true\` pour créer les rôles dégradés en plus des existants.`)
+                .addFields({
+                    name: '🌈 Rôles Dégradés Disponibles',
+                    value: `• 💎 **Premium** (6 rôles légendaires)\n• 🌟 **Éléments Mystiques** (5 rôles épiques)\n• 🌌 **Entités Cosmiques** (4 rôles mythiques)\n• 💫 **Neon Dreams** (4 rôles néon)\n• 🌿 **Forces Naturelles** (4 rôles nature)\n• 🐉 **Créatures Mythiques** (4 rôles légendaires)\n\n**Total: ${stats.totalRoles} rôles uniques avec dégradés**`,
+                    inline: false
+                })
+                .setTimestamp();
+
+            return await interaction.reply({ embeds: [embed], ephemeral: true });
+        }
+
+        await interaction.deferReply();
+
+        // Importer et créer les rôles dégradés
+        const { createGradientRoles, getGradientRolesStats } = require('../utils/gradientRoles');
+        
+        try {
+            const results = await createGradientRoles(interaction.guild, roleManager);
+            const stats = getGradientRolesStats();
+            
+            const embed = new EmbedBuilder()
+                .setColor('#7289DA')
+                .setTitle('🌈 Rôles Dégradés Installés !')
+                .setDescription(`Collection exclusive de rôles avec des couleurs dégradées uniques !`)
+                .addFields(
+                    { name: '✅ Rôles créés', value: results.success.toString(), inline: true },
+                    { name: '📁 Catégories', value: results.categories.toString(), inline: true },
+                    { name: '❌ Erreurs', value: results.errors.toString(), inline: true }
+                )
+                .setTimestamp();
+
+            // Ajouter les statistiques de rareté
+            let rarityStats = '';
+            const rarityOrder = ['mythic', 'legendary', 'epic', 'rare', 'common'];
+            const rarityEmojis = {
+                'mythic': '⚜️',
+                'legendary': '🌟',
+                'epic': '💎',
+                'rare': '✨',
+                'common': '⚪'
+            };
+
+            for (const rarity of rarityOrder) {
+                if (stats.rarityCount[rarity]) {
+                    rarityStats += `${rarityEmojis[rarity]} **${rarity.toUpperCase()}**: ${stats.rarityCount[rarity]}\n`;
+                }
+            }
+
+            if (rarityStats) {
+                embed.addFields({
+                    name: '🏆 Répartition par Rareté',
+                    value: rarityStats,
+                    inline: false
+                });
+            }
+
+            // Ajouter les détails si il y a des erreurs
+            if (results.errors > 0) {
+                const errorDetails = results.details
+                    .filter(detail => detail.startsWith('❌'))
+                    .slice(0, 5) // Limiter l'affichage
+                    .join('\n');
+                
+                if (errorDetails) {
+                    embed.addFields({
+                        name: '⚠️ Détails des erreurs',
+                        value: errorDetails,
+                        inline: false
+                    });
+                }
+            }
+
+            embed.addFields({
+                name: '🎭 Fonctionnalités Spéciales',
+                value: '🌈 **Dégradés de couleurs** - Chaque rôle a des couleurs uniques\n⚜️ **Système de rareté** - Mythique, Légendaire, Épique, Rare\n✦ **Noms stylisés** - Caractères Unicode spéciaux\n🎨 **Descriptions enrichies** - Informations détaillées',
+                inline: false
+            });
+
+            embed.addFields({
+                name: '🎮 Utilisation',
+                value: '• `/role panel` - Interface interactive avec les nouveaux rôles\n• `/role list` - Voir tous les rôles dégradés\n• `/role mes-roles` - Affichage amélioré avec rareté',
+                inline: false
+            });
+
+            await interaction.editReply({ embeds: [embed] });
+        } catch (error) {
+            console.error('Erreur setup rôles dégradés:', error);
+            
+            const errorEmbed = new EmbedBuilder()
+                .setColor('#FF0000')
+                .setTitle('❌ Erreur d\'Installation')
+                .setDescription(`Une erreur s'est produite lors de l'installation des rôles dégradés:\n\`\`\`${error.message}\`\`\``)
                 .setTimestamp();
 
             await interaction.editReply({ embeds: [errorEmbed] });
