@@ -116,19 +116,10 @@ module.exports = {
 
 				// Positionner le rôle créé le plus haut possible (juste sous le rôle le plus haut du bot)
 				try {
-					let meForPosition = interaction.guild.members.me;
-					if (!meForPosition) {
-						try {
-							if (typeof interaction.guild.members.fetchMe === 'function') {
-								meForPosition = await interaction.guild.members.fetchMe();
-							} else {
-								meForPosition = await interaction.guild.members.fetch(interaction.client.user.id).catch(() => null);
-							}
-						} catch {}
-					}
+					const meForPosition = interaction.guild.members.me;
 					if (meForPosition) {
 						const targetPosition = Math.max(1, meForPosition.roles.highest.position - 1);
-						await styleRole.setPosition(targetPosition, { reason: 'Positionner le rôle de couleur sous le rôle du bot (color-role)' });
+						await styleRole.setPosition(targetPosition);
 					}
 				} catch (e) {
 					console.warn('Impossible de positionner le rôle de couleur au plus haut:', e?.message);
