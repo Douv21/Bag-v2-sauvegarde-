@@ -1512,6 +1512,21 @@ class MainRouterHandler {
             if (customId === 'aouv_nsfw_prompt_edit_select_truth') {
                 return await handler.handleAouvNsfwPromptEditSelect(interaction, 'verite');
             }
+            if (customId === 'aouv_nsfw_prompt_remove_select_action') {
+                return await handler.handleAouvNsfwPromptRemoveSelect(interaction, 'action');
+            }
+            if (customId === 'aouv_nsfw_prompt_remove_select_truth') {
+                return await handler.handleAouvNsfwPromptRemoveSelect(interaction, 'verite');
+            }
+            if (customId === 'aouv_nsfw_prompt_edit_kind_select') {
+                return await handler.handleAouvNsfwPromptEditKindSelect(interaction);
+            }
+            if (customId === 'aouv_nsfw_prompt_remove_kind_select') {
+                return await handler.handleAouvNsfwPromptRemoveKindSelect(interaction);
+            }
+            if (customId === 'aouv_nsfw_prompt_list_custom_kind_select') {
+                return await handler.handleAouvNsfwPromptListCustomKindSelect(interaction);
+            }
 
             // Gestion des modals d'édition
             if (customId === 'aouv_prompt_edit_modal') {
@@ -1591,6 +1606,24 @@ class MainRouterHandler {
                 const kind = parts[4]; // action ou verite
                 const page = parseInt(parts[6], 10);
                 return await handler.showAouvPromptOverrideBaseListPaged(interaction, kind, page);
+            }
+            if (customId.startsWith('aouv_nsfw_prompt_edit_list_') && customId.includes('_page_')) {
+                const parts = customId.split('_');
+                const kind = parts[5]; // action ou verite
+                const page = parseInt(parts[7], 10);
+                return await handler.showAouvNsfwPromptEditListPaged(interaction, kind, page);
+            }
+            if (customId.startsWith('aouv_nsfw_prompt_remove_list_') && customId.includes('_page_')) {
+                const parts = customId.split('_');
+                const kind = parts[5]; // action ou verite
+                const page = parseInt(parts[7], 10);
+                return await handler.showAouvNsfwPromptRemoveListPaged(interaction, kind, page);
+            }
+            if (customId.startsWith('aouv_nsfw_prompt_list_custom_') && customId.includes('_page_')) {
+                const parts = customId.split('_');
+                const kind = parts[5]; // action ou verite
+                const page = parseInt(parts[7], 10);
+                return await handler.showAouvNsfwPromptListCustomPaged(interaction, kind, page);
             }
 
             console.log(`⚠️ CustomId AouV non géré: ${customId}`);

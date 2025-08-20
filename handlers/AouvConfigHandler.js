@@ -73,8 +73,8 @@ class AouvConfigHandler {
 		if (choice === 'nsfw_channels') return this.showAouvNsfwChannelsMenu(interaction);
 		if (choice === 'nsfw_prompt_add') return this.showAouvNsfwPromptAddModal(interaction);
 		if (choice === 'nsfw_prompt_add_bulk') return this.showAouvNsfwPromptAddBulkModal(interaction);
-		if (choice === 'nsfw_prompt_edit') return this.showAouvNsfwPromptEditPicker(interaction);
-		if (choice === 'nsfw_prompt_remove') return this.showAouvNsfwPromptRemoveModal(interaction);
+		if (choice === 'nsfw_prompt_edit') return this.showAouvNsfwPromptEditKindPicker(interaction);
+		if (choice === 'nsfw_prompt_remove') return this.showAouvNsfwPromptRemoveKindPicker(interaction);
 		if (choice === 'nsfw_prompt_list_custom') return this.showAouvNsfwPromptListCustom(interaction);
 		if (choice === 'nsfw_prompt_list_base') return this.showAouvNsfwPromptListBaseModal(interaction);
 		if (choice === 'nsfw_prompt_override_base') return this.showAouvNsfwPromptOverrideBaseModal(interaction);
@@ -808,41 +808,56 @@ class AouvConfigHandler {
 		await modalHandler.showModal(interaction, modal);
 	}
 
-	async showAouvNsfwPromptEditPicker(interaction) {
+	// === NSFW EDIT personnalisés (sélection type puis liste paginée)
+	async showAouvNsfwPromptEditKindPicker(interaction) {
+		const embed = new EmbedBuilder()
+			.setColor('#e91e63')
+			.setTitle('🔞 Modifier un prompt NSFW personnalisé')
+			.setDescription('Choisissez le type de prompt à modifier.');
+		const select = new StringSelectMenuBuilder()
+			.setCustomId('aouv_nsfw_prompt_edit_kind_select')
+			.setPlaceholder('Choisir un type...')
+			.addOptions([
+				{ label: 'Actions (NSFW)', value: 'action' },
+				{ label: 'Vérités (NSFW)', value: 'verite' }
+			]);
+		await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+	}
+
+	async handleAouvNsfwPromptEditKindSelect(interaction) {
+		const kind = interaction.values[0];
+		return this.showAouvNsfwPromptEditListPaged(interaction, kind, 1);
+	}
+
+	async showAouvNsfwPromptEditListPaged(interaction, kind, page = 1) {
 		const guildId = interaction.guild.id;
 		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
-		const actions = Array.isArray(cfg.nsfwCustomActions) ? cfg.nsfwCustomActions : [];
-		const truths = Array.isArray(cfg.nsfwCustomTruths) ? cfg.nsfwCustomTruths : [];
+		const list = kind === 'action' ? (cfg.nsfwCustomActions || []) : (cfg.nsfwCustomTruths || []);
+		const per = 25;
+		const totalPages = Math.max(1, Math.ceil(list.length / per));
+		const start = (page - 1) * per;
+		const slice = list.slice(start, start + per);
 
 		const embed = new EmbedBuilder()
 			.setColor('#e91e63')
-			.setTitle('🔞 Choisir un prompt NSFW à modifier')
-			.setDescription('Sélectionnez un prompt NSFW, puis éditez-le.');
+			.setTitle(`🔞 Modifier un prompt perso — ${kind === 'action' ? 'Actions' : 'Vérités'} (Page ${page}/${totalPages})`)
+			.setDescription(slice.length ? 'Sélectionnez un prompt à modifier.' : 'Aucun prompt.');
 
-		const actionSelect = new StringSelectMenuBuilder()
-			.setCustomId('aouv_nsfw_prompt_edit_select_action')
-			.setPlaceholder(actions.length ? 'Choisir un prompt Action (NSFW)...' : 'Aucun prompt Action NSFW')
+		const select = new StringSelectMenuBuilder()
+			.setCustomId(kind === 'action' ? 'aouv_nsfw_prompt_edit_select_action' : 'aouv_nsfw_prompt_edit_select_truth')
+			.setPlaceholder(slice.length ? 'Choisir un prompt...' : 'Aucun prompt')
 			.setMinValues(1)
 			.setMaxValues(1)
-			.setDisabled(actions.length === 0);
-		actions.slice(0, 25).forEach((t, i) => {
-			const idx = i.toString();
-			actionSelect.addOptions({ label: t.length > 95 ? t.slice(0, 95) + '…' : t, value: idx });
+			.setDisabled(slice.length === 0);
+		slice.forEach((t, i) => {
+			const absoluteIndex = start + i;
+			const label = t.length > 95 ? t.slice(0, 95) + '…' : t;
+			select.addOptions({ label, value: String(absoluteIndex) });
 		});
 
-		const truthSelect = new StringSelectMenuBuilder()
-			.setCustomId('aouv_nsfw_prompt_edit_select_truth')
-			.setPlaceholder(truths.length ? 'Choisir un prompt Vérité (NSFW)...' : 'Aucun prompt Vérité NSFW')
-			.setMinValues(1)
-			.setMaxValues(1)
-			.setDisabled(truths.length === 0);
-		truths.slice(0, 25).forEach((t, i) => {
-			const idx = i.toString();
-			truthSelect.addOptions({ label: t.length > 95 ? t.slice(0, 95) + '…' : t, value: idx });
-		});
-
-		await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(actionSelect), new ActionRowBuilder().addComponents(truthSelect)] });
+		const rows = [new ActionRowBuilder().addComponents(select), ...this.buildPaginationRow('aouv_nsfw_prompt_edit_list', kind, page, totalPages)];
+		await interaction.update({ embeds: [embed], components: rows });
 	}
 
 	async handleAouvNsfwPromptEditSelect(interaction, kind) {
@@ -861,22 +876,111 @@ class AouvConfigHandler {
 		await modalHandler.showModal(interaction, modal);
 	}
 
-	async showAouvNsfwPromptRemoveModal(interaction) {
-		const modal = new ModalBuilder().setCustomId('aouv_nsfw_prompt_remove_modal').setTitle('Supprimer un prompt NSFW');
-		modal.addComponents(
-			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
-			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('index').setLabel('Indice à supprimer').setStyle(TextInputStyle.Short).setRequired(true))
-		);
-		await modalHandler.showModal(interaction, modal);
+	// === NSFW REMOVE personnalisés (sélection type puis liste paginée)
+	async showAouvNsfwPromptRemoveKindPicker(interaction) {
+		const embed = new EmbedBuilder()
+			.setColor('#e74c3c')
+			.setTitle('🔞 Supprimer un prompt NSFW personnalisé')
+			.setDescription('Choisissez le type de prompt à supprimer.');
+		const select = new StringSelectMenuBuilder()
+			.setCustomId('aouv_nsfw_prompt_remove_kind_select')
+			.setPlaceholder('Choisir un type...')
+			.addOptions([
+				{ label: 'Actions (NSFW)', value: 'action' },
+				{ label: 'Vérités (NSFW)', value: 'verite' }
+			]);
+		await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
 	}
 
-	async showAouvNsfwPromptListCustom(interaction) {
+	async handleAouvNsfwPromptRemoveKindSelect(interaction) {
+		const kind = interaction.values[0];
+		return this.showAouvNsfwPromptRemoveListPaged(interaction, kind, 1);
+	}
+
+	async showAouvNsfwPromptRemoveListPaged(interaction, kind, page = 1) {
 		const guildId = interaction.guild.id;
 		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
-		const a = (cfg.nsfwCustomActions || []).map((t, i) => `A${i}: ${t}`).join('\n') || '(Aucune action NSFW personnalisée)';
-		const v = (cfg.nsfwCustomTruths || []).map((t, i) => `V${i}: ${t}`).join('\n') || '(Aucune vérité NSFW personnalisée)';
-		await interaction.update({ content: `NSFW — Actions:\n${a}\n\nNSFW — Vérités:\n${v}`, embeds: [], components: [] });
+		const list = kind === 'action' ? (cfg.nsfwCustomActions || []) : (cfg.nsfwCustomTruths || []);
+		const per = 25;
+		const totalPages = Math.max(1, Math.ceil(list.length / per));
+		const start = (page - 1) * per;
+		const slice = list.slice(start, start + per);
+
+		const embed = new EmbedBuilder()
+			.setColor('#e74c3c')
+			.setTitle(`🔞 Supprimer un prompt perso — ${kind === 'action' ? 'Actions' : 'Vérités'} (Page ${page}/${totalPages})`)
+			.setDescription(slice.length ? 'Sélectionnez un prompt à supprimer.' : 'Aucun prompt.');
+
+		const select = new StringSelectMenuBuilder()
+			.setCustomId(kind === 'action' ? 'aouv_nsfw_prompt_remove_select_action' : 'aouv_nsfw_prompt_remove_select_truth')
+			.setPlaceholder(slice.length ? 'Choisir un prompt...' : 'Aucun prompt')
+			.setMinValues(1)
+			.setMaxValues(1)
+			.setDisabled(slice.length === 0);
+		slice.forEach((t, i) => {
+			const absoluteIndex = start + i;
+			const label = t.length > 95 ? t.slice(0, 95) + '…' : t;
+			select.addOptions({ label, value: String(absoluteIndex) });
+		});
+
+		const rows = [new ActionRowBuilder().addComponents(select), ...this.buildPaginationRow('aouv_nsfw_prompt_remove_list', kind, page, totalPages)];
+		await interaction.update({ embeds: [embed], components: rows });
+	}
+
+	async handleAouvNsfwPromptRemoveSelect(interaction, kind) {
+		const guildId = interaction.guild.id;
+		const index = parseInt(interaction.values[0], 10);
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || {};
+		if (kind === 'action') {
+			if (!Array.isArray(cfg.nsfwCustomActions) || index < 0 || index >= cfg.nsfwCustomActions.length) return interaction.update({ content: '❌ Indice invalide.', embeds: [], components: [] });
+			cfg.nsfwCustomActions.splice(index, 1);
+		} else {
+			if (!Array.isArray(cfg.nsfwCustomTruths) || index < 0 || index >= cfg.nsfwCustomTruths.length) return interaction.update({ content: '❌ Indice invalide.', embeds: [], components: [] });
+			cfg.nsfwCustomTruths.splice(index, 1);
+		}
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
+		await interaction.update({ content: '✅ Supprimé (NSFW).', embeds: [], components: [] });
+	}
+
+	// === NSFW LIST personnalisés (sélection type puis pagination)
+	async showAouvNsfwPromptListCustom(interaction) {
+		const embed = new EmbedBuilder()
+			.setColor('#9b59b6')
+			.setTitle('🔞 Lister prompts NSFW personnalisés')
+			.setDescription('Choisissez le type à afficher.');
+		const select = new StringSelectMenuBuilder()
+			.setCustomId('aouv_nsfw_prompt_list_custom_kind_select')
+			.setPlaceholder('Choisir un type...')
+			.addOptions([
+				{ label: 'Actions (NSFW)', value: 'action' },
+				{ label: 'Vérités (NSFW)', value: 'verite' }
+			]);
+		await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+	}
+
+	async handleAouvNsfwPromptListCustomKindSelect(interaction) {
+		const kind = interaction.values[0];
+		return this.showAouvNsfwPromptListCustomPaged(interaction, kind, 1);
+	}
+
+	async showAouvNsfwPromptListCustomPaged(interaction, kind, page = 1) {
+		const guildId = interaction.guild.id;
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
+		const list = kind === 'action' ? (cfg.nsfwCustomActions || []) : (cfg.nsfwCustomTruths || []);
+		const per = 20;
+		const totalPages = Math.max(1, Math.ceil(list.length / per));
+		const start = (page - 1) * per;
+		const slice = list.slice(start, start + per);
+		const lines = slice.map((t, i) => `${start + i}. ${t}`);
+		const embed = new EmbedBuilder()
+			.setColor('#9b59b6')
+			.setTitle(`📜 ${kind === 'action' ? 'Actions' : 'Vérités'} NSFW personnalisées (Page ${page}/${totalPages})`)
+			.setDescription(lines.length ? lines.join('\n') : '(Aucune entrée)');
+		const rows = this.buildPaginationRow('aouv_nsfw_prompt_list_custom', kind, page, totalPages);
+		await interaction.update({ embeds: [embed], components: rows });
 	}
 
 	async showAouvNsfwPromptToggleBase(interaction, disable) {

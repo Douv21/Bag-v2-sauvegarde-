@@ -3033,6 +3033,28 @@ class RenderSolutionBot {
                     return;
                 }
 
+                // ==== AOUV NSFW — selects de type pour pagination ====
+                if (customId === 'aouv_nsfw_prompt_edit_kind_select') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptEditKindSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_remove_kind_select') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptRemoveKindSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_list_custom_kind_select') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptListCustomKindSelect(interaction);
+                    return;
+                }
+
                 // ==== AOUV — selects sur listes paginées ====
                 if (customId === 'aouv_prompt_remove_select_action') {
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
@@ -3059,6 +3081,20 @@ class RenderSolutionBot {
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
                     const aouvHandler = new AouvConfigHandler(dataManager);
                     await aouvHandler.handleAouvPromptOverrideSelect(interaction, 'verite');
+                    return;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_remove_select_action') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptRemoveSelect(interaction, 'action');
+                    return;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_remove_select_truth') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwPromptRemoveSelect(interaction, 'verite');
                     return;
                 }
 
@@ -3110,6 +3146,36 @@ class RenderSolutionBot {
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
                     const aouvHandler = new AouvConfigHandler(dataManager);
                     await aouvHandler.showAouvPromptOverrideBaseListPaged(interaction, kind, page);
+                    return;
+                }
+
+                if (customId.startsWith('aouv_nsfw_prompt_edit_list_')) {
+                    const parts = String(customId || '').split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.showAouvNsfwPromptEditListPaged(interaction, kind, page);
+                    return;
+                }
+
+                if (customId.startsWith('aouv_nsfw_prompt_remove_list_')) {
+                    const parts = String(customId || '').split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.showAouvNsfwPromptRemoveListPaged(interaction, kind, page);
+                    return;
+                }
+
+                if (customId.startsWith('aouv_nsfw_prompt_list_custom_')) {
+                    const parts = String(customId || '').split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.showAouvNsfwPromptListCustomPaged(interaction, kind, page);
                     return;
                 }
 
