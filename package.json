@@ -12,7 +12,7 @@
     "diagnose:music": "node -e \"console.log('LOAD'); require('./managers/SimpleMusicManager'); console.log('OK')\"",
     "diag:yt-dlp": "node node_modules/@distube/yt-dlp/bin/yt-dlp --version",
     "diag:voice": "node -e \"try{console.log(require('@discordjs/voice').generateDependencyReport())}catch(e){console.log('no-report', e?.message)}\"",
-    "diag:lavalink": "node -e \"try{const M=require('./managers/LavalinkMusicManager');const p=M.__getConfiguredNodesPreview?.()||{nodes:[],source:'unknown'};console.log('configured',p.source,p.nodes.length);console.log('has lib',!!require('shoukaku'));console.log('first',p.nodes[0]);}catch(e){console.log('diag error',e?.message)}\"", 
+    "diag:lavalink": "node -e \"try{const M=require('./managers/LavalinkMusicManager');const p=M.__getConfiguredNodesPreview?.()||{nodes:[],source:'unknown'};console.log('configured',p.source,p.nodes.length);console.log('has lib',!!require('shoukaku'));console.log('first',p.nodes[0]);}catch(e){console.log('diag error',e?.message)}\"",
     "test": "echo \"Test passed\" && exit 0",
     "postinstall": "node scripts/install-yt-dlp.js"
   },
@@ -20,12 +20,12 @@
     "discord.js": "^14.21.0",
     "dotenv": "^17.2.1",
     "express": "^4.21.2",
-    "mongodb": "^6.18.0",
-    "sharp": "^0.34.3",
     "is-ci": "^3.0.1",
     "libsodium-wrappers": "^0.7.13",
-    "shoukaku": "^4.1.1",
-    "multer": "^1.4.5-lts.1"
+    "mongodb": "^6.18.0",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.34.3",
+    "shoukaku": "^4.1.1"
   },
   "engines": {
     "node": "20.x"

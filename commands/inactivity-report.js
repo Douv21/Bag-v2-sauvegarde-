@@ -3,7 +3,7 @@ const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('inactivity-report')
-    .setDescription('Se mettre en pause: attribue un rôle spécial pour éviter l\'auto-kick d\'inactivité (retiré automatiquement lorsque vous redevenez actif)'),
+    .setDescription('Se mettre en pause pour éviter l\'auto-kick d\'inactivité'),
 
   cooldown: 2,
 
