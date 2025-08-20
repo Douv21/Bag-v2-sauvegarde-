@@ -97,6 +97,7 @@ class BagBotRender {
         this.client.logManager = this.logManager;
         
         // Attacher les méthodes de quarantaine au client pour les commandes
+        console.log('🔗 Attachement des méthodes de quarantaine au client...');
         this.client.quarantineMember = this.quarantineMember.bind(this);
         this.client.grantAccess = this.grantAccess.bind(this);
         this.client.getQuarantineInfo = this.getQuarantineInfo.bind(this);
@@ -105,6 +106,11 @@ class BagBotRender {
         this.client.setupQuarantinePermissions = this.setupQuarantinePermissions.bind(this);
         this.client.recordQuarantineInfo = this.recordQuarantineInfo.bind(this);
         this.client.cleanupQuarantineChannels = this.cleanupQuarantineChannels.bind(this);
+        console.log('✅ Méthodes de quarantaine attachées:', {
+            quarantineMember: typeof this.client.quarantineMember,
+            grantAccess: typeof this.client.grantAccess,
+            getQuarantineInfo: typeof this.client.getQuarantineInfo
+        });
 
         // Collections
         this.client.commands = new Collection();
@@ -555,6 +561,13 @@ class BagBotRender {
     setupDiscordEvents() {
         this.client.once('ready', async () => {
             console.log(`✅ ${this.client.user.tag} connecté`);
+            
+            // Vérifier que les méthodes de quarantaine sont toujours attachées
+            console.log('🔍 Vérification des méthodes de quarantaine après connexion:', {
+                quarantineMember: typeof this.client.quarantineMember,
+                grantAccess: typeof this.client.grantAccess,
+                getQuarantineInfo: typeof this.client.getQuarantineInfo
+            });
             
             // Enregistrement des commandes slash
             await this.registerSlashCommands();

@@ -263,6 +263,13 @@ module.exports = {
                  `Il sera automatiquement libéré dans 30 secondes.`
       });
 
+      // Vérifier que la méthode est disponible avant de l'appeler
+      console.log('🔍 Vérification de bot.quarantineMember:', typeof bot.quarantineMember);
+      
+      if (typeof bot.quarantineMember !== 'function') {
+        throw new Error(`La méthode quarantineMember n'est pas disponible (type: ${typeof bot.quarantineMember})`);
+      }
+      
       // Appliquer la quarantaine de test
       await bot.quarantineMember(member, 'TEST', testDetails);
 
