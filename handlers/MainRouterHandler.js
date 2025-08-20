@@ -19,6 +19,9 @@ class MainRouterHandler {
             const ConfessionHandler = require('./ConfessionHandler');
             this.confessionHandler = new ConfessionHandler(this.dataManager);
             
+            const ConfessionConfigHandler = require('./ConfessionConfigHandler');
+            this.confessionConfigHandler = new ConfessionConfigHandler(this.dataManager);
+            
             // Initialiser les autres handlers
             try {
                 const AouvConfigHandler = require('./AouvConfigHandler');
@@ -289,6 +292,14 @@ class MainRouterHandler {
                 }
             }
 
+            // === MODALS AUTOTHREAD SYSTEM ===
+            if (this.autothreadHandler && customId.startsWith('autothread_')) {
+                if (customId === 'autothread_name_modal') {
+                    await this.autothreadHandler.handleThreadNameModal(interaction);
+                    return true;
+                }
+            }
+
             return false;
         } catch (error) {
             console.error('❌ Erreur modal submit:', error);
@@ -436,6 +447,24 @@ class MainRouterHandler {
             // === BOUTONS LEVEL SYSTEM ===
             if (this.levelHandler && customId.startsWith('level_')) {
                 await this.levelHandler.handleLevelButton(interaction, customId);
+                return true;
+            }
+
+            // === BOUTONS COUNTING SYSTEM ===
+            if (this.countingHandler && customId.startsWith('counting_')) {
+                await this.countingHandler.handleCountingSelect(interaction);
+                return true;
+            }
+
+            // === BOUTONS AUTOTHREAD SYSTEM ===
+            if (this.autothreadHandler && customId.startsWith('autothread_')) {
+                await this.autothreadHandler.handleAutothreadSelect(interaction);
+                return true;
+            }
+
+            // === BOUTONS CONFESSION CONFIG ===
+            if (this.confessionConfigHandler && (customId.startsWith('confession_config') || customId.includes('confession_logs_back') || customId.includes('confession_autothread_back'))) {
+                await this.confessionConfigHandler.handleConfessionConfigSelect(interaction);
                 return true;
             }
 
@@ -828,6 +857,12 @@ class MainRouterHandler {
 
             if (this.bumpHandler && customId.startsWith('bump_')) {
                 await this.bumpHandler.handleBumpSelect(interaction);
+                return true;
+            }
+
+            // === SELECT MENUS CONFESSION CONFIG ===
+            if (this.confessionConfigHandler && (customId.startsWith('confession_config') || customId.startsWith('confession_channel'))) {
+                await this.confessionConfigHandler.handleConfessionConfigSelect(interaction);
                 return true;
             }
 
