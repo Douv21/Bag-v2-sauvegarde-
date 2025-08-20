@@ -3,7 +3,7 @@ services:
     name: bagbot-v2
     env: node
     plan: free
-    buildCommand: npm ci
+    buildCommand: npm ci && node scripts/cleanup-removed-commands.js
     startCommand: node index.render-final.js
     envVars:
       - key: NODE_VERSION
