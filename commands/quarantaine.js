@@ -30,6 +30,10 @@ module.exports = {
       subcommand
         .setName('nettoyer')
         .setDescription('Nettoyer les canaux de quarantaine orphelins'))
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('configurer-permissions')
+        .setDescription('Reconfigurer les permissions du rôle de quarantaine sur tous les canaux'))
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers.toString()),
 
   cooldown: 5,
@@ -64,6 +68,9 @@ module.exports = {
           break;
         case 'nettoyer':
           await this.handleCleanup(interaction);
+          break;
+        case 'configurer-permissions':
+          await this.handleConfigurePermissions(interaction);
           break;
       }
     } catch (error) {
@@ -481,6 +488,65 @@ module.exports = {
         content: `❌ **Erreur lors du nettoyage**\n\n` +
                  `${error.message}\n\n` +
                  `Vérifiez les permissions du bot pour gérer les canaux.`
+      });
+    }
+  },
+
+  async handleConfigurePermissions(interaction) {
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+      // Vérifier si le système de quarantaine est configuré
+      const config = await this.quarantineManager.moderationManager.getSecurityConfig(interaction.guild.id);
+      
+      if (!config.accessControl?.quarantineRoleId) {
+        return interaction.editReply({
+          content: '❌ **Aucun rôle de quarantaine configuré**\n\n' +
+                   'Configurez d\'abord le système avec `/config-verif quarantaine`'
+        });
+      }
+
+      const quarantineRole = interaction.guild.roles.cache.get(config.accessControl.quarantineRoleId);
+      if (!quarantineRole) {
+        return interaction.editReply({
+          content: '❌ **Rôle de quarantaine introuvable**\n\n' +
+                   'Le rôle configuré n\'existe plus. Reconfigurez avec `/config-verif quarantaine`'
+        });
+      }
+
+      // Reconfigurer les permissions
+      await this.quarantineManager.configureQuarantineRolePermissions(interaction.guild, quarantineRole);
+
+      const embed = new EmbedBuilder()
+        .setTitle('✅ Permissions de quarantaine reconfigurées')
+        .setColor(0x51cf66)
+        .addFields(
+          {
+            name: '🔒 Rôle configuré',
+            value: `**${quarantineRole.name}**`,
+            inline: true
+          },
+          {
+            name: '📊 Configuration appliquée',
+            value: `• Accès refusé à tous les canaux généraux\n• Permissions configurées automatiquement\n• Canaux de quarantaine exemptés`,
+            inline: false
+          },
+          {
+            name: '💡 Informations',
+            value: `• Les membres avec ce rôle ne peuvent accéder qu'aux canaux de quarantaine\n• Les nouveaux canaux hériteront automatiquement des restrictions\n• Les permissions sont appliquées en temps réel`,
+            inline: false
+          }
+        )
+        .setTimestamp();
+
+      return interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Erreur configuration permissions:', error);
+      return interaction.editReply({
+        content: `❌ **Erreur lors de la configuration**\n\n` +
+                 `${error.message}\n\n` +
+                 `Vérifiez que le bot a les permissions nécessaires pour gérer les canaux.`
       });
     }
   }
