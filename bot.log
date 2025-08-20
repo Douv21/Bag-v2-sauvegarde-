@@ -1,5 +1,7 @@
-[dotenv@17.2.1] injecting env (4) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+nohup: ignoring input
+[dotenv@17.2.1] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
 🔑 MONGODB_PASSWORD non configuré - sauvegarde locale uniquement
+📁 Répertoire de sauvegarde level créé
 ⏰ Sauvegarde automatique level activée (30 min)
 ✅ LevelBackupManager initialisé
 ⚠️ Variables d'environnement MongoDB manquantes - utilisation du mode JSON uniquement
@@ -7,100 +9,15 @@
    - MONGODB_USERNAME
    - MONGODB_PASSWORD
    - MONGODB_CLUSTER_URL
-✅ Handlers spécialisés initialisés
-📂 Chargement de 88 commandes...
-✅ action
-✅ je-suis-actif
 🎨 LevelCardGenerator initialisé
-✅ add-level-reward
-✅ adminxp
-✅ after-dark
-✅ aguicher
-✅ ajout-argent
-✅ ajout-karma
-✅ ajouter-carte
-✅ aouv
-❌ Erreur chargement apercu-couleur.js: Unexpected token ')'
-✅ aphrodisiaque
-✅ autothread
-✅ backup-status
-✅ baiser
-✅ ban
-✅ boutique
-✅ caresser
-✅ vider-salon
-✅ clear-commands
-✅ color-role
-✅ comptage
-✅ confess
-✅ config-aouv
-✅ config-boost
-✅ config-confession
-✅ config-economie
-✅ config-level
-✅ config-logs
-✅ config-moderation
-✅ config-verif
-✅ crime
-✅ daily
-✅ dashboard
-✅ defier
-✅ donner
-✅ economie
-✅ embrasser
-✅ force-backup
-✅ fuck
-✅ historique
-❌ Erreur chargement inactivity-report.js: Invalid string length
-✅ karma
-✅ kick
-✅ leaderboard
-✅ level
-✅ massage
-✅ massban
-✅ masskick
-✅ membre-proche
-✅ mongodb-backup
-✅ mongodb-diagnostic
-✅ mute
-✅ nowplaying
-✅ objet
-✅ parier
-✅ oser
-✅ pause
-✅ pecher
-✅ play
-✅ profil-carte
-✅ purge
-✅ queue
-✅ reset
-✅ resume
-✅ retrait-argent
-✅ retrait-karma
-✅ seduire-mass
-✅ seduire
-✅ seek
-✅ setup-colors
-✅ skip
-✅ stats
-✅ stop
-✅ striptease
-✅ test-level-notif
-✅ topplaisir
-✅ travailler
-✅ unban
-✅ unmute
-✅ unwarn
-✅ verifier
-✅ verite
-✅ voler
-✅ voler
-✅ volume
-✅ warn
-✅ warns
-✅ 85 commandes chargées
-🔄 Enregistrement de 85 commandes...
-📂 Chargement de 88 commandes...
+✅ Handlers spécialisés initialisés
+🔗 Attachement des méthodes de quarantaine au client...
+✅ Méthodes de quarantaine attachées: {
+  quarantineMember: 'function',
+  grantAccess: 'function',
+  getQuarantineInfo: 'function'
+}
+📂 Chargement de 89 commandes...
 ✅ action
 ✅ je-suis-actif
 ✅ add-level-reward
@@ -111,7 +28,6 @@
 ✅ ajout-karma
 ✅ ajouter-carte
 ✅ aouv
-❌ Erreur chargement apercu-couleur.js: Unexpected token ')'
 ✅ aphrodisiaque
 ✅ autothread
 ✅ backup-status
@@ -136,13 +52,14 @@
 ✅ daily
 ✅ dashboard
 ✅ defier
+✅ diagnostic-quarantine
 ✅ donner
 ✅ economie
 ✅ embrasser
 ✅ force-backup
 ✅ fuck
 ✅ historique
-❌ Erreur chargement inactivity-report.js: Invalid string length
+✅ inactivity-report
 ✅ karma
 ✅ kick
 ✅ leaderboard
@@ -161,8 +78,8 @@
 ✅ pause
 ✅ pecher
 ✅ play
-✅ profil-carte
 ✅ purge
+✅ quarantaine
 ✅ queue
 ✅ reset
 ✅ resume
@@ -177,6 +94,7 @@
 ✅ stop
 ✅ striptease
 ✅ test-level-notif
+✅ test-verif
 ✅ topplaisir
 ✅ travailler
 ✅ unban
@@ -189,38 +107,108 @@
 ✅ volume
 ✅ warn
 ✅ warns
-✅ 85 commandes chargées
-🚀 BAG BOT V2 - Render.com Web Service démarré
-🌐 Serveur Web actif sur port 5000
-📊 Health check: http://localhost:5000/health
-✅ 85 commandes enregistrées
-✅ Bag#0424 connecté
-🔄 Enregistrement de 85 commandes...
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
-[lavalink] Node darren-v4 error: Unexpected server response: 403
-[lavalink] Node darren-v4 closed: 1006 
-[lavalink] Node ajie-v4 ready
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node darren-v4 error: Unexpected server response: 403
-[lavalink] Node darren-v4 closed: 1006 
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node darren-v4 error: Unexpected server response: 403
-[lavalink] Node darren-v4 closed: 1006 
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
-[lavalink] Node lava-link disconnected: 
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node v4-lavalink-rocks disconnected: 
-[lavalink] Node darren-v4 error: Unexpected server response: 403
-[lavalink] Node darren-v4 closed: 1006 
-[lavalink] Node darren-v4 disconnected: 
+✅ 88 commandes chargées
+🔄 Enregistrement de 88 commandes...
+❌ Erreur enregistrement commandes: Error: Expected token to be set for this request, but none was present
+    at _REST.resolveRequest (/workspace/node_modules/@discordjs/rest/dist/index.js:1367:15)
+    at _REST.queueRequest (/workspace/node_modules/@discordjs/rest/dist/index.js:1327:46)
+    at _REST.request (/workspace/node_modules/@discordjs/rest/dist/index.js:1293:33)
+    at _REST.put (/workspace/node_modules/@discordjs/rest/dist/index.js:1276:17)
+    at CommandHandler.registerCommands (/workspace/handlers/CommandHandler.js:67:24)
+    at CommandHandler.init (/workspace/handlers/CommandHandler.js:16:20)
+📂 Chargement de 89 commandes...
+✅ action
+✅ je-suis-actif
+✅ add-level-reward
+✅ adminxp
+✅ after-dark
+✅ aguicher
+✅ ajout-argent
+✅ ajout-karma
+✅ ajouter-carte
+✅ aouv
+✅ aphrodisiaque
+✅ autothread
+✅ backup-status
+✅ baiser
+✅ ban
+✅ boutique
+✅ caresser
+✅ vider-salon
+✅ clear-commands
+✅ color-role
+✅ comptage
+✅ confess
+✅ config-aouv
+✅ config-boost
+✅ config-confession
+✅ config-economie
+✅ config-level
+✅ config-logs
+✅ config-moderation
+✅ config-verif
+✅ crime
+✅ daily
+✅ dashboard
+✅ defier
+✅ diagnostic-quarantine
+✅ donner
+✅ economie
+✅ embrasser
+✅ force-backup
+✅ fuck
+✅ historique
+✅ inactivity-report
+✅ karma
+✅ kick
+✅ leaderboard
+✅ level
+✅ massage
+✅ massban
+✅ masskick
+✅ membre-proche
+✅ mongodb-backup
+✅ mongodb-diagnostic
+✅ mute
+✅ nowplaying
+✅ objet
+✅ parier
+✅ oser
+✅ pause
+✅ pecher
+✅ play
+✅ purge
+✅ quarantaine
+✅ queue
+✅ reset
+✅ resume
+✅ retrait-argent
+✅ retrait-karma
+✅ seduire-mass
+✅ seduire
+✅ seek
+✅ setup-colors
+✅ skip
+✅ stats
+✅ stop
+✅ striptease
+✅ test-level-notif
+✅ test-verif
+✅ topplaisir
+✅ travailler
+✅ unban
+✅ unmute
+✅ unwarn
+✅ verifier
+✅ verite
+✅ voler
+✅ voler
+✅ volume
+✅ warn
+✅ warns
+✅ 88 commandes chargées
+❌ Erreur démarrage: Error [TokenInvalid]: An invalid token was provided.
+    at Client.login (/workspace/node_modules/discord.js/src/client/Client.js:217:52)
+    at BagBotRender.init (/workspace/index.js:138:31) {
+  code: 'TokenInvalid'
+}

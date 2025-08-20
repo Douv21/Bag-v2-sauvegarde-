@@ -85,6 +85,14 @@ module.exports = {
     try {
       // Utiliser le système de quarantaine du bot principal
       const bot = interaction.client;
+      
+      // Vérifier que la méthode est disponible
+      console.log('🔍 Vérification quarantineMember dans quarantaine.js:', typeof bot.quarantineMember);
+      
+      if (typeof bot.quarantineMember !== 'function') {
+        throw new Error(`La méthode quarantineMember n'est pas disponible (type: ${typeof bot.quarantineMember})`);
+      }
+      
       await bot.quarantineMember(member, 'MANUAL', {
         reason: `Quarantaine manuelle: ${reason}`,
         score: 0,
