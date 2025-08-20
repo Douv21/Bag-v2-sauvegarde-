@@ -1483,6 +1483,14 @@ class MainRouterHandler {
                 return await handler.handleAouvPromptOverrideKindSelect(interaction);
             }
 
+            // Nouveau: désactivation globale par sélecteur (SFW / NSFW)
+            if (customId === 'aouv_disable_all_select') {
+                return await handler.handleAouvDisableAllSelect(interaction);
+            }
+            if (customId === 'aouv_nsfw_disable_all_select') {
+                return await handler.handleAouvNsfwDisableAllSelect(interaction);
+            }
+
             // Gestion des sélections d'édition/suppression
             if (customId === 'aouv_prompt_edit_select_action') {
                 return await handler.handleAouvPromptEditSelect(interaction, 'action');

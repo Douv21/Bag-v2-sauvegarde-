@@ -583,7 +583,27 @@ class AouvConfigHandler {
 	}
 
 	async showAouvPromptToggleBase(interaction, disable) {
-		const modal = new ModalBuilder().setCustomId(disable ? 'aouv_prompt_disable_base_modal' : 'aouv_prompt_enable_base_modal').setTitle(disable ? 'Désactiver prompt de base' : 'Réactiver prompt de base');
+		// Remplacer le modal par un sélecteur pour la désactivation globale
+		if (disable) {
+			const embed = new EmbedBuilder()
+				.setColor('#e74c3c')
+				.setTitle('⛔ Désactiver les prompts de base')
+				.setDescription('Sélectionnez le type pour désactiver tous les prompts intégrés de cette catégorie.');
+
+			const select = new StringSelectMenuBuilder()
+				.setCustomId('aouv_disable_all_select')
+				.setPlaceholder('Choisir un type...')
+				.addOptions([
+					{ label: 'Désactiver toutes les Actions', value: 'action' },
+					{ label: 'Désactiver toutes les Vérités', value: 'verite' }
+				]);
+
+			await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+			return;
+		}
+
+		// Conserver le modal existant pour la réactivation unitaire
+		const modal = new ModalBuilder().setCustomId('aouv_prompt_enable_base_modal').setTitle('Réactiver prompt de base');
 		modal.addComponents(
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('numero').setLabel('Numéro (1..n) du prompt de base').setStyle(TextInputStyle.Short).setRequired(true))
@@ -716,6 +736,25 @@ class AouvConfigHandler {
 		cfg[key] = Array.from(set);
 		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.reply({ content: `✅ ${disable ? 'Désactivé' : 'Réactivé'}: ${kind} #${numero}`, flags: 64 });
+	}
+
+	// Nouveau: handler pour la désactivation globale via sélecteur (SFW)
+	async handleAouvDisableAllSelect(interaction) {
+		const guildId = interaction.guild.id;
+		const kind = interaction.values[0];
+		if (!['action', 'verite'].includes(kind)) {
+			return interaction.update({ content: '❌ Sélection invalide.', embeds: [], components: [] });
+		}
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || {};
+		const { BASE_ACTIONS, BASE_TRUTHS } = require('../utils/aouvPrompts');
+		const total = kind === 'action' ? (BASE_ACTIONS?.length || 0) : (BASE_TRUTHS?.length || 0);
+		const indices = Array.from({ length: total }, (_, i) => i);
+		const key = kind === 'action' ? 'disabledBaseActions' : 'disabledBaseTruths';
+		cfg[key] = indices;
+		all[guildId] = cfg;
+		await this.dataManager.saveData('aouv_config.json', all);
+		await interaction.update({ content: `✅ Tous les ${kind === 'action' ? 'prompts Action' : 'prompts Vérité'} de base ont été désactivés.`, embeds: [], components: [] });
 	}
 
 	async showAouvPromptListBaseModal(interaction) {
@@ -984,7 +1023,27 @@ class AouvConfigHandler {
 	}
 
 	async showAouvNsfwPromptToggleBase(interaction, disable) {
-		const modal = new ModalBuilder().setCustomId(disable ? 'aouv_nsfw_prompt_disable_base_modal' : 'aouv_nsfw_prompt_enable_base_modal').setTitle(disable ? 'Désactiver prompt NSFW de base' : 'Réactiver prompt NSFW de base');
+		// Remplacer le modal par un sélecteur pour la désactivation globale (NSFW)
+		if (disable) {
+			const embed = new EmbedBuilder()
+				.setColor('#e91e63')
+				.setTitle('🔞 Désactiver les prompts NSFW de base')
+				.setDescription('Sélectionnez le type pour désactiver tous les prompts NSFW intégrés de cette catégorie.');
+
+			const select = new StringSelectMenuBuilder()
+				.setCustomId('aouv_nsfw_disable_all_select')
+				.setPlaceholder('Choisir un type...')
+				.addOptions([
+					{ label: 'Désactiver toutes les Actions NSFW', value: 'action' },
+					{ label: 'Désactiver toutes les Vérités NSFW', value: 'verite' }
+				]);
+
+			await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(select)] });
+			return;
+		}
+
+		// Conserver le modal existant pour la réactivation unitaire (NSFW)
+		const modal = new ModalBuilder().setCustomId('aouv_nsfw_prompt_enable_base_modal').setTitle('Réactiver prompt NSFW de base');
 		modal.addComponents(
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true)),
 			new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('numero').setLabel('Numéro (1..n) du prompt NSFW de base').setStyle(TextInputStyle.Short).setRequired(true))
@@ -1157,6 +1216,25 @@ class AouvConfigHandler {
 		cfg[key] = Array.from(set);
 		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.reply({ content: `✅ ${disable ? 'Désactivé' : 'Réactivé'} (NSFW): ${kind} #${numero}`, flags: 64 });
+	}
+
+	// Nouveau: handler pour la désactivation globale via sélecteur (NSFW)
+	async handleAouvNsfwDisableAllSelect(interaction) {
+		const guildId = interaction.guild.id;
+		const kind = interaction.values[0];
+		if (!['action', 'verite'].includes(kind)) {
+			return interaction.update({ content: '❌ Sélection invalide.', embeds: [], components: [] });
+		}
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || {};
+		const { BASE_NSFW_ACTIONS, BASE_NSFW_TRUTHS } = require('../utils/aouvPrompts');
+		const total = kind === 'action' ? (BASE_NSFW_ACTIONS?.length || 0) : (BASE_NSFW_TRUTHS?.length || 0);
+		const indices = Array.from({ length: total }, (_, i) => i);
+		const key = kind === 'action' ? 'nsfwDisabledBaseActions' : 'nsfwDisabledBaseTruths';
+		cfg[key] = indices;
+		all[guildId] = cfg;
+		await this.dataManager.saveData('aouv_config.json', all);
+		await interaction.update({ content: `✅ Tous les ${kind === 'action' ? 'prompts Action NSFW' : 'prompts Vérité NSFW'} de base ont été désactivés.`, embeds: [], components: [] });
 	}
 
 	async handleAouvNsfwPromptListBaseModal(interaction) {

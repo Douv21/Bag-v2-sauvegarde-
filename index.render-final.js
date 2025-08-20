@@ -3033,6 +3033,14 @@ class RenderSolutionBot {
                     return;
                 }
 
+                // ==== AOUV — désactivation globale via sélecteur ====
+                if (customId === 'aouv_disable_all_select') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvDisableAllSelect(interaction);
+                    return;
+                }
+
                 // ==== AOUV NSFW — selects de type pour pagination ====
                 if (customId === 'aouv_nsfw_prompt_edit_kind_select') {
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
@@ -3052,6 +3060,13 @@ class RenderSolutionBot {
                     const AouvConfigHandler = require('./handlers/AouvConfigHandler');
                     const aouvHandler = new AouvConfigHandler(dataManager);
                     await aouvHandler.handleAouvNsfwPromptListCustomKindSelect(interaction);
+                    return;
+                }
+
+                if (customId === 'aouv_nsfw_disable_all_select') {
+                    const AouvConfigHandler = require('./handlers/AouvConfigHandler');
+                    const aouvHandler = new AouvConfigHandler(dataManager);
+                    await aouvHandler.handleAouvNsfwDisableAllSelect(interaction);
                     return;
                 }
 
