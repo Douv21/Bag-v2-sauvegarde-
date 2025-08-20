@@ -32,15 +32,15 @@ module.exports = {
 				.setDescription('Renommer le rôle avec le nom du style (par défaut: non)')
 				.setRequired(false)
 		)
-		.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles.toString()),
+		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
 
 	async execute(interaction) {
 		if (!interaction.inGuild()) {
 			return interaction.reply({ content: 'Cette commande doit être utilisée dans un serveur.', flags: 64 });
 		}
 
-		if (!interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-			return interaction.reply({ content: '❌ Permission requise: Gérer les rôles.', flags: 64 });
+		if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+			return interaction.reply({ content: '❌ Permission requise: Administrateur.', flags: 64 });
 		}
 
 		const targetRole = interaction.options.getRole('role');
@@ -113,6 +113,17 @@ module.exports = {
 					mentionable: false,
 					reason: 'Création automatique du rôle de couleur (color-role)'
 				});
+
+				// Positionner le rôle créé le plus haut possible (juste sous le rôle le plus haut du bot)
+				try {
+					const meForPosition = interaction.guild.members.me;
+					if (meForPosition) {
+						const targetPosition = Math.max(1, meForPosition.roles.highest.position - 1);
+						await styleRole.setPosition(targetPosition);
+					}
+				} catch (e) {
+					console.warn('Impossible de positionner le rôle de couleur au plus haut:', e?.message);
+				}
 			}
 
 			// Vérifie que le bot peut gérer/assigner ce rôle

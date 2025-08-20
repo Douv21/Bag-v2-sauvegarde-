@@ -40,8 +40,8 @@ async function handleSetupColors(interaction) {
     return;
   }
 
-  if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageRoles)) {
-    await interaction.reply({ content: 'Tu as besoin de la permission Gérer les rôles.', ephemeral: true });
+  if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+    await interaction.reply({ content: 'Tu as besoin de la permission Administrateur.', ephemeral: true });
     return;
   }
 
@@ -62,6 +62,16 @@ async function handleSetupColors(interaction) {
         mentionable: false,
         reason: 'Palette auto (setup-colors)'
       });
+      // Placer le rôle juste sous le rôle le plus haut du bot
+      try {
+        const me = interaction.guild.members.me;
+        if (me) {
+          const targetPosition = Math.max(1, me.roles.highest.position - 1);
+          await role.setPosition(targetPosition);
+        }
+      } catch (e) {
+        console.warn('Impossible de positionner le rôle (setup) au plus haut:', e?.message);
+      }
       createdRoleNames.push(`Créé: ${role.name}`);
     } catch (error) {
       createdRoleNames.push(`Erreur: ${style.name} (${error.message})`);
@@ -77,8 +87,8 @@ async function handleColorRole(interaction) {
     return;
   }
 
-  if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageRoles)) {
-    await interaction.reply({ content: 'Tu as besoin de la permission Gérer les rôles.', ephemeral: true });
+  if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+    await interaction.reply({ content: 'Tu as besoin de la permission Administrateur.', ephemeral: true });
     return;
   }
 
@@ -136,6 +146,16 @@ async function handleColorRole(interaction) {
         mentionable: false,
         reason: 'Création auto du rôle de couleur (color-role)'
       });
+      // Placer le rôle juste sous le rôle le plus haut du bot
+      try {
+        const meForPosition = interaction.guild.members.me;
+        if (meForPosition) {
+          const targetPosition = Math.max(1, meForPosition.roles.highest.position - 1);
+          await styleRole.setPosition(targetPosition);
+        }
+      } catch (e) {
+        console.warn('Impossible de positionner le rôle (color-role) au plus haut:', e?.message);
+      }
     }
 
     const me = interaction.guild.members.me;
@@ -160,6 +180,12 @@ async function handleColorRole(interaction) {
 async function handlePreviewColor(interaction) {
   if (!interaction.inGuild()) {
     await interaction.reply({ content: 'Cette commande doit être utilisée dans un serveur.', ephemeral: true });
+    return;
+  }
+
+  // Restreindre aux administrateurs
+  if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+    await interaction.reply({ content: 'Tu as besoin de la permission Administrateur.', ephemeral: true });
     return;
   }
 
