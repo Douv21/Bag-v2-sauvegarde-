@@ -9,23 +9,6 @@ class ConfessionConfigHandler {
         this.dataManager = dataManager;
     }
 
-    async handleMainMenu(interaction) {
-        const value = interaction.values[0];
-        switch (value) {
-            case 'channels':
-                await this.showChannelsConfig(interaction);
-                break;
-            case 'autothread':
-                await this.showAutothreadConfig(interaction);
-                break;
-            case 'logs':
-                await this.showLogsConfig(interaction);
-                break;
-            default:
-                await interaction.reply({ content: '❌ Option non reconnue', flags: 64 });
-        }
-    }
-
     async showMainConfigMenu(interaction) {
         const guildId = interaction.guild.id;
         const config = await this.dataManager.getData('config');
@@ -199,6 +182,137 @@ class ConfessionConfigHandler {
 
     async handleAutoThreadOptions(interaction) {
         return await this.showAutoThreadConfig(interaction);
+    }
+
+    /**
+     * Méthode principale pour gérer toutes les interactions confession config
+     * Appelée par MainRouterHandler
+     */
+    async handleConfessionConfigSelect(interaction) {
+        const customId = interaction.customId;
+        
+        try {
+            // Router selon le customId
+            switch (customId) {
+                case 'confession_config_main':
+                    await this.handleMainMenu(interaction);
+                    break;
+                    
+                case 'confession_channel_add':
+                    await this.handleChannelAdd(interaction);
+                    break;
+                    
+                case 'confession_channel_remove':
+                    await this.handleChannelRemove(interaction);
+                    break;
+                    
+                // Boutons de retour
+                case 'confession_logs_back':
+                case 'confession_autothread_back':
+                    await this.showMainConfigMenu(interaction);
+                    break;
+                    
+                default:
+                    console.log(`⚠️ Interaction confession config non gérée: ${customId}`);
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply({
+                            content: '❌ Interaction confession non reconnue.',
+                            flags: 64
+                        });
+                    }
+                    break;
+            }
+        } catch (error) {
+            console.error('❌ Erreur handleConfessionConfigSelect:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Erreur lors du traitement de l\'interaction confession.',
+                    flags: 64
+                });
+            }
+        }
+    }
+
+    async handleChannelAdd(interaction) {
+        const guildId = interaction.guild.id;
+        const channelId = interaction.values[0];
+        
+        try {
+            const config = await this.dataManager.getData('config');
+            if (!config.confessions) config.confessions = {};
+            if (!config.confessions[guildId]) config.confessions[guildId] = { channels: [] };
+            
+            if (!config.confessions[guildId].channels.includes(channelId)) {
+                config.confessions[guildId].channels.push(channelId);
+                await this.dataManager.saveData('config', config);
+                
+                await interaction.update({
+                    content: `✅ Canal <#${channelId}> ajouté aux confessions !`,
+                    embeds: [],
+                    components: []
+                });
+            } else {
+                await interaction.update({
+                    content: `⚠️ Canal <#${channelId}> déjà configuré !`,
+                    embeds: [],
+                    components: []
+                });
+            }
+            
+            // Retour au menu après 2 secondes
+            setTimeout(() => {
+                this.showMainConfigMenu(interaction).catch(console.error);
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Erreur handleChannelAdd:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de l\'ajout du canal.',
+                embeds: [],
+                components: []
+            });
+        }
+    }
+
+    async handleChannelRemove(interaction) {
+        const guildId = interaction.guild.id;
+        const channelId = interaction.values[0];
+        
+        try {
+            const config = await this.dataManager.getData('config');
+            if (config.confessions?.[guildId]?.channels) {
+                const index = config.confessions[guildId].channels.indexOf(channelId);
+                if (index > -1) {
+                    config.confessions[guildId].channels.splice(index, 1);
+                    await this.dataManager.saveData('config', config);
+                    
+                    await interaction.update({
+                        content: `✅ Canal <#${channelId}> retiré des confessions !`,
+                        embeds: [],
+                        components: []
+                    });
+                } else {
+                    await interaction.update({
+                        content: `⚠️ Canal <#${channelId}> n'était pas configuré !`,
+                        embeds: [],
+                        components: []
+                    });
+                }
+            }
+            
+            // Retour au menu après 2 secondes
+            setTimeout(() => {
+                this.showMainConfigMenu(interaction).catch(console.error);
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Erreur handleChannelRemove:', error);
+            await interaction.update({
+                content: '❌ Erreur lors de la suppression du canal.',
+                embeds: [],
+                components: []
+            });
+        }
     }
 }
 

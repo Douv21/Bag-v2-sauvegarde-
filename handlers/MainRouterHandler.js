@@ -19,6 +19,9 @@ class MainRouterHandler {
             const ConfessionHandler = require('./ConfessionHandler');
             this.confessionHandler = new ConfessionHandler(this.dataManager);
             
+            const ConfessionConfigHandler = require('./ConfessionConfigHandler');
+            this.confessionConfigHandler = new ConfessionConfigHandler(this.dataManager);
+            
             // Initialiser les autres handlers
             try {
                 const AouvConfigHandler = require('./AouvConfigHandler');
@@ -459,6 +462,12 @@ class MainRouterHandler {
                 return true;
             }
 
+            // === BOUTONS CONFESSION CONFIG ===
+            if (this.confessionConfigHandler && (customId.startsWith('confession_config') || customId.includes('confession_logs_back') || customId.includes('confession_autothread_back'))) {
+                await this.confessionConfigHandler.handleConfessionConfigSelect(interaction);
+                return true;
+            }
+
             return false;
         } catch (error) {
             console.error('❌ Erreur button interaction:', error);
@@ -848,6 +857,12 @@ class MainRouterHandler {
 
             if (this.bumpHandler && customId.startsWith('bump_')) {
                 await this.bumpHandler.handleBumpSelect(interaction);
+                return true;
+            }
+
+            // === SELECT MENUS CONFESSION CONFIG ===
+            if (this.confessionConfigHandler && (customId.startsWith('confession_config') || customId.startsWith('confession_channel'))) {
+                await this.confessionConfigHandler.handleConfessionConfigSelect(interaction);
                 return true;
             }
 
