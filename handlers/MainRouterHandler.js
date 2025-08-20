@@ -180,6 +180,17 @@ class MainRouterHandler {
                 return true;
             }
 
+            // === MODALS PATTERNS GÉNÉRIQUES ===
+            if (customId.startsWith('edit_item_modal_')) {
+                await this.economyHandler.handleEditItemModal(interaction);
+                return true;
+            }
+
+            if (customId.startsWith('role_config_modal_')) {
+                await this.economyHandler.handleRoleConfigModal(interaction);
+                return true;
+            }
+
             // === MODALS AOUV ===
             if (this.aouvHandler) {
                 if (customId === 'aouv_prompt_add_modal') {
@@ -395,8 +406,84 @@ class MainRouterHandler {
     async handleSelectMenuInteraction(interaction, customId) {
         try {
             // === SELECT MENUS ÉCONOMIE ===
+            if (customId === 'economy_actions_select') {
+                await this.economyHandler.handleEconomyActionsSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'economy_boutique_select') {
+                await this.economyHandler.handleEconomyBoutiqueSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'economy_daily_select') {
+                await this.economyHandler.handleEconomyDailySelect(interaction);
+                return true;
+            }
+
+            if (customId === 'economy_messages_select') {
+                await this.economyHandler.handleEconomyMessagesSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'economy_karma_select') {
+                await this.economyHandler.handleEconomyKarmaSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'karma_weekly_day_select') {
+                await this.economyHandler.handleKarmaWeeklyDaySelect(interaction);
+                return true;
+            }
+
+            if (customId === 'karma_rewards_select') {
+                await this.economyHandler.handleKarmaRewardsSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'manage_objects_select') {
+                await this.economyHandler.handleManageObjectsSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'delete_articles_select') {
+                await this.economyHandler.handleDeleteArticlesSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'role_temp_select') {
+                await this.economyHandler.handleRoleTempSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'role_perm_select') {
+                await this.economyHandler.handleRolePermSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'remises_karma_select') {
+                await this.economyHandler.handleRemisesKarmaSelect(interaction);
+                return true;
+            }
+
             if (customId.startsWith('action_sub_config_')) {
                 await this.economyHandler.handleActionSubConfig(interaction);
+                return true;
+            }
+
+            // === PATTERNS GÉNÉRIQUES SELECTS ===
+            if (customId.startsWith('offer_user_select_')) {
+                await this.economyHandler.handleOfferUserSelect(interaction);
+                return true;
+            }
+
+            if (customId.startsWith('use_user_select_')) {
+                await this.economyHandler.handleUseUserSelect(interaction);
+                return true;
+            }
+
+            if (customId.startsWith('received_object_selection')) {
+                await this.economyHandler.handleReceivedObjectSelection(interaction);
                 return true;
             }
 

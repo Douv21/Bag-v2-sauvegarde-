@@ -3003,21 +3003,27 @@ class RenderSolutionBot {
 
                 // Routage via MainRouter pour le reste - UNIQUEMENT si pas déjà traité
                 if (!interaction.replied && !interaction.deferred) {
-                    // Vérifier si l'interaction a été traitée par le nouveau handler économique
-                    const economyHandled = customId === 'economy_main_config' ||
-                                         customId === 'economy_actions_select' ||
-                                         customId.startsWith('economy_action_config_') ||
-                                         customId === 'economy_boutique_select' ||
-                                         customId === 'economy_daily_select' ||
-                                         customId === 'economy_messages_select' ||
-                                         customId === 'remises_karma_select' ||
-                                         customId === 'role_temp_select' ||
-                                         customId === 'role_perm_select' ||
-                                         customId === 'manage_objects_select' ||
-                                         customId === 'delete_articles_select' ||
-                                         customId.startsWith('aouv_');
+                    // Vérifier si l'interaction doit être traitée par MainRouterHandler
+                    const shouldRouteToMainRouter = customId === 'economy_main_config' ||
+                                         customId.startsWith('economy_') ||
+                                         customId.startsWith('aouv_') ||
+                                         customId.startsWith('level_') ||
+                                         customId.startsWith('confession_') ||
+                                         customId.startsWith('style_backgrounds_') ||
+                                         customId.includes('_modal') ||
+                                         customId.includes('_select') ||
+                                         customId.includes('karma_') ||
+                                         customId.includes('daily_') ||
+                                         customId.includes('message_') ||
+                                         customId.includes('shop_') ||
+                                         customId.includes('role_') ||
+                                         customId.includes('remise') ||
+                                         customId.includes('object') ||
+                                         customId.includes('item_') ||
+                                         customId.includes('reward') ||
+                                         customId.includes('config_');
                     
-                    if (!economyHandled) {
+                    if (shouldRouteToMainRouter) {
                         console.log('🔄 Routage vers MainRouter pour:', customId);
                         const handled = await router.handleInteraction(interaction);
                         
@@ -3028,17 +3034,12 @@ class RenderSolutionBot {
                             });
                         }
                     } else {
-                        console.log('✅ Interaction économique déjà traitée, ignorée par MainRouter');
+                        console.log('⚠️ Interaction non routée vers MainRouter:', customId);
                     }
                 }
 
-                // === AOUV BUTTONS — Gestion des boutons Action/Vérité ===
-                if (customId === 'aouv_btn_action' || customId === 'aouv_btn_verite') {
-                    console.log('🎯 Bouton AouV cliqué:', customId);
-                    const aouvCommand = require('./commands/aouv');
-                    await aouvCommand.handleButton(interaction, dataManager);
-                    return;
-                }
+                // === TOUTES LES INTERACTIONS PASSENT PAR MAINROUTERHANDLER ===
+                // (Sections supprimées pour éviter les duplicatas)
 
                 // === AOUV CONFIG — indépendant ===
                 if (customId === 'aouv_main_select') {
