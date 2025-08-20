@@ -265,6 +265,15 @@ module.exports = {
 
     await mod.updateSecurityConfig(guildId, updates);
 
+    // Configurer automatiquement les permissions du rôle de quarantaine
+    try {
+      const QuarantineChannelManager = require('../handlers/QuarantineChannelManager');
+      const quarantineManager = new QuarantineChannelManager(mod);
+      await quarantineManager.configureQuarantineRolePermissions(interaction.guild, quarantineRole);
+    } catch (permError) {
+      console.error('Erreur configuration permissions quarantaine:', permError);
+    }
+
     let response = '✅ **Configuration de quarantaine mise à jour :**\n\n';
     response += `🔒 **Rôle quarantaine :** ${quarantineRole}\n`;
     if (verifiedRole) response += `✅ **Rôle vérifié :** ${verifiedRole}\n`;
@@ -277,14 +286,15 @@ module.exports = {
     response += '• **Suppression automatique** des canaux à la libération\n\n';
 
     response += '⚙️ **Permissions automatiques du rôle quarantaine :**\n';
-    response += '• ❌ **Accès refusé** à tous les canaux généraux\n';
+    response += '• ❌ **Accès refusé** à tous les canaux généraux (configuré automatiquement)\n';
     response += '• ✅ **Accès autorisé** uniquement aux canaux de quarantaine personnels\n';
     response += '• 🔧 **Configuration automatique** des permissions par canal\n\n';
 
-    response += '💡 **Recommandations :**\n';
-    response += '• Configurez le rôle pour **refuser l\'accès** à tous les canaux normaux\n';
+    response += '💡 **Informations importantes :**\n';
+    response += '• Les permissions ont été configurées automatiquement sur tous les canaux\n';
     response += '• Les permissions des canaux de quarantaine sont **gérées automatiquement**\n';
-    response += '• Les admins ont accès aux canaux de quarantaine pour modération';
+    response += '• Les admins ont accès aux canaux de quarantaine pour modération\n';
+    response += '• Utilisez `/quarantaine nettoyer` pour supprimer les canaux orphelins';
 
     return interaction.reply({ content: response, flags: 64 });
   },

@@ -94,6 +94,9 @@ class BagBotRender {
         // Attache reminderManager
         this.client.reminderManager = this.reminderManager;
         this.client.moderationManager = this.moderationManager;
+        
+        // Initialiser les handlers qui dépendent du client
+        this.mainRouterHandler.setClient(this.client);
         this.client.logManager = this.logManager;
         
         // Note: L'attachement des méthodes de quarantaine sera fait dans initializeQuarantineMethods()

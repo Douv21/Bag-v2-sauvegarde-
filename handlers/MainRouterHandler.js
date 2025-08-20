@@ -71,10 +71,35 @@ class MainRouterHandler {
             } catch (e) {
                 console.log('⚠️ DashboardHandler non disponible');
             }
+
+            try {
+                const SecurityConfigHandler = require('./SecurityConfigHandler');
+                // Le moderationManager sera initialisé plus tard via setClient
+                this.securityConfigHandler = null;
+            } catch (e) {
+                console.log('⚠️ SecurityConfigHandler non disponible:', e.message);
+            }
             
             console.log('✅ Handlers spécialisés initialisés');
         } catch (error) {
             console.error('❌ Erreur initialisation handlers:', error);
+        }
+    }
+
+    /**
+     * Initialiser les handlers qui dépendent du client
+     * @param {Client} client - Le client Discord
+     */
+    setClient(client) {
+        try {
+            // Initialiser SecurityConfigHandler avec moderationManager
+            if (client.moderationManager && !this.securityConfigHandler) {
+                const SecurityConfigHandler = require('./SecurityConfigHandler');
+                this.securityConfigHandler = new SecurityConfigHandler(client.moderationManager);
+                console.log('✅ SecurityConfigHandler initialisé avec moderationManager');
+            }
+        } catch (error) {
+            console.error('❌ Erreur initialisation SecurityConfigHandler:', error);
         }
     }
 
@@ -466,6 +491,20 @@ class MainRouterHandler {
             if (this.confessionConfigHandler && (customId.startsWith('confession_config') || customId.includes('confession_logs_back') || customId.includes('confession_autothread_back'))) {
                 await this.confessionConfigHandler.handleConfessionConfigSelect(interaction);
                 return true;
+            }
+
+            // === BOUTONS SECURITY CONFIG ===
+            if (customId.startsWith('config_verif_')) {
+                if (this.securityConfigHandler) {
+                    await this.securityConfigHandler.handleConfigVerifButton(interaction);
+                    return true;
+                } else {
+                    await interaction.reply({
+                        content: '❌ Le gestionnaire de configuration de sécurité n\'est pas disponible.',
+                        ephemeral: true
+                    });
+                    return true;
+                }
             }
 
             return false;
@@ -881,6 +920,20 @@ class MainRouterHandler {
                     
                 await interaction.update({ embeds: [embed], components: [] });
                 return true;
+            }
+
+            // === SELECT MENUS SECURITY CONFIG ===
+            if (customId === 'config_verif_menu') {
+                if (this.securityConfigHandler) {
+                    await this.securityConfigHandler.handleConfigVerifMenu(interaction);
+                    return true;
+                } else {
+                    await interaction.reply({
+                        content: '❌ Le gestionnaire de configuration de sécurité n\'est pas disponible.',
+                        ephemeral: true
+                    });
+                    return true;
+                }
             }
 
             return false;
