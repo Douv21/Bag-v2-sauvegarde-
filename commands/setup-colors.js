@@ -36,10 +36,19 @@ module.exports = {
 
 				// Positionner le rôle créé le plus haut possible (juste sous le rôle le plus haut du bot)
 				try {
-					const me = interaction.guild.members.me;
+					let me = interaction.guild.members.me;
+					if (!me) {
+						try {
+							if (typeof interaction.guild.members.fetchMe === 'function') {
+								me = await interaction.guild.members.fetchMe();
+							} else {
+								me = await interaction.guild.members.fetch(interaction.client.user.id).catch(() => null);
+							}
+						} catch {}
+					}
 					if (me) {
 						const targetPosition = Math.max(1, me.roles.highest.position - 1);
-						await role.setPosition(targetPosition);
+						await role.setPosition(targetPosition, { reason: 'Positionner le rôle de couleur sous le rôle du bot (setup-colors)' });
 					}
 				} catch (e) {
 					console.warn('Impossible de positionner le rôle de couleur (setup) au plus haut:', e?.message);
@@ -49,6 +58,32 @@ module.exports = {
 				results.push(`Erreur: ${style.name} (${error.message})`);
 			}
 		}
+
+		// Tentative de repositionnement en bloc de tous les rôles de la palette juste sous le rôle le plus haut du bot
+		try {
+			let me = interaction.guild.members.me;
+			if (!me) {
+				try {
+					if (typeof interaction.guild.members.fetchMe === 'function') {
+						me = await interaction.guild.members.fetchMe();
+					} else {
+						me = await interaction.guild.members.fetch(interaction.client.user.id).catch(() => null);
+					}
+				} catch {}
+			}
+			if (me) {
+				const targetTop = Math.max(1, me.roles.highest.position - 1);
+				const paletteNames = new Map(ROLE_STYLES.map((s, i) => [s.name, i]));
+				const paletteRoles = interaction.guild.roles.cache
+					.filter(r => paletteNames.has(r.name))
+					.sort((a, b) => paletteNames.get(a.name) - paletteNames.get(b.name));
+				let offset = 0;
+				for (const role of paletteRoles.values()) {
+					try { await role.setPosition(targetTop - offset, { reason: 'Repositionnement palette de couleurs (setup-colors)' }); } catch {}
+					offset += 1;
+				}
+			}
+		} catch (_) {}
 
 		return interaction.editReply({ content: `Terminé.\n${results.join('\n')}` });
 	}
