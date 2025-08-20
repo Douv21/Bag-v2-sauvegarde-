@@ -11,6 +11,13 @@ async function forceRegisterCommands() {
     console.log('🚀 DÉBUT ENREGISTREMENT FORCÉ');
     
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+    const DISABLED_NAMES = new Set([
+        'apercu-couleur',
+        'mongodb-backup',
+        'mongodb-diagnostic',
+        'reset',
+        'test-level-notif'
+    ]);
     
     try {
         // 1. Charger toutes les commandes
@@ -24,6 +31,11 @@ async function forceRegisterCommands() {
                 delete require.cache[filePath];
                 const command = require(filePath);
                 
+                if (command && command.data && DISABLED_NAMES.has(command.data.name)) {
+                    console.log(`  ⛔ ${command.data.name} (désactivée, ignorée)`);
+                    continue;
+                }
+
                 if (command.data && command.execute) {
                     const commandJson = command.data.toJSON();
                     commands.push(commandJson);
