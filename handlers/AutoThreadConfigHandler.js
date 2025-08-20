@@ -590,6 +590,62 @@ class AutoThreadConfigHandler {
             this.handleMainConfig(interaction).catch(console.error);
         }, 2000);
     }
+
+    /**
+     * Méthode principale pour gérer toutes les interactions autothread
+     * Appelée par MainRouterHandler
+     */
+    async handleAutothreadSelect(interaction) {
+        const customId = interaction.customId;
+        
+        try {
+            // Router selon le customId
+            switch (customId) {
+                case 'autothread_action':
+                case 'autothread_config':
+                    await this.handleAction(interaction);
+                    break;
+                    
+                case 'autothread_add_channel':
+                    await this.handleAddChannel(interaction);
+                    break;
+                    
+                case 'autothread_remove_channel':
+                    await this.handleRemoveChannel(interaction);
+                    break;
+                    
+                case 'autothread_name_select':
+                    await this.handleThreadNameSelection(interaction);
+                    break;
+                    
+                case 'autothread_archive':
+                    await this.handleArchive(interaction);
+                    break;
+                    
+                case 'autothread_slowmode':
+                    await this.handleSlowMode(interaction);
+                    break;
+                    
+                default:
+                    console.log(`⚠️ Interaction autothread non gérée: ${customId}`);
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply({
+                            content: '❌ Interaction autothread non reconnue.',
+                            flags: 64
+                        });
+                    }
+                    break;
+            }
+        } catch (error) {
+            console.error('❌ Erreur handleAutothreadSelect:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Erreur lors du traitement de l\'interaction autothread.',
+                    flags: 64
+                });
+            }
+        }
+    }
 }
 
 module.exports = AutoThreadConfigHandler;

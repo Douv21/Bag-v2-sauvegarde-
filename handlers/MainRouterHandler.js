@@ -289,6 +289,14 @@ class MainRouterHandler {
                 }
             }
 
+            // === MODALS AUTOTHREAD SYSTEM ===
+            if (this.autothreadHandler && customId.startsWith('autothread_')) {
+                if (customId === 'autothread_name_modal') {
+                    await this.autothreadHandler.handleThreadNameModal(interaction);
+                    return true;
+                }
+            }
+
             return false;
         } catch (error) {
             console.error('❌ Erreur modal submit:', error);
@@ -442,6 +450,12 @@ class MainRouterHandler {
             // === BOUTONS COUNTING SYSTEM ===
             if (this.countingHandler && customId.startsWith('counting_')) {
                 await this.countingHandler.handleCountingSelect(interaction);
+                return true;
+            }
+
+            // === BOUTONS AUTOTHREAD SYSTEM ===
+            if (this.autothreadHandler && customId.startsWith('autothread_')) {
+                await this.autothreadHandler.handleAutothreadSelect(interaction);
                 return true;
             }
 
