@@ -23,10 +23,9 @@ module.exports = {
     .addSubcommand(subcommand =>
       subcommand
         .setName('quarantaine')
-        .setDescription('Configurer le système de quarantaine')
-        .addRoleOption(o => o.setName('role-quarantaine').setDescription('Rôle de quarantaine pour membres suspects'))
-        .addChannelOption(o => o.setName('canal-quarantaine').setDescription('Canal de quarantaine').addChannelTypes(ChannelType.GuildText))
-        .addRoleOption(o => o.setName('role-verifie').setDescription('Rôle pour membres vérifiés')))
+        .setDescription('Configurer le système de quarantaine (canaux créés automatiquement)')
+        .addRoleOption(o => o.setName('role-quarantaine').setDescription('Rôle de quarantaine (canaux privés créés automatiquement)').setRequired(true))
+        .addRoleOption(o => o.setName('role-verifie').setDescription('Rôle pour membres vérifiés après libération')))
     .addSubcommand(subcommand =>
       subcommand
         .setName('actions-auto')
@@ -249,21 +248,16 @@ module.exports = {
   },
 
   async handleQuarantineConfig(interaction, mod, guildId) {
-    const quarantineRole = interaction.options.getRole('role-quarantaine');
-    const quarantineChannel = interaction.options.getChannel('canal-quarantaine');
+    const quarantineRole = interaction.options.getRole('role-quarantaine', true);
     const verifiedRole = interaction.options.getRole('role-verifie');
 
     const updates = { accessControl: {} };
     
-    if (quarantineRole) {
-      updates.accessControl.quarantineRoleId = quarantineRole.id;
-      updates.accessControl.quarantineRoleName = quarantineRole.name;
-    }
+    // Configuration du rôle de quarantaine (obligatoire)
+    updates.accessControl.quarantineRoleId = quarantineRole.id;
+    updates.accessControl.quarantineRoleName = quarantineRole.name;
     
-    if (quarantineChannel) {
-      updates.accessControl.quarantineChannelId = quarantineChannel.id;
-    }
-    
+    // Configuration du rôle vérifié (optionnel)
     if (verifiedRole) {
       updates.accessControl.verifiedRoleId = verifiedRole.id;
       updates.accessControl.verifiedRoleName = verifiedRole.name;
@@ -272,16 +266,25 @@ module.exports = {
     await mod.updateSecurityConfig(guildId, updates);
 
     let response = '✅ **Configuration de quarantaine mise à jour :**\n\n';
-    if (quarantineRole) response += `🔒 **Rôle quarantaine :** ${quarantineRole}\n`;
-    if (quarantineChannel) response += `📢 **Canal quarantaine :** ${quarantineChannel}\n`;
+    response += `🔒 **Rôle quarantaine :** ${quarantineRole}\n`;
     if (verifiedRole) response += `✅ **Rôle vérifié :** ${verifiedRole}\n`;
 
-    response += '\n💡 **Permissions recommandées pour le rôle quarantaine :**\n';
-    response += '• ❌ Voir les canaux généraux\n';
-    response += '• ✅ Voir seulement le canal de quarantaine\n';
-    response += '• ❌ Envoyer des messages (sauf quarantaine)\n';
-    response += '• ❌ Ajouter des réactions\n';
-    response += '• ❌ Utiliser les commandes du bot';
+    response += '\n🏗️ **Fonctionnement automatique :**\n';
+    response += '• **Canaux créés automatiquement** pour chaque membre en quarantaine\n';
+    response += '• **Canal texte privé** pour communication avec les admins\n';
+    response += '• **Canal vocal privé** pour discussions vocales si nécessaire\n';
+    response += '• **Catégorie "🔒 QUARANTAINE"** créée automatiquement\n';
+    response += '• **Suppression automatique** des canaux à la libération\n\n';
+
+    response += '⚙️ **Permissions automatiques du rôle quarantaine :**\n';
+    response += '• ❌ **Accès refusé** à tous les canaux généraux\n';
+    response += '• ✅ **Accès autorisé** uniquement aux canaux de quarantaine personnels\n';
+    response += '• 🔧 **Configuration automatique** des permissions par canal\n\n';
+
+    response += '💡 **Recommandations :**\n';
+    response += '• Configurez le rôle pour **refuser l\'accès** à tous les canaux normaux\n';
+    response += '• Les permissions des canaux de quarantaine sont **gérées automatiquement**\n';
+    response += '• Les admins ont accès aux canaux de quarantaine pour modération';
 
     return interaction.reply({ content: response, flags: 64 });
   },
