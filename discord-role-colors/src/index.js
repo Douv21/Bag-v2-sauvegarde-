@@ -64,10 +64,13 @@ async function handleSetupColors(interaction) {
       });
       // Placer le rôle juste sous le rôle le plus haut du bot
       try {
-        const me = interaction.guild.members.me;
+        let me = interaction.guild.members.me;
+        if (!me) {
+          try { me = await interaction.guild.members.fetchMe(); } catch {}
+        }
         if (me) {
           const targetPosition = Math.max(1, me.roles.highest.position - 1);
-          await role.setPosition(targetPosition);
+          await role.setPosition(targetPosition, { reason: 'Positionner le rôle de couleur sous le rôle du bot (setup-colors)' });
         }
       } catch (e) {
         console.warn('Impossible de positionner le rôle (setup) au plus haut:', e?.message);
@@ -77,6 +80,26 @@ async function handleSetupColors(interaction) {
       createdRoleNames.push(`Erreur: ${style.name} (${error.message})`);
     }
   }
+
+  // Repositionnement en bloc des rôles de la palette sous le rôle le plus haut du bot
+  try {
+    let me = interaction.guild.members.me;
+    if (!me) {
+      try { me = await interaction.guild.members.fetchMe(); } catch {}
+    }
+    if (me) {
+      const targetTop = Math.max(1, me.roles.highest.position - 1);
+      const paletteNames = new Map(ROLE_STYLES.map((s, i) => [s.name, i]));
+      const paletteRoles = interaction.guild.roles.cache
+        .filter(r => paletteNames.has(r.name))
+        .sort((a, b) => paletteNames.get(a.name) - paletteNames.get(b.name));
+      let offset = 0;
+      for (const role of paletteRoles.values()) {
+        try { await role.setPosition(targetTop - offset, { reason: 'Repositionnement palette de couleurs (setup-colors)' }); } catch {}
+        offset += 1;
+      }
+    }
+  } catch {}
 
   await interaction.editReply({ content: `Terminé.\n${createdRoleNames.join('\n')}` });
 }
@@ -148,10 +171,13 @@ async function handleColorRole(interaction) {
       });
       // Placer le rôle juste sous le rôle le plus haut du bot
       try {
-        const meForPosition = interaction.guild.members.me;
+        let meForPosition = interaction.guild.members.me;
+        if (!meForPosition) {
+          try { meForPosition = await interaction.guild.members.fetchMe(); } catch {}
+        }
         if (meForPosition) {
           const targetPosition = Math.max(1, meForPosition.roles.highest.position - 1);
-          await styleRole.setPosition(targetPosition);
+          await styleRole.setPosition(targetPosition, { reason: 'Positionner le rôle de couleur sous le rôle du bot (color-role)' });
         }
       } catch (e) {
         console.warn('Impossible de positionner le rôle (color-role) au plus haut:', e?.message);
