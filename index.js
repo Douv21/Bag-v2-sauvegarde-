@@ -37,6 +37,13 @@ const ensureFileAndBlobPolyfills = () => {
 
 ensureFileAndBlobPolyfills();
 
+// Charger les variables d'environnement
+try {
+    require('dotenv').config();
+} catch (e) {
+    console.log('⚠️ dotenv non installé, utilisation des variables d\'environnement système');
+}
+
 const { Client, Collection, GatewayIntentBits, Partials, REST, Routes, MessageFlags, AuditLogEvent, PermissionFlagsBits } = require('discord.js');
 const express = require('express');
 const path = require('path');
@@ -46,6 +53,7 @@ const multer = require('multer');
 // Gestionnaires centralisés
 const DataManager = require('./managers/DataManager');
 const KarmaManager = require('./managers/KarmaManager');
+const InteractionHandler = require('./handlers/InteractionHandler');
 const MainRouterHandler = require('./handlers/MainRouterHandler');
 const CommandHandler = require('./handlers/CommandHandler');
 const ReminderManager = require('./managers/ReminderManager');

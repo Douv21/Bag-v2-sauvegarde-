@@ -1,0 +1,226 @@
+[dotenv@17.2.1] injecting env (4) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+🔑 MONGODB_PASSWORD non configuré - sauvegarde locale uniquement
+⏰ Sauvegarde automatique level activée (30 min)
+✅ LevelBackupManager initialisé
+⚠️ Variables d'environnement MongoDB manquantes - utilisation du mode JSON uniquement
+   Pour utiliser le système de bump, configurez:
+   - MONGODB_USERNAME
+   - MONGODB_PASSWORD
+   - MONGODB_CLUSTER_URL
+✅ Handlers spécialisés initialisés
+📂 Chargement de 88 commandes...
+✅ action
+✅ je-suis-actif
+🎨 LevelCardGenerator initialisé
+✅ add-level-reward
+✅ adminxp
+✅ after-dark
+✅ aguicher
+✅ ajout-argent
+✅ ajout-karma
+✅ ajouter-carte
+✅ aouv
+❌ Erreur chargement apercu-couleur.js: Unexpected token ')'
+✅ aphrodisiaque
+✅ autothread
+✅ backup-status
+✅ baiser
+✅ ban
+✅ boutique
+✅ caresser
+✅ vider-salon
+✅ clear-commands
+✅ color-role
+✅ comptage
+✅ confess
+✅ config-aouv
+✅ config-boost
+✅ config-confession
+✅ config-economie
+✅ config-level
+✅ config-logs
+✅ config-moderation
+✅ config-verif
+✅ crime
+✅ daily
+✅ dashboard
+✅ defier
+✅ donner
+✅ economie
+✅ embrasser
+✅ force-backup
+✅ fuck
+✅ historique
+❌ Erreur chargement inactivity-report.js: Invalid string length
+✅ karma
+✅ kick
+✅ leaderboard
+✅ level
+✅ massage
+✅ massban
+✅ masskick
+✅ membre-proche
+✅ mongodb-backup
+✅ mongodb-diagnostic
+✅ mute
+✅ nowplaying
+✅ objet
+✅ parier
+✅ oser
+✅ pause
+✅ pecher
+✅ play
+✅ profil-carte
+✅ purge
+✅ queue
+✅ reset
+✅ resume
+✅ retrait-argent
+✅ retrait-karma
+✅ seduire-mass
+✅ seduire
+✅ seek
+✅ setup-colors
+✅ skip
+✅ stats
+✅ stop
+✅ striptease
+✅ test-level-notif
+✅ topplaisir
+✅ travailler
+✅ unban
+✅ unmute
+✅ unwarn
+✅ verifier
+✅ verite
+✅ voler
+✅ voler
+✅ volume
+✅ warn
+✅ warns
+✅ 85 commandes chargées
+🔄 Enregistrement de 85 commandes...
+📂 Chargement de 88 commandes...
+✅ action
+✅ je-suis-actif
+✅ add-level-reward
+✅ adminxp
+✅ after-dark
+✅ aguicher
+✅ ajout-argent
+✅ ajout-karma
+✅ ajouter-carte
+✅ aouv
+❌ Erreur chargement apercu-couleur.js: Unexpected token ')'
+✅ aphrodisiaque
+✅ autothread
+✅ backup-status
+✅ baiser
+✅ ban
+✅ boutique
+✅ caresser
+✅ vider-salon
+✅ clear-commands
+✅ color-role
+✅ comptage
+✅ confess
+✅ config-aouv
+✅ config-boost
+✅ config-confession
+✅ config-economie
+✅ config-level
+✅ config-logs
+✅ config-moderation
+✅ config-verif
+✅ crime
+✅ daily
+✅ dashboard
+✅ defier
+✅ donner
+✅ economie
+✅ embrasser
+✅ force-backup
+✅ fuck
+✅ historique
+❌ Erreur chargement inactivity-report.js: Invalid string length
+✅ karma
+✅ kick
+✅ leaderboard
+✅ level
+✅ massage
+✅ massban
+✅ masskick
+✅ membre-proche
+✅ mongodb-backup
+✅ mongodb-diagnostic
+✅ mute
+✅ nowplaying
+✅ objet
+✅ parier
+✅ oser
+✅ pause
+✅ pecher
+✅ play
+✅ profil-carte
+✅ purge
+✅ queue
+✅ reset
+✅ resume
+✅ retrait-argent
+✅ retrait-karma
+✅ seduire-mass
+✅ seduire
+✅ seek
+✅ setup-colors
+✅ skip
+✅ stats
+✅ stop
+✅ striptease
+✅ test-level-notif
+✅ topplaisir
+✅ travailler
+✅ unban
+✅ unmute
+✅ unwarn
+✅ verifier
+✅ verite
+✅ voler
+✅ voler
+✅ volume
+✅ warn
+✅ warns
+✅ 85 commandes chargées
+🚀 BAG BOT V2 - Render.com Web Service démarré
+🌐 Serveur Web actif sur port 5000
+📊 Health check: http://localhost:5000/health
+✅ 85 commandes enregistrées
+✅ Bag#0424 connecté
+🔄 Enregistrement de 85 commandes...
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
+[lavalink] Node ajie-v4 ready
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node lava-link disconnected: 
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node v4-lavalink-rocks disconnected: 
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
+[lavalink] Node darren-v4 disconnected: 
