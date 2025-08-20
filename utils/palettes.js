@@ -103,7 +103,30 @@ const ROLE_PALETTES = {
 	corporate: { key: 'corporate', name: 'Corporate', styles: CORPORATE },
 	pastel: { key: 'pastel', name: 'Pastel', styles: PASTEL },
 	vibrant: { key: 'vibrant', name: 'Vibrant', styles: VIBRANT },
-	ocean: { key: 'ocean', name: 'Ocean', styles: OCEAN }
+	ocean: { key: 'ocean', name: 'Ocean', styles: OCEAN },
+	metallic: { key: 'metallic', name: 'Métallique', styles: [
+		// Or
+		{ key: 'gold-1', name: '🥇 Gold 1', color: '#D4AF37' },
+		{ key: 'gold-2', name: '🥇 Gold 2', color: '#C5A028' },
+		{ key: 'gold-3', name: '🥇 Gold 3', color: '#B08D28' },
+		{ key: 'gold-4', name: '🥇 Gold 4', color: '#8B6B1F' },
+		{ key: 'gold-5', name: '🥇 Gold 5', color: '#7A5E1A' },
+		{ key: 'gold-6', name: '🥇 Gold 6', color: '#6A5316' },
+		// Argent
+		{ key: 'silver-1', name: '🥈 Silver 1', color: '#C0C0C0' },
+		{ key: 'silver-2', name: '🥈 Silver 2', color: '#B0B0B0' },
+		{ key: 'silver-3', name: '🥈 Silver 3', color: '#A0A0A0' },
+		{ key: 'silver-4', name: '🥈 Silver 4', color: '#909090' },
+		{ key: 'silver-5', name: '🥈 Silver 5', color: '#808080' },
+		{ key: 'silver-6', name: '🥈 Silver 6', color: '#6E6E6E' },
+		// Bronze
+		{ key: 'bronze-1', name: '🥉 Bronze 1', color: '#CD7F32' },
+		{ key: 'bronze-2', name: '🥉 Bronze 2', color: '#B87333' },
+		{ key: 'bronze-3', name: '🥉 Bronze 3', color: '#A1662C' },
+		{ key: 'bronze-4', name: '🥉 Bronze 4', color: '#8C5A27' },
+		{ key: 'bronze-5', name: '🥉 Bronze 5', color: '#7A4F22' },
+		{ key: 'bronze-6', name: '🥉 Bronze 6', color: '#6A441D' }
+	] }
 };
 
 const DEFAULT_PALETTE_KEY = 'irise_exotique';
