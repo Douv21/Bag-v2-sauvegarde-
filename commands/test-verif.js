@@ -17,6 +17,11 @@ module.exports = {
         .setName('alerte')
         .setDescription('Envoyer une alerte de test')
         .addUserOption(o => o.setName('membre').setDescription('Membre à utiliser pour le test')))
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('quarantaine')
+        .setDescription('Tester le système de quarantaine complet')
+        .addUserOption(o => o.setName('membre').setDescription('Membre à utiliser pour le test (optionnel)')))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
 
   cooldown: 10,
@@ -43,6 +48,9 @@ module.exports = {
           break;
         case 'alerte':
           await this.testAlert(interaction);
+          break;
+        case 'quarantaine':
+          await this.testQuarantine(interaction);
           break;
       }
     } catch (error) {
@@ -218,6 +226,108 @@ module.exports = {
                  `**Erreur :** ${error.message}\n\n` +
                  `Vérifiez la configuration avec \`/test-verif config\``,
         ephemeral: true
+      });
+    }
+  },
+
+  async testQuarantine(interaction) {
+    const member = interaction.options.getMember('membre') || interaction.member;
+    
+    if (member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return interaction.reply({
+        content: '❌ Impossible de tester la quarantaine sur un administrateur. Utilisez un membre normal.',
+        ephemeral: true
+      });
+    }
+
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+      // Créer des données de test pour la quarantaine
+      const testDetails = {
+        reason: 'Test du système de quarantaine',
+        score: 75,
+        manual: true,
+        tester: interaction.user.id
+      };
+
+      // Utiliser le système de quarantaine du bot principal
+      const bot = interaction.client;
+      
+      // Informer l'utilisateur du début du test
+      await interaction.editReply({
+        content: `🧪 **Test de quarantaine en cours...**\n\n` +
+                 `**Membre testé :** ${member.user.tag}\n` +
+                 `**Étape 1/3 :** Création des canaux de quarantaine...\n\n` +
+                 `⚠️ **Attention :** Ce test va temporairement isoler le membre. ` +
+                 `Il sera automatiquement libéré dans 30 secondes.`
+      });
+
+      // Appliquer la quarantaine de test
+      await bot.quarantineMember(member, 'TEST', testDetails);
+
+      // Attendre un moment pour que tout se mette en place
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Vérifier que les canaux ont été créés
+      const quarantineInfo = await bot.getQuarantineInfo(member);
+      
+      let testResult = `✅ **Test de quarantaine réussi !**\n\n`;
+      testResult += `**Membre testé :** ${member.user.tag}\n`;
+      testResult += `**Étapes accomplies :**\n`;
+      testResult += `• ✅ Rôle de quarantaine appliqué\n`;
+      
+      if (quarantineInfo && quarantineInfo.textChannelId) {
+        testResult += `• ✅ Canal texte créé : <#${quarantineInfo.textChannelId}>\n`;
+      }
+      
+      if (quarantineInfo && quarantineInfo.voiceChannelId) {
+        testResult += `• ✅ Canal vocal créé : <#${quarantineInfo.voiceChannelId}>\n`;
+      }
+      
+      testResult += `• ✅ Permissions configurées\n`;
+      testResult += `• ✅ Message de bienvenue envoyé\n`;
+      testResult += `• ✅ Notification admin envoyée\n\n`;
+      testResult += `🔄 **Libération automatique dans 30 secondes...**`;
+
+      await interaction.editReply({ content: testResult });
+
+      // Attendre 30 secondes puis libérer automatiquement
+      setTimeout(async () => {
+        try {
+          await bot.grantAccess(member, 'Fin du test automatique');
+          
+          // Notifier que le test est terminé
+          try {
+            await interaction.followUp({
+              content: `🎉 **Test terminé !**\n\n` +
+                       `${member.user.tag} a été automatiquement libéré de la quarantaine de test.\n` +
+                       `Tous les canaux ont été nettoyés et l'accès a été restauré.`,
+              ephemeral: true
+            });
+          } catch {}
+        } catch (error) {
+          console.error('Erreur libération automatique test:', error);
+          try {
+            await interaction.followUp({
+              content: `⚠️ **Erreur lors de la libération automatique**\n\n` +
+                       `Veuillez libérer manuellement ${member.user.tag} avec :\n` +
+                       `\`/quarantaine liberer membre:${member.user.tag} raison:Fin du test\``,
+              ephemeral: true
+            });
+          } catch {}
+        }
+      }, 30000);
+
+    } catch (error) {
+      console.error('Erreur test quarantaine:', error);
+      return interaction.editReply({
+        content: `❌ **Erreur lors du test de quarantaine**\n\n` +
+                 `**Erreur :** ${error.message}\n\n` +
+                 `Vérifiez que le bot a les permissions nécessaires :\n` +
+                 `• Gérer les rôles\n` +
+                 `• Gérer les canaux\n` +
+                 `• Gérer les permissions`
       });
     }
   }
