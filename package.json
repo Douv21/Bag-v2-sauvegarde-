@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.render-final.js",
     "deploy:commands": "node force-register.js",
+    "deploy:guild": "node scripts/register-guild.js",
     "reset:commands": "node scripts/remove-commands.js && node force-register.js",
     "remove:commands": "node scripts/remove-commands.js",
     "diagnose:music": "node -e \"console.log('LOAD'); require('./managers/SimpleMusicManager'); console.log('OK')\"",
