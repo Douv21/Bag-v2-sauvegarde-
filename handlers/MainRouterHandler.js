@@ -396,6 +396,9 @@ class MainRouterHandler {
         const handler = this.handlers.economy;
 
         switch (customId) {
+            case 'color_role_select':
+                // Compatibilité si jamais un ID simple est utilisé
+                return await this.handleColorRoleSelect(interaction, customId);
             // Suppression des routes economy_config_* qui sont gérées directement dans index.render-final.js
                 
             case 'economy_actions_back':
@@ -600,6 +603,96 @@ class MainRouterHandler {
                 }
                 
                 return false;
+        }
+    }
+
+    async handleColorRoleSelect(interaction, customId) {
+        try {
+            const { EmbedBuilder } = require('discord.js');
+            const { findStyleByKey } = require('../utils/rolePalette');
+
+            // customId attendu: color_role_select|r|<id>|<renameFlag>
+            const id = interaction.customId || customId;
+            const parts = id.split('|');
+            if (parts[0] !== 'color_role_select' || parts.length < 4) return false;
+            const targetType = parts[1]; // 'r' ou 'm'
+            const targetId = parts[2];
+            const renameFlag = parts[3] === '1';
+
+            const styleKey = interaction.values?.[0];
+            const style = findStyleByKey(styleKey);
+            if (!style) {
+                await interaction.update({ content: '❌ Style inconnu.', components: [], embeds: [] });
+                return true;
+            }
+
+            await interaction.deferUpdate();
+
+            if (targetType === 'r') {
+                const role = interaction.guild.roles.cache.get(targetId);
+                if (!role) {
+                    await interaction.followUp({ content: '❌ Rôle introuvable.', ephemeral: true });
+                    return true;
+                }
+                const roleEditData = { color: style.color };
+                if (renameFlag) roleEditData.name = style.name;
+                await role.edit(roleEditData, 'Application de couleur via color-role (sélecteur)');
+
+                const embed = new EmbedBuilder()
+                    .setTitle(`Style appliqué: ${style.name}`)
+                    .setDescription(`Clé: ${style.key}\nHex: ${style.color}`)
+                    .setColor(style.color);
+
+                await interaction.followUp({ content: `✅ Mis à jour: ${role.toString()} → ${style.name} (${style.color})`, embeds: [embed], ephemeral: true });
+                return true;
+            }
+
+            if (targetType === 'm') {
+                const member = interaction.guild.members.cache.get(targetId);
+                if (!member) {
+                    await interaction.followUp({ content: '❌ Membre introuvable.', ephemeral: true });
+                    return true;
+                }
+
+                let styleRole = interaction.guild.roles.cache.find(r => r.name === style.name);
+                if (!styleRole) {
+                    styleRole = await interaction.guild.roles.create({
+                        name: style.name,
+                        color: style.color,
+                        hoist: false,
+                        mentionable: false,
+                        reason: 'Création auto du rôle de couleur (sélecteur)'
+                    });
+                }
+
+                const me = interaction.guild.members.me;
+                if (!me || me.roles.highest.comparePositionTo(styleRole) <= 0) {
+                    await interaction.followUp({ content: `❌ Je ne peux pas assigner le rôle ${styleRole.toString()} (position trop haute).`, ephemeral: true });
+                    return true;
+                }
+
+                await member.roles.add(styleRole, 'Attribution de la couleur via color-role (sélecteur)');
+
+                const embed = new EmbedBuilder()
+                    .setTitle(`Style appliqué à ${member.displayName}`)
+                    .setDescription(`Rôle attribué: ${styleRole.toString()}\nClé: ${style.key}\nHex: ${style.color}`)
+                    .setColor(style.color);
+
+                await interaction.followUp({ content: `✅ Couleur attribuée à ${member.toString()} → ${style.name} (${style.color})`, embeds: [embed], ephemeral: true });
+                return true;
+            }
+
+            return false;
+        } catch (err) {
+            console.error('Erreur handleColorRoleSelect:', err);
+            try {
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ content: '❌ Erreur lors de l\'application de la couleur.', ephemeral: true });
+                } else {
+                    await interaction.followUp({ content: '❌ Erreur lors de l\'application de la couleur.', ephemeral: true });
+                }
+            } catch {}
+            return true;
         }
     }
 

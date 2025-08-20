@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
 const { buildChoicesForSlashCommand, findStyleByKey, ROLE_STYLES } = require('../utils/rolePalette');
 
 const LIMITED_CHOICES = buildChoicesForSlashCommand().slice(0, 25);
@@ -22,8 +22,8 @@ module.exports = {
 		.addStringOption(option =>
 			option
 				.setName('style')
-				.setDescription('Choisis un style')
-				.setRequired(true)
+				.setDescription('Choisis un style (ou laisse vide pour obtenir un menu)')
+				.setRequired(false)
 				.addChoices(...LIMITED_CHOICES)
 		)
 		.addBooleanOption(option =>
@@ -45,8 +45,28 @@ module.exports = {
 
 		const targetRole = interaction.options.getRole('role');
 		const targetMember = interaction.options.getMember('membre');
-		const styleKey = interaction.options.getString('style', true);
+		const styleKey = interaction.options.getString('style');
 		const shouldRename = interaction.options.getBoolean('rename') ?? false;
+
+		if (!styleKey) {
+			if (!targetRole && !targetMember) {
+				return interaction.reply({ content: 'Précise soit un rôle (`role`), soit un membre (`membre`).', flags: 64 });
+			}
+
+			const preview = new EmbedBuilder()
+				.setTitle('🎨 Choix du style de couleur')
+				.setDescription('Sélectionne un style dans la liste ci-dessous pour appliquer la couleur.')
+				.setColor('#5865F2')
+				.addFields(ROLE_STYLES.slice(0, 12).map(s => ({ name: s.name, value: s.color, inline: true })));
+
+			const select = new StringSelectMenuBuilder()
+				.setCustomId(`color_role_select|${targetRole ? 'r' : 'm'}|${(targetRole?.id || targetMember?.id)}|${shouldRename ? '1' : '0'}`)
+				.setPlaceholder('Choisir un style…')
+				.addOptions(LIMITED_CHOICES.map(c => ({ label: c.name, value: c.value })));
+
+			const row = new ActionRowBuilder().addComponents(select);
+			return interaction.reply({ embeds: [preview], components: [row], ephemeral: true });
+		}
 
 		const style = findStyleByKey(styleKey);
 		if (!style) {

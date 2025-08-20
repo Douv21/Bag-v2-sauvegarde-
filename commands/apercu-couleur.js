@@ -10,9 +10,15 @@ module.exports = {
 		.addStringOption(option =>
 			option
 				.setName('style')
-				.setDescription('Choisis un style')
-				.setRequired(true)
+				.setDescription('Choisis un style (liste limitée)')
+				.setRequired(false)
 				.addChoices(...LIMITED_CHOICES)
+		)
+		.addStringOption(option =>
+			option
+				.setName('style-key')
+				.setDescription('Clé du style (ex: irise-3, exotique-5)')
+				.setRequired(false)
 		)
 		),
 
@@ -21,7 +27,13 @@ module.exports = {
 			return interaction.reply({ content: 'Cette commande doit être utilisée dans un serveur.', flags: 64 });
 		}
 
-		const styleKey = interaction.options.getString('style', true);
+		const styleKeyFromChoice = interaction.options.getString('style');
+		const styleKeyFromText = interaction.options.getString('style-key');
+		const styleKey = styleKeyFromText || styleKeyFromChoice;
+		if (!styleKey) {
+			return interaction.reply({ content: 'Précise un style via la liste (style) ou sa clé (style-key), ex: irise-3.', flags: 64 });
+		}
+
 		const style = findStyleByKey(styleKey);
 		if (!style) {
 			return interaction.reply({ content: `Style inconnu: ${styleKey}.`, flags: 64 });
@@ -36,4 +48,3 @@ module.exports = {
 		return interaction.reply({ embeds: [embed], ephemeral: true });
 	}
 };
-
