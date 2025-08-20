@@ -1,38 +1,30 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { buildChoicesForSlashCommand, findStyleByKey, buildPaletteChoices } = require('../utils/rolePalette');
+const { buildChoicesForSlashCommand, findStyleByKey, ROLE_STYLES } = require('../utils/rolePalette');
 
 const LIMITED_CHOICES = buildChoicesForSlashCommand().slice(0, 25);
-const PALETTE_CHOICES = buildPaletteChoices().slice(0, 25);
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('color-role')
-		.setDescription('Appliquer une couleur/style à un rôle existant')
+		.setDescription('Appliquer une couleur/style à un rôle OU à un membre')
 		.addRoleOption(option =>
 			option
 				.setName('role')
-				.setDescription('Rôle à modifier')
-				.setRequired(true)
+				.setDescription('Rôle à modifier (optionnel si un membre est choisi)')
+				.setRequired(false)
+		)
+		.addUserOption(option =>
+			option
+				.setName('membre')
+				.setDescription('Membre à qui attribuer la couleur (optionnel si un rôle est choisi)')
+				.setRequired(false)
 		)
 		.addStringOption(option =>
 			option
 				.setName('style')
-				.setDescription('Choisis un style (liste limitée)')
-				.setRequired(false)
+				.setDescription('Choisis un style')
+				.setRequired(true)
 				.addChoices(...LIMITED_CHOICES)
-		)
-		.addStringOption(option =>
-			option
-				.setName('style-key')
-				.setDescription('Clé du style (ex: irise-3, exotique-5)')
-				.setRequired(false)
-		)
-		.addStringOption(option =>
-			option
-				.setName('palette')
-				.setDescription('Palette à utiliser (par défaut: palette active)')
-				.setRequired(false)
-				.addChoices(...PALETTE_CHOICES)
 		)
 		.addBooleanOption(option =>
 			option
@@ -51,37 +43,80 @@ module.exports = {
 			return interaction.reply({ content: '❌ Permission requise: Gérer les rôles.', flags: 64 });
 		}
 
-		const targetRole = interaction.options.getRole('role', true);
-		const styleKeyFromChoice = interaction.options.getString('style');
-		const styleKeyFromText = interaction.options.getString('style-key');
-		const paletteKey = interaction.options.getString('palette');
+		const targetRole = interaction.options.getRole('role');
+		const targetMember = interaction.options.getMember('membre');
+		const styleKey = interaction.options.getString('style', true);
 		const shouldRename = interaction.options.getBoolean('rename') ?? false;
 
-		const styleKey = styleKeyFromText || styleKeyFromChoice;
-		if (!styleKey) {
-			return interaction.reply({ content: 'Précise un style via la liste (style) ou sa clé (style-key), ex: irise-3.', flags: 64 });
+		const style = findStyleByKey(styleKey);
+		if (!style) {
+			return interaction.reply({ content: `Style inconnu: ${styleKey}.`, flags: 64 });
 		}
 
-		const style = findStyleByKey(styleKey, paletteKey);
-		if (!style) {
-			return interaction.reply({ content: `Style inconnu: ${styleKey}. Exemples: irise-3, exotique-5.`, flags: 64 });
+		if (!targetRole && !targetMember) {
+			return interaction.reply({ content: 'Précise soit un rôle (`role`), soit un membre (`membre`).', flags: 64 });
+		}
+
+		if (targetRole && targetMember) {
+			return interaction.reply({ content: 'Choisis soit un rôle, soit un membre — pas les deux.', flags: 64 });
 		}
 
 		await interaction.deferReply({ ephemeral: true });
 
 		try {
-			const roleEditData = { color: style.color };
-			if (shouldRename) roleEditData.name = style.name;
-			await targetRole.edit(roleEditData, 'Application de couleur via /color-role');
+			if (targetRole) {
+				const roleEditData = { color: style.color };
+				if (shouldRename) roleEditData.name = style.name;
+				await targetRole.edit(roleEditData, 'Application de couleur via /color-role');
+
+				const embed = new EmbedBuilder()
+					.setTitle(`Style appliqué: ${style.name}`)
+					.setDescription(`Clé: ${style.key}\nHex: ${style.color}`)
+					.setColor(style.color);
+
+				const listEmbed = new EmbedBuilder()
+					.setTitle('Palette des couleurs disponibles')
+					.setDescription('Néon, Dark, Pastel, Métal')
+					.setColor(style.color)
+					.addFields(ROLE_STYLES.map(s => ({ name: s.name, value: s.color, inline: true })));
+
+				return interaction.editReply({ content: `Mis à jour: ${targetRole.toString()} → ${style.name} (${style.color})`, embeds: [embed, listEmbed] });
+			}
+
+			// Cible: membre → on trouve ou crée le rôle de couleur correspondant au style, puis on l'assigne
+			let styleRole = interaction.guild.roles.cache.find(r => r.name === style.name);
+			if (!styleRole) {
+				styleRole = await interaction.guild.roles.create({
+					name: style.name,
+					color: style.color,
+					hoist: false,
+					mentionable: false,
+					reason: 'Création automatique du rôle de couleur (color-role)'
+				});
+			}
+
+			// Vérifie que le bot peut gérer/assigner ce rôle
+			const me = interaction.guild.members.me;
+			if (!me || me.roles.highest.comparePositionTo(styleRole) <= 0) {
+				return interaction.editReply({ content: `Je ne peux pas assigner le rôle ${styleRole.toString()} (position trop haute). Place mon rôle au-dessus.` });
+			}
+
+			await targetMember.roles.add(styleRole, 'Attribution de la couleur via /color-role');
 
 			const embed = new EmbedBuilder()
-				.setTitle(`Style appliqué: ${style.name}`)
-				.setDescription(`Clé: ${style.key}\nHex: ${style.color}`)
+				.setTitle(`Style appliqué à ${targetMember.displayName}`)
+				.setDescription(`Rôle attribué: ${styleRole.toString()}\nClé: ${style.key}\nHex: ${style.color}`)
 				.setColor(style.color);
 
-			return interaction.editReply({ content: `Mis à jour: ${targetRole.toString()} → ${style.name} (${style.color})`, embeds: [embed] });
+			const listEmbed = new EmbedBuilder()
+				.setTitle('Palette des couleurs disponibles')
+				.setDescription('Néon, Dark, Pastel, Métal')
+				.setColor(style.color)
+				.addFields(ROLE_STYLES.map(s => ({ name: s.name, value: s.color, inline: true })));
+
+			return interaction.editReply({ content: `Couleur attribuée à ${targetMember.toString()} → ${style.name} (${style.color})`, embeds: [embed, listEmbed] });
 		} catch (error) {
-			return interaction.editReply({ content: `Impossible de modifier ${targetRole.name}. Vérifie mes permissions et la position du rôle.\nErreur: ${error.message}` });
+			return interaction.editReply({ content: `Action impossible. Vérifie mes permissions et la position des rôles.\nErreur: ${error.message}` });
 		}
 	}
 };
