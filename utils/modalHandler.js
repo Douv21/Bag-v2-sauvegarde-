@@ -29,6 +29,7 @@ class ModalHandler {
             'level_for_role',
             // Modals AOUV
             'aouv_prompt_add_modal',
+            'aouv_prompt_add_bulk_modal',
             'aouv_prompt_edit_modal',
             'aouv_prompt_remove_modal',
             'aouv_prompt_disable_base_modal',
@@ -38,6 +39,7 @@ class ModalHandler {
             'aouv_prompt_reset_override_base_modal',
             // Modals AOUV NSFW
             'aouv_nsfw_prompt_add_modal',
+            'aouv_nsfw_prompt_add_bulk_modal',
             'aouv_nsfw_prompt_edit_modal',
             'aouv_nsfw_prompt_remove_modal',
             'aouv_nsfw_prompt_disable_base_modal',

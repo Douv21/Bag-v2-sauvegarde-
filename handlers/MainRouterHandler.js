@@ -1412,6 +1412,15 @@ class MainRouterHandler {
      */
     async routeToAouvConfigHandler(interaction, customId) {
         try {
+            // Vérifier si c'est un modal et s'il est implémenté
+            if (interaction.isModalSubmit()) {
+                const { modalHandler } = require('../utils/modalHandler');
+                const isImplemented = await modalHandler.handleModalSubmission(interaction);
+                if (!isImplemented) {
+                    return true; // Le modalHandler a géré l'erreur
+                }
+            }
+
             const AouvConfigHandler = require('./AouvConfigHandler');
             const handler = new AouvConfigHandler(this.dataManager);
 
