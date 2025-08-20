@@ -1,10 +1,17 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { ROLE_STYLES } = require('../utils/rolePalette');
+const { ROLE_STYLES, getPaletteByKey, buildPaletteChoices } = require('../utils/rolePalette');
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('setup-colors')
 		.setDescription('Créer les rôles « couleur/style » de la palette')
+		.addStringOption(option =>
+			option
+				.setName('palette')
+				.setDescription('Palette à utiliser (par défaut: palette active)')
+				.setRequired(false)
+				.addChoices(...buildPaletteChoices().slice(0,25))
+		)
 		.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles.toString()),
 
 	async execute(interaction) {
@@ -18,8 +25,11 @@ module.exports = {
 
 		await interaction.deferReply({ ephemeral: true });
 
+		const paletteKey = interaction.options.getString('palette');
+		const palette = paletteKey ? (getPaletteByKey(paletteKey) || { styles: ROLE_STYLES }) : { styles: ROLE_STYLES };
+
 		const results = [];
-		for (const style of ROLE_STYLES) {
+		for (const style of palette.styles) {
 			try {
 				const existing = interaction.guild.roles.cache.find(r => r.name === style.name);
 				if (existing) {
