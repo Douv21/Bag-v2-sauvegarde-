@@ -77,6 +77,12 @@ class LevelManager {
                 },
                 leaderboard: {
                     limit: 10
+                },
+                boosterPerks: {
+                    enabled: true,
+                    xpMultiplier: 1.5,
+                    voiceXpMultiplier: 1.5,
+                    textCooldownFactor: 0.5
                 }
             };
             this.saveConfig(defaultConfig);
@@ -145,7 +151,13 @@ class LevelManager {
             },
             roleRewards: [],
             levelFormula: { baseXP: 100, multiplier: 1.5 },
-            leaderboard: { limit: 10 }
+            leaderboard: { limit: 10 },
+            boosterPerks: {
+                enabled: true,
+                xpMultiplier: 1.5,
+                voiceXpMultiplier: 1.5,
+                textCooldownFactor: 0.5
+            }
         };
     }
 
@@ -341,7 +353,17 @@ class LevelManager {
             if (this.cooldowns.has(cooldownKey)) {
                 const lastTime = this.cooldowns.get(cooldownKey);
                 const config = this.loadConfig();
-                if (Date.now() - lastTime < config.xpCooldown) {
+                // Booster: cooldown réduit
+                let effectiveCooldown = config.xpCooldown;
+                try {
+                    const member = context.member || (context.guild ? context.guild.members.cache.get(userId) : null);
+                    const isBooster = !!(member?.premiumSince || member?.premiumSinceTimestamp);
+                    const factor = Number(config.boosterPerks?.textCooldownFactor) || 1;
+                    if (isBooster && config.boosterPerks?.enabled === true && factor > 0 && factor < 1) {
+                        effectiveCooldown = Math.max(1000, Math.floor(effectiveCooldown * factor));
+                    }
+                } catch {}
+                if (Date.now() - lastTime < effectiveCooldown) {
                     return null; // Still in cooldown
                 }
             }
@@ -352,7 +374,16 @@ class LevelManager {
             
             // Generate random XP
             const config = this.loadConfig();
-            const xpGain = Math.floor(Math.random() * (config.textXP.max - config.textXP.min + 1)) + config.textXP.min;
+            let xpGain = Math.floor(Math.random() * (config.textXP.max - config.textXP.min + 1)) + config.textXP.min;
+            // Booster: multiplicateur d'XP messages
+            try {
+                const member = context.member || (context.guild ? context.guild.members.cache.get(userId) : null);
+                const isBooster = !!(member?.premiumSince || member?.premiumSinceTimestamp);
+                const mult = Number(config.boosterPerks?.xpMultiplier) || 1;
+                if (isBooster && config.boosterPerks?.enabled === true && mult > 1) {
+                    xpGain = Math.max(1, Math.round(xpGain * mult));
+                }
+            } catch {}
             
             const oldLevel = userLevel.level;
             userLevel.xp += xpGain;
@@ -371,7 +402,7 @@ class LevelManager {
             // Synchroniser les XP avec economy.json
             this.syncXPWithEconomy(userId, guildId, userLevel.xp);
             
-            // Set cooldown
+            // Set cooldown (respecte le facteur booster au prochain contrôle)
             this.cooldowns.set(cooldownKey, Date.now());
             
             console.log(`📈 ${context.user?.username || userId} a gagné ${xpGain} XP (Total: ${userLevel.xp}, Niveau: ${newLevel})`);
@@ -438,7 +469,16 @@ class LevelManager {
             const userLevel = this.getUserLevel(userId, guildId);
             
             const config = this.loadConfig();
-            const xpGain = config.voiceXP.amount;
+            let xpGain = config.voiceXP.amount;
+            // Booster: multiplicateur XP vocal
+            try {
+                const member = context.member || (context.guild ? context.guild.members.cache.get(userId) : null);
+                const isBooster = !!(member?.premiumSince || member?.premiumSinceTimestamp);
+                const mult = Number(config.boosterPerks?.voiceXpMultiplier) || Number(config.boosterPerks?.xpMultiplier) || 1;
+                if (isBooster && config.boosterPerks?.enabled === true && mult > 1) {
+                    xpGain = Math.max(1, Math.round(xpGain * mult));
+                }
+            } catch {}
             
             const oldLevel = userLevel.level;
             userLevel.xp += xpGain;

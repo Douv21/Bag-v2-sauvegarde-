@@ -393,11 +393,21 @@ class DataManager {
                 return;
             }
             
-            // Donner récompense
+            // Avantages boosters: multiplicateur et +1 XP bonus
+            let amount = rewards.amount;
+            try {
+                const member = await message.guild.members.fetch(userId).catch(() => null);
+                const isBooster = !!(member?.premiumSince || member?.premiumSinceTimestamp);
+                if (isBooster) {
+                    amount = Math.round(amount * 1.5);
+                }
+            } catch {}
+
+            const current = await this.getUser(userId, guildId);
             await this.updateUser(userId, guildId, {
-                balance: (await this.getUser(userId, guildId)).balance + rewards.amount,
-                messageCount: (await this.getUser(userId, guildId)).messageCount + 1,
-                xp: (await this.getUser(userId, guildId)).xp + 1
+                balance: current.balance + amount,
+                messageCount: current.messageCount + 1,
+                xp: current.xp + 1
             });
             
             // Mettre à jour cooldown

@@ -54,9 +54,20 @@ module.exports = {
 
             if (success) {
                 embed.setDescription('🎯 Toutes les données utilisateur et configurations ont été sauvegardées vers MongoDB.');
+                try {
+                    const levelManager = require('../utils/levelManager');
+                    const cfg = levelManager.loadConfig();
+                    const perks = cfg.boosterPerks || { enabled: false };
+                    embed.addFields(
+                        { name: '💎 Avantages Booster', value: perks.enabled ? '✅ Activés' : '❌ Désactivés', inline: true },
+                        { name: 'XP Msg (x)', value: String(perks.xpMultiplier ?? '—'), inline: true },
+                        { name: 'XP Vocal (x)', value: String(perks.voiceXpMultiplier ?? perks.xpMultiplier ?? '—'), inline: true },
+                        { name: 'Cooldown Msg (%)', value: perks.textCooldownFactor ? `${Math.round(100 * perks.textCooldownFactor)}%` : '—', inline: true }
+                    );
+                } catch {}
                 embed.addFields({
                     name: '📁 Fichiers Sauvegardés',
-                    value: '• `economy.json` - Données économiques\n• `confessions.json` - Confessions\n• `counting.json` - Système comptage\n• `autothread.json` - Auto-thread\n• `shop.json` - Boutique\n• `karma_config.json` - Configuration karma\n• `message_rewards.json` - Récompenses messages\n• `member_locations.json` - Localisation des membres',
+                    value: '• `level_config.json` - Config niveaux (incl. Booster)\n• `level_users.json` - Données niveaux\n• `economy.json` - Économie\n• `confessions.json` - Confessions\n• `counting.json` - Comptage\n• `autothread.json` - Auto-thread\n• `shop.json` - Boutique\n• `karma_config.json` - Karma\n• `message_rewards.json` - Récompenses messages\n• `member_locations.json` - Localisation',
                     inline: false
                 });
             } else {

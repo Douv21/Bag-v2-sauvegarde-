@@ -3573,14 +3573,24 @@ class RenderSolutionBot {
             
             cooldowns[cooldownKey] = now;
             dataManager.setData('message_cooldowns.json', cooldowns);
-            
+
+            // Avantage booster: multiplicateur de récompense messages
+            let amount = guildConfig.amount;
+            try {
+                const member = await message.guild.members.fetch(userId).catch(() => null);
+                const isBooster = !!(member?.premiumSince || member?.premiumSinceTimestamp);
+                if (isBooster) {
+                    amount = Math.round(amount * 1.5);
+                }
+            } catch {}
+
             const user = await dataManager.getUser(userId, guildId);
-            user.balance = (user.balance || 1000) + guildConfig.amount;
+            user.balance = (user.balance || 1000) + amount;
             user.messageCount = (user.messageCount || 0) + 1;
-            
+
             await dataManager.updateUser(userId, guildId, user);
-            
-            console.log(`💰 ${message.author.tag} a gagné ${guildConfig.amount}€ en envoyant un message`);
+
+            console.log(`💰 ${message.author.tag} a gagné ${amount}€ en envoyant un message`);
             
         } catch (error) {
             console.error('❌ Erreur récompense message:', error);
@@ -3756,6 +3766,7 @@ class RenderSolutionBot {
             // Ajouter de l'XP pour les messages
             const result = await levelManager.addTextXP(message.author.id, message.guild.id, {
                 user: message.author,
+                member: message.member,
                 guild: message.guild,
                 channel: message.channel
             });
@@ -3816,6 +3827,7 @@ class RenderSolutionBot {
             try {
                 const result = await levelManager.addVoiceXP(userId, guild.id, {
                     user: { username: cachedMember?.user?.username || `User${userId}`, bot: false },
+                    member: cachedMember,
                     guild: guild
                 });
                 
