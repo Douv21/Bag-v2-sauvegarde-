@@ -12,11 +12,12 @@ if (!token || !clientId || !guildId) {
 }
 
 const roleChoices = buildChoicesForSlashCommand();
+const LIMITED_CHOICES = roleChoices.slice(0, 25);
 
 const commands = [
   new SlashCommandBuilder()
     .setName('setup-colors')
-    .setDescription('Créer 10 rôles « couleur/style » en une fois')
+    .setDescription('Créer les rôles « couleur/style » de la palette')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
 
   new SlashCommandBuilder()
@@ -32,8 +33,14 @@ const commands = [
       option
         .setName('style')
         .setDescription('Choisis un style')
-        .setRequired(true)
-        .addChoices(...roleChoices)
+        .setRequired(false)
+        .addChoices(...LIMITED_CHOICES)
+    )
+    .addStringOption(option =>
+      option
+        .setName('style-key')
+        .setDescription('Clé du style (ex: irise-3). Permet d\'utiliser un style hors de la liste ci-dessus.')
+        .setRequired(false)
     )
     .addBooleanOption(option =>
       option

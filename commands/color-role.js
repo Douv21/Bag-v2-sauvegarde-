@@ -1,6 +1,8 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { buildChoicesForSlashCommand, findStyleByKey } = require('../utils/rolePalette');
 
+const LIMITED_CHOICES = buildChoicesForSlashCommand().slice(0, 25);
+
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('color-role')
@@ -14,9 +16,15 @@ module.exports = {
 		.addStringOption(option =>
 			option
 				.setName('style')
-				.setDescription('Choisis un style')
-				.setRequired(true)
-				.addChoices(...buildChoicesForSlashCommand())
+				.setDescription('Choisis un style (liste limitée)')
+				.setRequired(false)
+				.addChoices(...LIMITED_CHOICES)
+		)
+		.addStringOption(option =>
+			option
+				.setName('style-key')
+				.setDescription('Clé du style (ex: irise-3, exotique-5, degrade-v-2)')
+				.setRequired(false)
 		)
 		.addBooleanOption(option =>
 			option
@@ -36,12 +44,18 @@ module.exports = {
 		}
 
 		const targetRole = interaction.options.getRole('role', true);
-		const styleKey = interaction.options.getString('style', true);
+		const styleKeyFromChoice = interaction.options.getString('style');
+		const styleKeyFromText = interaction.options.getString('style-key');
 		const shouldRename = interaction.options.getBoolean('rename') ?? false;
+
+		const styleKey = styleKeyFromText || styleKeyFromChoice;
+		if (!styleKey) {
+			return interaction.reply({ content: 'Précise un style via la liste (style) ou sa clé (style-key), ex: irise-3.', flags: 64 });
+		}
 
 		const style = findStyleByKey(styleKey);
 		if (!style) {
-			return interaction.reply({ content: 'Style inconnu.', flags: 64 });
+			return interaction.reply({ content: `Style inconnu: ${styleKey}. Exemples: irise-3, exotique-5, degrade-v-2.`, flags: 64 });
 		}
 
 		await interaction.deferReply({ ephemeral: true });

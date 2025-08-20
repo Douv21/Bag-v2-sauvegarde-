@@ -4,7 +4,7 @@ const { ROLE_STYLES } = require('../utils/rolePalette');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('setup-colors')
-		.setDescription('Créer 10 rôles « couleur/style » en une fois')
+		.setDescription('Créer les rôles « couleur/style » de la palette')
 		.setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles.toString()),
 
 	async execute(interaction) {

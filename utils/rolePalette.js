@@ -53,7 +53,37 @@ const ROLE_STYLES = [
 	{ key: 'lux-midnight', name: '🎩 Midnight Navy', color: '#1F2A44' },
 	{ key: 'lux-graphite', name: '🎩 Graphite Blue', color: '#344154' },
 	{ key: 'lux-porcelain', name: '🎩 Porcelain', color: '#EDE8E3' },
-	{ key: 'lux-linen', name: '🎩 Linen', color: '#E5D6C3' }
+	{ key: 'lux-linen', name: '🎩 Linen', color: '#E5D6C3' },
+
+	// Irisé (holographique/pastel)
+	{ key: 'irise-1', name: '🌈 Irisé 1', color: '#FF66CC' },
+	{ key: 'irise-2', name: '🌈 Irisé 2', color: '#FFA3E0' },
+	{ key: 'irise-3', name: '🌈 Irisé 3', color: '#CBA6FF' },
+	{ key: 'irise-4', name: '🌈 Irisé 4', color: '#9AD9FF' },
+	{ key: 'irise-5', name: '🌈 Irisé 5', color: '#8CFAC7' },
+	{ key: 'irise-6', name: '🌈 Irisé 6', color: '#FFE174' },
+	{ key: 'irise-7', name: '🌈 Irisé 7', color: '#FFB3B3' },
+	{ key: 'irise-8', name: '🌈 Irisé 8', color: '#B6F3FF' },
+
+	// Exotique (néons tropicaux)
+	{ key: 'exotique-1', name: '🪸 Exotique 1', color: '#00FFA3' },
+	{ key: 'exotique-2', name: '🪸 Exotique 2', color: '#00E0FF' },
+	{ key: 'exotique-3', name: '🪸 Exotique 3', color: '#0085FF' },
+	{ key: 'exotique-4', name: '🪸 Exotique 4', color: '#7A00FF' },
+	{ key: 'exotique-5', name: '🪸 Exotique 5', color: '#FF00E5' },
+	{ key: 'exotique-6', name: '🪸 Exotique 6', color: '#FF0062' },
+	{ key: 'exotique-7', name: '🪸 Exotique 7', color: '#FF8A00' },
+	{ key: 'exotique-8', name: '🪸 Exotique 8', color: '#A3FF00' },
+
+	// Dégradé vertical (stops du violet au corail)
+	{ key: 'degrade-v-1', name: '🧪 Dégradé V 1', color: '#2E026C' },
+	{ key: 'degrade-v-2', name: '🧪 Dégradé V 2', color: '#5B0AC8' },
+	{ key: 'degrade-v-3', name: '🧪 Dégradé V 3', color: '#8F3BFF' },
+	{ key: 'degrade-v-4', name: '🧪 Dégradé V 4', color: '#FF4DB6' },
+	{ key: 'degrade-v-5', name: '🧪 Dégradé V 5', color: '#FF7A45' },
+	{ key: 'degrade-v-6', name: '🧪 Dégradé V 6', color: '#FFC33D' },
+	{ key: 'degrade-v-7', name: '🧪 Dégradé V 7', color: '#E2FF72' },
+	{ key: 'degrade-v-8', name: '🧪 Dégradé V 8', color: '#8CFFEA' }
 ];
 
 function buildChoicesForSlashCommand() {

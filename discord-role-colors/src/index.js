@@ -78,12 +78,19 @@ async function handleColorRole(interaction) {
   }
 
   const targetRole = interaction.options.getRole('role', true);
-  const styleKey = interaction.options.getString('style', true);
+  const styleKeyFromChoice = interaction.options.getString('style');
+  const styleKeyFromText = interaction.options.getString('style-key');
   const shouldRename = interaction.options.getBoolean('rename') ?? false;
+
+  const styleKey = styleKeyFromText || styleKeyFromChoice;
+  if (!styleKey) {
+    await interaction.reply({ content: 'Précise un style via la liste (style) ou sa clé (style-key), ex: irise-3.', ephemeral: true });
+    return;
+  }
 
   const style = findStyleByKey(styleKey);
   if (!style) {
-    await interaction.reply({ content: 'Style inconnu.', ephemeral: true });
+    await interaction.reply({ content: `Style inconnu: ${styleKey}. Vérifie la clé (ex: irise-3, exotique-5, degrade-v-2).`, ephemeral: true });
     return;
   }
 
