@@ -96,21 +96,7 @@ class BagBotRender {
         this.client.moderationManager = this.moderationManager;
         this.client.logManager = this.logManager;
         
-        // Attacher les méthodes de quarantaine au client pour les commandes
-        console.log('🔗 Attachement des méthodes de quarantaine au client...');
-        this.client.quarantineMember = this.quarantineMember.bind(this);
-        this.client.grantAccess = this.grantAccess.bind(this);
-        this.client.getQuarantineInfo = this.getQuarantineInfo.bind(this);
-        this.client.ensureQuarantineRole = this.ensureQuarantineRole.bind(this);
-        this.client.createQuarantineChannels = this.createQuarantineChannels.bind(this);
-        this.client.setupQuarantinePermissions = this.setupQuarantinePermissions.bind(this);
-        this.client.recordQuarantineInfo = this.recordQuarantineInfo.bind(this);
-        this.client.cleanupQuarantineChannels = this.cleanupQuarantineChannels.bind(this);
-        console.log('✅ Méthodes de quarantaine attachées:', {
-            quarantineMember: typeof this.client.quarantineMember,
-            grantAccess: typeof this.client.grantAccess,
-            getQuarantineInfo: typeof this.client.getQuarantineInfo
-        });
+        // Note: L'attachement des méthodes de quarantaine sera fait dans initializeQuarantineMethods()
 
         // Collections
         this.client.commands = new Collection();
@@ -148,6 +134,24 @@ class BagBotRender {
             console.error('❌ Erreur démarrage:', error);
             process.exit(1);
         }
+    }
+
+    initializeQuarantineMethods() {
+        // Attacher les méthodes de quarantaine au client pour les commandes
+        console.log('🔗 Attachement des méthodes de quarantaine au client...');
+        this.client.quarantineMember = this.quarantineMember.bind(this);
+        this.client.grantAccess = this.grantAccess.bind(this);
+        this.client.getQuarantineInfo = this.getQuarantineInfo.bind(this);
+        this.client.ensureQuarantineRole = this.ensureQuarantineRole.bind(this);
+        this.client.createQuarantineChannels = this.createQuarantineChannels.bind(this);
+        this.client.setupQuarantinePermissions = this.setupQuarantinePermissions.bind(this);
+        this.client.recordQuarantineInfo = this.recordQuarantineInfo.bind(this);
+        this.client.cleanupQuarantineChannels = this.cleanupQuarantineChannels.bind(this);
+        console.log('✅ Méthodes de quarantaine attachées:', {
+            quarantineMember: typeof this.client.quarantineMember,
+            grantAccess: typeof this.client.grantAccess,
+            getQuarantineInfo: typeof this.client.getQuarantineInfo
+        });
     }
 
     setupExpress() {
@@ -1964,7 +1968,8 @@ class BagBotRender {
 
 // Démarrage pour Render.com Web Service
 if (require.main === module) {
-    new BagBotRender();
+    const bot = new BagBotRender();
+    bot.initializeQuarantineMethods();
 }
 
 module.exports = BagBotRender;
