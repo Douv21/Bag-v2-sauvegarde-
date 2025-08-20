@@ -1,8 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { buildChoicesForSlashCommand, findStyleByKey, buildPaletteChoices } = require('../utils/rolePalette');
+const { buildChoicesForSlashCommand, findStyleByKey } = require('../utils/rolePalette');
 
 const LIMITED_CHOICES = buildChoicesForSlashCommand().slice(0, 25);
-const PALETTE_CHOICES = buildPaletteChoices().slice(0, 25);
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -17,22 +16,9 @@ module.exports = {
 		.addStringOption(option =>
 			option
 				.setName('style')
-				.setDescription('Choisis un style (liste limitée)')
-				.setRequired(false)
+				.setDescription('Choisis un style')
+				.setRequired(true)
 				.addChoices(...LIMITED_CHOICES)
-		)
-		.addStringOption(option =>
-			option
-				.setName('style-key')
-				.setDescription('Clé du style (ex: irise-3, exotique-5)')
-				.setRequired(false)
-		)
-		.addStringOption(option =>
-			option
-				.setName('palette')
-				.setDescription('Palette à utiliser (par défaut: palette active)')
-				.setRequired(false)
-				.addChoices(...PALETTE_CHOICES)
 		)
 		.addBooleanOption(option =>
 			option
@@ -52,19 +38,12 @@ module.exports = {
 		}
 
 		const targetRole = interaction.options.getRole('role', true);
-		const styleKeyFromChoice = interaction.options.getString('style');
-		const styleKeyFromText = interaction.options.getString('style-key');
-		const paletteKey = interaction.options.getString('palette');
+		const styleKey = interaction.options.getString('style', true);
 		const shouldRename = interaction.options.getBoolean('rename') ?? false;
 
-		const styleKey = styleKeyFromText || styleKeyFromChoice;
-		if (!styleKey) {
-			return interaction.reply({ content: 'Précise un style via la liste (style) ou sa clé (style-key), ex: irise-3.', flags: 64 });
-		}
-
-		const style = findStyleByKey(styleKey, paletteKey);
+		const style = findStyleByKey(styleKey);
 		if (!style) {
-			return interaction.reply({ content: `Style inconnu: ${styleKey}. Exemples: irise-3, exotique-5.`, flags: 64 });
+			return interaction.reply({ content: `Style inconnu: ${styleKey}.`, flags: 64 });
 		}
 
 		await interaction.deferReply({ ephemeral: true });
