@@ -119,6 +119,13 @@ class MainRouterHandler {
 
     async handleModalSubmit(interaction, customId) {
         try {
+            // === VALIDATION MODAL HANDLER ===
+            const { modalHandler } = require('../utils/modalHandler');
+            const isImplemented = await modalHandler.handleModalSubmission(interaction);
+            if (!isImplemented) {
+                return true; // Modal non implémenté, déjà géré par modalHandler
+            }
+
             // === MODALS ÉCONOMIQUES ===
             if (customId.startsWith('action_config_modal_')) {
                 await this.economyHandler.handleActionConfigModal(interaction);
@@ -371,6 +378,53 @@ class MainRouterHandler {
                 const aouvCommand = require('../commands/aouv');
                 await aouvCommand.handleButton(interaction, this.dataManager);
                 return true;
+            }
+
+            // === BOUTONS CONTINUATION AOUV ===
+            if (this.aouvHandler && (customId.startsWith('aouv_continue_') || customId === 'aouv_back_to_menu')) {
+                console.log('🔄 Bouton continuation AouV:', customId);
+                await this.aouvHandler.handleContinueAddingButton(interaction, customId);
+                return true;
+            }
+
+            // === BOUTONS PAGINATION AOUV ===
+            if (this.aouvHandler && customId.includes('_page_') && (customId.startsWith('aouv_prompt_') || customId.startsWith('aouv_nsfw_prompt_'))) {
+                console.log('📄 Bouton pagination AouV:', customId);
+                
+                // Parser le customId pour extraire les informations de pagination
+                const parts = customId.split('_');
+                const pageIndex = parts.indexOf('page');
+                if (pageIndex !== -1 && pageIndex + 1 < parts.length) {
+                    const page = parseInt(parts[pageIndex + 1], 10) || 1;
+                    const kind = parts[pageIndex - 1]; // Le type est généralement juste avant 'page'
+                    
+                    // Déterminer quelle méthode appeler selon le type de pagination
+                    if (customId.includes('_edit_list_')) {
+                        if (customId.includes('_nsfw_')) {
+                            await this.aouvHandler.showAouvNsfwPromptEditListPaged(interaction, kind, page);
+                        } else {
+                            await this.aouvHandler.showAouvPromptEditListPaged(interaction, kind, page);
+                        }
+                    } else if (customId.includes('_remove_list_')) {
+                        if (customId.includes('_nsfw_')) {
+                            await this.aouvHandler.showAouvNsfwPromptRemoveListPaged(interaction, kind, page);
+                        } else {
+                            await this.aouvHandler.showAouvPromptRemoveListPaged(interaction, kind, page);
+                        }
+                    } else if (customId.includes('_list_custom_')) {
+                        if (customId.includes('_nsfw_')) {
+                            await this.aouvHandler.showAouvNsfwPromptListCustomPaged(interaction, kind, page);
+                        } else {
+                            await this.aouvHandler.showAouvPromptListCustomPaged(interaction, kind, page);
+                        }
+                    } else if (customId.includes('_list_base_')) {
+                        await this.aouvHandler.showAouvPromptListBasePaged(interaction, kind, page);
+                    } else if (customId.includes('_override_list_')) {
+                        await this.aouvHandler.showAouvPromptOverrideBaseListPaged(interaction, kind, page);
+                    }
+                    
+                    return true;
+                }
             }
 
             // === BOUTONS DASHBOARD ===
