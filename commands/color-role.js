@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { buildChoicesForSlashCommand, findStyleByKey } = require('../utils/rolePalette');
+const { buildChoicesForSlashCommand, findStyleByKey, ROLE_STYLES } = require('../utils/rolePalette');
 
 const LIMITED_CHOICES = buildChoicesForSlashCommand().slice(0, 25);
 
@@ -74,7 +74,13 @@ module.exports = {
 					.setDescription(`Clé: ${style.key}\nHex: ${style.color}`)
 					.setColor(style.color);
 
-				return interaction.editReply({ content: `Mis à jour: ${targetRole.toString()} → ${style.name} (${style.color})`, embeds: [embed] });
+				const listEmbed = new EmbedBuilder()
+					.setTitle('Palette des couleurs disponibles')
+					.setDescription('Néon, Dark, Pastel, Métal')
+					.setColor(style.color)
+					.addFields(ROLE_STYLES.map(s => ({ name: s.name, value: s.color, inline: true })));
+
+				return interaction.editReply({ content: `Mis à jour: ${targetRole.toString()} → ${style.name} (${style.color})`, embeds: [embed, listEmbed] });
 			}
 
 			// Cible: membre → on trouve ou crée le rôle de couleur correspondant au style, puis on l'assigne
@@ -102,7 +108,13 @@ module.exports = {
 				.setDescription(`Rôle attribué: ${styleRole.toString()}\nClé: ${style.key}\nHex: ${style.color}`)
 				.setColor(style.color);
 
-			return interaction.editReply({ content: `Couleur attribuée à ${targetMember.toString()} → ${style.name} (${style.color})`, embeds: [embed] });
+			const listEmbed = new EmbedBuilder()
+				.setTitle('Palette des couleurs disponibles')
+				.setDescription('Néon, Dark, Pastel, Métal')
+				.setColor(style.color)
+				.addFields(ROLE_STYLES.map(s => ({ name: s.name, value: s.color, inline: true })));
+
+			return interaction.editReply({ content: `Couleur attribuée à ${targetMember.toString()} → ${style.name} (${style.color})`, embeds: [embed, listEmbed] });
 		} catch (error) {
 			return interaction.editReply({ content: `Action impossible. Vérifie mes permissions et la position des rôles.\nErreur: ${error.message}` });
 		}
