@@ -607,11 +607,15 @@ class AouvConfigHandler {
 			.setCustomId('aouv_continue_adding')
 			.setLabel('➕ Continuer à ajouter')
 			.setStyle(ButtonStyle.Primary);
+		const bulkButton = new ButtonBuilder()
+			.setCustomId('aouv_continue_adding_bulk')
+			.setLabel('➕ Ajouter plus de prompts')
+			.setStyle(ButtonStyle.Primary);
 		const backButton = new ButtonBuilder()
 			.setCustomId('aouv_back_to_menu')
 			.setLabel('🔙 Retour au menu')
 			.setStyle(ButtonStyle.Secondary);
-		const row = new ActionRowBuilder().addComponents(continueButton, backButton);
+		const row = new ActionRowBuilder().addComponents(continueButton, bulkButton, backButton);
 		
 		await interaction.reply({ content: '✅ Prompt ajouté avec succès !', components: [row], flags: 64 });
 	}
@@ -639,7 +643,11 @@ class AouvConfigHandler {
 		await this.dataManager.saveData('aouv_config.json', all);
 		
 		// Ajouter des boutons pour continuer
-		const continueButton = new ButtonBuilder()
+		const singleButton = new ButtonBuilder()
+			.setCustomId('aouv_continue_adding')
+			.setLabel('➕ Continuer à ajouter')
+			.setStyle(ButtonStyle.Primary);
+		const bulkButton = new ButtonBuilder()
 			.setCustomId('aouv_continue_adding_bulk')
 			.setLabel('➕ Ajouter plus de prompts')
 			.setStyle(ButtonStyle.Primary);
@@ -647,7 +655,7 @@ class AouvConfigHandler {
 			.setCustomId('aouv_back_to_menu')
 			.setLabel('🔙 Retour au menu')
 			.setStyle(ButtonStyle.Secondary);
-		const row = new ActionRowBuilder().addComponents(continueButton, backButton);
+		const row = new ActionRowBuilder().addComponents(singleButton, bulkButton, backButton);
 		
 		await interaction.reply({ 
 			content: `✅ ${prompts.length} prompt(s) ${kind === 'action' ? 'action' : 'vérité'} ajouté(s) avec succès !`, 
@@ -936,11 +944,15 @@ class AouvConfigHandler {
 			.setCustomId('aouv_continue_adding_nsfw')
 			.setLabel('➕ Continuer à ajouter (NSFW)')
 			.setStyle(ButtonStyle.Primary);
+		const bulkButton = new ButtonBuilder()
+			.setCustomId('aouv_continue_adding_nsfw_bulk')
+			.setLabel('➕ Ajouter plus de prompts NSFW')
+			.setStyle(ButtonStyle.Primary);
 		const backButton = new ButtonBuilder()
 			.setCustomId('aouv_back_to_menu')
 			.setLabel('🔙 Retour au menu')
 			.setStyle(ButtonStyle.Secondary);
-		const row = new ActionRowBuilder().addComponents(continueButton, backButton);
+		const row = new ActionRowBuilder().addComponents(continueButton, bulkButton, backButton);
 		
 		await interaction.reply({ content: '✅ Prompt NSFW ajouté avec succès !', components: [row], flags: 64 });
 	}
@@ -968,7 +980,11 @@ class AouvConfigHandler {
 		await this.dataManager.saveData('aouv_config.json', all);
 		
 		// Ajouter des boutons pour continuer
-		const continueButton = new ButtonBuilder()
+		const singleButton = new ButtonBuilder()
+			.setCustomId('aouv_continue_adding_nsfw')
+			.setLabel('➕ Continuer à ajouter (NSFW)')
+			.setStyle(ButtonStyle.Primary);
+		const bulkButton = new ButtonBuilder()
 			.setCustomId('aouv_continue_adding_nsfw_bulk')
 			.setLabel('➕ Ajouter plus de prompts NSFW')
 			.setStyle(ButtonStyle.Primary);
@@ -976,7 +992,7 @@ class AouvConfigHandler {
 			.setCustomId('aouv_back_to_menu')
 			.setLabel('🔙 Retour au menu')
 			.setStyle(ButtonStyle.Secondary);
-		const row = new ActionRowBuilder().addComponents(continueButton, backButton);
+		const row = new ActionRowBuilder().addComponents(singleButton, bulkButton, backButton);
 		
 		await interaction.reply({ 
 			content: `✅ ${prompts.length} prompt(s) NSFW ${kind === 'action' ? 'action' : 'vérité'} ajouté(s) avec succès !`, 
