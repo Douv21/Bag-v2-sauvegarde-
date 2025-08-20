@@ -138,5 +138,15 @@
     "totalVoiceTime": 0,
     "lastMessageTime": 0,
     "lastVoiceTime": 0
+  },
+  "888888888888888888_999999999999999999": {
+    "userId": "999999999999999999",
+    "guildId": "888888888888888888",
+    "xp": 500,
+    "level": 3,
+    "totalMessages": 1,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 1755727222282,
+    "lastVoiceTime": 0
   }
 }

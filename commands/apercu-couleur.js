@@ -19,7 +19,6 @@ module.exports = {
 				.setName('style-key')
 				.setDescription('Clé du style (ex: irise-3, exotique-5)')
 				.setRequired(false)
-		)
 		),
 
 	async execute(interaction) {
