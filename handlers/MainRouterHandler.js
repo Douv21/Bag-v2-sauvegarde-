@@ -794,6 +794,22 @@ class MainRouterHandler {
                 }
             }
 
+            // === SELECT MENUS LEVEL SYSTEM ===
+            if (customId === 'level_config_menu') {
+                console.log('🎯 Menu level_config_menu détecté, valeur:', interaction.values[0]);
+                if (this.levelHandler) {
+                    const selectedValue = interaction.values[0];
+                    await this.levelHandler.handleLevelButton(interaction, `level_${selectedValue}`);
+                } else {
+                    console.log('⚠️ LevelConfigHandler non disponible');
+                    await interaction.reply({
+                        content: '❌ Le gestionnaire de configuration des niveaux n\'est pas disponible.',
+                        ephemeral: true
+                    });
+                }
+                return true;
+            }
+
             // === SELECT MENUS AUTRES HANDLERS ===
             if (this.countingHandler && customId.startsWith('counting_')) {
                 await this.countingHandler.handleCountingSelect(interaction);
@@ -812,6 +828,23 @@ class MainRouterHandler {
 
             if (this.bumpHandler && customId.startsWith('bump_')) {
                 await this.bumpHandler.handleBumpSelect(interaction);
+                return true;
+            }
+
+            // === SELECT MENUS MODERATION ===
+            if (customId === 'moderation_config_menu') {
+                const selectedValue = interaction.values[0];
+                const { EmbedBuilder } = require('discord.js');
+                const embed = new EmbedBuilder()
+                    .setTitle(`⚙️ Configuration: ${selectedValue}`)
+                    .setDescription('Cette fonctionnalité est en cours de développement.')
+                    .setColor('#FFA500')
+                    .addFields([
+                        { name: '🚧 En Construction', value: 'Cette section sera bientôt disponible.', inline: false }
+                    ])
+                    .setTimestamp();
+                    
+                await interaction.update({ embeds: [embed], components: [] });
                 return true;
             }
 
@@ -947,6 +980,61 @@ class MainRouterHandler {
                 console.error('❌ Impossible de répondre à l\'interaction:', e);
             }
             return true;
+        }
+    }
+
+    // Méthode pour gérer l'interface de modération
+    async handleModerationUI(interaction, menuType) {
+        try {
+            const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+            
+            const embed = new EmbedBuilder()
+                .setTitle('⚙️ Configuration de Modération')
+                .setDescription('Configurez les paramètres de modération de votre serveur')
+                .setColor('#FF6B6B')
+                .addFields([
+                    { name: '🛡️ Système de Sécurité', value: 'Configuration des vérifications automatiques', inline: true },
+                    { name: '⚠️ Avertissements', value: 'Gestion des avertissements et sanctions', inline: true },
+                    { name: '🔨 Actions Auto', value: 'Configuration des actions automatiques', inline: true }
+                ])
+                .setTimestamp();
+
+            const row = new ActionRowBuilder()
+                .addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('moderation_config_menu')
+                        .setPlaceholder('Choisissez une section à configurer...')
+                        .addOptions([
+                            {
+                                label: 'Système de Sécurité',
+                                description: 'Configurer les vérifications d\'entrée',
+                                value: 'security_config',
+                                emoji: '🛡️'
+                            },
+                            {
+                                label: 'Avertissements',
+                                description: 'Gérer le système d\'avertissements',
+                                value: 'warnings_config',
+                                emoji: '⚠️'
+                            },
+                            {
+                                label: 'Actions Automatiques',
+                                description: 'Configurer les sanctions automatiques',
+                                value: 'auto_actions_config',
+                                emoji: '🔨'
+                            }
+                        ])
+                );
+
+            await interaction.editReply({ embeds: [embed], components: [row] });
+            
+        } catch (error) {
+            console.error('❌ Erreur handleModerationUI:', error);
+            await interaction.editReply({
+                content: '❌ Erreur lors de l\'affichage du menu de modération.',
+                embeds: [],
+                components: []
+            });
         }
     }
 }
