@@ -111,6 +111,9 @@ class BagBotRender {
 
     async init() {
         try {
+            // Initialiser les méthodes de quarantaine AVANT tout
+            this.initializeQuarantineMethods();
+            
             // Configuration Express
             this.setupExpress();
             
@@ -1969,7 +1972,6 @@ class BagBotRender {
 // Démarrage pour Render.com Web Service
 if (require.main === module) {
     const bot = new BagBotRender();
-    bot.initializeQuarantineMethods();
 }
 
 module.exports = BagBotRender;
