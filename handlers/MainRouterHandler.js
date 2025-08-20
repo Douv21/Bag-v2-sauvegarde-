@@ -439,6 +439,12 @@ class MainRouterHandler {
                 return true;
             }
 
+            // === BOUTONS COUNTING SYSTEM ===
+            if (this.countingHandler && customId.startsWith('counting_')) {
+                await this.countingHandler.handleCountingSelect(interaction);
+                return true;
+            }
+
             return false;
         } catch (error) {
             console.error('❌ Erreur button interaction:', error);

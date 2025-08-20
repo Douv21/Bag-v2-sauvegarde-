@@ -103,20 +103,29 @@ class CountingConfigHandler {
     async handleMainMenu(interaction) {
         const value = interaction.values[0];
         switch (value) {
+            case 'add_channel':
+                await this.showAddChannelSelector(interaction);
+                break;
             case 'manage_channels':
                 await this.showChannelsManagement(interaction);
                 break;
-            case 'global_settings':
-                await this.showGlobalSettings(interaction);
-                break;
             case 'records_management':
                 await this.showRecordsManagement(interaction);
+                break;
+            case 'game_settings':
+                await this.showGlobalSettings(interaction);
+                break;
+            case 'global_settings':
+                await this.showGlobalSettings(interaction);
                 break;
             case 'counting_stats':
                 await this.showCountingStats(interaction);
                 break;
             default:
-                await interaction.reply({ content: '❌ Option non reconnue', flags: 64 });
+                console.log(`⚠️ Option de comptage non reconnue: ${value}`);
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ content: '❌ Option non reconnue', flags: 64 });
+                }
         }
     }
 
@@ -1139,6 +1148,86 @@ class CountingConfigHandler {
                 await interaction.editReply({ embeds: [embed], components: [] });
             } else {
                 await interaction.reply({ embeds: [embed], components: [], flags: 64 });
+            }
+        }
+    }
+
+    /**
+     * Méthode principale pour gérer toutes les interactions de comptage
+     * Appelée par MainRouterHandler
+     */
+    async handleCountingSelect(interaction) {
+        const customId = interaction.customId;
+        
+        try {
+            // Router selon le customId
+            switch (customId) {
+                case 'counting_config_main':
+                    await this.handleMainMenu(interaction);
+                    break;
+                    
+                case 'counting_channels_menu':
+                    await this.handleChannelsMenu(interaction);
+                    break;
+                    
+                case 'counting_add_channel':
+                    await this.handleAddChannel(interaction);
+                    break;
+                    
+                case 'counting_configure_channel':
+                    await this.handleConfigureChannel(interaction);
+                    break;
+                    
+                case 'counting_remove_channel':
+                    await this.handleRemoveChannel(interaction);
+                    break;
+                    
+                case 'counting_global_options':
+                    await this.handleGlobalSettings(interaction);
+                    break;
+                    
+                case 'counting_records_options':
+                    await this.handleRecordsOptions(interaction);
+                    break;
+                    
+                case 'counting_set_max_number':
+                    await this.handleSetMaxNumber(interaction);
+                    break;
+                    
+                case 'counting_reset_specific':
+                    await this.handleResetSpecific(interaction);
+                    break;
+                    
+                case 'counting_channel_settings':
+                    await this.handleChannelsOptions(interaction);
+                    break;
+                    
+                // Boutons de retour
+                case 'counting_add_back':
+                case 'counting_config_back':
+                case 'counting_stats_back':
+                case 'counting_remove_back':
+                case 'counting_reset_back':
+                    await this.showMainConfigMenu(interaction);
+                    break;
+                    
+                default:
+                    console.log(`⚠️ Interaction de comptage non gérée: ${customId}`);
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply({
+                            content: '❌ Interaction de comptage non reconnue.',
+                            flags: 64
+                        });
+                    }
+                    break;
+            }
+        } catch (error) {
+            console.error('❌ Erreur handleCountingSelect:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '❌ Erreur lors du traitement de l\'interaction de comptage.',
+                    flags: 64
+                });
             }
         }
     }
