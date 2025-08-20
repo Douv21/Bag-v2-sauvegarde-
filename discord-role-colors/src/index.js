@@ -95,7 +95,7 @@ async function handleColorRole(interaction) {
 
   const style = findStyleByKey(styleKey);
   if (!style) {
-    await interaction.reply({ content: `Style inconnu: ${styleKey}. Vérifie la clé (ex: irise-3, exotique-5, degrade-v-2).`, ephemeral: true });
+    await interaction.reply({ content: `Style inconnu: ${styleKey}. Vérifie la clé (ex: irise-3, exotique-5).`, ephemeral: true });
     return;
   }
 
@@ -128,7 +128,7 @@ async function handlePreviewColor(interaction) {
 
   const style = findStyleByKey(styleKey);
   if (!style) {
-    await interaction.reply({ content: `Style inconnu: ${styleKey}. Exemples: irise-3, exotique-5, degrade-v-2.`, ephemeral: true });
+    await interaction.reply({ content: `Style inconnu: ${styleKey}. Exemples: irise-3, exotique-5.`, ephemeral: true });
     return;
   }
 
