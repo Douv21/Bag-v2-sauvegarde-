@@ -4,8 +4,8 @@ Permissions requises: Administrateur (sauf mention contraire). Les actions sont 
 
 Commandes:
 
-- `/ban membre:<User> raison:<String?>`
-  - Bannit un membre. Ajoute à l'historique, journalise l'action.
+- `/ban membre:<User> suppr_jours:<Int 0-7?> raison:<String?>`
+  - Bannit un membre. Optionnellement supprime ses messages des N derniers jours (0 à 7). Ajoute à l'historique, journalise l'action.
 - `/unban userid:<String> raison:<String?>`
   - Débannit par ID, log de l’événement si possible.
 - `/kick membre:<User> raison:<String?>`
