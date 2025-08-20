@@ -206,7 +206,7 @@ class MainRouterHandler {
                 return await this.handlers.confession.showMainConfigMenu(interaction);
             }
 
-            // AouV buttons
+            // AouV buttons (jeu)
             if (customId === 'aouv_btn_action' || customId === 'aouv_btn_verite') {
                 console.log(`➡️ Routage vers AouV (boutons): ${customId}`);
                 try {
@@ -216,6 +216,12 @@ class MainRouterHandler {
                 } catch (e) {
                     console.error('Erreur routage AouV:', e);
                 }
+            }
+
+            // AouV configuration
+            if (customId.startsWith('aouv_')) {
+                console.log(`➡️ Routage vers AouV Config: ${customId}`);
+                return await this.routeToAouvConfigHandler(interaction, customId);
             }
 
             console.log(`⚠️ CustomId non géré par le router: ${customId}`);
@@ -1397,6 +1403,200 @@ class MainRouterHandler {
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({ content: '❌ Erreur menu modération.', ephemeral: true });
             }
+            return true;
+        }
+    }
+
+    /**
+     * Router vers le handler de configuration AouV
+     */
+    async routeToAouvConfigHandler(interaction, customId) {
+        try {
+            const AouvConfigHandler = require('./AouvConfigHandler');
+            const handler = new AouvConfigHandler(this.dataManager);
+
+            // Gestion des sélecteurs
+            if (customId === 'aouv_main_select') {
+                return await handler.handleAouvSelect(interaction);
+            }
+
+            // Gestion des canaux
+            if (customId === 'aouv_channel_add') {
+                return await handler.handleAouvChannelAdd(interaction);
+            }
+            if (customId === 'aouv_channel_remove') {
+                return await handler.handleAouvChannelRemove(interaction);
+            }
+
+            // Gestion des canaux NSFW
+            if (customId === 'aouv_nsfw_channel_add') {
+                return await handler.handleAouvNsfwChannelAdd(interaction);
+            }
+            if (customId === 'aouv_nsfw_channel_remove') {
+                return await handler.handleAouvNsfwChannelRemove(interaction);
+            }
+
+            // Gestion des modals d'ajout
+            if (customId === 'aouv_prompt_add_modal') {
+                return await handler.handleAouvPromptAddModal(interaction);
+            }
+            if (customId === 'aouv_prompt_add_bulk_modal') {
+                return await handler.handleAouvPromptAddBulkModal(interaction);
+            }
+            if (customId === 'aouv_nsfw_prompt_add_modal') {
+                return await handler.handleAouvNsfwPromptAddModal(interaction);
+            }
+            if (customId === 'aouv_nsfw_prompt_add_bulk_modal') {
+                return await handler.handleAouvNsfwPromptAddBulkModal(interaction);
+            }
+
+            // Gestion des boutons de continuation
+            if (customId === 'aouv_continue_adding' || customId === 'aouv_continue_adding_bulk' ||
+                customId === 'aouv_continue_adding_nsfw' || customId === 'aouv_continue_adding_nsfw_bulk' ||
+                customId === 'aouv_back_to_menu') {
+                return await handler.handleContinueAddingButton(interaction, customId);
+            }
+
+            // Gestion des sélecteurs de type pour édition/suppression
+            if (customId === 'aouv_prompt_edit_kind_select') {
+                return await handler.handleAouvPromptEditKindSelect(interaction);
+            }
+            if (customId === 'aouv_prompt_remove_kind_select') {
+                return await handler.handleAouvPromptRemoveKindSelect(interaction);
+            }
+            if (customId === 'aouv_prompt_list_custom_kind_select') {
+                return await handler.handleAouvPromptListCustomKindSelect(interaction);
+            }
+            if (customId === 'aouv_prompt_list_base_kind_select') {
+                return await handler.handleAouvPromptListBaseKindSelect(interaction);
+            }
+            if (customId === 'aouv_prompt_override_kind_select') {
+                return await handler.handleAouvPromptOverrideKindSelect(interaction);
+            }
+
+            // Gestion des sélections d'édition/suppression
+            if (customId === 'aouv_prompt_edit_select_action') {
+                return await handler.handleAouvPromptEditSelect(interaction, 'action');
+            }
+            if (customId === 'aouv_prompt_edit_select_truth') {
+                return await handler.handleAouvPromptEditSelect(interaction, 'verite');
+            }
+            if (customId === 'aouv_prompt_remove_select_action') {
+                return await handler.handleAouvPromptRemoveSelect(interaction, 'action');
+            }
+            if (customId === 'aouv_prompt_remove_select_truth') {
+                return await handler.handleAouvPromptRemoveSelect(interaction, 'verite');
+            }
+
+            // Gestion des sélections d'override
+            if (customId === 'aouv_prompt_override_select_action') {
+                return await handler.handleAouvPromptOverrideSelect(interaction, 'action');
+            }
+            if (customId === 'aouv_prompt_override_select_truth') {
+                return await handler.handleAouvPromptOverrideSelect(interaction, 'verite');
+            }
+
+            // Gestion des sélections NSFW
+            if (customId === 'aouv_nsfw_prompt_edit_select_action') {
+                return await handler.handleAouvNsfwPromptEditSelect(interaction, 'action');
+            }
+            if (customId === 'aouv_nsfw_prompt_edit_select_truth') {
+                return await handler.handleAouvNsfwPromptEditSelect(interaction, 'verite');
+            }
+
+            // Gestion des modals d'édition
+            if (customId === 'aouv_prompt_edit_modal') {
+                return await handler.handleAouvPromptEditModal(interaction);
+            }
+            if (customId === 'aouv_prompt_remove_modal') {
+                return await handler.handleAouvPromptRemoveModal(interaction);
+            }
+            if (customId === 'aouv_nsfw_prompt_edit_modal') {
+                return await handler.handleAouvNsfwPromptEditModal(interaction);
+            }
+            if (customId === 'aouv_nsfw_prompt_remove_modal') {
+                return await handler.handleAouvNsfwPromptRemoveModal(interaction);
+            }
+
+            // Gestion des modals de base
+            if (customId === 'aouv_prompt_list_base_modal') {
+                return await handler.handleAouvPromptListBaseModal(interaction);
+            }
+            if (customId === 'aouv_prompt_override_base_modal') {
+                return await handler.handleAouvPromptOverrideModal(interaction);
+            }
+            if (customId === 'aouv_prompt_reset_override_base_modal') {
+                return await handler.handleAouvPromptResetOverrideModal(interaction);
+            }
+            if (customId === 'aouv_prompt_disable_base_modal') {
+                return await handler.handleAouvPromptBaseModal(interaction, true);
+            }
+            if (customId === 'aouv_prompt_enable_base_modal') {
+                return await handler.handleAouvPromptBaseModal(interaction, false);
+            }
+
+            // Gestion des modals NSFW
+            if (customId === 'aouv_nsfw_prompt_list_base_modal') {
+                return await handler.handleAouvNsfwPromptListBaseModal(interaction);
+            }
+            if (customId === 'aouv_nsfw_prompt_override_base_modal') {
+                return await handler.handleAouvNsfwPromptOverrideModal(interaction);
+            }
+            if (customId === 'aouv_nsfw_prompt_reset_override_base_modal') {
+                return await handler.handleAouvNsfwPromptResetOverrideModal(interaction);
+            }
+            if (customId === 'aouv_nsfw_prompt_disable_base_modal') {
+                return await handler.handleAouvNsfwPromptBaseModal(interaction, true);
+            }
+            if (customId === 'aouv_nsfw_prompt_enable_base_modal') {
+                return await handler.handleAouvNsfwPromptBaseModal(interaction, false);
+            }
+
+            // Gestion des boutons de pagination
+            if (customId.startsWith('aouv_prompt_edit_list_') && customId.includes('_page_')) {
+                const parts = customId.split('_');
+                const kind = parts[4]; // action ou verite
+                const page = parseInt(parts[6], 10);
+                return await handler.showAouvPromptEditListPaged(interaction, kind, page);
+            }
+            if (customId.startsWith('aouv_prompt_remove_list_') && customId.includes('_page_')) {
+                const parts = customId.split('_');
+                const kind = parts[4]; // action ou verite
+                const page = parseInt(parts[6], 10);
+                return await handler.showAouvPromptRemoveListPaged(interaction, kind, page);
+            }
+            if (customId.startsWith('aouv_prompt_list_custom_') && customId.includes('_page_')) {
+                const parts = customId.split('_');
+                const kind = parts[4]; // action ou verite
+                const page = parseInt(parts[6], 10);
+                return await handler.showAouvPromptListCustomPaged(interaction, kind, page);
+            }
+            if (customId.startsWith('aouv_prompt_list_base_') && customId.includes('_page_')) {
+                const parts = customId.split('_');
+                const kind = parts[4]; // action ou verite
+                const page = parseInt(parts[6], 10);
+                return await handler.showAouvPromptListBasePaged(interaction, kind, page);
+            }
+            if (customId.startsWith('aouv_prompt_override_list_') && customId.includes('_page_')) {
+                const parts = customId.split('_');
+                const kind = parts[4]; // action ou verite
+                const page = parseInt(parts[6], 10);
+                return await handler.showAouvPromptOverrideBaseListPaged(interaction, kind, page);
+            }
+
+            console.log(`⚠️ CustomId AouV non géré: ${customId}`);
+            return false;
+
+        } catch (error) {
+            console.error(`Erreur dans routeToAouvConfigHandler pour ${customId}:`, error);
+            
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ 
+                    content: '❌ Une erreur est survenue lors du traitement de votre demande AouV.', 
+                    flags: 64 
+                });
+            }
+            
             return true;
         }
     }
