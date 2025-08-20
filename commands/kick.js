@@ -22,6 +22,12 @@ module.exports = {
     const member = await guild.members.fetch(user.id).catch(() => null);
     if (!member) return interaction.reply({ content: 'Utilisateur introuvable.', flags: 64 });
     await member.kick(reason);
+    
+    // Ajouter à l'historique global
+    try {
+      await interaction.client.moderationManager?.addKickToHistory(user.id, guild.id, reason, interaction.user.id);
+    } catch {}
+    
     try { await interaction.client.logManager?.logKick(member, interaction.user, reason); } catch {}
     return interaction.reply({ content: `✅ ${user.tag} a été expulsé.`, flags: 64 });
   }

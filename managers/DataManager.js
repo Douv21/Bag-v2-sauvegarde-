@@ -64,7 +64,11 @@ class DataManager {
             'moderation_state': 'moderation_state.json',
             'logs_config': 'logs_config.json',
             // Snapshots de rôles pour logs
-            'member_roles': 'member_roles.json'
+            'member_roles': 'member_roles.json',
+            // Historique cross-serveur
+            'global_moderation_history': 'global_moderation_history.json',
+            // Configuration sécurité
+            'security_config': 'security_config.json'
         };
 
         // Initialiser le LevelBackupManager
