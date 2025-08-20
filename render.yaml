@@ -3,9 +3,11 @@ services:
     name: bagbot-v2
     env: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm ci
     startCommand: node index.render-final.js
     envVars:
+      - key: NODE_VERSION
+        value: 20
       - key: NODE_ENV
         value: production
       - key: DISCORD_TOKEN
