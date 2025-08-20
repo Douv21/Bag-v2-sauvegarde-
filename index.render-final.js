@@ -3015,7 +3015,7 @@ class RenderSolutionBot {
                                          customId === 'role_perm_select' ||
                                          customId === 'manage_objects_select' ||
                                          customId === 'delete_articles_select' ||
-                                         (customId.startsWith('aouv_') && !customId.startsWith('aouv_btn_'));
+                                         customId.startsWith('aouv_');
                     
                     if (!economyHandled) {
                         console.log('🔄 Routage vers MainRouter pour:', customId);
@@ -3030,6 +3030,14 @@ class RenderSolutionBot {
                     } else {
                         console.log('✅ Interaction économique déjà traitée, ignorée par MainRouter');
                     }
+                }
+
+                // === AOUV BUTTONS — Gestion des boutons Action/Vérité ===
+                if (customId === 'aouv_btn_action' || customId === 'aouv_btn_verite') {
+                    console.log('🎯 Bouton AouV cliqué:', customId);
+                    const aouvCommand = require('./commands/aouv');
+                    await aouvCommand.handleButton(interaction, dataManager);
+                    return;
                 }
 
                 // === AOUV CONFIG — indépendant ===

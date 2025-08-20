@@ -19,6 +19,56 @@ class MainRouterHandler {
             const ConfessionHandler = require('./ConfessionHandler');
             this.confessionHandler = new ConfessionHandler(this.dataManager);
             
+            // Initialiser les autres handlers
+            try {
+                const AouvConfigHandler = require('./AouvConfigHandler');
+                this.aouvHandler = new AouvConfigHandler(this.dataManager);
+            } catch (e) {
+                console.log('⚠️ AouvConfigHandler non disponible');
+            }
+
+            try {
+                const LevelConfigHandler = require('./LevelConfigHandler');
+                this.levelHandler = new LevelConfigHandler();
+            } catch (e) {
+                console.log('⚠️ LevelConfigHandler non disponible');
+            }
+
+            try {
+                const CountingConfigHandler = require('./CountingConfigHandler');
+                this.countingHandler = new CountingConfigHandler(this.dataManager);
+            } catch (e) {
+                console.log('⚠️ CountingConfigHandler non disponible');
+            }
+
+            try {
+                const LogsConfigHandler = require('./LogsConfigHandler');
+                this.logsHandler = new LogsConfigHandler(this.dataManager);
+            } catch (e) {
+                console.log('⚠️ LogsConfigHandler non disponible');
+            }
+
+            try {
+                const AutoThreadConfigHandler = require('./AutoThreadConfigHandler');
+                this.autothreadHandler = new AutoThreadConfigHandler(this.dataManager);
+            } catch (e) {
+                console.log('⚠️ AutoThreadConfigHandler non disponible');
+            }
+
+            try {
+                const BumpInteractionHandler = require('./BumpInteractionHandler');
+                this.bumpHandler = new BumpInteractionHandler(this.dataManager);
+            } catch (e) {
+                console.log('⚠️ BumpInteractionHandler non disponible');
+            }
+
+            try {
+                const DashboardHandler = require('./DashboardHandler');
+                this.dashboardHandler = new DashboardHandler(this.dataManager);
+            } catch (e) {
+                console.log('⚠️ DashboardHandler non disponible');
+            }
+            
             console.log('✅ Handlers spécialisés initialisés');
         } catch (error) {
             console.error('❌ Erreur initialisation handlers:', error);
@@ -69,7 +119,7 @@ class MainRouterHandler {
 
     async handleModalSubmit(interaction, customId) {
         try {
-            // Modals économiques
+            // === MODALS ÉCONOMIQUES ===
             if (customId.startsWith('action_config_modal_')) {
                 await this.economyHandler.handleActionConfigModal(interaction);
                 return true;
@@ -80,7 +130,6 @@ class MainRouterHandler {
                 return true;
             }
 
-            // Modals Daily
             if (customId === 'daily_amount_modal') {
                 await this.economyHandler.handleDailyAmountModal(interaction);
                 return true;
@@ -91,7 +140,6 @@ class MainRouterHandler {
                 return true;
             }
 
-            // Modals Messages
             if (customId === 'message_amount_modal') {
                 await this.economyHandler.handleMessageAmountModal(interaction);
                 return true;
@@ -107,7 +155,6 @@ class MainRouterHandler {
                 return true;
             }
 
-            // Modals Karma
             if (customId === 'karma_levels_modal') {
                 await this.economyHandler.handleKarmaLevelsModal(interaction);
                 return true;
@@ -128,10 +175,111 @@ class MainRouterHandler {
                 return true;
             }
 
-            // Autres modals
             if (customId.includes('shop_role_price_modal')) {
                 await this.economyHandler.handleShopRolePriceModal(interaction);
                 return true;
+            }
+
+            // === MODALS AOUV ===
+            if (this.aouvHandler) {
+                if (customId === 'aouv_prompt_add_modal') {
+                    await this.aouvHandler.handleAouvPromptAddModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_add_bulk_modal') {
+                    await this.aouvHandler.handleAouvPromptAddBulkModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_edit_modal') {
+                    await this.aouvHandler.handleAouvPromptEditModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_remove_modal') {
+                    await this.aouvHandler.handleAouvPromptRemoveModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_disable_base_modal') {
+                    await this.aouvHandler.handleAouvPromptBaseModal(interaction, true);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_enable_base_modal') {
+                    await this.aouvHandler.handleAouvPromptBaseModal(interaction, false);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_list_base_modal') {
+                    await this.aouvHandler.handleAouvPromptListBaseModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_override_base_modal') {
+                    await this.aouvHandler.handleAouvPromptOverrideBaseModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_reset_override_base_modal') {
+                    await this.aouvHandler.handleAouvPromptResetOverrideBaseModal(interaction);
+                    return true;
+                }
+
+                // NSFW Modals
+                if (customId === 'aouv_nsfw_prompt_add_modal') {
+                    await this.aouvHandler.handleAouvNsfwPromptAddModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_add_bulk_modal') {
+                    await this.aouvHandler.handleAouvNsfwPromptAddBulkModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_edit_modal') {
+                    await this.aouvHandler.handleAouvNsfwPromptEditModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_remove_modal') {
+                    await this.aouvHandler.handleAouvNsfwPromptRemoveModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_list_base_modal') {
+                    await this.aouvHandler.handleAouvNsfwPromptListBaseModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_override_base_modal') {
+                    await this.aouvHandler.handleAouvNsfwPromptOverrideBaseModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_reset_override_base_modal') {
+                    await this.aouvHandler.handleAouvNsfwPromptResetOverrideBaseModal(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_disable_base_modal') {
+                    await this.aouvHandler.handleAouvNsfwPromptBaseModal(interaction, true);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_enable_base_modal') {
+                    await this.aouvHandler.handleAouvNsfwPromptBaseModal(interaction, false);
+                    return true;
+                }
+            }
+
+            // === MODALS LEVEL SYSTEM ===
+            if (this.levelHandler) {
+                if (customId.startsWith('style_backgrounds_modal_') || customId.startsWith('style_backgrounds_default_modal_')) {
+                    await this.levelHandler.handleStyleBackgroundsModal(interaction, customId);
+                    return true;
+                }
             }
 
             return false;
@@ -143,7 +291,7 @@ class MainRouterHandler {
 
     async handleButtonInteraction(interaction, customId) {
         try {
-            // Boutons économie
+            // === BOUTONS ÉCONOMIE ===
             if (customId === 'economy_main_config') {
                 await this.economyHandler.handleEconomyMainConfig(interaction);
                 return true;
@@ -196,7 +344,7 @@ class MainRouterHandler {
                 return true;
             }
 
-            // Boutons confession
+            // === BOUTONS CONFESSION ===
             if (customId === 'confession_main_config') {
                 await this.confessionHandler.handleConfessionMainConfig(interaction);
                 return true;
@@ -217,6 +365,26 @@ class MainRouterHandler {
                 return true;
             }
 
+            // === BOUTONS AOUV ===
+            if (customId === 'aouv_btn_action' || customId === 'aouv_btn_verite') {
+                console.log('🎯 Bouton AouV cliqué via MainRouter:', customId);
+                const aouvCommand = require('../commands/aouv');
+                await aouvCommand.handleButton(interaction, this.dataManager);
+                return true;
+            }
+
+            // === BOUTONS DASHBOARD ===
+            if (this.dashboardHandler && customId.startsWith('dashboard_')) {
+                await this.dashboardHandler.handleDashboardButton(interaction);
+                return true;
+            }
+
+            // === BOUTONS LEVEL SYSTEM ===
+            if (this.levelHandler && customId.startsWith('level_')) {
+                await this.levelHandler.handleLevelButton(interaction, customId);
+                return true;
+            }
+
             return false;
         } catch (error) {
             console.error('❌ Erreur button interaction:', error);
@@ -226,7 +394,7 @@ class MainRouterHandler {
 
     async handleSelectMenuInteraction(interaction, customId) {
         try {
-            // Select menus économie
+            // === SELECT MENUS ÉCONOMIE ===
             if (customId.startsWith('action_sub_config_')) {
                 await this.economyHandler.handleActionSubConfig(interaction);
                 return true;
@@ -310,7 +478,7 @@ class MainRouterHandler {
                 return true;
             }
 
-            // Select menus confession
+            // === SELECT MENUS CONFESSION ===
             if (customId === 'confession_log_level') {
                 await this.confessionHandler.handleConfessionLogLevel(interaction);
                 return true;
@@ -343,6 +511,253 @@ class MainRouterHandler {
 
             if (customId === 'confession_archive_time') {
                 await this.confessionHandler.handleConfessionArchiveTime(interaction);
+                return true;
+            }
+
+            // === SELECT MENUS AOUV ===
+            if (this.aouvHandler) {
+                if (customId === 'aouv_main_select') {
+                    await this.aouvHandler.handleAouvSelect(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_edit_kind_select') {
+                    await this.aouvHandler.handleAouvPromptEditKindSelect(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_remove_kind_select') {
+                    await this.aouvHandler.handleAouvPromptRemoveKindSelect(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_list_custom_kind_select') {
+                    await this.aouvHandler.handleAouvPromptListCustomKindSelect(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_list_base_kind_select') {
+                    await this.aouvHandler.handleAouvPromptListBaseKindSelect(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_override_kind_select') {
+                    await this.aouvHandler.handleAouvPromptOverrideKindSelect(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_disable_all_select') {
+                    await this.aouvHandler.handleAouvDisableAllSelect(interaction);
+                    return true;
+                }
+
+                // NSFW selects
+                if (customId === 'aouv_nsfw_prompt_edit_kind_select') {
+                    await this.aouvHandler.handleAouvNsfwPromptEditKindSelect(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_remove_kind_select') {
+                    await this.aouvHandler.handleAouvNsfwPromptRemoveKindSelect(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_list_custom_kind_select') {
+                    await this.aouvHandler.handleAouvNsfwPromptListCustomKindSelect(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_disable_all_select') {
+                    await this.aouvHandler.handleAouvNsfwDisableAllSelect(interaction);
+                    return true;
+                }
+
+                // Channel selects
+                if (customId === 'aouv_channel_add') {
+                    await this.aouvHandler.handleAouvChannelAdd(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_channel_remove') {
+                    await this.aouvHandler.handleAouvChannelRemove(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_channel_add') {
+                    await this.aouvHandler.handleAouvNsfwChannelAdd(interaction);
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_channel_remove') {
+                    await this.aouvHandler.handleAouvNsfwChannelRemove(interaction);
+                    return true;
+                }
+
+                // Prompt specific selects
+                if (customId === 'aouv_prompt_remove_select_action') {
+                    await this.aouvHandler.handleAouvPromptRemoveSelect(interaction, 'action');
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_remove_select_truth') {
+                    await this.aouvHandler.handleAouvPromptRemoveSelect(interaction, 'verite');
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_edit_select_action') {
+                    await this.aouvHandler.handleAouvPromptEditSelect(interaction, 'action');
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_edit_select_truth') {
+                    await this.aouvHandler.handleAouvPromptEditSelect(interaction, 'verite');
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_edit_select_action') {
+                    await this.aouvHandler.handleAouvNsfwPromptEditSelect(interaction, 'action');
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_edit_select_truth') {
+                    await this.aouvHandler.handleAouvNsfwPromptEditSelect(interaction, 'verite');
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_remove_select_action') {
+                    await this.aouvHandler.handleAouvNsfwPromptRemoveSelect(interaction, 'action');
+                    return true;
+                }
+
+                if (customId === 'aouv_nsfw_prompt_remove_select_truth') {
+                    await this.aouvHandler.handleAouvNsfwPromptRemoveSelect(interaction, 'verite');
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_override_select_action') {
+                    await this.aouvHandler.handleAouvPromptOverrideSelect(interaction, 'action');
+                    return true;
+                }
+
+                if (customId === 'aouv_prompt_override_select_truth') {
+                    await this.aouvHandler.handleAouvPromptOverrideSelect(interaction, 'verite');
+                    return true;
+                }
+
+                // Gestion des selects paginés
+                if (customId.startsWith('aouv_prompt_edit_list_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    await this.aouvHandler.showAouvPromptEditListPaged(interaction, kind, page);
+                    return true;
+                }
+
+                if (customId.startsWith('aouv_prompt_remove_list_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    await this.aouvHandler.showAouvPromptRemoveListPaged(interaction, kind, page);
+                    return true;
+                }
+
+                if (customId.startsWith('aouv_prompt_list_custom_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    await this.aouvHandler.showAouvPromptListCustomPaged(interaction, kind, page);
+                    return true;
+                }
+
+                if (customId.startsWith('aouv_prompt_override_list_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    await this.aouvHandler.showAouvPromptOverrideBaseListPaged(interaction, kind, page);
+                    return true;
+                }
+
+                if (customId.startsWith('aouv_nsfw_prompt_edit_list_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    await this.aouvHandler.showAouvNsfwPromptEditListPaged(interaction, kind, page);
+                    return true;
+                }
+
+                if (customId.startsWith('aouv_nsfw_prompt_remove_list_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    await this.aouvHandler.showAouvNsfwPromptRemoveListPaged(interaction, kind, page);
+                    return true;
+                }
+
+                if (customId.startsWith('aouv_nsfw_prompt_list_custom_')) {
+                    const parts = customId.split('_');
+                    const kind = parts[parts.length - 3];
+                    const page = parseInt(parts[parts.length - 1], 10) || 1;
+                    await this.aouvHandler.showAouvNsfwPromptListCustomPaged(interaction, kind, page);
+                    return true;
+                }
+            }
+
+            // === SELECT MENUS LEVEL SYSTEM ===
+            if (this.levelHandler) {
+                if (customId === 'level_notification_channel') {
+                    await this.levelHandler.handleLevelNotificationChannel(interaction);
+                    return true;
+                }
+
+                if (customId === 'level_card_style') {
+                    await this.levelHandler.handleLevelCardStyle(interaction);
+                    return true;
+                }
+
+                if (customId === 'style_backgrounds_style') {
+                    await this.levelHandler.handleStyleBackgroundsStyle(interaction);
+                    return true;
+                }
+
+                if (customId.startsWith('style_backgrounds_role_')) {
+                    await this.levelHandler.handleStyleBackgroundsRole(interaction, customId);
+                    return true;
+                }
+
+                if (customId.startsWith('style_backgrounds_actions_')) {
+                    await this.levelHandler.handleStyleBackgroundsActions(interaction, customId);
+                    return true;
+                }
+
+                if (customId === 'add_role_reward_select') {
+                    await this.levelHandler.handleAddRoleRewardSelect(interaction);
+                    return true;
+                }
+
+                if (customId === 'remove_role_reward') {
+                    await this.levelHandler.handleRemoveRoleReward(interaction);
+                    return true;
+                }
+            }
+
+            // === SELECT MENUS AUTRES HANDLERS ===
+            if (this.countingHandler && customId.startsWith('counting_')) {
+                await this.countingHandler.handleCountingSelect(interaction);
+                return true;
+            }
+
+            if (this.logsHandler && customId.startsWith('logs_')) {
+                await this.logsHandler.handleLogsSelect(interaction);
+                return true;
+            }
+
+            if (this.autothreadHandler && customId.startsWith('autothread_')) {
+                await this.autothreadHandler.handleAutothreadSelect(interaction);
+                return true;
+            }
+
+            if (this.bumpHandler && customId.startsWith('bump_')) {
+                await this.bumpHandler.handleBumpSelect(interaction);
                 return true;
             }
 
