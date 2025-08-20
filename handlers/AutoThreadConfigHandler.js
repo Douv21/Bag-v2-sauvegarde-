@@ -42,7 +42,7 @@ class AutoThreadConfigHandler {
                 },
                 { 
                     name: '🗃️ Archivage Auto', 
-                    value: `${guildConfig.archiveTime || 1440} minutes`, 
+                    value: guildConfig.permanentThreads ? '♾️ Permanent (Jamais)' : `${guildConfig.archiveTime || 1440} minutes`, 
                     inline: true 
                 },
                 { 
@@ -459,12 +459,13 @@ class AutoThreadConfigHandler {
         const embed = new EmbedBuilder()
             .setColor('#ffa500')
             .setTitle('🗃️ Durée d\'Archivage')
-            .setDescription('Choisissez la durée avant archivage automatique');
+            .setDescription('Choisissez la durée avant archivage automatique\n\n⚠️ **Permanent** : Garde les threads actifs indéfiniment');
 
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('autothread_archive')
             .setPlaceholder('Sélectionnez une durée...')
             .addOptions([
+                { label: '🚫 Permanent (Jamais archivé)', value: 'never', description: 'Les threads restent actifs en permanence', emoji: '♾️' },
                 { label: '1 heure', value: '60', description: 'Archive après 1 heure d\'inactivité' },
                 { label: '24 heures', value: '1440', description: 'Archive après 1 jour d\'inactivité' },
                 { label: '3 jours', value: '4320', description: 'Archive après 3 jours d\'inactivité' },
@@ -477,22 +478,43 @@ class AutoThreadConfigHandler {
 
     async handleArchive(interaction) {
         const guildId = interaction.guild.id;
-        const archiveTime = parseInt(interaction.values[0]);
+        const selectedValue = interaction.values[0];
         const config = await this.dataManager.loadData('autothread.json', {});
         
         if (!config[guildId]) {
             config[guildId] = { enabled: false, channels: [], threadName: 'Thread automatique', archiveTime: 1440, slowMode: 0 };
         }
         
-        config[guildId].archiveTime = archiveTime;
+        let archiveDescription;
+        
+        if (selectedValue === 'never') {
+            // Mode permanent : utiliser 10080 (7 jours) mais avec un flag spécial
+            config[guildId].archiveTime = 10080; // Maximum Discord
+            config[guildId].permanentThreads = true;
+            archiveDescription = '♾️ **Permanent** (Jamais archivé)';
+        } else {
+            const archiveTime = parseInt(selectedValue);
+            config[guildId].archiveTime = archiveTime;
+            config[guildId].permanentThreads = false;
+            
+            const labels = { 60: '1 heure', 1440: '24 heures', 4320: '3 jours', 10080: '7 jours' };
+            archiveDescription = `**${labels[archiveTime]}**`;
+        }
+        
         await this.dataManager.saveData('autothread.json', config);
-
-        const labels = { 60: '1 heure', 1440: '24 heures', 4320: '3 jours', 10080: '7 jours' };
 
         const embed = new EmbedBuilder()
             .setColor('#00ff00')
             .setTitle('✅ Archivage Configuré')
-            .setDescription(`Durée d'archivage : **${labels[archiveTime]}**`);
+            .setDescription(`Durée d'archivage : ${archiveDescription}`);
+
+        if (selectedValue === 'never') {
+            embed.addFields({
+                name: '⚠️ Mode Permanent Activé',
+                value: 'Les threads seront gardés actifs indéfiniment.\nLe bot réactivera automatiquement les threads archivés.',
+                inline: false
+            });
+        }
 
         await interaction.update({ embeds: [embed], components: [] });
         

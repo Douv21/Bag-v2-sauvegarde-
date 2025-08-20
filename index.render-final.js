@@ -3576,9 +3576,17 @@ class RenderSolutionBot {
             // Limiter le nom à 100 caractères (limite Discord)
             threadName = threadName.substring(0, 100);
             
+            // Déterminer la durée d'archivage
+            let archiveDuration = parseInt(autoThreadConfig.archiveTime) || 60;
+            
+            // Si mode permanent, utiliser la durée maximale Discord (7 jours = 10080 minutes)
+            if (autoThreadConfig.permanentThreads) {
+                archiveDuration = 10080; // 7 jours (maximum Discord)
+            }
+            
             const thread = await message.startThread({
                 name: threadName,
-                autoArchiveDuration: parseInt(autoThreadConfig.archiveTime) || 60,
+                autoArchiveDuration: archiveDuration,
                 reason: `Auto-thread créé par ${message.author.tag}`
             });
             
@@ -3593,6 +3601,11 @@ class RenderSolutionBot {
             config[guildId].stats.lastCreated = new Date().toISOString();
             
             await dataManager.saveData('autothread.json', config);
+            
+            // Si mode permanent, surveiller ce thread pour le réactiver si archivé
+            if (autoThreadConfig.permanentThreads) {
+                this.monitorPermanentThread(thread.id, guildId);
+            }
             
             console.log(`🧵 Thread créé: "${threadName}" dans #${message.channel.name} par ${message.author.tag}`);
             
