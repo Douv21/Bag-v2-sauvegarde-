@@ -23,7 +23,7 @@ module.exports = {
 		.addStringOption(option =>
 			option
 				.setName('style-key')
-				.setDescription('Clé du style (ex: irise-3, exotique-5, degrade-v-2)')
+				.setDescription('Clé du style (ex: irise-3, exotique-5)')
 				.setRequired(false)
 		)
 		.addBooleanOption(option =>
@@ -55,7 +55,7 @@ module.exports = {
 
 		const style = findStyleByKey(styleKey);
 		if (!style) {
-			return interaction.reply({ content: `Style inconnu: ${styleKey}. Exemples: irise-3, exotique-5, degrade-v-2.`, flags: 64 });
+			return interaction.reply({ content: `Style inconnu: ${styleKey}. Exemples: irise-3, exotique-5.`, flags: 64 });
 		}
 
 		await interaction.deferReply({ ephemeral: true });

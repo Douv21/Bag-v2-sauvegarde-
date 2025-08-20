@@ -63,7 +63,7 @@ const commands = [
     .addStringOption(option =>
       option
         .setName('style-key')
-        .setDescription('Clé du style (ex: irise-3, exotique-5, degrade-v-2)')
+        .setDescription('Clé du style (ex: irise-3, exotique-5)')
         .setRequired(false)
     )
 ].map(cmd => cmd.toJSON());
