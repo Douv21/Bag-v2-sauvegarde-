@@ -2,7 +2,7 @@ const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ChannelType } = 
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('config-securite')
+    .setName('config-verif')
     .setDescription('Configurer le système de sécurité et contrôle d\'accès')
     .addSubcommand(subcommand =>
       subcommand
@@ -187,10 +187,10 @@ module.exports = {
     embed.addFields({
       name: '🚀 Configuration rapide',
       value: '**Étapes recommandées :**\n' +
-             '1️⃣ `/config-securite acces activer:true age-minimum:7 score-max:40`\n' +
-             '2️⃣ `/config-securite roles` (configurer rôles)\n' +
-             '3️⃣ `/config-securite actions` (définir actions auto)\n' +
-             '4️⃣ `/config-securite admins` (canal d\'alertes)',
+             '1️⃣ `/config-verif acces activer:true age-minimum:7 score-max:40`\n' +
+             '2️⃣ `/config-verif roles` (configurer rôles)\n' +
+             '3️⃣ `/config-verif actions` (définir actions auto)\n' +
+             '4️⃣ `/config-verif admins` (canal d\'alertes)',
       inline: false
     });
 
@@ -240,8 +240,8 @@ module.exports = {
     
     if (enabled) {
       response += '\n\n💡 **Prochaines étapes :**';
-      response += '\n• Configurez les rôles avec `/config-securite roles`';
-      response += '\n• Définissez les actions avec `/config-securite actions`';
+      response += '\n• Configurez les rôles avec `/config-verif roles`';
+      response += '\n• Définissez les actions avec `/config-verif actions`';
     }
 
     return interaction.reply({ content: response, flags: 64 });
@@ -466,3 +466,4 @@ module.exports = {
     return displays[action] || action;
   }
 };
+

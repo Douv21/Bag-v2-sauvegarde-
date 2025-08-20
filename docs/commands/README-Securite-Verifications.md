@@ -4,14 +4,12 @@ Ces commandes évaluent les risques, détectent des multi‑comptes, agrègent l
 
 Commandes:
 
-- `/securite membre:<User> detaille:<Bool?>` (Modérer les membres)
-  - Analyse rapide (score, niveau de risque, indicateurs, recommandations).
 - `/verifier membre:<User> detaille:<Bool?>` (Modérer les membres)
   - Analyse complète (multi‑comptes, historique cross-serveur, audit log, warns locaux, genre détecté, recommandations et actions rapides).
 
 Configuration liée:
 
-- `/config-securite`
+- `/config-verif`
   - Sous‑commandes:
     - `voir`: Affiche la configuration.
     - `activer etat:<Bool>`: Active/désactive le système.
