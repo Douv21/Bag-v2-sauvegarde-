@@ -44,7 +44,21 @@ async function removeCommands({ token, clientId }) {
             }
         }
     } else {
-        console.log('ℹ️ Aucune guilde fournie. Définissez GUILD_IDS=ID1,ID2 pour supprimer côté guildes.');
+        // Fallback: tenter de supprimer côté guildes connus du bot si GUILD_IDS non fourni
+        try {
+            const guildIdsGuess = String(process.env.KNOWN_GUILD_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+            for (const guildId of guildIdsGuess) {
+                const list = await rest.get(Routes.applicationGuildCommands(clientId, guildId));
+                for (const cmd of list) {
+                    if (TARGET_NAMES.has(cmd.name)) {
+                        await rest.delete(Routes.applicationGuildCommand(clientId, guildId, cmd.id));
+                        console.log(`❌ Supprimée (guild ${guildId}) : ${cmd.name}`);
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('ℹ️ Aucune guilde fournie. Définissez GUILD_IDS=ID1,ID2 pour supprimer côté guildes.');
+        }
     }
 }
 

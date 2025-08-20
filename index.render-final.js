@@ -463,11 +463,15 @@ class RenderSolutionBot {
             }
         });
 
-        app.post('/api/admin/reset-commands', (req, res) => {
+        app.post('/api/admin/reset-commands', async (req, res) => {
             try {
                 console.log('🔁 reset-commands (dashboard)');
+                // Nettoyer et re-déployer via les méthodes natives du bot
+                try { await this.cleanupDisabledCommands(); } catch (e) { console.warn('cleanupDisabledCommands:', e?.message || e); }
+                await this.deployCommands();
                 res.json({ success: true });
             } catch (error) {
+                console.error('❌ reset-commands error:', error);
                 res.status(500).json({ success: false, error: error.message });
             }
         });
