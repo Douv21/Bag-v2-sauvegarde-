@@ -94,12 +94,13 @@ async function main() {
   try {
     const { token, owner, repo } = getRemoteInfo();
     const head = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
-    const base = 'main';
-    const title = 'Refactor: Palette unique (néon/dark/pastel/métal) + color-role (rôle ou membre)';
-    const body = [
-      '- Palette unique stylée (24 couleurs: Néon, Dark, Pastel, Métal).',
-      '- Suppression des options palette/style-key, simplification.',
-      '- Commande color-role: support rôle OU membre avec création/assignation du rôle de couleur.'
+    const base = process.env.PR_BASE || 'main';
+    const title = process.env.PR_TITLE || 'Désactivation et retrait de commandes (Render)';
+    const body = process.env.PR_BODY || [
+      '- Désactive: `apercu-couleur`, `mongodb-backup`, `mongodb-diagnostic`, `reset`, `test-level-notif` (ignorées au chargement).',
+      '- Ajoute nettoyage global automatique avant déploiement des commandes guild.',
+      '- Ajoute script `scripts/remove-commands.js` + npm script `remove:commands` pour suppression immédiate.',
+      '- Sécurise aussi `force-register.js` pour éviter leur réinscription accidentelle.'
     ].join('\n');
 
     const created = await createPullRequest({ token, owner, repo, title, head, base, body });

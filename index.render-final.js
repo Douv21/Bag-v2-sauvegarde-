@@ -858,12 +858,24 @@ class RenderSolutionBot {
             console.log('📂 Chargement des commandes...');
             const commandsPath = path.join(__dirname, 'commands');
             const commandFiles = await fs.readdir(commandsPath);
+            const disabledCommands = new Set([
+                'apercu-couleur',
+                'mongodb-backup',
+                'mongodb-diagnostic',
+                'reset',
+                'test-level-notif'
+            ]);
 
             for (const file of commandFiles.filter(file => file.endsWith('.js'))) {
                 try {
                     const filePath = path.join(commandsPath, file);
                     delete require.cache[require.resolve(filePath)];
                     const command = require(filePath);
+
+                    if (command && command.data && disabledCommands.has(command.data.name)) {
+                        console.log(`⛔ Commande désactivée (ignorée): ${command.data.name}`);
+                        continue;
+                    }
 
                     if ('data' in command && 'execute' in command) {
                         this.commands.set(command.data.name, command);
@@ -930,6 +942,13 @@ class RenderSolutionBot {
             this.commands.forEach(command => {
                 console.log(`  - ${command.data.name}`);
             });
+
+            // Nettoyage des commandes désactivées (globales) avant déploiement guild
+            try {
+                await this.cleanupDisabledCommands();
+            } catch (e) {
+                console.warn('⚠️ Cleanup disabled commands (global) échoué:', e?.message || e);
+            }
 
             await this.deployCommands();
         });
@@ -1310,6 +1329,27 @@ class RenderSolutionBot {
 		this.client.on('guildScheduledEventCreate', async (event) => { try { if (this.logManager) await this.logManager.logScheduledEventCreate(event); } catch {} });
 		this.client.on('guildScheduledEventUpdate', async (oldEvent, newEvent) => { try { if (this.logManager) await this.logManager.logScheduledEventUpdate(oldEvent, newEvent); } catch {} });
 		this.client.on('guildScheduledEventDelete', async (event) => { try { if (this.logManager) await this.logManager.logScheduledEventDelete(event); } catch {} });
+    }
+
+    async cleanupDisabledCommands() {
+        const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+        const disabled = new Set(['apercu-couleur', 'mongodb-backup', 'mongodb-diagnostic', 'reset', 'test-level-notif']);
+        try {
+            const existing = await rest.get(Routes.applicationCommands(process.env.CLIENT_ID));
+            const targets = Array.isArray(existing) ? existing.filter(c => disabled.has(c.name)) : [];
+            if (targets.length === 0) return;
+            console.log(`🧹 Suppression globale de ${targets.length} commande(s) désactivée(s)`);
+            for (const cmd of targets) {
+                try {
+                    await rest.delete(Routes.applicationCommand(process.env.CLIENT_ID, cmd.id));
+                    console.log(`   ❌ Global: ${cmd.name}`);
+                } catch (e) {
+                    console.warn(`   ⚠️ Échec suppression globale ${cmd.name}:`, e?.message || e);
+                }
+            }
+        } catch (e) {
+            console.warn('⚠️ Lecture des commandes globales échouée:', e?.message || e);
+        }
     }
 
     async deployCommands() {
