@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const { buildChoicesForSlashCommand, findStyleByKey } = require('../utils/rolePalette');
 
 const LIMITED_CHOICES = buildChoicesForSlashCommand().slice(0, 25);
@@ -64,7 +64,13 @@ module.exports = {
 			const roleEditData = { color: style.color };
 			if (shouldRename) roleEditData.name = style.name;
 			await targetRole.edit(roleEditData, 'Application de couleur via /color-role');
-			return interaction.editReply({ content: `Mis à jour: ${targetRole.toString()} → ${style.name} (${style.color})` });
+
+			const embed = new EmbedBuilder()
+				.setTitle(`Style appliqué: ${style.name}`)
+				.setDescription(`Clé: ${style.key}\nHex: ${style.color}`)
+				.setColor(style.color);
+
+			return interaction.editReply({ content: `Mis à jour: ${targetRole.toString()} → ${style.name} (${style.color})`, embeds: [embed] });
 		} catch (error) {
 			return interaction.editReply({ content: `Impossible de modifier ${targetRole.name}. Vérifie mes permissions et la position du rôle.\nErreur: ${error.message}` });
 		}

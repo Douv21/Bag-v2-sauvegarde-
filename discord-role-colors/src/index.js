@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { Client, GatewayIntentBits, Events, PermissionFlagsBits } from 'discord.js';
+import { Client, GatewayIntentBits, Events, PermissionFlagsBits, EmbedBuilder } from 'discord.js';
 import { ROLE_STYLES, findStyleByKey } from './palette.js';
 
 const token = process.env.DISCORD_TOKEN;
@@ -25,6 +25,11 @@ client.on(Events.InteractionCreate, async interaction => {
 
   if (interaction.commandName === 'color-role') {
     await handleColorRole(interaction);
+    return;
+  }
+
+  if (interaction.commandName === 'preview-color') {
+    await handlePreviewColor(interaction);
     return;
   }
 });
@@ -106,5 +111,34 @@ async function handleColorRole(interaction) {
   }
 }
 
-client.login(token);
+async function handlePreviewColor(interaction) {
+  if (!interaction.inGuild()) {
+    await interaction.reply({ content: 'Cette commande doit être utilisée dans un serveur.', ephemeral: true });
+    return;
+  }
 
+  const styleKeyFromChoice = interaction.options.getString('style');
+  const styleKeyFromText = interaction.options.getString('style-key');
+  const styleKey = styleKeyFromText || styleKeyFromChoice;
+
+  if (!styleKey) {
+    await interaction.reply({ content: 'Précise un style via la liste (style) ou sa clé (style-key), ex: irise-3.', ephemeral: true });
+    return;
+  }
+
+  const style = findStyleByKey(styleKey);
+  if (!style) {
+    await interaction.reply({ content: `Style inconnu: ${styleKey}. Exemples: irise-3, exotique-5, degrade-v-2.`, ephemeral: true });
+    return;
+  }
+
+  const embed = new EmbedBuilder()
+    .setTitle(`Aperçu: ${style.name}`)
+    .setDescription(`Clé: ${style.key}\nHex: ${style.color}`)
+    .setColor(style.color)
+    .setFooter({ text: "Cet aperçu utilise la couleur de la bordure de l'embed." });
+
+  await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
+client.login(token);

@@ -48,7 +48,24 @@ const commands = [
         .setDescription('Renommer le rôle avec le nom du style (par défaut: non)')
         .setRequired(false)
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
+
+  new SlashCommandBuilder()
+    .setName('preview-color')
+    .setDescription('Afficher un aperçu d\'un style/couleur')
+    .addStringOption(option =>
+      option
+        .setName('style')
+        .setDescription('Choisis un style (liste limitée)')
+        .setRequired(false)
+        .addChoices(...LIMITED_CHOICES)
+    )
+    .addStringOption(option =>
+      option
+        .setName('style-key')
+        .setDescription('Clé du style (ex: irise-3, exotique-5, degrade-v-2)')
+        .setRequired(false)
+    )
 ].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(token);
@@ -62,4 +79,3 @@ try {
   console.error('Erreur d\'enregistrement des commandes:', error);
   process.exit(1);
 }
-
