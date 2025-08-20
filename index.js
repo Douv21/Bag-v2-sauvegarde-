@@ -79,6 +79,12 @@ class BagBotRender {
         const LogManager = require('./managers/LogManager');
         this.logManager = new LogManager(this.dataManager, this.client);
         this.securityButtonHandler = new SecurityButtonHandler(this.moderationManager);
+        
+        // Système de rôles personnalisés
+        const RoleManager = require('./managers/RoleManager');
+        const RoleInteractionHandler = require('./handlers/RoleInteractionHandler');
+        this.roleManager = new RoleManager(this.dataManager, this.client);
+        this.roleInteractionHandler = new RoleInteractionHandler(this.roleManager);
         // Optionnel: conserver config-bump uniquement pour UI? On va retirer bump complet; pas d'UI bump.
         this.mainRouterHandler = new MainRouterHandler(this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
@@ -87,6 +93,7 @@ class BagBotRender {
         this.client.reminderManager = this.reminderManager;
         this.client.moderationManager = this.moderationManager;
         this.client.logManager = this.logManager;
+        this.client.roleManager = this.roleManager;
 
         // Collections
         this.client.commands = new Collection();
@@ -609,6 +616,17 @@ class BagBotRender {
                     // Gestion des boutons de sécurité
                     if (interaction.isButton() && interaction.customId.startsWith('security_')) {
                         return this.securityButtonHandler.handleSecurityButton(interaction);
+                    }
+
+                    // Gestion des interactions du système de rôles
+                    if (interaction.customId && (
+                        interaction.customId.startsWith('role_') ||
+                        interaction.customId.startsWith('confirm_delete_role_') ||
+                        interaction.customId === 'cancel_delete_role' ||
+                        interaction.customId.startsWith('config_') ||
+                        interaction.customId.startsWith('create_category_')
+                    )) {
+                        return this.roleInteractionHandler.handleInteraction(interaction);
                     }
 
                     // Routage prioritaire: configuration des images par style & rôle
