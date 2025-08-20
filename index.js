@@ -1263,41 +1263,620 @@ class BagBotRender {
     async quarantineMember(member, reason, details) {
         const config = await this.moderationManager.getSecurityConfig(member.guild.id);
         
-        // Ajouter rôle de quarantaine
+        try {
+            // 1. Créer ou obtenir le rôle de quarantaine
+            const quarantineRole = await this.ensureQuarantineRole(member.guild, config);
+            
+            // 2. Créer les canaux de quarantaine personnalisés
+            const { textChannel, voiceChannel } = await this.createQuarantineChannels(member, quarantineRole);
+            
+            // 3. Configurer les permissions pour isoler le membre
+            await this.setupQuarantinePermissions(member, quarantineRole, textChannel, voiceChannel);
+            
+            // 4. Ajouter le rôle de quarantaine au membre
+            await member.roles.add(quarantineRole, `Quarantaine auto: ${details.reason}`);
+            
+            // 5. Enregistrer les informations de quarantaine
+            await this.recordQuarantineInfo(member, {
+                reason: details.reason,
+                score: details.score,
+                textChannelId: textChannel.id,
+                voiceChannelId: voiceChannel.id,
+                timestamp: Date.now()
+            });
+
+            // 6. Notifier le membre avec les informations des canaux
+            try {
+                await member.send(
+                    `🔒 **Quarantaine de sécurité - ${member.guild.name}**\n\n` +
+                    `Votre accès est temporairement limité à des canaux spécifiques.\n` +
+                    `**Raison :** ${details.reason}\n` +
+                    `**Score :** ${details.score}/100\n\n` +
+                    `**Vos canaux de quarantaine :**\n` +
+                    `💬 Texte : <#${textChannel.id}>\n` +
+                    `🔊 Vocal : <#${voiceChannel.id}>\n\n` +
+                    `Un admin va examiner votre cas. Vous pouvez expliquer votre situation dans le canal texte.`
+                );
+            } catch {}
+
+            // 7. Envoyer un message de bienvenue dans le canal de quarantaine
+            await this.sendQuarantineWelcome(textChannel, member, details);
+
+            // 8. Notifier les admins
+            await this.notifyAdminsQuarantine(member, reason, {
+                ...details,
+                textChannel: textChannel.id,
+                voiceChannel: voiceChannel.id
+            });
+
+            console.log(`🔒 Quarantaine complète: ${member.user.tag} - Canaux créés: #${textChannel.name}, #${voiceChannel.name}`);
+            
+        } catch (error) {
+            console.error('Erreur lors de la quarantaine:', error);
+            // Fallback vers l'ancienne méthode si la nouvelle échoue
+            await this.fallbackQuarantine(member, reason, details, config);
+        }
+    }
+
+    async ensureQuarantineRole(guild, config) {
+        // Vérifier si le rôle configuré existe
         if (config.accessControl?.quarantineRoleId) {
-            const role = member.guild.roles.cache.get(config.accessControl.quarantineRoleId);
-            if (role) {
-                await member.roles.add(role, `Quarantaine auto: ${details.reason}`);
-            }
+            const existingRole = guild.roles.cache.get(config.accessControl.quarantineRoleId);
+            if (existingRole) return existingRole;
         }
 
-        // Notifier le membre
-        try {
-            await member.send(
-                `🔒 **Quarantaine de sécurité - ${member.guild.name}**\n\n` +
-                `Votre accès est temporairement limité.\n` +
-                `**Raison :** ${details.reason}\n` +
-                `**Score :** ${details.score}/100\n\n` +
-                `Un admin va examiner votre cas.`
-            );
-        } catch {}
+        // Créer un nouveau rôle de quarantaine
+        const role = await guild.roles.create({
+            name: 'Quarantaine',
+            color: 0xff6b6b,
+            reason: 'Rôle de quarantaine automatique',
+            permissions: []
+        });
 
-        await this.notifyAdminsQuarantine(member, reason, details);
-        console.log(`🔒 Quarantaine: ${member.user.tag}`);
+        // Mettre à jour la configuration
+        await this.moderationManager.updateSecurityConfig(guild.id, {
+            accessControl: {
+                quarantineRoleId: role.id,
+                quarantineRoleName: role.name
+            }
+        });
+
+        console.log(`🔒 Rôle de quarantaine créé: @${role.name}`);
+        return role;
+    }
+
+    async createQuarantineChannels(member, quarantineRole) {
+        const guild = member.guild;
+        const timestamp = Date.now();
+        const userName = member.user.username.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'user';
+        
+        // Créer ou obtenir la catégorie de quarantaine
+        let category = guild.channels.cache.find(ch => 
+            ch.type === 4 && ch.name.toLowerCase().includes('quarantaine')
+        );
+        
+        if (!category) {
+            category = await guild.channels.create({
+                name: '🔒 QUARANTAINE',
+                type: 4, // CategoryChannel
+                reason: 'Catégorie de quarantaine automatique'
+            });
+        }
+
+        // Créer le canal texte
+        const textChannel = await guild.channels.create({
+            name: `quarantaine-${userName}-${timestamp.toString().slice(-6)}`,
+            type: 0, // TextChannel
+            parent: category.id,
+            reason: `Quarantaine de ${member.user.tag}`,
+            permissionOverwrites: [
+                {
+                    id: guild.id, // @everyone
+                    deny: ['ViewChannel', 'SendMessages', 'ReadMessageHistory']
+                },
+                {
+                    id: quarantineRole.id,
+                    deny: ['ViewChannel', 'SendMessages', 'ReadMessageHistory']
+                },
+                {
+                    id: member.id,
+                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'UseExternalEmojis', 'AddReactions']
+                }
+            ]
+        });
+
+        // Créer le canal vocal
+        const voiceChannel = await guild.channels.create({
+            name: `🔊 Quarantaine ${member.user.username}`,
+            type: 2, // VoiceChannel
+            parent: category.id,
+            reason: `Quarantaine vocale de ${member.user.tag}`,
+            permissionOverwrites: [
+                {
+                    id: guild.id, // @everyone
+                    deny: ['ViewChannel', 'Connect']
+                },
+                {
+                    id: quarantineRole.id,
+                    deny: ['ViewChannel', 'Connect']
+                },
+                {
+                    id: member.id,
+                    allow: ['ViewChannel', 'Connect', 'Speak']
+                }
+            ]
+        });
+
+        console.log(`📁 Canaux de quarantaine créés: #${textChannel.name}, #${voiceChannel.name}`);
+        return { textChannel, voiceChannel };
+    }
+
+    async setupQuarantinePermissions(member, quarantineRole, textChannel, voiceChannel) {
+        const guild = member.guild;
+
+        try {
+            // Supprimer l'accès à TOUS les autres canaux du serveur
+            const allChannels = guild.channels.cache.filter(ch => 
+                ch.id !== textChannel.id && ch.id !== voiceChannel.id && ch.parentId !== textChannel.parentId
+            );
+
+            // Traitement par lots pour éviter les rate limits
+            const channelBatches = this.chunkArray([...allChannels.values()], 5);
+            
+            for (const batch of channelBatches) {
+                await Promise.all(batch.map(async (channel) => {
+                    try {
+                        await channel.permissionOverwrites.create(member.id, {
+                            ViewChannel: false,
+                            Connect: false,
+                            SendMessages: false,
+                            Speak: false
+                        }, { reason: `Quarantaine de ${member.user.tag}` });
+                    } catch (error) {
+                        // Ignorer les erreurs pour les canaux où on n'a pas les permissions
+                        console.warn(`⚠️ Impossible de modifier les permissions pour ${channel.name}: ${error.message}`);
+                    }
+                }));
+                
+                // Petit délai entre les lots
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // Ajouter les permissions d'accès aux modérateurs dans les canaux de quarantaine
+            const moderatorRoles = guild.roles.cache.filter(role => 
+                role.permissions.has('ModerateMembers') || 
+                role.permissions.has('Administrator')
+            );
+
+            for (const role of moderatorRoles.values()) {
+                await textChannel.permissionOverwrites.create(role.id, {
+                    ViewChannel: true,
+                    SendMessages: true,
+                    ReadMessageHistory: true,
+                    ManageMessages: true
+                });
+                
+                await voiceChannel.permissionOverwrites.create(role.id, {
+                    ViewChannel: true,
+                    Connect: true,
+                    MoveMembers: true,
+                    MuteMembers: true,
+                    DeafenMembers: true
+                });
+            }
+
+            console.log(`🔐 Permissions de quarantaine configurées pour ${member.user.tag}`);
+            
+        } catch (error) {
+            console.error('Erreur configuration permissions quarantaine:', error);
+        }
+    }
+
+    async recordQuarantineInfo(member, info) {
+        try {
+            const quarantineData = await this.dataManager.getData('quarantine_records');
+            if (!quarantineData[member.guild.id]) quarantineData[member.guild.id] = {};
+            
+            quarantineData[member.guild.id][member.id] = {
+                ...info,
+                guildId: member.guild.id,
+                userId: member.id,
+                status: 'active'
+            };
+            
+            await this.dataManager.saveData('quarantine_records', quarantineData);
+            console.log(`📝 Quarantaine enregistrée: ${member.user.tag}`);
+        } catch (error) {
+            console.error('Erreur enregistrement quarantaine:', error);
+        }
+    }
+
+    async sendQuarantineWelcome(textChannel, member, details) {
+        const { EmbedBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setTitle('🔒 Bienvenue en Quarantaine')
+            .setDescription(
+                `Bonjour ${member.user.tag},\n\n` +
+                `Vous avez été placé en quarantaine de sécurité pour les raisons suivantes :\n\n` +
+                `**Raison :** ${details.reason}\n` +
+                `**Score de risque :** ${details.score}/100\n\n` +
+                `**Que se passe-t-il maintenant ?**\n` +
+                `• Vous n'avez accès qu'à ces canaux de quarantaine\n` +
+                `• Un administrateur va examiner votre cas\n` +
+                `• Vous pouvez expliquer votre situation dans ce canal\n` +
+                `• Soyez respectueux et patient\n\n` +
+                `**Conseils :**\n` +
+                `• Présentez-vous brièvement\n` +
+                `• Expliquez pourquoi vous rejoignez le serveur\n` +
+                `• Répondez aux questions des modérateurs\n` +
+                `• Restez poli et coopératif`
+            )
+            .setColor(0xff922b)
+            .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+            .setTimestamp();
+
+        await textChannel.send({ 
+            content: `👋 ${member.toString()}`,
+            embeds: [embed] 
+        });
+    }
+
+    async fallbackQuarantine(member, reason, details, config) {
+        // Méthode de fallback en cas d'échec du système avancé
+        try {
+            if (config.accessControl?.quarantineRoleId) {
+                const role = member.guild.roles.cache.get(config.accessControl.quarantineRoleId);
+                if (role) {
+                    await member.roles.add(role, `Quarantaine fallback: ${details.reason}`);
+                }
+            }
+            
+            await this.notifyAdminsQuarantine(member, reason, details);
+            console.log(`🔒 Quarantaine fallback appliquée: ${member.user.tag}`);
+        } catch (error) {
+            console.error('Erreur quarantaine fallback:', error);
+        }
+    }
+
+    chunkArray(array, size) {
+        const chunks = [];
+        for (let i = 0; i < array.length; i += size) {
+            chunks.push(array.slice(i, i + size));
+        }
+        return chunks;
     }
 
     async grantAccess(member, reason) {
         const config = await this.moderationManager.getSecurityConfig(member.guild.id);
         
-        // Ajouter rôle vérifié
-        if (config.accessControl?.verifiedRoleId) {
-            const role = member.guild.roles.cache.get(config.accessControl.verifiedRoleId);
-            if (role) {
-                await member.roles.add(role, `Accès accordé: ${reason}`);
+        try {
+            // 1. Récupérer les informations de quarantaine
+            const quarantineInfo = await this.getQuarantineInfo(member);
+            
+            // 2. Supprimer le rôle de quarantaine
+            const quarantineRole = member.guild.roles.cache.get(config.accessControl?.quarantineRoleId);
+            if (quarantineRole && member.roles.cache.has(quarantineRole.id)) {
+                await member.roles.remove(quarantineRole, `Libération: ${reason}`);
             }
-        }
+            
+            // 3. Restaurer l'accès à tous les canaux
+            await this.restoreChannelAccess(member);
+            
+            // 4. Nettoyer les canaux de quarantaine
+            if (quarantineInfo) {
+                await this.cleanupQuarantineChannels(member, quarantineInfo);
+            }
+            
+            // 5. Ajouter rôle vérifié
+            if (config.accessControl?.verifiedRoleId) {
+                const role = member.guild.roles.cache.get(config.accessControl.verifiedRoleId);
+                if (role) {
+                    await member.roles.add(role, `Accès accordé: ${reason}`);
+                }
+            }
+            
+            // 6. Marquer la quarantaine comme résolue
+            if (quarantineInfo) {
+                await this.markQuarantineResolved(member, reason);
+            }
+            
+            // 7. Notifier le membre
+            try {
+                await member.send(
+                    `✅ **Accès accordé - ${member.guild.name}**\n\n` +
+                    `Votre quarantaine a été levée !\n` +
+                    `**Raison :** ${reason}\n\n` +
+                    `Vous avez maintenant accès à tous les canaux du serveur.\n` +
+                    `Merci de respecter les règles et de profiter de votre séjour ! 🎉`
+                );
+            } catch {}
 
-        console.log(`✅ Accès accordé: ${member.user.tag} - ${reason}`);
+            console.log(`✅ Accès accordé et quarantaine nettoyée: ${member.user.tag} - ${reason}`);
+            
+        } catch (error) {
+            console.error('Erreur lors de l\'octroi d\'accès:', error);
+            // Fallback simple
+            if (config.accessControl?.verifiedRoleId) {
+                const role = member.guild.roles.cache.get(config.accessControl.verifiedRoleId);
+                if (role) {
+                    await member.roles.add(role, `Accès accordé (fallback): ${reason}`);
+                }
+            }
+            console.log(`✅ Accès accordé (fallback): ${member.user.tag} - ${reason}`);
+        }
+    }
+
+    async getQuarantineInfo(member) {
+        try {
+            const quarantineData = await this.dataManager.getData('quarantine_records');
+            return quarantineData[member.guild.id]?.[member.id] || null;
+        } catch (error) {
+            console.error('Erreur récupération info quarantaine:', error);
+            return null;
+        }
+    }
+
+    async restoreChannelAccess(member) {
+        try {
+            const guild = member.guild;
+            const allChannels = guild.channels.cache.values();
+            
+            // Traitement par lots pour éviter les rate limits
+            const channelBatches = this.chunkArray([...allChannels], 10);
+            
+            for (const batch of channelBatches) {
+                await Promise.all(batch.map(async (channel) => {
+                    try {
+                        // Supprimer les overrides spécifiques au membre
+                        const memberOverride = channel.permissionOverwrites.cache.get(member.id);
+                        if (memberOverride) {
+                            await memberOverride.delete(`Libération de quarantaine: ${member.user.tag}`);
+                        }
+                    } catch (error) {
+                        // Ignorer les erreurs pour les canaux où on n'a pas les permissions
+                        console.warn(`⚠️ Impossible de restaurer l'accès pour ${channel.name}: ${error.message}`);
+                    }
+                }));
+                
+                // Petit délai entre les lots
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            
+            console.log(`🔓 Accès aux canaux restauré pour ${member.user.tag}`);
+        } catch (error) {
+            console.error('Erreur restauration accès canaux:', error);
+        }
+    }
+
+    async cleanupQuarantineChannels(member, quarantineInfo) {
+        try {
+            const guild = member.guild;
+            
+            // Supprimer le canal texte
+            if (quarantineInfo.textChannelId) {
+                const textChannel = guild.channels.cache.get(quarantineInfo.textChannelId);
+                if (textChannel) {
+                    await textChannel.delete(`Quarantaine terminée: ${member.user.tag}`);
+                    console.log(`🗑️ Canal texte supprimé: #${textChannel.name}`);
+                }
+            }
+            
+            // Supprimer le canal vocal
+            if (quarantineInfo.voiceChannelId) {
+                const voiceChannel = guild.channels.cache.get(quarantineInfo.voiceChannelId);
+                if (voiceChannel) {
+                    await voiceChannel.delete(`Quarantaine terminée: ${member.user.tag}`);
+                    console.log(`🗑️ Canal vocal supprimé: #${voiceChannel.name}`);
+                }
+            }
+            
+            // Vérifier si la catégorie de quarantaine est vide et la supprimer si nécessaire
+            const category = guild.channels.cache.find(ch => 
+                ch.type === 4 && ch.name.toLowerCase().includes('quarantaine')
+            );
+            
+            if (category) {
+                const childChannels = category.children.cache.size;
+                if (childChannels === 0) {
+                    await category.delete('Catégorie de quarantaine vide');
+                    console.log(`🗑️ Catégorie de quarantaine supprimée`);
+                }
+            }
+            
+        } catch (error) {
+            console.error('Erreur nettoyage canaux quarantaine:', error);
+        }
+    }
+
+    async markQuarantineResolved(member, reason) {
+        try {
+            const quarantineData = await this.dataManager.getData('quarantine_records');
+            if (quarantineData[member.guild.id]?.[member.id]) {
+                quarantineData[member.guild.id][member.id] = {
+                    ...quarantineData[member.guild.id][member.id],
+                    status: 'resolved',
+                    resolvedAt: Date.now(),
+                    resolvedReason: reason
+                };
+                await this.dataManager.saveData('quarantine_records', quarantineData);
+            }
+        } catch (error) {
+            console.error('Erreur marquage quarantaine résolue:', error);
+        }
+    }
+
+    async sendSecurityAlert(member, securityAnalysis, details) {
+        try {
+            const alertChannel = await this.findSecurityLogChannel(member.guild);
+            if (!alertChannel) {
+                console.log(`❌ Aucun canal d'alertes configuré pour ${member.guild.name}`);
+                return;
+            }
+
+            const { EmbedBuilder } = require('discord.js');
+            
+            // Déterminer la couleur selon le niveau de risque
+            let color = 0x51cf66; // Vert (LOW)
+            if (details.totalScore >= 80) color = 0xff6b6b; // Rouge (CRITICAL)
+            else if (details.totalScore >= 60) color = 0xff922b; // Orange (HIGH)
+            else if (details.totalScore >= 30) color = 0xffd43b; // Jaune (MEDIUM)
+
+            const embed = new EmbedBuilder()
+                .setTitle('🚨 ALERTE SÉCURITÉ - Nouveau membre')
+                .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+                .setColor(color)
+                .setTimestamp();
+
+            // Informations de base
+            const accountAge = Math.floor((Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24));
+            embed.addFields({
+                name: '👤 Membre',
+                value: `**Nom :** ${member.user.tag}\n**Mention :** <@${member.user.id}>\n**Âge du compte :** ${accountAge} jour(s)`,
+                inline: true
+            });
+
+            embed.addFields({
+                name: '📊 Score de risque',
+                value: `**Score total :** ${details.totalScore}/100\n**Niveau :** ${this.getRiskLevelText(details.totalScore)}`,
+                inline: true
+            });
+
+            // Multi-comptes
+            if (details.multiAccountCheck && details.multiAccountCheck.totalSuspects > 0) {
+                embed.addFields({
+                    name: '🔍 Multi-comptes détectés',
+                    value: `**Suspects :** ${details.multiAccountCheck.totalSuspects}\n**Confiance :** ${details.multiAccountCheck.confidence}%`,
+                    inline: true
+                });
+            }
+
+            // Indicateurs de raid
+            if (details.raidCheck && details.raidCheck.isRaidSuspect) {
+                embed.addFields({
+                    name: '🚨 Suspect de raid',
+                    value: details.raidCheck.reasons.slice(0, 3).join('\n'),
+                    inline: false
+                });
+            }
+
+            // Drapeaux de sécurité
+            if (securityAnalysis.flags && securityAnalysis.flags.length > 0) {
+                embed.addFields({
+                    name: '🚩 Alertes',
+                    value: securityAnalysis.flags.slice(0, 5).join('\n'),
+                    inline: false
+                });
+            }
+
+            // Recommandations
+            if (securityAnalysis.recommendations && securityAnalysis.recommendations.length > 0) {
+                embed.addFields({
+                    name: '💡 Recommandations',
+                    value: securityAnalysis.recommendations.slice(0, 3).join('\n'),
+                    inline: false
+                });
+            }
+
+            // Mentionner les modérateurs si configuré
+            const config = await this.moderationManager.getSecurityConfig(member.guild.id);
+            let content = '';
+            if (config.autoAlerts?.mentionModerators && config.autoAlerts?.moderatorRoleId) {
+                content = `<@&${config.autoAlerts.moderatorRoleId}> **Alerte sécurité**`;
+            }
+
+            await alertChannel.send({ content, embeds: [embed] });
+            console.log(`🚨 Alerte sécurité envoyée: ${member.user.tag} (score: ${details.totalScore})`);
+
+        } catch (error) {
+            console.error('Erreur envoi alerte sécurité:', error);
+        }
+    }
+
+    async notifyAdminsQuarantine(member, reason, details) {
+        try {
+            const alertChannel = await this.findSecurityLogChannel(member.guild);
+            if (!alertChannel) return;
+
+            const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+            
+            const embed = new EmbedBuilder()
+                .setTitle('🔒 QUARANTAINE AUTOMATIQUE')
+                .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+                .setColor(0xff922b)
+                .setTimestamp();
+
+            embed.addFields({
+                name: '👤 Membre en quarantaine',
+                value: `${member.user.tag}\n<@${member.user.id}>`,
+                inline: true
+            });
+
+            embed.addFields({
+                name: '⚠️ Raison',
+                value: `**Motif :** ${details.reason}\n**Score :** ${details.score}/100`,
+                inline: true
+            });
+
+            // Ajouter les informations sur les canaux créés
+            if (details.textChannel && details.voiceChannel) {
+                embed.addFields({
+                    name: '📁 Canaux créés',
+                    value: `💬 Texte : <#${details.textChannel}>\n🔊 Vocal : <#${details.voiceChannel}>`,
+                    inline: true
+                });
+            }
+
+            embed.addFields({
+                name: '🔧 Actions disponibles',
+                value: 'Utilisez les boutons ci-dessous ou les commandes :\n' +
+                       '• ✅ **Approuver** : Libère le membre et nettoie les canaux\n' +
+                       '• ❌ **Refuser** : Bannit le membre et nettoie les canaux\n' +
+                       '• 🔍 **Examiner** : Aller dans le canal de quarantaine\n' +
+                       '• ⏳ **Reporter** : Laisser en quarantaine pour plus tard',
+                inline: false
+            });
+
+            // Boutons d'action rapide
+            const row = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`quarantine_approve_${member.id}`)
+                        .setLabel('Approuver')
+                        .setEmoji('✅')
+                        .setStyle(ButtonStyle.Success),
+                    new ButtonBuilder()
+                        .setCustomId(`quarantine_reject_${member.id}`)
+                        .setLabel('Refuser & Ban')
+                        .setEmoji('❌')
+                        .setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder()
+                        .setCustomId(`quarantine_examine_${member.id}`)
+                        .setLabel('Examiner')
+                        .setEmoji('🔍')
+                        .setStyle(ButtonStyle.Secondary)
+                );
+
+            // Mentionner les modérateurs
+            const config = await this.moderationManager.getSecurityConfig(member.guild.id);
+            let content = '';
+            if (config.autoAlerts?.mentionModerators && config.autoAlerts?.moderatorRoleId) {
+                content = `<@&${config.autoAlerts.moderatorRoleId}> **Quarantaine automatique**`;
+            }
+
+            await alertChannel.send({ content, embeds: [embed], components: [row] });
+            console.log(`🔒 Notification quarantaine envoyée: ${member.user.tag}`);
+
+        } catch (error) {
+            console.error('Erreur notification quarantaine:', error);
+        }
+    }
+
+    getRiskLevelText(score) {
+        if (score >= 80) return '🔴 CRITIQUE';
+        if (score >= 60) return '🚨 ÉLEVÉ';
+        if (score >= 30) return '⚠️ MOYEN';
+        return '✅ FAIBLE';
     }
 
     /**
@@ -1307,11 +1886,24 @@ class BagBotRender {
      */
     async findSecurityLogChannel(guild) {
         try {
-            // Chercher d'abord le canal configuré
-            const config = await this.moderationManager.getGuildConfig(guild.id);
-            if (config.logsChannelId) {
-                const logChannel = guild.channels.cache.get(config.logsChannelId);
-                if (logChannel) return logChannel;
+            // Chercher d'abord le canal configuré dans la config de sécurité
+            const securityConfig = await this.moderationManager.getSecurityConfig(guild.id);
+            if (securityConfig.autoAlerts?.alertChannelId) {
+                const alertChannel = guild.channels.cache.get(securityConfig.autoAlerts.alertChannelId);
+                if (alertChannel) {
+                    console.log(`✅ Canal d'alertes sécurité trouvé: #${alertChannel.name}`);
+                    return alertChannel;
+                }
+            }
+
+            // Fallback sur la config de modération générale
+            const moderationConfig = await this.moderationManager.getGuildConfig(guild.id);
+            if (moderationConfig.logsChannelId) {
+                const logChannel = guild.channels.cache.get(moderationConfig.logsChannelId);
+                if (logChannel) {
+                    console.log(`⚠️ Utilisation du canal de logs général: #${logChannel.name}`);
+                    return logChannel;
+                }
             }
 
             // Chercher des canaux avec des noms typiques
@@ -1324,10 +1916,14 @@ class BagBotRender {
                 const channel = guild.channels.cache.find(ch => 
                     ch.name.toLowerCase().includes(channelName) && ch.isTextBased()
                 );
-                if (channel) return channel;
+                if (channel) {
+                    console.log(`🔍 Canal trouvé par nom: #${channel.name}`);
+                    return channel;
+                }
             }
 
             // En dernier recours, chercher le canal système
+            console.log(`⚠️ Aucun canal spécialisé trouvé, utilisation du canal système`);
             return guild.systemChannel;
         } catch (error) {
             console.error('Erreur recherche canal logs:', error);
