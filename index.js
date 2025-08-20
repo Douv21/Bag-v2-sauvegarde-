@@ -636,6 +636,15 @@ class BagBotRender {
                     
                     if (!handled) {
                         console.log(`❌ Interaction non gérée: ${interaction.customId}`);
+                        // Gestion rapide du sélecteur color-role si présent (fallback)
+                        try {
+                            if ((interaction.customId || '').startsWith('color_role_select|')) {
+                                const ok = await this.mainRouterHandler.handleColorRoleSelect(interaction, interaction.customId);
+                                if (ok) return;
+                            }
+                        } catch (e) {
+                            console.error('Erreur fallback color_role_select:', e);
+                        }
                         
                         // Répondre uniquement si pas encore répondu
                         if (!interaction.replied && !interaction.deferred) {
