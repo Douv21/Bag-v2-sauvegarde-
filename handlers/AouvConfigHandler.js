@@ -26,6 +26,7 @@ class AouvConfigHandler {
 			.addOptions([
 				{ label: '📺 Salons autorisés', value: 'channels', description: 'Limiter /aouv à certains salons' },
 				{ label: '📝 Ajouter prompt personnalisé', value: 'prompt_add', description: 'Ajouter un prompt action/vérité' },
+				{ label: '📝+ Ajouter plusieurs prompts', value: 'prompt_add_bulk', description: 'Ajouter plusieurs prompts en une fois' },
 				{ label: '✏️ Modifier prompt personnalisé', value: 'prompt_edit', description: 'Modifier un prompt personnalisé' },
 				{ label: '🗑️ Supprimer prompt personnalisé', value: 'prompt_remove', description: 'Supprimer un prompt personnalisé' },
 				{ label: '📜 Lister prompts personnalisés', value: 'prompt_list_custom', description: 'Voir vos prompts' },
@@ -37,6 +38,7 @@ class AouvConfigHandler {
 				// NSFW
 				{ label: '🔞 Salons autorisés (NSFW)', value: 'nsfw_channels', description: 'Limiter /aouv (NSFW) à certains salons' },
 				{ label: '🔞 Ajouter prompt NSFW', value: 'nsfw_prompt_add', description: 'Ajouter un prompt 18+' },
+				{ label: '🔞+ Ajouter plusieurs prompts NSFW', value: 'nsfw_prompt_add_bulk', description: 'Ajouter plusieurs prompts 18+ en une fois' },
 				{ label: '🔞 Modifier prompt NSFW', value: 'nsfw_prompt_edit', description: 'Modifier un prompt 18+' },
 				{ label: '🔞 Supprimer prompt NSFW', value: 'nsfw_prompt_remove', description: 'Supprimer un prompt 18+' },
 				{ label: '🔞 Lister prompts NSFW persos', value: 'nsfw_prompt_list_custom', description: 'Voir vos prompts 18+' },
@@ -57,6 +59,7 @@ class AouvConfigHandler {
 
 		if (choice === 'channels') return this.showAouvChannelsMenu(interaction);
 		if (choice === 'prompt_add') return this.showAouvPromptAddModal(interaction);
+		if (choice === 'prompt_add_bulk') return this.showAouvPromptAddBulkModal(interaction);
 		if (choice === 'prompt_edit') return this.showAouvPromptEditKindPicker(interaction);
 		if (choice === 'prompt_remove') return this.showAouvPromptRemoveKindPicker(interaction);
 		if (choice === 'prompt_list_custom') return this.showAouvPromptListCustom(interaction);
@@ -69,6 +72,7 @@ class AouvConfigHandler {
 		// NSFW
 		if (choice === 'nsfw_channels') return this.showAouvNsfwChannelsMenu(interaction);
 		if (choice === 'nsfw_prompt_add') return this.showAouvNsfwPromptAddModal(interaction);
+		if (choice === 'nsfw_prompt_add_bulk') return this.showAouvNsfwPromptAddBulkModal(interaction);
 		if (choice === 'nsfw_prompt_edit') return this.showAouvNsfwPromptEditPicker(interaction);
 		if (choice === 'nsfw_prompt_remove') return this.showAouvNsfwPromptRemoveModal(interaction);
 		if (choice === 'nsfw_prompt_list_custom') return this.showAouvNsfwPromptListCustom(interaction);
@@ -209,6 +213,14 @@ class AouvConfigHandler {
 		const modal = new ModalBuilder().setCustomId('aouv_prompt_add_modal').setTitle('Ajouter un prompt AouV');
 		const kind = new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true);
 		const texte = new TextInputBuilder().setCustomId('texte').setLabel('Contenu du prompt').setStyle(TextInputStyle.Paragraph).setRequired(true);
+		modal.addComponents(new ActionRowBuilder().addComponents(kind), new ActionRowBuilder().addComponents(texte));
+		await modalHandler.showModal(interaction, modal);
+	}
+
+	async showAouvPromptAddBulkModal(interaction) {
+		const modal = new ModalBuilder().setCustomId('aouv_prompt_add_bulk_modal').setTitle('Ajouter plusieurs prompts AouV');
+		const kind = new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true);
+		const texte = new TextInputBuilder().setCustomId('texte').setLabel('Prompts (un par ligne)').setStyle(TextInputStyle.Paragraph).setRequired(true).setPlaceholder('Prompt 1\nPrompt 2\nPrompt 3...');
 		modal.addComponents(new ActionRowBuilder().addComponents(kind), new ActionRowBuilder().addComponents(texte));
 		await modalHandler.showModal(interaction, modal);
 	}
@@ -589,7 +601,59 @@ class AouvConfigHandler {
 		const cfg = all[guildId] || { customActions: [], customTruths: [] };
 		if (kind === 'action') cfg.customActions = [...(cfg.customActions||[]), texte]; else cfg.customTruths = [...(cfg.customTruths||[]), texte];
 		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
-		await interaction.reply({ content: '✅ Ajouté.', flags: 64 });
+		
+		// Ajouter des boutons pour continuer
+		const continueButton = new ButtonBuilder()
+			.setCustomId('aouv_continue_adding')
+			.setLabel('➕ Continuer à ajouter')
+			.setStyle(ButtonStyle.Primary);
+		const backButton = new ButtonBuilder()
+			.setCustomId('aouv_back_to_menu')
+			.setLabel('🔙 Retour au menu')
+			.setStyle(ButtonStyle.Secondary);
+		const row = new ActionRowBuilder().addComponents(continueButton, backButton);
+		
+		await interaction.reply({ content: '✅ Prompt ajouté avec succès !', components: [row], flags: 64 });
+	}
+
+	async handleAouvPromptAddBulkModal(interaction) {
+		const guildId = interaction.guild.id;
+		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
+		const texte = interaction.fields.getTextInputValue('texte') || '';
+		if (!['action','verite'].includes(kind) || !texte.trim()) return interaction.reply({ content: '❌ Paramètres invalides.', flags: 64 });
+		
+		// Séparer les prompts par ligne et filtrer les lignes vides
+		const prompts = texte.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+		if (prompts.length === 0) return interaction.reply({ content: '❌ Aucun prompt valide trouvé.', flags: 64 });
+		
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || { customActions: [], customTruths: [] };
+		
+		if (kind === 'action') {
+			cfg.customActions = [...(cfg.customActions||[]), ...prompts];
+		} else {
+			cfg.customTruths = [...(cfg.customTruths||[]), ...prompts];
+		}
+		
+		all[guildId] = cfg; 
+		await this.dataManager.saveData('aouv_config.json', all);
+		
+		// Ajouter des boutons pour continuer
+		const continueButton = new ButtonBuilder()
+			.setCustomId('aouv_continue_adding_bulk')
+			.setLabel('➕ Ajouter plus de prompts')
+			.setStyle(ButtonStyle.Primary);
+		const backButton = new ButtonBuilder()
+			.setCustomId('aouv_back_to_menu')
+			.setLabel('🔙 Retour au menu')
+			.setStyle(ButtonStyle.Secondary);
+		const row = new ActionRowBuilder().addComponents(continueButton, backButton);
+		
+		await interaction.reply({ 
+			content: `✅ ${prompts.length} prompt(s) ${kind === 'action' ? 'action' : 'vérité'} ajouté(s) avec succès !`, 
+			components: [row], 
+			flags: 64 
+		});
 	}
 
 	async handleAouvPromptEditModal(interaction) {
@@ -728,6 +792,14 @@ class AouvConfigHandler {
 		await modalHandler.showModal(interaction, modal);
 	}
 
+	async showAouvNsfwPromptAddBulkModal(interaction) {
+		const modal = new ModalBuilder().setCustomId('aouv_nsfw_prompt_add_bulk_modal').setTitle('Ajouter plusieurs prompts NSFW');
+		const kind = new TextInputBuilder().setCustomId('kind').setLabel("Type ('action' ou 'verite')").setStyle(TextInputStyle.Short).setRequired(true);
+		const texte = new TextInputBuilder().setCustomId('texte').setLabel('Prompts NSFW (un par ligne)').setStyle(TextInputStyle.Paragraph).setRequired(true).setPlaceholder('Prompt NSFW 1\nPrompt NSFW 2\nPrompt NSFW 3...');
+		modal.addComponents(new ActionRowBuilder().addComponents(kind), new ActionRowBuilder().addComponents(texte));
+		await modalHandler.showModal(interaction, modal);
+	}
+
 	async showAouvNsfwPromptEditPicker(interaction) {
 		const guildId = interaction.guild.id;
 		const all = await this.dataManager.loadData('aouv_config.json', {});
@@ -858,7 +930,59 @@ class AouvConfigHandler {
 		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
 		if (kind === 'action') cfg.nsfwCustomActions = [...(cfg.nsfwCustomActions||[]), texte]; else cfg.nsfwCustomTruths = [...(cfg.nsfwCustomTruths||[]), texte];
 		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
-		await interaction.reply({ content: '✅ Ajouté (NSFW).', flags: 64 });
+		
+		// Ajouter des boutons pour continuer
+		const continueButton = new ButtonBuilder()
+			.setCustomId('aouv_continue_adding_nsfw')
+			.setLabel('➕ Continuer à ajouter (NSFW)')
+			.setStyle(ButtonStyle.Primary);
+		const backButton = new ButtonBuilder()
+			.setCustomId('aouv_back_to_menu')
+			.setLabel('🔙 Retour au menu')
+			.setStyle(ButtonStyle.Secondary);
+		const row = new ActionRowBuilder().addComponents(continueButton, backButton);
+		
+		await interaction.reply({ content: '✅ Prompt NSFW ajouté avec succès !', components: [row], flags: 64 });
+	}
+
+	async handleAouvNsfwPromptAddBulkModal(interaction) {
+		const guildId = interaction.guild.id;
+		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
+		const texte = interaction.fields.getTextInputValue('texte') || '';
+		if (!['action','verite'].includes(kind) || !texte.trim()) return interaction.reply({ content: '❌ Paramètres invalides.', flags: 64 });
+		
+		// Séparer les prompts par ligne et filtrer les lignes vides
+		const prompts = texte.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+		if (prompts.length === 0) return interaction.reply({ content: '❌ Aucun prompt valide trouvé.', flags: 64 });
+		
+		const all = await this.dataManager.loadData('aouv_config.json', {});
+		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
+		
+		if (kind === 'action') {
+			cfg.nsfwCustomActions = [...(cfg.nsfwCustomActions||[]), ...prompts];
+		} else {
+			cfg.nsfwCustomTruths = [...(cfg.nsfwCustomTruths||[]), ...prompts];
+		}
+		
+		all[guildId] = cfg; 
+		await this.dataManager.saveData('aouv_config.json', all);
+		
+		// Ajouter des boutons pour continuer
+		const continueButton = new ButtonBuilder()
+			.setCustomId('aouv_continue_adding_nsfw_bulk')
+			.setLabel('➕ Ajouter plus de prompts NSFW')
+			.setStyle(ButtonStyle.Primary);
+		const backButton = new ButtonBuilder()
+			.setCustomId('aouv_back_to_menu')
+			.setLabel('🔙 Retour au menu')
+			.setStyle(ButtonStyle.Secondary);
+		const row = new ActionRowBuilder().addComponents(continueButton, backButton);
+		
+		await interaction.reply({ 
+			content: `✅ ${prompts.length} prompt(s) NSFW ${kind === 'action' ? 'action' : 'vérité'} ajouté(s) avec succès !`, 
+			components: [row], 
+			flags: 64 
+		});
 	}
 
 	async handleAouvNsfwPromptEditModal(interaction) {
@@ -958,6 +1082,25 @@ class AouvConfigHandler {
 			return interaction.reply({ content: `✅ Override NSFW supprimé pour ${kind} #${numero}.`, flags: 64 });
 		}
 		return interaction.reply({ content: 'ℹ️ Aucun override NSFW trouvé pour ce numéro.', flags: 64 });
+	}
+
+	// ===== GESTIONNAIRES DE BOUTONS DE CONTINUATION =====
+	async handleContinueAddingButton(interaction, buttonId) {
+		if (buttonId === 'aouv_continue_adding') {
+			return this.showAouvPromptAddModal(interaction);
+		}
+		if (buttonId === 'aouv_continue_adding_bulk') {
+			return this.showAouvPromptAddBulkModal(interaction);
+		}
+		if (buttonId === 'aouv_continue_adding_nsfw') {
+			return this.showAouvNsfwPromptAddModal(interaction);
+		}
+		if (buttonId === 'aouv_continue_adding_nsfw_bulk') {
+			return this.showAouvNsfwPromptAddBulkModal(interaction);
+		}
+		if (buttonId === 'aouv_back_to_menu') {
+			return this.showAouvMenu(interaction);
+		}
 	}
 }
 
