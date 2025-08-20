@@ -27,14 +27,34 @@ function generateGradient(startHex, endHex, steps) {
 	return gradient;
 }
 
-// Pastel gradient from lavender to pink (similar to screenshot)
-const GRADIENT_COLORS = generateGradient('#A78BFA', '#F9A8D4', 10);
-
-const ROLE_STYLES = GRADIENT_COLORS.map((hex, index) => ({
-	key: `gradient-${String(index + 1).padStart(2, '0')}`,
-	name: `🦄 Dégradé ${String(index + 1).padStart(2, '0')}`,
-	color: hex
-}));
+// Palette solide « chic & élégant »
+const ROLE_STYLES = [
+	{ key: 'metal-platinum', name: '✨ Platinum Mist', color: '#C7CDD7' },
+	{ key: 'metal-silver', name: '✨ Silver Frost', color: '#BFC5CE' },
+	{ key: 'metal-gunmetal', name: '✨ Gunmetal', color: '#2A2F36' },
+	{ key: 'metal-pewter', name: '✨ Pewter', color: '#8E949C' },
+	{ key: 'metal-champagne', name: '✨ Champagne Gold', color: '#D1B67A' },
+	{ key: 'metal-rosegold', name: '✨ Rose Gold', color: '#C8929B' },
+	{ key: 'metal-bronze', name: '✨ Bronze Patina', color: '#8B6B3D' },
+	{ key: 'metal-copper', name: '✨ Copper Ember', color: '#B46E3A' },
+	{ key: 'metal-brass', name: '✨ Brass Satin', color: '#B9972F' },
+	{ key: 'wood-walnut', name: '🌲 Walnut', color: '#6B4B3A' },
+	{ key: 'wood-mahogany', name: '🌲 Mahogany', color: '#7B3B2E' },
+	{ key: 'wood-teak', name: '🌲 Teak', color: '#996C3F' },
+	{ key: 'wood-oak', name: '🌲 Oak', color: '#A67C52' },
+	{ key: 'wood-ebony', name: '🌲 Ebony', color: '#1F1410' },
+	{ key: 'wood-maple', name: '🌲 Maple', color: '#C99B66' },
+	{ key: 'gem-slate', name: '💎 Slate', color: '#5C6A75' },
+	{ key: 'gem-onyx', name: '💎 Onyx', color: '#0F141A' },
+	{ key: 'gem-lapis', name: '💎 Lapis', color: '#2D56A6' },
+	{ key: 'gem-amethyst', name: '💎 Amethyst', color: '#6A4EA2' },
+	{ key: 'gem-jade', name: '💎 Jade', color: '#2E7D6C' },
+	{ key: 'gem-garnet', name: '💎 Garnet', color: '#7B1E2E' },
+	{ key: 'lux-midnight', name: '🎩 Midnight Navy', color: '#1F2A44' },
+	{ key: 'lux-graphite', name: '🎩 Graphite Blue', color: '#344154' },
+	{ key: 'lux-porcelain', name: '🎩 Porcelain', color: '#EDE8E3' },
+	{ key: 'lux-linen', name: '🎩 Linen', color: '#E5D6C3' }
+];
 
 function buildChoicesForSlashCommand() {
 	return ROLE_STYLES.map(style => ({ name: style.name, value: style.key }));
@@ -49,4 +69,3 @@ module.exports = {
 	buildChoicesForSlashCommand,
 	findStyleByKey
 };
-
