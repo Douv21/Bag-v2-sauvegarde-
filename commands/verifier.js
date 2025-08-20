@@ -13,7 +13,7 @@ module.exports = {
   async execute(interaction) {
     // Vérifier les permissions
     if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-      return interaction.reply({ content: '❌ Réservé aux modérateurs.', flags: 64 });
+      return interaction.reply({ content: '❌ Réservé aux modérateurs.', ephemeral: true });
     }
 
     const user = interaction.options.getUser('membre', true);
@@ -21,11 +21,11 @@ module.exports = {
     const mod = interaction.client.moderationManager;
 
     if (!mod) {
-      return interaction.reply({ content: '❌ Système de modération non disponible.', flags: 64 });
+      return interaction.reply({ content: '❌ Système de modération non disponible.', ephemeral: true });
     }
 
     // Déférer la réponse car l'analyse complète peut prendre du temps
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ ephemeral: false });
 
     try {
       // Effectuer toutes les analyses en parallèle
