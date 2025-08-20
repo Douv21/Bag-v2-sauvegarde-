@@ -3015,7 +3015,7 @@ class RenderSolutionBot {
                                          customId === 'role_perm_select' ||
                                          customId === 'manage_objects_select' ||
                                          customId === 'delete_articles_select' ||
-                                         (customId.startsWith('aouv_') && !customId.startsWith('aouv_btn_'));
+                                         customId.startsWith('aouv_');
                     
                     if (!economyHandled) {
                         console.log('🔄 Routage vers MainRouter pour:', customId);
