@@ -360,27 +360,124 @@ class MainRouterHandler {
                 return false;
             }
 
-            // Traitement du sélecteur de couleur de rôle
-            const parts = customId.split('|');
-            if (parts.length < 2) {
-                return false;
+            const { findStyleByKey } = require('../utils/rolePalette');
+            const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+
+            // Vérification des permissions
+            if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+                await interaction.reply({ content: '❌ Permission requise: Administrateur.', ephemeral: true });
+                return true;
             }
 
-            const roleId = parts[1];
-            const selectedColor = interaction.values[0];
+            // Traitement du sélecteur de couleur de rôle
+            const parts = customId.split('|');
+            if (parts.length < 4) {
+                await interaction.reply({ content: '❌ Format d\'interaction invalide.', ephemeral: true });
+                return true;
+            }
 
-            // Ici vous pouvez ajouter la logique pour changer la couleur du rôle
-            // Cette partie dépend de votre implémentation spécifique
+            const targetType = parts[1]; // 'r' pour rôle, 'm' pour membre
+            const targetId = parts[2];
+            const shouldRename = parts[3] === '1';
+            const selectedStyleKey = interaction.values[0];
 
-            await interaction.reply({
-                content: `✅ Couleur du rôle mise à jour vers: ${selectedColor}`,
-                ephemeral: true
-            });
+            const style = findStyleByKey(selectedStyleKey);
+            if (!style) {
+                await interaction.reply({ content: `❌ Style inconnu: ${selectedStyleKey}.`, ephemeral: true });
+                return true;
+            }
+
+            await interaction.deferReply({ ephemeral: true });
+
+            if (targetType === 'r') {
+                // Modification d'un rôle existant
+                const targetRole = interaction.guild.roles.cache.get(targetId);
+                if (!targetRole) {
+                    await interaction.editReply({ content: '❌ Rôle introuvable.' });
+                    return true;
+                }
+
+                const roleEditData = { color: style.color };
+                if (shouldRename) roleEditData.name = style.name;
+                await targetRole.edit(roleEditData, 'Application de couleur via sélecteur');
+
+                const embed = new EmbedBuilder()
+                    .setTitle(`Style appliqué: ${style.name}`)
+                    .setDescription(`Clé: ${style.key}\nHex: ${style.color}`)
+                    .setColor(style.color);
+
+                await interaction.editReply({ 
+                    content: `✅ Mis à jour: ${targetRole.toString()} → ${style.name} (${style.color})`, 
+                    embeds: [embed] 
+                });
+            } else if (targetType === 'm') {
+                // Attribution à un membre
+                const targetMember = interaction.guild.members.cache.get(targetId);
+                if (!targetMember) {
+                    await interaction.editReply({ content: '❌ Membre introuvable.' });
+                    return true;
+                }
+
+                // Trouver ou créer le rôle de couleur
+                let styleRole = interaction.guild.roles.cache.find(r => r.name === style.name);
+                if (!styleRole) {
+                    const { createAndPositionColorRole } = require('../utils/rolePositioning');
+                    const meForPosition = interaction.guild.members.me;
+                    
+                    if (!meForPosition) {
+                        await interaction.editReply({ content: '❌ Impossible de récupérer les informations du bot.' });
+                        return true;
+                    }
+
+                    styleRole = await createAndPositionColorRole(
+                        interaction.guild, 
+                        meForPosition, 
+                        style, 
+                        'Création automatique du rôle de couleur (sélecteur)'
+                    );
+
+                    if (!styleRole) {
+                        await interaction.editReply({ content: '❌ Impossible de créer le rôle de couleur.' });
+                        return true;
+                    }
+                }
+
+                // Vérifier que le bot peut gérer ce rôle
+                const me = interaction.guild.members.me;
+                if (!me || me.roles.highest.comparePositionTo(styleRole) <= 0) {
+                    await interaction.editReply({ 
+                        content: `❌ Je ne peux pas assigner le rôle ${styleRole.toString()} (position trop haute). Place mon rôle au-dessus.` 
+                    });
+                    return true;
+                }
+
+                await targetMember.roles.add(styleRole, 'Attribution de la couleur via sélecteur');
+
+                const embed = new EmbedBuilder()
+                    .setTitle(`Style appliqué à ${targetMember.displayName}`)
+                    .setDescription(`Rôle attribué: ${styleRole.toString()}\nClé: ${style.key}\nHex: ${style.color}`)
+                    .setColor(style.color);
+
+                await interaction.editReply({ 
+                    content: `✅ Couleur attribuée à ${targetMember.toString()} → ${style.name} (${style.color})`, 
+                    embeds: [embed] 
+                });
+            }
 
             return true;
         } catch (error) {
             console.error('❌ Erreur color role select:', error);
-            return false;
+            try {
+                const content = `❌ Action impossible. Vérifie mes permissions et la position des rôles.\nErreur: ${error.message}`;
+                if (interaction.deferred) {
+                    await interaction.editReply({ content });
+                } else {
+                    await interaction.reply({ content, ephemeral: true });
+                }
+            } catch (e) {
+                console.error('❌ Impossible de répondre à l\'interaction:', e);
+            }
+            return true;
         }
     }
 }
