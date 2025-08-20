@@ -1,0 +1,20 @@
+{
+  "name": "discord-role-colors",
+  "version": "1.0.0",
+  "description": "Bot Discord pour créer en une commande une palette de rôles colorés et l'appliquer aux rôles existants",
+  "type": "module",
+  "main": "src/index.js",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy:commands": "node src/register-commands.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  }
+}
+
