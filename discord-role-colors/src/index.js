@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { Client, GatewayIntentBits, Events, PermissionFlagsBits, EmbedBuilder } from 'discord.js';
 import { ROLE_STYLES, findStyleByKey } from './palette.js';
+import { createAndPositionColorRole } from './rolePositioning.js';
 
 const token = process.env.DISCORD_TOKEN;
 
@@ -48,6 +49,13 @@ async function handleSetupColors(interaction) {
   await interaction.deferReply({ ephemeral: true });
 
   const createdRoleNames = [];
+  const me = interaction.guild.members.me;
+  
+  if (!me) {
+    await interaction.editReply({ content: '❌ Impossible de récupérer les informations du bot.' });
+    return;
+  }
+
   for (const style of ROLE_STYLES) {
     try {
       const existing = interaction.guild.roles.cache.find(r => r.name === style.name);
@@ -55,24 +63,19 @@ async function handleSetupColors(interaction) {
         createdRoleNames.push(`Déjà présent: ${style.name}`);
         continue;
       }
-      const role = await interaction.guild.roles.create({
-        name: style.name,
-        color: style.color,
-        hoist: false,
-        mentionable: false,
-        reason: 'Palette auto (setup-colors)'
-      });
-      // Placer le rôle juste sous le rôle le plus haut du bot
-      try {
-        const me = interaction.guild.members.me;
-        if (me) {
-          const targetPosition = Math.max(1, me.roles.highest.position - 1);
-          await role.setPosition(targetPosition);
-        }
-      } catch (e) {
-        console.warn('Impossible de positionner le rôle (setup) au plus haut:', e?.message);
+
+      const role = await createAndPositionColorRole(
+        interaction.guild, 
+        me, 
+        style, 
+        'Palette auto (setup-colors)'
+      );
+
+      if (role) {
+        createdRoleNames.push(`Créé: ${role.name}`);
+      } else {
+        createdRoleNames.push(`Erreur: ${style.name} (impossible de créer)`);
       }
-      createdRoleNames.push(`Créé: ${role.name}`);
     } catch (error) {
       createdRoleNames.push(`Erreur: ${style.name} (${error.message})`);
     }
@@ -139,22 +142,22 @@ async function handleColorRole(interaction) {
 
     let styleRole = interaction.guild.roles.cache.find(r => r.name === style.name);
     if (!styleRole) {
-      styleRole = await interaction.guild.roles.create({
-        name: style.name,
-        color: style.color,
-        hoist: false,
-        mentionable: false,
-        reason: 'Création auto du rôle de couleur (color-role)'
-      });
-      // Placer le rôle juste sous le rôle le plus haut du bot
-      try {
-        const meForPosition = interaction.guild.members.me;
-        if (meForPosition) {
-          const targetPosition = Math.max(1, meForPosition.roles.highest.position - 1);
-          await styleRole.setPosition(targetPosition);
-        }
-      } catch (e) {
-        console.warn('Impossible de positionner le rôle (color-role) au plus haut:', e?.message);
+      const meForPosition = interaction.guild.members.me;
+      if (!meForPosition) {
+        await interaction.editReply({ content: '❌ Impossible de récupérer les informations du bot.' });
+        return;
+      }
+
+      styleRole = await createAndPositionColorRole(
+        interaction.guild, 
+        meForPosition, 
+        style, 
+        'Création auto du rôle de couleur (color-role)'
+      );
+
+      if (!styleRole) {
+        await interaction.editReply({ content: '❌ Impossible de créer le rôle de couleur.' });
+        return;
       }
     }
 

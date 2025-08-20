@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } = require('discord.js');
 const { buildChoicesForSlashCommand, findStyleByKey, ROLE_STYLES } = require('../utils/rolePalette');
+const { createAndPositionColorRole } = require('../utils/rolePositioning');
 
 const LIMITED_CHOICES = buildChoicesForSlashCommand().slice(0, 25);
 
@@ -106,23 +107,20 @@ module.exports = {
 			// Cible: membre → on trouve ou crée le rôle de couleur correspondant au style, puis on l'assigne
 			let styleRole = interaction.guild.roles.cache.find(r => r.name === style.name);
 			if (!styleRole) {
-				styleRole = await interaction.guild.roles.create({
-					name: style.name,
-					color: style.color,
-					hoist: false,
-					mentionable: false,
-					reason: 'Création automatique du rôle de couleur (color-role)'
-				});
+				const meForPosition = interaction.guild.members.me;
+				if (!meForPosition) {
+					return interaction.editReply({ content: '❌ Impossible de récupérer les informations du bot.' });
+				}
 
-				// Positionner le rôle créé le plus haut possible (juste sous le rôle le plus haut du bot)
-				try {
-					const meForPosition = interaction.guild.members.me;
-					if (meForPosition) {
-						const targetPosition = Math.max(1, meForPosition.roles.highest.position - 1);
-						await styleRole.setPosition(targetPosition);
-					}
-				} catch (e) {
-					console.warn('Impossible de positionner le rôle de couleur au plus haut:', e?.message);
+				styleRole = await createAndPositionColorRole(
+					interaction.guild, 
+					meForPosition, 
+					style, 
+					'Création automatique du rôle de couleur (color-role)'
+				);
+
+				if (!styleRole) {
+					return interaction.editReply({ content: '❌ Impossible de créer le rôle de couleur.' });
 				}
 			}
 
