@@ -1037,10 +1037,6 @@ class ModerationManager {
       };
     }
   }
-}
-
-module.exports = ModerationManager;
-
 
   // ========== CONFIGURATION DE SÉCURITÉ ==========
 
@@ -1148,3 +1144,6 @@ module.exports = ModerationManager;
       return false;
     }
   }
+}
+
+module.exports = ModerationManager;
