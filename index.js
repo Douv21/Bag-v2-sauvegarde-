@@ -1300,6 +1300,146 @@ class BagBotRender {
         console.log(`✅ Accès accordé: ${member.user.tag} - ${reason}`);
     }
 
+    async sendSecurityAlert(member, securityAnalysis, details) {
+        try {
+            const alertChannel = await this.findSecurityLogChannel(member.guild);
+            if (!alertChannel) {
+                console.log(`❌ Aucun canal d'alertes configuré pour ${member.guild.name}`);
+                return;
+            }
+
+            const { EmbedBuilder } = require('discord.js');
+            
+            // Déterminer la couleur selon le niveau de risque
+            let color = 0x51cf66; // Vert (LOW)
+            if (details.totalScore >= 80) color = 0xff6b6b; // Rouge (CRITICAL)
+            else if (details.totalScore >= 60) color = 0xff922b; // Orange (HIGH)
+            else if (details.totalScore >= 30) color = 0xffd43b; // Jaune (MEDIUM)
+
+            const embed = new EmbedBuilder()
+                .setTitle('🚨 ALERTE SÉCURITÉ - Nouveau membre')
+                .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+                .setColor(color)
+                .setTimestamp();
+
+            // Informations de base
+            const accountAge = Math.floor((Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24));
+            embed.addFields({
+                name: '👤 Membre',
+                value: `**Nom :** ${member.user.tag}\n**Mention :** <@${member.user.id}>\n**Âge du compte :** ${accountAge} jour(s)`,
+                inline: true
+            });
+
+            embed.addFields({
+                name: '📊 Score de risque',
+                value: `**Score total :** ${details.totalScore}/100\n**Niveau :** ${this.getRiskLevelText(details.totalScore)}`,
+                inline: true
+            });
+
+            // Multi-comptes
+            if (details.multiAccountCheck && details.multiAccountCheck.totalSuspects > 0) {
+                embed.addFields({
+                    name: '🔍 Multi-comptes détectés',
+                    value: `**Suspects :** ${details.multiAccountCheck.totalSuspects}\n**Confiance :** ${details.multiAccountCheck.confidence}%`,
+                    inline: true
+                });
+            }
+
+            // Indicateurs de raid
+            if (details.raidCheck && details.raidCheck.isRaidSuspect) {
+                embed.addFields({
+                    name: '🚨 Suspect de raid',
+                    value: details.raidCheck.reasons.slice(0, 3).join('\n'),
+                    inline: false
+                });
+            }
+
+            // Drapeaux de sécurité
+            if (securityAnalysis.flags && securityAnalysis.flags.length > 0) {
+                embed.addFields({
+                    name: '🚩 Alertes',
+                    value: securityAnalysis.flags.slice(0, 5).join('\n'),
+                    inline: false
+                });
+            }
+
+            // Recommandations
+            if (securityAnalysis.recommendations && securityAnalysis.recommendations.length > 0) {
+                embed.addFields({
+                    name: '💡 Recommandations',
+                    value: securityAnalysis.recommendations.slice(0, 3).join('\n'),
+                    inline: false
+                });
+            }
+
+            // Mentionner les modérateurs si configuré
+            const config = await this.moderationManager.getSecurityConfig(member.guild.id);
+            let content = '';
+            if (config.autoAlerts?.mentionModerators && config.autoAlerts?.moderatorRoleId) {
+                content = `<@&${config.autoAlerts.moderatorRoleId}> **Alerte sécurité**`;
+            }
+
+            await alertChannel.send({ content, embeds: [embed] });
+            console.log(`🚨 Alerte sécurité envoyée: ${member.user.tag} (score: ${details.totalScore})`);
+
+        } catch (error) {
+            console.error('Erreur envoi alerte sécurité:', error);
+        }
+    }
+
+    async notifyAdminsQuarantine(member, reason, details) {
+        try {
+            const alertChannel = await this.findSecurityLogChannel(member.guild);
+            if (!alertChannel) return;
+
+            const { EmbedBuilder } = require('discord.js');
+            
+            const embed = new EmbedBuilder()
+                .setTitle('🔒 QUARANTAINE AUTOMATIQUE')
+                .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+                .setColor(0xff922b)
+                .setTimestamp();
+
+            embed.addFields({
+                name: '👤 Membre en quarantaine',
+                value: `${member.user.tag}\n<@${member.user.id}>`,
+                inline: true
+            });
+
+            embed.addFields({
+                name: '⚠️ Raison',
+                value: `**Motif :** ${details.reason}\n**Score :** ${details.score}/100`,
+                inline: true
+            });
+
+            embed.addFields({
+                name: '🔧 Action requise',
+                value: 'Un administrateur doit examiner ce cas et décider:\n• ✅ Approuver l\'accès\n• ❌ Refuser et bannir/kicker\n• 🔍 Demander plus d\'informations',
+                inline: false
+            });
+
+            // Mentionner les modérateurs
+            const config = await this.moderationManager.getSecurityConfig(member.guild.id);
+            let content = '';
+            if (config.autoAlerts?.mentionModerators && config.autoAlerts?.moderatorRoleId) {
+                content = `<@&${config.autoAlerts.moderatorRoleId}> **Quarantaine automatique**`;
+            }
+
+            await alertChannel.send({ content, embeds: [embed] });
+            console.log(`🔒 Notification quarantaine envoyée: ${member.user.tag}`);
+
+        } catch (error) {
+            console.error('Erreur notification quarantaine:', error);
+        }
+    }
+
+    getRiskLevelText(score) {
+        if (score >= 80) return '🔴 CRITIQUE';
+        if (score >= 60) return '🚨 ÉLEVÉ';
+        if (score >= 30) return '⚠️ MOYEN';
+        return '✅ FAIBLE';
+    }
+
     /**
      * Trouver le canal de logs de sécurité
      * @param {Guild} guild - Le serveur Discord
@@ -1307,11 +1447,24 @@ class BagBotRender {
      */
     async findSecurityLogChannel(guild) {
         try {
-            // Chercher d'abord le canal configuré
-            const config = await this.moderationManager.getGuildConfig(guild.id);
-            if (config.logsChannelId) {
-                const logChannel = guild.channels.cache.get(config.logsChannelId);
-                if (logChannel) return logChannel;
+            // Chercher d'abord le canal configuré dans la config de sécurité
+            const securityConfig = await this.moderationManager.getSecurityConfig(guild.id);
+            if (securityConfig.autoAlerts?.alertChannelId) {
+                const alertChannel = guild.channels.cache.get(securityConfig.autoAlerts.alertChannelId);
+                if (alertChannel) {
+                    console.log(`✅ Canal d'alertes sécurité trouvé: #${alertChannel.name}`);
+                    return alertChannel;
+                }
+            }
+
+            // Fallback sur la config de modération générale
+            const moderationConfig = await this.moderationManager.getGuildConfig(guild.id);
+            if (moderationConfig.logsChannelId) {
+                const logChannel = guild.channels.cache.get(moderationConfig.logsChannelId);
+                if (logChannel) {
+                    console.log(`⚠️ Utilisation du canal de logs général: #${logChannel.name}`);
+                    return logChannel;
+                }
             }
 
             // Chercher des canaux avec des noms typiques
@@ -1324,10 +1477,14 @@ class BagBotRender {
                 const channel = guild.channels.cache.find(ch => 
                     ch.name.toLowerCase().includes(channelName) && ch.isTextBased()
                 );
-                if (channel) return channel;
+                if (channel) {
+                    console.log(`🔍 Canal trouvé par nom: #${channel.name}`);
+                    return channel;
+                }
             }
 
             // En dernier recours, chercher le canal système
+            console.log(`⚠️ Aucun canal spécialisé trouvé, utilisation du canal système`);
             return guild.systemChannel;
         } catch (error) {
             console.error('Erreur recherche canal logs:', error);
