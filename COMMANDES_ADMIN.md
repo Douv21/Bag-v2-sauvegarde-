@@ -9,7 +9,7 @@
 - `/backup-status` (Administrateur): État du système de sauvegarde MongoDB
 
 - `/ban` (Administrateur): Bannir un membre
-  - Options: `membre` (User, requis), `raison` (String)
+  - Options: `membre` (User, requis), `suppr_jours` (Integer 0-7), `raison` (String)
 
 - Rappels de bump: automatiques, 2h après chaque bump DISBOARD détecté (pas de commande). Configurez le canal via la base de données si nécessaire.
 
