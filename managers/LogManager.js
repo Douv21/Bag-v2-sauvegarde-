@@ -854,15 +854,63 @@ class LogManager {
 			const cfg = await this.getGuildConfig(guild.id);
 			const cat = cfg.categories.threads;
 			if (!cat?.enabled || !cat.logCreates) return;
+			
+			// Récupérer les informations du créateur et des membres
+			let creatorInfo = 'Inconnu';
+			let memberCount = 0;
+			let parentChannelName = 'Canal supprimé';
+			
+			try {
+				// Récupérer le canal parent
+				if (thread.parentId) {
+					const parentChannel = guild.channels.cache.get(thread.parentId) || await guild.channels.fetch(thread.parentId).catch(() => null);
+					if (parentChannel) {
+						parentChannelName = `#${parentChannel.name}`;
+					}
+				}
+				
+				// Récupérer le créateur du thread
+				if (thread.ownerId) {
+					const owner = guild.members.cache.get(thread.ownerId) || await guild.members.fetch(thread.ownerId).catch(() => null);
+					if (owner) {
+						creatorInfo = `${owner.user.tag} (<@${owner.id}>)`;
+					} else {
+						creatorInfo = `<@${thread.ownerId}>`;
+					}
+				}
+				
+				// Récupérer le nombre de membres
+				if (thread.memberCount !== undefined) {
+					memberCount = thread.memberCount;
+				} else {
+					// Fallback: essayer de fetch les membres
+					try {
+						const members = await thread.members.fetch();
+						memberCount = members.size;
+					} catch {
+						memberCount = 1; // Au minimum le créateur
+					}
+				}
+			} catch {}
+			
 			const embed = new EmbedBuilder()
 				.setColor(Colors.Green)
 				.setTitle('🧵 Thread créé')
 				.addFields(
-					{ name: 'Thread', value: `<#${thread.id}>`, inline: true },
-					{ name: 'Salon parent', value: thread.parentId ? `<#${thread.parentId}>` : '—', inline: true }
+					{ name: 'Thread', value: `<#${thread.id}> (${thread.name || 'Sans nom'})`, inline: true },
+					{ name: 'Canal parent', value: thread.parentId ? `<#${thread.parentId}> (${parentChannelName})` : '—', inline: true },
+					{ name: 'Créateur', value: creatorInfo, inline: true },
+					{ name: 'Membres', value: `${memberCount} membre${memberCount > 1 ? 's' : ''}`, inline: true }
 				)
 				.setTimestamp(new Date());
-			await this.sendToCategory(guild, 'threads', embed);
+				
+			// Ajouter l'avatar du créateur si disponible
+			let creatorUser = null;
+			if (thread.ownerId) {
+				creatorUser = guild.members.cache.get(thread.ownerId)?.user;
+			}
+			
+			await this.sendToCategory(guild, 'threads', embed, { __decor: { actorUser: creatorUser } });
 		} catch {}
 	}
 
@@ -872,15 +920,63 @@ class LogManager {
 			const cfg = await this.getGuildConfig(guild.id);
 			const cat = cfg.categories.threads;
 			if (!cat?.enabled || !cat.logDeletes) return;
+			
+			// Récupérer les informations du créateur et des membres
+			let creatorInfo = 'Inconnu';
+			let memberCount = 0;
+			let parentChannelName = 'Canal supprimé';
+			
+			try {
+				// Récupérer le canal parent
+				if (thread.parentId) {
+					const parentChannel = guild.channels.cache.get(thread.parentId) || await guild.channels.fetch(thread.parentId).catch(() => null);
+					if (parentChannel) {
+						parentChannelName = `#${parentChannel.name}`;
+					}
+				}
+				
+				// Récupérer le créateur du thread
+				if (thread.ownerId) {
+					const owner = guild.members.cache.get(thread.ownerId) || await guild.members.fetch(thread.ownerId).catch(() => null);
+					if (owner) {
+						creatorInfo = `${owner.user.tag} (<@${owner.id}>)`;
+					} else {
+						creatorInfo = `<@${thread.ownerId}>`;
+					}
+				}
+				
+				// Récupérer le nombre de membres
+				if (thread.memberCount !== undefined) {
+					memberCount = thread.memberCount;
+				} else {
+					// Fallback: essayer de fetch les membres
+					try {
+						const members = await thread.members.fetch();
+						memberCount = members.size;
+					} catch {
+						memberCount = 1; // Au minimum le créateur
+					}
+				}
+			} catch {}
+			
 			const embed = new EmbedBuilder()
 				.setColor(Colors.DarkRed)
 				.setTitle('🧵 Thread supprimé')
 				.addFields(
 					{ name: 'Nom', value: `${thread.name || '—'}`, inline: true },
-					{ name: 'Salon parent', value: thread.parentId ? `<#${thread.parentId}>` : '—', inline: true }
+					{ name: 'Canal parent', value: thread.parentId ? `<#${thread.parentId}> (${parentChannelName})` : '—', inline: true },
+					{ name: 'Créateur', value: creatorInfo, inline: true },
+					{ name: 'Membres', value: `${memberCount} membre${memberCount > 1 ? 's' : ''}`, inline: true }
 				)
 				.setTimestamp(new Date());
-			await this.sendToCategory(guild, 'threads', embed);
+				
+			// Ajouter l'avatar du créateur si disponible
+			let creatorUser = null;
+			if (thread.ownerId) {
+				creatorUser = guild.members.cache.get(thread.ownerId)?.user;
+			}
+			
+			await this.sendToCategory(guild, 'threads', embed, { __decor: { actorUser: creatorUser } });
 		} catch {}
 	}
 
@@ -890,20 +986,75 @@ class LogManager {
 			const cfg = await this.getGuildConfig(guild.id);
 			const cat = cfg.categories.threads;
 			if (!cat?.enabled || !cat.logUpdates) return;
+			
 			const changes = [];
 			if (oldThread.name !== newThread.name) changes.push({ name: 'Nom', value: `${oldThread.name} → ${newThread.name}` });
-			if (oldThread.archived !== newThread.archived) changes.push({ name: 'Archive', value: `${oldThread.archived ? 'Archivé' : 'Ouvert'} → ${newThread.archived ? 'Archivé' : 'Ouvert'}` });
+			if (oldThread.archived !== newThread.archived) {
+				const archiveChange = `${oldThread.archived ? 'Archivé' : 'Ouvert'} → ${newThread.archived ? 'Archivé' : 'Ouvert'}`;
+				changes.push({ name: 'Archive', value: archiveChange });
+			}
 			if (oldThread.locked !== newThread.locked) changes.push({ name: 'Verrou', value: `${oldThread.locked ? 'Verrouillé' : 'Déverrouillé'} → ${newThread.locked ? 'Verrouillé' : 'Déverrouillé'}` });
+			
+			// Si aucun changement significatif, ne pas logger
 			if (changes.length === 0) return;
+			
+			// Récupérer les informations du créateur et des membres
+			let creatorInfo = 'Inconnu';
+			let memberCount = 0;
+			let parentChannelName = 'Canal supprimé';
+			
+			try {
+				// Récupérer le canal parent
+				if (newThread.parentId) {
+					const parentChannel = guild.channels.cache.get(newThread.parentId) || await guild.channels.fetch(newThread.parentId).catch(() => null);
+					if (parentChannel) {
+						parentChannelName = `#${parentChannel.name}`;
+					}
+				}
+				
+				// Récupérer le créateur du thread
+				if (newThread.ownerId) {
+					const owner = guild.members.cache.get(newThread.ownerId) || await guild.members.fetch(newThread.ownerId).catch(() => null);
+					if (owner) {
+						creatorInfo = `${owner.user.tag} (<@${owner.id}>)`;
+					} else {
+						creatorInfo = `<@${newThread.ownerId}>`;
+					}
+				}
+				
+				// Récupérer le nombre de membres
+				if (newThread.memberCount !== undefined) {
+					memberCount = newThread.memberCount;
+				} else {
+					// Fallback: essayer de fetch les membres
+					try {
+						const members = await newThread.members.fetch();
+						memberCount = members.size;
+					} catch {
+						memberCount = 1; // Au minimum le créateur
+					}
+				}
+			} catch {}
+			
 			const embed = new EmbedBuilder()
 				.setColor(Colors.Blurple)
 				.setTitle('✏️ Thread modifié')
 				.addFields(
-					{ name: 'Thread', value: `<#${newThread.id}>` },
-					...changes.slice(0, 24)
+					{ name: 'Thread', value: `<#${newThread.id}> (${newThread.name || 'Sans nom'})` },
+					{ name: 'Canal parent', value: newThread.parentId ? `<#${newThread.parentId}> (${parentChannelName})` : '—', inline: true },
+					{ name: 'Créateur', value: creatorInfo, inline: true },
+					{ name: 'Membres', value: `${memberCount} membre${memberCount > 1 ? 's' : ''}`, inline: true },
+					...changes.slice(0, 21)
 				)
 				.setTimestamp(new Date());
-			await this.sendToCategory(guild, 'threads', embed);
+				
+			// Ajouter l'avatar du créateur si disponible
+			let creatorUser = null;
+			if (newThread.ownerId) {
+				creatorUser = guild.members.cache.get(newThread.ownerId)?.user;
+			}
+			
+			await this.sendToCategory(guild, 'threads', embed, { __decor: { actorUser: creatorUser } });
 		} catch {}
 	}
 
