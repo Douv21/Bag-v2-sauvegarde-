@@ -22,12 +22,18 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName('color-role')
-    .setDescription('Appliquer une couleur/style à un rôle existant')
+    .setDescription('Appliquer une couleur/style à un rôle existant OU à un membre')
     .addRoleOption(option =>
       option
         .setName('role')
         .setDescription('Rôle à modifier')
-        .setRequired(true)
+        .setRequired(false)
+    )
+    .addUserOption(option =>
+      option
+        .setName('member')
+        .setDescription('Membre à qui attribuer la couleur (si aucun rôle n\'est fourni)')
+        .setRequired(false)
     )
     .addStringOption(option =>
       option
