@@ -2,6 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const { ROLE_PALETTES, DEFAULT_PALETTE_KEY } = require('./palettes');
 
+function safeParseJSON(str) {
+	try { return JSON.parse(str); } catch { return null; }
+}
+
 function validateStyles(styles) {
 	if (!Array.isArray(styles)) return null;
 	const hexRegex = /^#([0-9A-Fa-f]{6})$/;
@@ -22,17 +26,15 @@ function loadCustomPaletteFromEnv() {
 	const filePath = process.env.ROLE_PALETTE_FILE;
 	let styles = null;
 	if (jsonInline) {
-		try {
-			const parsed = JSON.parse(jsonInline);
-			styles = validateStyles(Array.isArray(parsed) ? parsed : parsed.styles);
-		} catch {}
+		const parsed = safeParseJSON(jsonInline);
+		styles = validateStyles(parsed?.styles || parsed);
 	}
 	if (!styles && filePath) {
 		try {
 			const resolved = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
 			const raw = fs.readFileSync(resolved, 'utf8');
-			const parsed = JSON.parse(raw);
-			styles = validateStyles(Array.isArray(parsed) ? parsed : parsed.styles);
+			const parsed = safeParseJSON(raw);
+			styles = validateStyles(parsed?.styles || parsed);
 		} catch {}
 	}
 	if (styles) return { key: 'custom', name: 'Custom', styles };
@@ -53,20 +55,6 @@ function getActivePalette() {
 	return ROLE_PALETTES[envKey] || ROLE_PALETTES[DEFAULT_PALETTE_KEY];
 }
 
-const ROLE_STYLES = (getActivePalette()?.styles || []);
-
-function buildChoicesForSlashCommand() {
-	const styles = (getActivePalette()?.styles || ROLE_STYLES);
-	return styles.map(style => ({ name: style.name, value: style.key }));
-}
-
-function findStyleByKey(styleKey, paletteKey) {
-	const source = paletteKey
-		? ((getPaletteByKey(paletteKey) || {}).styles || [])
-		: ((getActivePalette() || {}).styles || ROLE_STYLES);
-	return source.find(style => style.key === styleKey);
-}
-
 function getAllPalettes() {
 	const all = { ...ROLE_PALETTES };
 	const custom = loadCustomPaletteFromEnv();
@@ -74,17 +62,30 @@ function getAllPalettes() {
 	return all;
 }
 
+function buildChoicesForSlashCommand(paletteKey) {
+	const palette = paletteKey ? (getPaletteByKey(paletteKey) || getActivePalette()) : getActivePalette();
+	const styles = palette?.styles || [];
+	return styles.map(style => ({ name: style.name, value: style.key }));
+}
+
 function buildPaletteChoices() {
 	const palettes = getAllPalettes();
 	return Object.values(palettes).map(p => ({ name: p.name, value: p.key }));
 }
 
+function findStyleByKey(styleKey, paletteKey) {
+	const source = paletteKey
+		? ((getPaletteByKey(paletteKey) || {}).styles || [])
+		: ((getActivePalette() || {}).styles || []);
+	return source.find(style => style.key === styleKey);
+}
+
 module.exports = {
-	ROLE_STYLES,
-	buildChoicesForSlashCommand,
-	findStyleByKey,
 	getActivePalette,
-	getPaletteByKey,
 	getAllPalettes,
-	buildPaletteChoices
+	getPaletteByKey,
+	buildChoicesForSlashCommand,
+	buildPaletteChoices,
+	findStyleByKey
 };
+
