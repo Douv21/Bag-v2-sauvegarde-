@@ -1,29 +1,30 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const QuarantineChannelManager = require('../handlers/QuarantineChannelManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('quarantaine')
-    .setDescription('Gérer les quarantaines de sécurité')
+    .setDescription('Gérer les quarantaines de sécurité avec canaux privés automatiques')
     .addSubcommand(subcommand =>
       subcommand
         .setName('appliquer')
-        .setDescription('Mettre un membre en quarantaine manuellement')
+        .setDescription('Mettre un membre en quarantaine avec canaux privés')
         .addUserOption(o => o.setName('membre').setDescription('Membre à mettre en quarantaine').setRequired(true))
         .addStringOption(o => o.setName('raison').setDescription('Raison de la quarantaine').setRequired(true)))
     .addSubcommand(subcommand =>
       subcommand
         .setName('liberer')
-        .setDescription('Libérer un membre de la quarantaine')
+        .setDescription('Libérer un membre de la quarantaine et supprimer ses canaux')
         .addUserOption(o => o.setName('membre').setDescription('Membre à libérer').setRequired(true))
         .addStringOption(o => o.setName('raison').setDescription('Raison de la libération').setRequired(true)))
     .addSubcommand(subcommand =>
       subcommand
         .setName('liste')
-        .setDescription('Voir tous les membres en quarantaine'))
+        .setDescription('Voir tous les membres en quarantaine avec leurs canaux'))
     .addSubcommand(subcommand =>
       subcommand
         .setName('info')
-        .setDescription('Voir les détails d\'une quarantaine')
+        .setDescription('Voir les détails d\'une quarantaine et ses canaux')
         .addUserOption(o => o.setName('membre').setDescription('Membre à examiner').setRequired(true)))
     .addSubcommand(subcommand =>
       subcommand
@@ -38,6 +39,13 @@ module.exports = {
       return interaction.reply({ content: '❌ Réservé aux modérateurs.', ephemeral: true });
     }
 
+    // Initialiser le gestionnaire de quarantaine
+    const mod = interaction.client.moderationManager;
+    if (!mod) {
+      return interaction.reply({ content: '❌ Système de modération non disponible.', ephemeral: true });
+    }
+
+    this.quarantineManager = new QuarantineChannelManager(mod);
     const subcommand = interaction.options.getSubcommand();
 
     try {
@@ -80,37 +88,77 @@ module.exports = {
       return interaction.reply({ content: '❌ Impossible de mettre un administrateur en quarantaine.', ephemeral: true });
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    // Vérifier si le membre est déjà en quarantaine
+    const config = await this.quarantineManager.moderationManager.getSecurityConfig(interaction.guild.id);
+    if (config.accessControl?.quarantineRoleId) {
+      const quarantineRole = interaction.guild.roles.cache.get(config.accessControl.quarantineRoleId);
+      if (quarantineRole && member.roles.cache.has(quarantineRole.id)) {
+        return interaction.reply({ 
+          content: `❌ **${member.user.tag}** est déjà en quarantaine.`, 
+          ephemeral: true 
+        });
+      }
+    }
+
+    await interaction.deferReply({ ephemeral: false });
 
     try {
-      // Utiliser le système de quarantaine du bot principal
-      const bot = interaction.client;
-      
-      // Vérifier que la méthode est disponible
-      console.log('🔍 Vérification quarantineMember dans quarantaine.js:', typeof bot.quarantineMember);
-      
-      if (typeof bot.quarantineMember !== 'function') {
-        throw new Error(`La méthode quarantineMember n'est pas disponible (type: ${typeof bot.quarantineMember})`);
-      }
-      
-      await bot.quarantineMember(member, 'MANUAL', {
-        reason: `Quarantaine manuelle: ${reason}`,
-        score: 0,
-        manual: true,
-        moderator: interaction.user.id
-      });
+      // Utiliser le nouveau système de canaux de quarantaine
+      const fullReason = `Quarantaine manuelle par ${interaction.user.tag}: ${reason}`;
+      const channels = await this.quarantineManager.createQuarantineChannels(member, fullReason);
 
-      return interaction.editReply({
-        content: `✅ **Quarantaine appliquée**\n\n` +
-                 `**Membre :** ${member.user.tag}\n` +
-                 `**Raison :** ${reason}\n\n` +
-                 `Des canaux de quarantaine ont été créés automatiquement.`
-      });
+      // Créer l'embed de confirmation
+      const embed = new EmbedBuilder()
+        .setTitle('🔒 Quarantaine appliquée')
+        .setDescription(`**${member.user.tag}** a été mis en quarantaine`)
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+        .setColor(0xff922b)
+        .addFields(
+          {
+            name: '👮 Modérateur',
+            value: interaction.user.tag,
+            inline: true
+          },
+          {
+            name: '📝 Raison',
+            value: reason,
+            inline: true
+          },
+          {
+            name: '🏗️ Canaux créés',
+            value: `**Texte :** ${channels.textChannel}\n**Vocal :** ${channels.voiceChannel}`,
+            inline: false
+          },
+          {
+            name: '⚙️ Système',
+            value: `• Accès limité aux canaux de quarantaine uniquement\n• Communication possible avec les modérateurs\n• Libération via \`/quarantaine liberer\``,
+            inline: false
+          }
+        )
+        .setTimestamp();
+
+      await interaction.editReply({ embeds: [embed] });
+
+      // Envoyer notification dans le canal d'alertes si configuré
+      const alertChannelId = config.autoAlerts?.alertChannelId;
+      if (alertChannelId) {
+        const alertChannel = interaction.guild.channels.cache.get(alertChannelId);
+        if (alertChannel) {
+          await alertChannel.send({
+            content: `🔒 **Quarantaine manuelle appliquée**`,
+            embeds: [embed]
+          });
+        }
+      }
+
+      console.log(`🔒 Quarantaine manuelle appliquée: ${member.user.tag} par ${interaction.user.tag}`);
+
     } catch (error) {
       console.error('Erreur application quarantaine:', error);
       return interaction.editReply({
         content: `❌ **Erreur lors de l'application de la quarantaine**\n\n` +
-                 `${error.message}`
+                 `${error.message}\n\n` +
+                 `Vérifiez que le rôle de quarantaine est configuré avec \`/config-verif quarantaine\``
       });
     }
   },
@@ -123,24 +171,82 @@ module.exports = {
       return interaction.reply({ content: '❌ Membre introuvable sur ce serveur.', ephemeral: true });
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    // Vérifier si le membre est en quarantaine
+    const config = await this.quarantineManager.moderationManager.getSecurityConfig(interaction.guild.id);
+    if (config.accessControl?.quarantineRoleId) {
+      const quarantineRole = interaction.guild.roles.cache.get(config.accessControl.quarantineRoleId);
+      if (!quarantineRole || !member.roles.cache.has(quarantineRole.id)) {
+        return interaction.reply({ 
+          content: `❌ **${member.user.tag}** n'est pas en quarantaine.`, 
+          ephemeral: true 
+        });
+      }
+    }
+
+    await interaction.deferReply({ ephemeral: false });
 
     try {
-      // Utiliser le système de libération du bot principal
-      const bot = interaction.client;
-      await bot.grantAccess(member, `Libération manuelle: ${reason}`);
+      // Récupérer les infos de quarantaine avant libération
+      const quarantineInfo = this.quarantineManager.getQuarantineInfo(member.user.id);
+      
+      // Utiliser le nouveau système de libération
+      const fullReason = `Libération manuelle par ${interaction.user.tag}: ${reason}`;
+      await this.quarantineManager.releaseFromQuarantine(member, fullReason);
 
-      return interaction.editReply({
-        content: `✅ **Quarantaine levée**\n\n` +
-                 `**Membre :** ${member.user.tag}\n` +
-                 `**Raison :** ${reason}\n\n` +
-                 `L'accès a été restauré et les canaux ont été nettoyés.`
-      });
+      // Créer l'embed de confirmation
+      const embed = new EmbedBuilder()
+        .setTitle('✅ Quarantaine levée')
+        .setDescription(`**${member.user.tag}** a été libéré de quarantaine`)
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+        .setColor(0x51cf66)
+        .addFields(
+          {
+            name: '👮 Modérateur',
+            value: interaction.user.tag,
+            inline: true
+          },
+          {
+            name: '📝 Raison',
+            value: reason,
+            inline: true
+          },
+          {
+            name: '🗑️ Canaux supprimés',
+            value: quarantineInfo ? 
+              `Canal texte et vocal de quarantaine supprimés` : 
+              `Aucun canal trouvé`,
+            inline: false
+          },
+          {
+            name: '⚙️ Statut',
+            value: `• Accès complet restauré\n• Rôle vérifié ajouté (si configuré)\n• Membre peut accéder à tous les canaux autorisés`,
+            inline: false
+          }
+        )
+        .setTimestamp();
+
+      await interaction.editReply({ embeds: [embed] });
+
+      // Envoyer notification dans le canal d'alertes si configuré
+      const alertChannelId = config.autoAlerts?.alertChannelId;
+      if (alertChannelId) {
+        const alertChannel = interaction.guild.channels.cache.get(alertChannelId);
+        if (alertChannel) {
+          await alertChannel.send({
+            content: `✅ **Libération de quarantaine**`,
+            embeds: [embed]
+          });
+        }
+      }
+
+      console.log(`✅ Libération de quarantaine: ${member.user.tag} par ${interaction.user.tag}`);
+
     } catch (error) {
       console.error('Erreur libération quarantaine:', error);
       return interaction.editReply({
         content: `❌ **Erreur lors de la libération**\n\n` +
-                 `${error.message}`
+                 `${error.message}\n\n` +
+                 `Le membre pourrait ne pas être en quarantaine ou les canaux pourraient déjà être supprimés.`
       });
     }
   },
@@ -149,45 +255,60 @@ module.exports = {
     await interaction.deferReply({ ephemeral: true });
 
     try {
-      const dataManager = interaction.client.dataManager;
-      const quarantineData = await dataManager.getData('quarantine_records');
-      const guildData = quarantineData[interaction.guild.id] || {};
+      // Utiliser le nouveau système pour lister les membres en quarantaine
+      const quarantinedMembers = await this.quarantineManager.listQuarantinedMembers(interaction.guild);
 
-      const activeQuarantines = Object.entries(guildData)
-        .filter(([userId, data]) => data.status === 'active')
-        .slice(0, 10); // Limiter à 10 pour éviter les messages trop longs
-
-      if (activeQuarantines.length === 0) {
+      if (quarantinedMembers.length === 0) {
         return interaction.editReply({
           content: '✅ **Aucune quarantaine active**\n\nTous les membres ont accès normal au serveur.'
         });
       }
 
       const embed = new EmbedBuilder()
-        .setTitle(`🔒 Quarantaines actives (${activeQuarantines.length})`)
+        .setTitle(`🔒 Quarantaines actives (${quarantinedMembers.length})`)
         .setColor(0xff922b)
         .setTimestamp();
 
       let description = '';
-      for (const [userId, data] of activeQuarantines) {
-        try {
-          const user = await interaction.client.users.fetch(userId);
-          const quarantineAge = Math.floor((Date.now() - data.timestamp) / (1000 * 60 * 60));
-          description += `👤 **${user.tag}**\n`;
-          description += `   📝 ${data.reason}\n`;
-          description += `   📊 Score: ${data.score}/100\n`;
-          description += `   ⏰ Depuis: ${quarantineAge}h\n`;
-          if (data.textChannelId) {
-            description += `   💬 <#${data.textChannelId}>\n`;
+      for (const memberInfo of quarantinedMembers.slice(0, 10)) { // Limiter à 10
+        const { member, channels, duration } = memberInfo;
+        const quarantineHours = Math.floor(duration / (1000 * 60 * 60));
+        const quarantineDays = Math.floor(quarantineHours / 24);
+        
+        description += `👤 **${member.user.tag}**\n`;
+        
+        if (channels) {
+          description += `   📝 ${channels.reason}\n`;
+          description += `   💬 Texte: ${channels.textChannel}\n`;
+          description += `   🔊 Vocal: ${channels.voiceChannel}\n`;
+          
+          if (quarantineDays > 0) {
+            description += `   ⏰ Depuis: ${quarantineDays}j ${quarantineHours % 24}h\n`;
+          } else {
+            description += `   ⏰ Depuis: ${quarantineHours}h\n`;
           }
-          description += '\n';
-        } catch {
-          description += `👤 **Utilisateur inconnu (${userId})**\n`;
-          description += `   📝 ${data.reason}\n\n`;
+        } else {
+          description += `   📝 Quarantaine sans canaux détectés\n`;
+          description += `   ⚠️ Canaux possiblement supprimés manuellement\n`;
         }
+        
+        description += '\n';
+      }
+
+      if (quarantinedMembers.length > 10) {
+        description += `*Et ${quarantinedMembers.length - 10} autre(s)...*`;
       }
 
       embed.setDescription(description);
+
+      // Ajouter des informations utiles
+      embed.addFields({
+        name: '💡 Actions disponibles',
+        value: `• \`/quarantaine liberer\` pour libérer un membre\n` +
+               `• \`/quarantaine info\` pour voir les détails\n` +
+               `• \`/quarantaine nettoyer\` pour supprimer les canaux orphelins`,
+        inline: false
+      });
 
       return interaction.editReply({ embeds: [embed] });
     } catch (error) {
@@ -208,45 +329,71 @@ module.exports = {
     await interaction.deferReply({ ephemeral: true });
 
     try {
-      const dataManager = interaction.client.dataManager;
-      const quarantineData = await dataManager.getData('quarantine_records');
-      const memberData = quarantineData[interaction.guild.id]?.[member.id];
+      // Vérifier si le membre est actuellement en quarantaine
+      const config = await this.quarantineManager.moderationManager.getSecurityConfig(interaction.guild.id);
+      const isCurrentlyQuarantined = config.accessControl?.quarantineRoleId && 
+        member.roles.cache.has(config.accessControl.quarantineRoleId);
 
-      if (!memberData) {
+      // Récupérer les informations de quarantaine actuelle
+      const quarantineInfo = this.quarantineManager.getQuarantineInfo(member.user.id);
+
+      if (!isCurrentlyQuarantined && !quarantineInfo) {
         return interaction.editReply({
-          content: `ℹ️ **${member.user.tag}** n'a pas d'historique de quarantaine sur ce serveur.`
+          content: `ℹ️ **${member.user.tag}** n'est pas actuellement en quarantaine et n'a pas de canaux actifs.`
         });
       }
 
       const embed = new EmbedBuilder()
         .setTitle(`🔍 Détails de quarantaine - ${member.user.tag}`)
         .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-        .setColor(memberData.status === 'active' ? 0xff922b : 0x51cf66)
+        .setColor(isCurrentlyQuarantined ? 0xff922b : 0x51cf66)
         .setTimestamp();
 
+      // Informations générales
       embed.addFields({
-        name: '📊 Informations générales',
-        value: `**Statut :** ${memberData.status === 'active' ? '🔒 En quarantaine' : '✅ Libéré'}\n` +
-               `**Raison :** ${memberData.reason}\n` +
-               `**Score :** ${memberData.score}/100\n` +
-               `**Date :** ${new Date(memberData.timestamp).toLocaleString('fr-FR')}`,
+        name: '📊 Statut actuel',
+        value: `**Statut :** ${isCurrentlyQuarantined ? '🔒 En quarantaine' : '✅ Non en quarantaine'}\n` +
+               `**Rôle quarantaine :** ${isCurrentlyQuarantined ? '✅ Possédé' : '❌ Non possédé'}\n` +
+               `**Canaux actifs :** ${quarantineInfo ? '✅ Oui' : '❌ Non'}`,
         inline: false
       });
 
-      if (memberData.status === 'active' && memberData.textChannelId) {
+      // Détails des canaux si disponibles
+      if (quarantineInfo) {
+        const duration = Date.now() - quarantineInfo.createdAt;
+        const hours = Math.floor(duration / (1000 * 60 * 60));
+        const days = Math.floor(hours / 24);
+
         embed.addFields({
-          name: '📁 Canaux de quarantaine',
-          value: `💬 Texte : <#${memberData.textChannelId}>\n` +
-                 `🔊 Vocal : <#${memberData.voiceChannelId}>`,
+          name: '🏗️ Canaux de quarantaine',
+          value: `**Texte :** ${quarantineInfo.textChannel}\n` +
+                 `**Vocal :** ${quarantineInfo.voiceChannel}\n` +
+                 `**Créés :** ${days > 0 ? `${days}j ${hours % 24}h` : `${hours}h`} ago\n` +
+                 `**Raison :** ${quarantineInfo.reason}`,
           inline: false
         });
       }
 
-      if (memberData.status === 'resolved') {
+      // Informations du membre
+      const accountAge = Math.floor((Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24));
+      const joinAge = Math.floor((Date.now() - member.joinedTimestamp) / (1000 * 60 * 60 * 24));
+      
+      embed.addFields({
+        name: '👤 Informations membre',
+        value: `**ID :** ${member.user.id}\n` +
+               `**Compte créé :** ${accountAge} jour(s) ago\n` +
+               `**Rejoint serveur :** ${joinAge} jour(s) ago\n` +
+               `**Rôles :** ${member.roles.cache.size - 1} (hors @everyone)`,
+        inline: false
+      });
+
+      // Actions disponibles
+      if (isCurrentlyQuarantined) {
         embed.addFields({
-          name: '✅ Résolution',
-          value: `**Date :** ${new Date(memberData.resolvedAt).toLocaleString('fr-FR')}\n` +
-                 `**Raison :** ${memberData.resolvedReason}`,
+          name: '⚡ Actions disponibles',
+          value: `• \`/quarantaine liberer membre:${member.user.tag} raison:...\`\n` +
+                 `• Accès aux canaux : ${quarantineInfo ? 'Voir les canaux ci-dessus' : 'Aucun canal actif'}\n` +
+                 `• Communication directe possible avec le membre`,
           inline: false
         });
       }
@@ -264,65 +411,76 @@ module.exports = {
     await interaction.deferReply({ ephemeral: true });
 
     try {
-      let cleaned = 0;
+      // Utiliser le système de nettoyage intégré
+      await this.quarantineManager.cleanupOrphanedChannels(interaction.guild);
+
+      // Compter les canaux de quarantaine restants pour rapport
       const guild = interaction.guild;
-
-      // Trouver tous les canaux de quarantaine orphelins
-      const quarantineChannels = guild.channels.cache.filter(channel => 
-        channel.name.includes('quarantaine') && 
-        (channel.type === 0 || channel.type === 2) // Text ou Voice
+      const quarantineCategory = guild.channels.cache.find(
+        c => c.type === 4 && c.name.toLowerCase().includes('quarantaine')
       );
 
-      for (const channel of quarantineChannels.values()) {
-        try {
-          // Vérifier si le canal a été utilisé récemment
-          if (channel.type === 0) { // TextChannel
-            const messages = await channel.messages.fetch({ limit: 1 });
-            const lastMessage = messages.first();
-            
-            // Si pas de messages depuis plus de 24h, considérer comme orphelin
-            if (!lastMessage || (Date.now() - lastMessage.createdTimestamp) > 24 * 60 * 60 * 1000) {
-              await channel.delete('Nettoyage automatique des canaux de quarantaine orphelins');
-              cleaned++;
-            }
-          } else { // VoiceChannel
-            // Si pas de membres connectés, supprimer
-            if (channel.members.size === 0) {
-              await channel.delete('Nettoyage automatique des canaux de quarantaine orphelins');
-              cleaned++;
-            }
-          }
-        } catch (error) {
-          console.warn(`Impossible de nettoyer le canal ${channel.name}:`, error.message);
-        }
+      let remainingChannels = 0;
+      if (quarantineCategory) {
+        remainingChannels = quarantineCategory.children.cache.size;
       }
 
-      // Nettoyer les catégories vides
-      const quarantineCategories = guild.channels.cache.filter(channel =>
-        channel.type === 4 && channel.name.toLowerCase().includes('quarantaine')
-      );
+      // Compter les membres actuellement en quarantaine
+      const quarantinedMembers = await this.quarantineManager.listQuarantinedMembers(guild);
+      const activeQuarantines = quarantinedMembers.length;
 
-      for (const category of quarantineCategories.values()) {
-        if (category.children.cache.size === 0) {
-          try {
-            await category.delete('Catégorie de quarantaine vide');
-            cleaned++;
-          } catch (error) {
-            console.warn(`Impossible de supprimer la catégorie ${category.name}:`, error.message);
+      const embed = new EmbedBuilder()
+        .setTitle('🧹 Nettoyage des canaux de quarantaine')
+        .setColor(0x51cf66)
+        .addFields(
+          {
+            name: '📊 État après nettoyage',
+            value: `**Quarantaines actives :** ${activeQuarantines}\n` +
+                   `**Canaux restants :** ${remainingChannels}\n` +
+                   `**Catégorie :** ${quarantineCategory ? '✅ Présente' : '❌ Absente'}`,
+            inline: false
+          },
+          {
+            name: '🔧 Nettoyage effectué',
+            value: `• Suppression des canaux orphelins (sans membre correspondant)\n` +
+                   `• Suppression des catégories vides\n` +
+                   `• Vérification de la cohérence des rôles\n` +
+                   `• Conservation des canaux avec membres actifs`,
+            inline: false
+          },
+          {
+            name: '💡 Informations',
+            value: `Le nettoyage automatique supprime uniquement :\n` +
+                   `• Les canaux sans membre correspondant en quarantaine\n` +
+                   `• Les catégories complètement vides\n` +
+                   `• Les canaux corrompus ou inaccessibles`,
+            inline: false
           }
+        )
+        .setTimestamp();
+
+      // Ajouter liste des membres encore en quarantaine si peu nombreux
+      if (activeQuarantines > 0 && activeQuarantines <= 5) {
+        let membersList = '';
+        for (const memberInfo of quarantinedMembers.slice(0, 5)) {
+          membersList += `• ${memberInfo.member.user.tag}\n`;
         }
+        
+        embed.addFields({
+          name: '👥 Membres encore en quarantaine',
+          value: membersList,
+          inline: false
+        });
       }
 
-      return interaction.editReply({
-        content: `🧹 **Nettoyage terminé**\n\n` +
-                 `**Canaux supprimés :** ${cleaned}\n\n` +
-                 `${cleaned === 0 ? 'Aucun canal orphelin trouvé.' : 'Les canaux inutilisés ont été supprimés.'}`
-      });
+      return interaction.editReply({ embeds: [embed] });
 
     } catch (error) {
       console.error('Erreur nettoyage quarantaines:', error);
       return interaction.editReply({
-        content: '❌ Erreur lors du nettoyage des canaux de quarantaine.'
+        content: `❌ **Erreur lors du nettoyage**\n\n` +
+                 `${error.message}\n\n` +
+                 `Vérifiez les permissions du bot pour gérer les canaux.`
       });
     }
   }
