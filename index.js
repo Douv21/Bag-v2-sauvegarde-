@@ -95,6 +95,16 @@ class BagBotRender {
         this.client.reminderManager = this.reminderManager;
         this.client.moderationManager = this.moderationManager;
         this.client.logManager = this.logManager;
+        
+        // Attacher les méthodes de quarantaine au client pour les commandes
+        this.client.quarantineMember = this.quarantineMember.bind(this);
+        this.client.grantAccess = this.grantAccess.bind(this);
+        this.client.getQuarantineInfo = this.getQuarantineInfo.bind(this);
+        this.client.ensureQuarantineRole = this.ensureQuarantineRole.bind(this);
+        this.client.createQuarantineChannels = this.createQuarantineChannels.bind(this);
+        this.client.setupQuarantinePermissions = this.setupQuarantinePermissions.bind(this);
+        this.client.recordQuarantineInfo = this.recordQuarantineInfo.bind(this);
+        this.client.cleanupQuarantineChannels = this.cleanupQuarantineChannels.bind(this);
 
         // Collections
         this.client.commands = new Collection();
