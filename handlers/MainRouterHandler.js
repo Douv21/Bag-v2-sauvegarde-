@@ -217,6 +217,14 @@ class MainRouterHandler {
                 return true;
             }
 
+            // Boutons AouV - Action et Vérité
+            if (customId === 'aouv_btn_action' || customId === 'aouv_btn_verite') {
+                console.log('🎯 Bouton AouV cliqué via MainRouter:', customId);
+                const aouvCommand = require('../commands/aouv');
+                await aouvCommand.handleButton(interaction, this.dataManager);
+                return true;
+            }
+
             return false;
         } catch (error) {
             console.error('❌ Erreur button interaction:', error);

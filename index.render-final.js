@@ -3032,6 +3032,14 @@ class RenderSolutionBot {
                     }
                 }
 
+                // === AOUV BUTTONS — Gestion des boutons Action/Vérité ===
+                if (customId === 'aouv_btn_action' || customId === 'aouv_btn_verite') {
+                    console.log('🎯 Bouton AouV cliqué:', customId);
+                    const aouvCommand = require('./commands/aouv');
+                    await aouvCommand.handleButton(interaction, dataManager);
+                    return;
+                }
+
                 // === AOUV CONFIG — indépendant ===
                 if (customId === 'aouv_main_select') {
                     console.log('🎯 Sélection AouV');
