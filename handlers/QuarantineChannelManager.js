@@ -99,13 +99,34 @@ class QuarantineChannelManager {
         console.warn('⚠️ Échec application des refus au niveau membre:', isolationErr?.message || isolationErr);
       }
 
-      // Enregistrer les canaux
+      // Enregistrer les canaux en mémoire
       this.quarantineChannels.set(member.user.id, {
         textChannel,
         voiceChannel,
         createdAt: Date.now(),
         reason
       });
+
+      // Persister les canaux dans les enregistrements pour garantir le nettoyage
+      try {
+        const dm = this.moderationManager?.dataManager;
+        if (dm) {
+          const records = await dm.getData('quarantine_records');
+          if (!records[member.guild.id]) records[member.guild.id] = {};
+          records[member.guild.id][member.user.id] = {
+            guildId: member.guild.id,
+            userId: member.user.id,
+            textChannelId: textChannel.id,
+            voiceChannelId: voiceChannel.id,
+            status: 'active',
+            reason,
+            createdAt: Date.now()
+          };
+          await dm.saveData('quarantine_records', records);
+        }
+      } catch (persistErr) {
+        console.warn('⚠️ Impossible d\'enregistrer le dossier de quarantaine:', persistErr?.message || persistErr);
+      }
 
       // Envoyer message de bienvenue dans le canal texte
       await this.sendWelcomeMessage(textChannel, member, reason);
@@ -153,8 +174,28 @@ class QuarantineChannelManager {
         console.warn('⚠️ Échec restauration des accès canaux:', restErr?.message || restErr);
       }
 
-      // Supprimer les canaux de quarantaine
-      await this.deleteQuarantineChannels(member.user.id);
+      // Supprimer les canaux de quarantaine (via mémoire ou enregistrements persistés)
+      await this.deleteQuarantineChannelsForMember(member);
+
+      // Mettre à jour l'enregistrement persistant
+      try {
+        const dm = this.moderationManager?.dataManager;
+        if (dm) {
+          const records = await dm.getData('quarantine_records');
+          const rec = records[member.guild.id]?.[member.user.id];
+          if (rec) {
+            records[member.guild.id][member.user.id] = {
+              ...rec,
+              status: 'resolved',
+              resolvedAt: Date.now(),
+              resolvedReason: reason
+            };
+            await dm.saveData('quarantine_records', records);
+          }
+        }
+      } catch (markErr) {
+        console.warn('⚠️ Impossible de marquer la quarantaine comme résolue:', markErr?.message || markErr);
+      }
 
       // Notifier le membre
       try {
@@ -171,6 +212,59 @@ class QuarantineChannelManager {
     } catch (error) {
       console.error('Erreur libération quarantaine:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Supprimer les canaux de quarantaine d'un membre (avec fallback sur enregistrements persistés)
+   * @param {GuildMember} member
+   */
+  async deleteQuarantineChannelsForMember(member) {
+    try {
+      // 1) Tentative via mémoire
+      const inMemory = this.quarantineChannels.get(member.user.id);
+      if (inMemory) {
+        await this.deleteQuarantineChannels(member.user.id);
+      }
+
+      // 2) Fallback via enregistrement persistant
+      const dm = this.moderationManager?.dataManager;
+      if (!dm) return;
+      const records = await dm.getData('quarantine_records');
+      const rec = records[member.guild.id]?.[member.user.id];
+      if (!rec) return;
+
+      const { textChannelId, voiceChannelId } = rec;
+      if (textChannelId) {
+        try {
+          const ch = member.guild.channels.cache.get(textChannelId) || await member.guild.channels.fetch(textChannelId).catch(() => null);
+          if (ch) await ch.delete(`Quarantaine terminée: ${member.user.tag}`);
+        } catch (e) {
+          console.warn('⚠️ Suppression canal texte échouée:', e?.message || e);
+        }
+      }
+      if (voiceChannelId) {
+        try {
+          const ch = member.guild.channels.cache.get(voiceChannelId) || await member.guild.channels.fetch(voiceChannelId).catch(() => null);
+          if (ch) await ch.delete(`Quarantaine terminée: ${member.user.tag}`);
+        } catch (e) {
+          console.warn('⚠️ Suppression canal vocal échouée:', e?.message || e);
+        }
+      }
+
+      // Nettoyer l'enregistrement
+      try {
+        records[member.guild.id][member.user.id] = {
+          ...rec,
+          textChannelId: null,
+          voiceChannelId: null
+        };
+        await dm.saveData('quarantine_records', records);
+      } catch (saveErr) {
+        console.warn('⚠️ Impossible de mettre à jour les enregistrements de quarantaine:', saveErr?.message || saveErr);
+      }
+    } catch (error) {
+      console.error('Erreur deleteQuarantineChannelsForMember:', error);
     }
   }
 
@@ -667,6 +761,54 @@ class QuarantineChannelManager {
 
     } catch (error) {
       console.error('Erreur nettoyage canaux orphelins:', error);
+    }
+  }
+
+  /**
+   * Nettoyer les canaux de quarantaine d'un utilisateur qui a quitté/été kick/ban
+   * @param {Guild} guild
+   * @param {String} userId
+   */
+  async cleanupOnMemberExit(guild, userId) {
+    try {
+      const dm = this.moderationManager?.dataManager;
+      if (!dm) return;
+      const records = await dm.getData('quarantine_records');
+      const rec = records[guild.id]?.[userId];
+      if (!rec) return;
+
+      const { textChannelId, voiceChannelId } = rec;
+      if (textChannelId) {
+        try {
+          const ch = guild.channels.cache.get(textChannelId) || await guild.channels.fetch(textChannelId).catch(() => null);
+          if (ch) await ch.delete('Membre parti/kick/ban - Nettoyage quarantaine');
+        } catch (e) {
+          console.warn('⚠️ Suppression canal texte (exit) échouée:', e?.message || e);
+        }
+      }
+      if (voiceChannelId) {
+        try {
+          const ch = guild.channels.cache.get(voiceChannelId) || await guild.channels.fetch(voiceChannelId).catch(() => null);
+          if (ch) await ch.delete('Membre parti/kick/ban - Nettoyage quarantaine');
+        } catch (e) {
+          console.warn('⚠️ Suppression canal vocal (exit) échouée:', e?.message || e);
+        }
+      }
+
+      // Marquer comme terminé
+      try {
+        records[guild.id][userId] = {
+          ...rec,
+          status: 'terminated',
+          resolvedAt: Date.now(),
+          resolvedReason: 'Membre parti/kick/ban'
+        };
+        await dm.saveData('quarantine_records', records);
+      } catch (saveErr) {
+        console.warn('⚠️ Impossible de mettre à jour l\'enregistrement de quarantaine (exit):', saveErr?.message || saveErr);
+      }
+    } catch (error) {
+      console.error('Erreur cleanupOnMemberExit:', error);
     }
   }
 

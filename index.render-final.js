@@ -1010,6 +1010,16 @@ class RenderSolutionBot {
                     return;
                 }
 
+                // Boutons de sécurité (approbation/quarantaine)
+                if (interaction.isButton() && interaction.customId && interaction.customId.startsWith('security_')) {
+                    try {
+                        const SecurityButtonHandler = require('./handlers/SecurityButtonHandler');
+                        if (!this.__securityButtons) this.__securityButtons = new SecurityButtonHandler(this.moderationManager);
+                        await this.__securityButtons.handleSecurityButton(interaction);
+                    } catch (e) { console.warn('⚠️ Erreur SecurityButtonHandler:', e?.message || e); }
+                    return;
+                }
+
                 await this.handleInteraction(interaction);
             } catch (error) {
                 // Gestion spécifique des erreurs Discord d'interaction
@@ -1158,6 +1168,12 @@ class RenderSolutionBot {
             try { if (this.moderationManager) await this.moderationManager.recordJoin(member.guild.id, member.id); } catch {}
             try { if (this.logManager) await this.logManager.logMemberJoin(member); } catch {}
             try { if (this.logManager) await this.logManager.updateMemberRolesSnapshot(member); } catch {}
+            // Vérification automatique à l'arrivée
+            try {
+                const AutoVerificationHandler = require('./handlers/AutoVerificationHandler');
+                if (!this.__autoVerif) { this.__autoVerif = new AutoVerificationHandler(this.moderationManager); }
+                await this.__autoVerif.verifyNewMember(member);
+            } catch {}
         });
         this.client.on('guildMemberRemove', async (member) => {
             try {
@@ -1189,6 +1205,13 @@ class RenderSolutionBot {
                 } else if (!isBan) {
                     try { if (this.logManager) await this.logManager.logMemberLeave(member); } catch {}
                 }
+
+                // Nettoyage canaux de quarantaine si existants
+                try {
+                    const QuarantineChannelManager = require('./handlers/QuarantineChannelManager');
+                    if (!this.__quarantineManager) this.__quarantineManager = new QuarantineChannelManager(this.moderationManager);
+                    if (member.guild) await this.__quarantineManager.cleanupOnMemberExit(member.guild, member.id);
+                } catch {}
             } catch {}
         });
 
@@ -1264,6 +1287,13 @@ class RenderSolutionBot {
                     }
                 } catch {}
                 try { if (this.logManager) await this.logManager.logBan(ban.guild, ban.user, reason, moderatorUser); } catch {}
+
+                // Nettoyage canaux de quarantaine si existants (ban)
+                try {
+                    const QuarantineChannelManager = require('./handlers/QuarantineChannelManager');
+                    if (!this.__quarantineManager) this.__quarantineManager = new QuarantineChannelManager(this.moderationManager);
+                    if (ban.guild) await this.__quarantineManager.cleanupOnMemberExit(ban.guild, ban.user.id);
+                } catch {}
             } catch {}
         });
         this.client.on('guildBanRemove', async (ban) => {
