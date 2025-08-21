@@ -55,6 +55,11 @@ function getPublicFallbackNodes() {
 		{ name: 'v4-lavalink-rocks', url: 'v4.lavalink.rocks:443', auth: 'horizxon.tech', secure: true },
 		{ name: 'darren-v4', url: 'lavalink.darrennathanael.com:443', auth: 'www.darrennathanael.com', secure: true },
 		{ name: 'lava-link', url: 'lava.link:80', auth: 'youshallnotpass', secure: false },
+		// Additional curated public nodes (SSL and non-SSL)
+		{ name: 'nextgencoders-ssl', url: 'lavalink.nextgencoders.xyz:443', auth: 'nextgencoderspvt', secure: true },
+		{ name: 'jirayu-nossl', url: 'lavalink.jirayu.net:13592', auth: 'youshallnotpass', secure: false },
+		{ name: 'hatry4-nossl', url: 'lavahatry4.techbyte.host:3000', auth: 'NAIGLAVA-dash.techbyte.host', secure: false },
+		{ name: 'creavite-eu1', url: 'eu1.lavalink.creavite.co:20080', auth: 'auto.creavite.co', secure: false },
 	];
 }
 
@@ -87,12 +92,50 @@ function getConfiguredNodesPreview() {
 	return { nodes: [], source: 'none' };
 }
 
+function mergeNodes(primary, secondary) {
+	try {
+		const keyOf = (n) => `${String(n?.url || '')}|${String(n?.auth || '')}|${n?.secure ? '1' : '0'}`;
+		const seen = new Set(primary.map(keyOf));
+		const merged = [...primary];
+		for (const n of secondary) {
+			const k = keyOf(n);
+			if (!seen.has(k)) {
+				merged.push(n);
+				seen.add(k);
+			}
+		}
+		return merged;
+	} catch (_) {
+		return [...primary, ...secondary];
+	}
+}
+
+function maybeShuffle(arr) {
+	try {
+		if (process.env.LAVALINK_SHUFFLE_NODES === 'true' || process.env.LAVALINK_SHUFFLE_NODES === '1') {
+			for (let i = arr.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[arr[i], arr[j]] = [arr[j], arr[i]];
+			}
+		}
+	} catch (_) {}
+	return arr;
+}
+
 function init(discordClient) {
 	if (!isConfigured()) return false;
 	if (!Shoukaku || !Connectors) return false;
 	clientRef = discordClient;
-	nodes = parseNodesFromEnv();
-	if (!nodes.length && shouldUsePublicFallback()) nodes = getPublicFallbackNodes();
+	const envNodes = parseNodesFromEnv();
+	const appendPublic = process.env.LAVALINK_APPEND_PUBLIC === 'true' || process.env.LAVALINK_APPEND_PUBLIC === '1';
+	if (envNodes.length) {
+		nodes = appendPublic ? mergeNodes(envNodes, getPublicFallbackNodes()) : envNodes;
+	} else if (shouldUsePublicFallback()) {
+		nodes = getPublicFallbackNodes();
+	} else {
+		nodes = [];
+	}
+	nodes = maybeShuffle(nodes);
 	if (!nodes.length) return false;
 	try {
 		shoukaku = new Shoukaku(new Connectors.DiscordJS(discordClient), nodes, {
