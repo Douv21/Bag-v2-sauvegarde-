@@ -219,7 +219,7 @@ class SecurityConfigHandler {
     }
 
     description += '\n💡 Configuration :\n';
-    description += '• Bientôt configurable via ce menu\n\n';
+    description += '• Sélectionnez une action pour chaque type détecté\n\n';
 
     description += '⚠️ **Important :**\n';
     description += '• Les actions automatiques s\'exécutent sans intervention\n';
@@ -228,19 +228,43 @@ class SecurityConfigHandler {
 
     embed.setDescription(description);
 
-    const buttons = new ActionRowBuilder()
-      .addComponents(
-        new ButtonBuilder()
-          .setCustomId('config_verif_back_menu')
-          .setLabel('Retour au menu')
-          .setStyle(ButtonStyle.Secondary)
-          .setEmoji('🔙')
-      );
+    // Menus de sélection d'action
+    const currentActions = config.autoVerification?.actions || {};
+    const options = this.buildAutoActionOptions();
 
-    return interaction.reply({ 
-      embeds: [embed], 
-      components: [buttons], 
-      ephemeral: true 
+    const rowRecent = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('config_verif_action_recentAccount')
+        .setPlaceholder('Action pour compte récent')
+        .addOptions(options.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: currentActions.recentAccount === o.value })))
+    );
+
+    const rowMulti = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('config_verif_action_multiAccount')
+        .setPlaceholder('Action pour multi-comptes')
+        .addOptions(options.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: currentActions.multiAccount === o.value })))
+    );
+
+    const rowName = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('config_verif_action_suspiciousName')
+        .setPlaceholder('Action pour nom suspect')
+        .addOptions(options.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: currentActions.suspiciousName === o.value })))
+    );
+
+    const buttons = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('config_verif_back_menu')
+        .setLabel('Retour au menu')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('🔙')
+    );
+
+    return interaction.reply({
+      embeds: [embed],
+      components: [rowRecent, rowMulti, rowName, buttons],
+      ephemeral: true
     });
   }
 
@@ -1060,6 +1084,20 @@ class SecurityConfigHandler {
   }
 
   /**
+   * Options pour les actions automatiques
+   */
+  buildAutoActionOptions() {
+    return [
+      { label: '📢 Alerte seulement', value: 'ALERT', emoji: '📢', description: 'Notifier sans agir' },
+      { label: '⚠️ Avertissement', value: 'WARN', emoji: '⚠️', description: 'Envoyer un avertissement' },
+      { label: '🔒 Mise en quarantaine', value: 'QUARANTINE', emoji: '🔒', description: "Restreindre l'accès" },
+      { label: '👨‍💼 Approbation admin', value: 'ADMIN_APPROVAL', emoji: '👨‍💼', description: 'Demander une décision' },
+      { label: '👢 Expulsion automatique', value: 'KICK', emoji: '👢', description: 'Expulser le membre' },
+      { label: '🔨 Bannissement automatique', value: 'BAN', emoji: '🔨', description: 'Bannir le membre' }
+    ];
+  }
+
+  /**
    * Basculer l'activation/désactivation du système
    */
   async toggleSystemEnable(interaction) {
@@ -1219,6 +1257,82 @@ class SecurityConfigHandler {
         content: '❌ Erreur lors de l\'affichage des exemptions.',
         ephemeral: true
       });
+    }
+  }
+
+  /**
+   * Gérer le choix d'une action automatique (select menu)
+   */
+  async handleAutoActionSelect(interaction) {
+    try {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return interaction.reply({ content: '❌ Réservé aux administrateurs.', ephemeral: true });
+      }
+
+      const actionType = interaction.customId.replace('config_verif_action_', '');
+      const selected = interaction.values?.[0];
+      if (!selected) {
+        return interaction.reply({ content: '❌ Aucune action sélectionnée.', ephemeral: true });
+      }
+
+      const guildId = interaction.guild.id;
+      const current = await this.moderationManager.getSecurityConfig(guildId);
+      const currentActions = current.autoVerification?.actions || {};
+
+      const updated = await this.moderationManager.updateSecurityConfig(guildId, {
+        autoVerification: {
+          actions: {
+            ...currentActions,
+            [actionType]: selected
+          }
+        }
+      });
+
+      // Reconstruire la vue
+      const embed = new EmbedBuilder()
+        .setTitle('⚡ Configuration des actions automatiques')
+        .setColor(0x3498db)
+        .setTimestamp();
+
+      const actions = updated.autoVerification?.actions || {};
+      let description = '⚙️ **Actions configurées :**\n\n';
+      if (actions.recentAccount) description += `🕐 **Compte récent :** ${this.getActionDisplay(actions.recentAccount)}\n`;
+      if (actions.multiAccount) description += `🔍 **Multi-comptes :** ${this.getActionDisplay(actions.multiAccount)}\n`;
+      if (actions.suspiciousName) description += `👤 **Nom suspect :** ${this.getActionDisplay(actions.suspiciousName)}\n`;
+      if (!actions.recentAccount && !actions.multiAccount && !actions.suspiciousName) description += 'Aucune action configurée\n';
+      description += '\n⚠️ **Important :**\n';
+      description += '• Les actions automatiques s\'exécutent sans intervention\n';
+      description += '• Recommandé : Commencer par "Quarantaine" ou "Approbation admin"\n';
+      description += '• Les actions "Kick" et "Ban" sont irréversibles';
+      embed.setDescription(description);
+
+      const opts = this.buildAutoActionOptions();
+      const rowRecent = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('config_verif_action_recentAccount')
+          .setPlaceholder('Action pour compte récent')
+          .addOptions(opts.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: actions.recentAccount === o.value })))
+      );
+      const rowMulti = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('config_verif_action_multiAccount')
+          .setPlaceholder('Action pour multi-comptes')
+          .addOptions(opts.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: actions.multiAccount === o.value })))
+      );
+      const rowName = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('config_verif_action_suspiciousName')
+          .setPlaceholder('Action pour nom suspect')
+          .addOptions(opts.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: actions.suspiciousName === o.value })))
+      );
+      const buttons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('config_verif_back_menu').setLabel('Retour au menu').setStyle(ButtonStyle.Secondary).setEmoji('🔙')
+      );
+
+      return interaction.update({ embeds: [embed], components: [rowRecent, rowMulti, rowName, buttons] });
+    } catch (error) {
+      console.error('Erreur handleAutoActionSelect:', error);
+      return interaction.reply({ content: '❌ Erreur lors de la mise à jour des actions automatiques.', ephemeral: true });
     }
   }
 
