@@ -601,38 +601,51 @@ class MainRouterHandler {
             }
 
             // === SELECT MENUS CONFESSION ===
-            if (customId === 'confession_log_level') {
-                await this.confessionHandler.handleConfessionLogLevel(interaction);
+            // Menus d'options principaux (logs / autothread / canaux)
+            if (customId === 'confession_logs_options') {
+                const selected = Array.isArray(interaction.values) ? interaction.values[0] : undefined;
+                await this.confessionHandler.handleLogOption(interaction, selected);
                 return true;
             }
 
-            if (customId === 'confession_log_channel') {
-                await this.confessionHandler.handleConfessionLogChannel(interaction);
+            if (customId === 'confession_autothread_options') {
+                const selected = Array.isArray(interaction.values) ? interaction.values[0] : undefined;
+                await this.confessionHandler.handleAutoThreadOption(interaction, selected);
                 return true;
             }
 
-            if (customId === 'confession_log_ping_roles') {
-                await this.confessionHandler.handleConfessionLogPingRoles(interaction);
+            if (customId === 'confession_channel_config') {
+                await this.confessionHandler.handleConfessionChannelsConfig(interaction);
                 return true;
             }
 
-            if (customId === 'confession_ping_roles') {
-                await this.confessionHandler.handleConfessionPingRoles(interaction);
+            // Menus "retour" (sélecteurs) vers le menu principal de config des confessions
+            if (customId === 'confession_logs_back' || customId === 'confession_autothread_back' || customId === 'confession_channels_back') {
+                if (this.confessionConfigHandler) {
+                    await this.confessionConfigHandler.handleConfessionConfigSelect(interaction);
+                    return true;
+                }
+            }
+
+            // Sélecteurs spécialisés (canal/roles/niveau/archive...) qui déclenchent un enregistrement immédiat
+            const specializedConfessionSelects = [
+                'confession_log_channel_select',
+                'confession_log_level_select',
+                'confession_archive_time_select',
+                'confession_thread_name_select',
+                'confession_remove_channel_select',
+                'confession_log_ping_roles_select',
+                'confession_ping_roles_select'
+            ];
+
+            if (specializedConfessionSelects.includes(customId)) {
+                await this.confessionHandler.handleSpecializedSelector(interaction, customId);
                 return true;
             }
 
+            // Ajout de canal via ChannelSelect (flux ConfessionHandler historique)
             if (customId === 'confession_add_channel') {
                 await this.confessionHandler.handleConfessionAddChannel(interaction);
-                return true;
-            }
-
-            if (customId === 'confession_remove_channel') {
-                await this.confessionHandler.handleConfessionRemoveChannel(interaction);
-                return true;
-            }
-
-            if (customId === 'confession_archive_time') {
-                await this.confessionHandler.handleConfessionArchiveTime(interaction);
                 return true;
             }
 

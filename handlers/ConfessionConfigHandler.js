@@ -71,7 +71,24 @@ class ConfessionConfigHandler {
             ]);
 
         const row = new ActionRowBuilder().addComponents(selectMenu);
-        await interaction.reply({ embeds: [embed], components: [row], flags: 64 });
+        const payload = { embeds: [embed], components: [row] };
+        try {
+            if ((typeof interaction.isStringSelectMenu === 'function' && interaction.isStringSelectMenu())
+                || (typeof interaction.isChannelSelectMenu === 'function' && interaction.isChannelSelectMenu())
+                || (typeof interaction.isRoleSelectMenu === 'function' && interaction.isRoleSelectMenu())
+                || (typeof interaction.isButton === 'function' && interaction.isButton())) {
+                await interaction.update(payload);
+            } else if (interaction.replied || interaction.deferred) {
+                await interaction.editReply(payload);
+            } else {
+                await interaction.reply({ ...payload, flags: 64 });
+            }
+        } catch (e) {
+            try {
+                // Fallback: essaye d'éditer la réponse existante
+                await interaction.editReply(payload);
+            } catch {}
+        }
     }
 
     async handleMainMenu(interaction) {
@@ -115,7 +132,7 @@ class ConfessionConfigHandler {
             .setPlaceholder('Sélectionnez un canal à ajouter...')
             .setMinValues(1)
             .setMaxValues(5)
-            .addChannelTypes(0); // TEXT_CHANNEL
+            .setChannelTypes([0]); // TEXT_CHANNEL
 
         const row1 = new ActionRowBuilder().addComponents(channelSelect);
 
