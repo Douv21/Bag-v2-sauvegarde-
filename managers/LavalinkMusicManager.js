@@ -217,7 +217,7 @@ const guildIdToState = new Map();
 function getState(guildId) {
 	let state = guildIdToState.get(guildId);
 	if (!state) {
-		state = { player: null, queue: [], current: null, volume: 100, textChannel: null, playerMessageId: null };
+		state = { player: null, queue: [], current: null, volume: 100, paused: false, textChannel: null, playerMessageId: null };
 		guildIdToState.set(guildId, state);
 	}
 	return state;
@@ -237,7 +237,8 @@ function createPlayerEmbed(state) {
 	const base = new EmbedBuilder().setColor(getGuildColor(guild)).setTitle('🎶 Lecteur musique').setFooter({ text: THEME.footer });
 	if (state.current) {
 		const title = state.current.title || state.current.query || 'Lecture en cours';
-		base.setDescription(`▶️ ${title}\nVolume: ${state.volume}%`);
+		const icon = state.paused ? '⏸️' : '▶️';
+		base.setDescription(`${icon} ${title}\nVolume: ${state.volume}%`);
 	} else {
 		base.setDescription(`⏹️ Aucune lecture en cours\nVolume: ${state.volume}%`);
 	}
@@ -376,12 +377,14 @@ async function playCommand(voiceChannel, query, textChannel, requestedBy) {
 async function pause(guildId) {
 	const state = getState(guildId);
 	await state.player.setPaused(true);
+	state.paused = true;
 	try { await updatePlayerMessage(guildId); } catch {}
 }
 
 async function resume(guildId) {
 	const state = getState(guildId);
 	await state.player.setPaused(false);
+	state.paused = false;
 	try { await updatePlayerMessage(guildId); } catch {}
 }
 
@@ -418,7 +421,7 @@ async function seek(guildId, seconds) {
 
 function getQueueInfo(guildId) {
 	const state = guildIdToState.get(guildId);
-	return { current: state?.current || null, queue: state?.queue ? [...state.queue] : [], volume: state?.volume ?? 100 };
+	return { current: state?.current || null, queue: state?.queue ? [...state.queue] : [], volume: state?.volume ?? 100, paused: state?.paused === true };
 }
 
 module.exports = {
