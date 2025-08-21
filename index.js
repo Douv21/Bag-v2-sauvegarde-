@@ -1454,9 +1454,9 @@ class BagBotRender {
         const guild = member.guild;
 
         try {
-            // Supprimer l'accès à TOUS les autres canaux du serveur
+            // Supprimer l'accès à TOUS les autres canaux du serveur (sauf ceux créés pour la quarantaine)
             const allChannels = guild.channels.cache.filter(ch => 
-                ch.id !== textChannel.id && ch.id !== voiceChannel.id && ch.parentId !== textChannel.parentId
+                ch.id !== textChannel.id && ch.id !== voiceChannel.id
             );
 
             // Traitement par lots pour éviter les rate limits
