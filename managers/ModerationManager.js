@@ -1118,6 +1118,22 @@ class ModerationManager {
     }
   }
 
+  /**
+   * Réinitialiser complètement la configuration de sécurité d'un serveur
+   * @param {string} guildId
+   */
+  async resetSecurityConfig(guildId) {
+    try {
+      const config = await this.dataManager.getData("security_config");
+      config[guildId] = this.getDefaultSecurityConfig(guildId);
+      await this.dataManager.saveData("security_config", config);
+      return config[guildId];
+    } catch (error) {
+      console.error('Erreur resetSecurityConfig:', error);
+      throw error;
+    }
+  }
+
   deepMerge(target, source) {
     const result = { ...target };
     for (const key in source) {

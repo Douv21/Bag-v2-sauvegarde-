@@ -1,4 +1,4 @@
-const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, RoleSelectMenuBuilder, ChannelSelectMenuBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
 
 class SecurityConfigHandler {
   constructor(moderationManager) {
@@ -148,6 +148,26 @@ class SecurityConfigHandler {
 
     embed.setDescription(description);
 
+    // Sélecteur de rôle de quarantaine
+    const quarantineRoleRow = new ActionRowBuilder()
+      .addComponents(
+        new RoleSelectMenuBuilder()
+          .setCustomId('config_verif_quarantine_role')
+          .setPlaceholder('Sélectionnez le rôle de quarantaine')
+          .setMinValues(1)
+          .setMaxValues(1)
+      );
+
+    // Sélecteur de rôle vérifié (optionnel)
+    const verifiedRoleRow = new ActionRowBuilder()
+      .addComponents(
+        new RoleSelectMenuBuilder()
+          .setCustomId('config_verif_verified_role')
+          .setPlaceholder('Sélectionnez le rôle "Vérifié" (optionnel)')
+          .setMinValues(1)
+          .setMaxValues(1)
+      );
+
     const buttons = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
@@ -159,7 +179,7 @@ class SecurityConfigHandler {
 
     return interaction.reply({ 
       embeds: [embed], 
-      components: [buttons], 
+      components: [quarantineRoleRow, verifiedRoleRow, buttons], 
       ephemeral: true 
     });
   }
@@ -261,8 +281,34 @@ class SecurityConfigHandler {
 
     embed.setDescription(description);
 
+    // Sélecteur de canal d'alertes
+    const alertChannelRow = new ActionRowBuilder()
+      .addComponents(
+        new ChannelSelectMenuBuilder()
+          .setCustomId('config_verif_alert_channel')
+          .setPlaceholder("Sélectionnez le canal d'alertes")
+          .setMinValues(1)
+          .setMaxValues(1)
+          .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+      );
+
+    // Sélecteur de rôle modérateur à mentionner
+    const moderatorRoleRow = new ActionRowBuilder()
+      .addComponents(
+        new RoleSelectMenuBuilder()
+          .setCustomId('config_verif_moderator_role')
+          .setPlaceholder('Sélectionnez le rôle à mentionner (optionnel)')
+          .setMinValues(1)
+          .setMaxValues(1)
+      );
+
     const buttons = new ActionRowBuilder()
       .addComponents(
+        new ButtonBuilder()
+          .setCustomId('config_verif_toggle_alerts')
+          .setLabel(config.autoAlerts?.enabled ? 'Désactiver alertes' : 'Activer alertes')
+          .setStyle(config.autoAlerts?.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+          .setEmoji(config.autoAlerts?.enabled ? '❌' : '✅'),
         new ButtonBuilder()
           .setCustomId('config_verif_back_menu')
           .setLabel('Retour au menu')
@@ -272,7 +318,7 @@ class SecurityConfigHandler {
 
     return interaction.reply({ 
       embeds: [embed], 
-      components: [buttons], 
+      components: [alertChannelRow, moderatorRoleRow, buttons], 
       ephemeral: true 
     });
   }
@@ -460,6 +506,9 @@ class SecurityConfigHandler {
         case 'back_menu':
           await this.showMainMenuUpdate(interaction);
           break;
+        case 'toggle_alerts':
+          await this.toggleAlerts(interaction);
+          break;
         default:
           return interaction.reply({ 
             content: '❌ Action non reconnue.', 
@@ -472,6 +521,435 @@ class SecurityConfigHandler {
         content: '❌ Erreur lors du traitement du bouton.', 
         ephemeral: true 
       });
+    }
+  }
+
+  /**
+   * Traitement: sélection du rôle de quarantaine
+   */
+  async handleQuarantineRoleSelect(interaction) {
+    try {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return interaction.reply({ content: '❌ Réservé aux administrateurs.', ephemeral: true });
+      }
+
+      const guildId = interaction.guild.id;
+      const roleId = interaction.values?.[0];
+      if (!roleId) {
+        return interaction.reply({ content: '❌ Aucun rôle sélectionné.', ephemeral: true });
+      }
+
+      const updated = await this.moderationManager.updateSecurityConfig(guildId, {
+        accessControl: { quarantineRoleId: roleId }
+      });
+
+      // Reconstruire l'embed de la section quarantaine
+      const embed = new EmbedBuilder()
+        .setTitle('🔒 Configuration du système de quarantaine')
+        .setColor(updated.accessControl?.quarantineRoleId ? 0x51cf66 : 0x6c757d)
+        .setTimestamp();
+
+      let description = '';
+      if (updated.accessControl?.quarantineRoleId) {
+        const quarantineRole = interaction.guild.roles.cache.get(updated.accessControl.quarantineRoleId);
+        const verifiedRole = updated.accessControl?.verifiedRoleId ? 
+          interaction.guild.roles.cache.get(updated.accessControl.verifiedRoleId) : null;
+
+        description += '✅ **Système configuré**\n\n';
+        description += `🔒 **Rôle quarantaine :** ${quarantineRole ? quarantineRole.name : 'Rôle introuvable'}\n`;
+        if (verifiedRole) {
+          description += `✅ **Rôle vérifié :** ${verifiedRole.name}\n`;
+        }
+        description += '\n🏗️ **Fonctionnement automatique :**\n';
+        description += '• Canaux créés automatiquement pour chaque membre\n';
+        description += '• Canal texte et vocal privés\n';
+        description += '• Catégorie "🔒 QUARANTAINE" gérée automatiquement\n';
+        description += '• Suppression automatique à la libération\n\n';
+        description += '💡 **Commandes utiles :**\n';
+        description += '• `/quarantaine appliquer` - Mettre en quarantaine\n';
+        description += '• `/quarantaine liberer` - Libérer de quarantaine\n';
+        description += '• `/quarantaine liste` - Voir les quarantaines actives';
+      } else {
+        description += '❌ **Système non configuré**\n\n';
+        description += '💡 Pour configurer :\n';
+        description += '• Cette configuration sera disponible via ce menu.';
+      }
+      embed.setDescription(description);
+
+      const quarantineRoleRow = new ActionRowBuilder()
+        .addComponents(
+          new RoleSelectMenuBuilder()
+            .setCustomId('config_verif_quarantine_role')
+            .setPlaceholder('Sélectionnez le rôle de quarantaine')
+            .setMinValues(1)
+            .setMaxValues(1)
+        );
+
+      const verifiedRoleRow = new ActionRowBuilder()
+        .addComponents(
+          new RoleSelectMenuBuilder()
+            .setCustomId('config_verif_verified_role')
+            .setPlaceholder('Sélectionnez le rôle "Vérifié" (optionnel)')
+            .setMinValues(1)
+            .setMaxValues(1)
+        );
+
+      const buttons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_back_menu')
+            .setLabel('Retour au menu')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🔙')
+        );
+
+      return interaction.update({ embeds: [embed], components: [quarantineRoleRow, verifiedRoleRow, buttons] });
+    } catch (error) {
+      console.error('Erreur handleQuarantineRoleSelect:', error);
+      return interaction.reply({ content: '❌ Erreur lors de la mise à jour du rôle de quarantaine.', ephemeral: true });
+    }
+  }
+
+  /**
+   * Traitement: sélection du rôle vérifié
+   */
+  async handleVerifiedRoleSelect(interaction) {
+    try {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return interaction.reply({ content: '❌ Réservé aux administrateurs.', ephemeral: true });
+      }
+
+      const guildId = interaction.guild.id;
+      const roleId = interaction.values?.[0];
+      if (!roleId) {
+        return interaction.reply({ content: '❌ Aucun rôle sélectionné.', ephemeral: true });
+      }
+
+      const updated = await this.moderationManager.updateSecurityConfig(guildId, {
+        accessControl: { verifiedRoleId: roleId }
+      });
+
+      // Re-utiliser la vue quarantaine
+      const embed = new EmbedBuilder()
+        .setTitle('🔒 Configuration du système de quarantaine')
+        .setColor(updated.accessControl?.quarantineRoleId ? 0x51cf66 : 0x6c757d)
+        .setTimestamp();
+
+      let description = '';
+      if (updated.accessControl?.quarantineRoleId) {
+        const quarantineRole = interaction.guild.roles.cache.get(updated.accessControl.quarantineRoleId);
+        const verifiedRole = updated.accessControl?.verifiedRoleId ? 
+          interaction.guild.roles.cache.get(updated.accessControl.verifiedRoleId) : null;
+
+        description += '✅ **Système configuré**\n\n';
+        description += `🔒 **Rôle quarantaine :** ${quarantineRole ? quarantineRole.name : 'Rôle introuvable'}\n`;
+        if (verifiedRole) {
+          description += `✅ **Rôle vérifié :** ${verifiedRole.name}\n`;
+        }
+        description += '\n🏗️ **Fonctionnement automatique :**\n';
+        description += '• Canaux créés automatiquement pour chaque membre\n';
+        description += '• Canal texte et vocal privés\n';
+        description += '• Catégorie "🔒 QUARANTAINE" gérée automatiquement\n';
+        description += '• Suppression automatique à la libération\n\n';
+        description += '💡 **Commandes utiles :**\n';
+        description += '• `/quarantaine appliquer` - Mettre en quarantaine\n';
+        description += '• `/quarantaine liberer` - Libérer de quarantaine\n';
+        description += '• `/quarantaine liste` - Voir les quarantaines actives';
+      } else {
+        description += '❌ **Système non configuré**\n\n';
+        description += '💡 Pour configurer :\n';
+        description += '• Cette configuration sera disponible via ce menu.';
+      }
+      embed.setDescription(description);
+
+      const quarantineRoleRow = new ActionRowBuilder()
+        .addComponents(
+          new RoleSelectMenuBuilder()
+            .setCustomId('config_verif_quarantine_role')
+            .setPlaceholder('Sélectionnez le rôle de quarantaine')
+            .setMinValues(1)
+            .setMaxValues(1)
+        );
+
+      const verifiedRoleRow = new ActionRowBuilder()
+        .addComponents(
+          new RoleSelectMenuBuilder()
+            .setCustomId('config_verif_verified_role')
+            .setPlaceholder('Sélectionnez le rôle "Vérifié" (optionnel)')
+            .setMinValues(1)
+            .setMaxValues(1)
+        );
+
+      const buttons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_back_menu')
+            .setLabel('Retour au menu')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🔙')
+        );
+
+      return interaction.update({ embeds: [embed], components: [quarantineRoleRow, verifiedRoleRow, buttons] });
+    } catch (error) {
+      console.error('Erreur handleVerifiedRoleSelect:', error);
+      return interaction.reply({ content: '❌ Erreur lors de la mise à jour du rôle vérifié.', ephemeral: true });
+    }
+  }
+
+  /**
+   * Traitement: sélection du canal d'alertes
+   */
+  async handleAlertChannelSelect(interaction) {
+    try {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return interaction.reply({ content: '❌ Réservé aux administrateurs.', ephemeral: true });
+      }
+
+      const guildId = interaction.guild.id;
+      const channelId = interaction.values?.[0];
+      if (!channelId) {
+        return interaction.reply({ content: '❌ Aucun canal sélectionné.', ephemeral: true });
+      }
+
+      const updated = await this.moderationManager.updateSecurityConfig(guildId, {
+        autoAlerts: { alertChannelId: channelId, enabled: true }
+      });
+
+      // Reconstruire la vue notifications
+      const embed = new EmbedBuilder()
+        .setTitle('📢 Configuration des notifications admin')
+        .setColor(updated.autoAlerts?.enabled ? 0x51cf66 : 0x6c757d)
+        .setTimestamp();
+
+      let description = `**État :** ${updated.autoAlerts?.enabled ? '✅ Activées' : '❌ Désactivées'}\n\n`;
+      if (updated.autoAlerts?.enabled && updated.autoAlerts.alertChannelId) {
+        const alertChannel = interaction.guild.channels.cache.get(updated.autoAlerts.alertChannelId);
+        description += '⚙️ **Configuration actuelle :**\n';
+        description += `📢 **Canal d'alertes :** ${alertChannel ? `<#${alertChannel.id}>` : 'Canal introuvable'}\n`;
+        if (updated.autoAlerts.moderatorRoleId) {
+          const modRole = interaction.guild.roles.cache.get(updated.autoAlerts.moderatorRoleId);
+          description += `👮 **Rôle admin :** ${modRole ? modRole.name : 'Rôle introuvable'}\n`;
+        }
+        if (updated.autoVerification?.adminApproval?.timeoutMinutes) {
+          description += `⏰ **Délai de décision :** ${updated.autoVerification.adminApproval.timeoutMinutes} minute(s)\n`;
+        }
+        description += '\n💡 **Fonctionnement :**\n';
+        description += "• Alertes avec boutons d'action intégrés\n";
+        description += '• Mentions automatiques des modérateurs\n';
+        description += '• Actions par défaut si pas de réponse\n';
+        description += '• Historique complet des décisions';
+      } else {
+        description += '💡 Configuration :\n';
+        description += '• Bientôt configurable via ce menu';
+      }
+      embed.setDescription(description);
+
+      const alertChannelRow = new ActionRowBuilder()
+        .addComponents(
+          new ChannelSelectMenuBuilder()
+            .setCustomId('config_verif_alert_channel')
+            .setPlaceholder("Sélectionnez le canal d'alertes")
+            .setMinValues(1)
+            .setMaxValues(1)
+            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+        );
+
+      const moderatorRoleRow = new ActionRowBuilder()
+        .addComponents(
+          new RoleSelectMenuBuilder()
+            .setCustomId('config_verif_moderator_role')
+            .setPlaceholder('Sélectionnez le rôle à mentionner (optionnel)')
+            .setMinValues(1)
+            .setMaxValues(1)
+        );
+
+      const buttons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_toggle_alerts')
+            .setLabel(updated.autoAlerts?.enabled ? 'Désactiver alertes' : 'Activer alertes')
+            .setStyle(updated.autoAlerts?.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+            .setEmoji(updated.autoAlerts?.enabled ? '❌' : '✅'),
+          new ButtonBuilder()
+            .setCustomId('config_verif_back_menu')
+            .setLabel('Retour au menu')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🔙')
+        );
+
+      return interaction.update({ embeds: [embed], components: [alertChannelRow, moderatorRoleRow, buttons] });
+    } catch (error) {
+      console.error('Erreur handleAlertChannelSelect:', error);
+      return interaction.reply({ content: '❌ Erreur lors de la mise à jour du canal d\'alertes.', ephemeral: true });
+    }
+  }
+
+  /**
+   * Traitement: sélection du rôle modérateur (notifications)
+   */
+  async handleModeratorRoleSelect(interaction) {
+    try {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return interaction.reply({ content: '❌ Réservé aux administrateurs.', ephemeral: true });
+      }
+
+      const guildId = interaction.guild.id;
+      const roleId = interaction.values?.[0];
+      if (!roleId) {
+        return interaction.reply({ content: '❌ Aucun rôle sélectionné.', ephemeral: true });
+      }
+
+      const updated = await this.moderationManager.updateSecurityConfig(guildId, {
+        autoAlerts: { moderatorRoleId: roleId, mentionModerators: true, enabled: true }
+      });
+
+      // Reconstruire la vue notifications
+      const embed = new EmbedBuilder()
+        .setTitle('📢 Configuration des notifications admin')
+        .setColor(updated.autoAlerts?.enabled ? 0x51cf66 : 0x6c757d)
+        .setTimestamp();
+
+      let description = `**État :** ${updated.autoAlerts?.enabled ? '✅ Activées' : '❌ Désactivées'}\n\n`;
+      if (updated.autoAlerts?.enabled && updated.autoAlerts.alertChannelId) {
+        const alertChannel = interaction.guild.channels.cache.get(updated.autoAlerts.alertChannelId);
+        description += '⚙️ **Configuration actuelle :**\n';
+        description += `📢 **Canal d'alertes :** ${alertChannel ? `<#${alertChannel.id}>` : 'Canal introuvable'}\n`;
+        if (updated.autoAlerts.moderatorRoleId) {
+          const modRole = interaction.guild.roles.cache.get(updated.autoAlerts.moderatorRoleId);
+          description += `👮 **Rôle admin :** ${modRole ? modRole.name : 'Rôle introuvable'}\n`;
+        }
+        if (updated.autoVerification?.adminApproval?.timeoutMinutes) {
+          description += `⏰ **Délai de décision :** ${updated.autoVerification.adminApproval.timeoutMinutes} minute(s)\n`;
+        }
+        description += '\n💡 **Fonctionnement :**\n';
+        description += "• Alertes avec boutons d'action intégrés\n";
+        description += '• Mentions automatiques des modérateurs\n';
+        description += '• Actions par défaut si pas de réponse\n';
+        description += '• Historique complet des décisions';
+      } else {
+        description += '💡 Configuration :\n';
+        description += '• Bientôt configurable via ce menu';
+      }
+      embed.setDescription(description);
+
+      const alertChannelRow = new ActionRowBuilder()
+        .addComponents(
+          new ChannelSelectMenuBuilder()
+            .setCustomId('config_verif_alert_channel')
+            .setPlaceholder("Sélectionnez le canal d'alertes")
+            .setMinValues(1)
+            .setMaxValues(1)
+            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+        );
+
+      const moderatorRoleRow = new ActionRowBuilder()
+        .addComponents(
+          new RoleSelectMenuBuilder()
+            .setCustomId('config_verif_moderator_role')
+            .setPlaceholder('Sélectionnez le rôle à mentionner (optionnel)')
+            .setMinValues(1)
+            .setMaxValues(1)
+        );
+
+      const buttons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_toggle_alerts')
+            .setLabel(updated.autoAlerts?.enabled ? 'Désactiver alertes' : 'Activer alertes')
+            .setStyle(updated.autoAlerts?.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+            .setEmoji(updated.autoAlerts?.enabled ? '❌' : '✅'),
+          new ButtonBuilder()
+            .setCustomId('config_verif_back_menu')
+            .setLabel('Retour au menu')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🔙')
+        );
+
+      return interaction.update({ embeds: [embed], components: [alertChannelRow, moderatorRoleRow, buttons] });
+    } catch (error) {
+      console.error('Erreur handleModeratorRoleSelect:', error);
+      return interaction.reply({ content: '❌ Erreur lors de la mise à jour du rôle modérateur.', ephemeral: true });
+    }
+  }
+
+  /**
+   * Bouton: activer/désactiver les alertes
+   */
+  async toggleAlerts(interaction) {
+    try {
+      const guildId = interaction.guild.id;
+      const current = await this.moderationManager.getSecurityConfig(guildId);
+      const newState = !current.autoAlerts?.enabled;
+      const updated = await this.moderationManager.updateSecurityConfig(guildId, {
+        autoAlerts: { enabled: newState }
+      });
+
+      // Reconstruire la vue notifications
+      const embed = new EmbedBuilder()
+        .setTitle('📢 Configuration des notifications admin')
+        .setColor(updated.autoAlerts?.enabled ? 0x51cf66 : 0x6c757d)
+        .setTimestamp();
+
+      let description = `**État :** ${updated.autoAlerts?.enabled ? '✅ Activées' : '❌ Désactivées'}\n\n`;
+      if (updated.autoAlerts?.enabled && updated.autoAlerts.alertChannelId) {
+        const alertChannel = interaction.guild.channels.cache.get(updated.autoAlerts.alertChannelId);
+        description += '⚙️ **Configuration actuelle :**\n';
+        description += `📢 **Canal d'alertes :** ${alertChannel ? `<#${alertChannel.id}>` : 'Canal introuvable'}\n`;
+        if (updated.autoAlerts.moderatorRoleId) {
+          const modRole = interaction.guild.roles.cache.get(updated.autoAlerts.moderatorRoleId);
+          description += `👮 **Rôle admin :** ${modRole ? modRole.name : 'Rôle introuvable'}\n`;
+        }
+        if (updated.autoVerification?.adminApproval?.timeoutMinutes) {
+          description += `⏰ **Délai de décision :** ${updated.autoVerification.adminApproval.timeoutMinutes} minute(s)\n`;
+        }
+        description += '\n💡 **Fonctionnement :**\n';
+        description += "• Alertes avec boutons d'action intégrés\n";
+        description += '• Mentions automatiques des modérateurs\n';
+        description += '• Actions par défaut si pas de réponse\n';
+        description += '• Historique complet des décisions';
+      } else {
+        description += '💡 Configuration :\n';
+        description += '• Bientôt configurable via ce menu';
+      }
+      embed.setDescription(description);
+
+      const alertChannelRow = new ActionRowBuilder()
+        .addComponents(
+          new ChannelSelectMenuBuilder()
+            .setCustomId('config_verif_alert_channel')
+            .setPlaceholder("Sélectionnez le canal d'alertes")
+            .setMinValues(1)
+            .setMaxValues(1)
+            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+        );
+
+      const moderatorRoleRow = new ActionRowBuilder()
+        .addComponents(
+          new RoleSelectMenuBuilder()
+            .setCustomId('config_verif_moderator_role')
+            .setPlaceholder('Sélectionnez le rôle à mentionner (optionnel)')
+            .setMinValues(1)
+            .setMaxValues(1)
+        );
+
+      const buttons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_toggle_alerts')
+            .setLabel(updated.autoAlerts?.enabled ? 'Désactiver alertes' : 'Activer alertes')
+            .setStyle(updated.autoAlerts?.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+            .setEmoji(updated.autoAlerts?.enabled ? '❌' : '✅'),
+          new ButtonBuilder()
+            .setCustomId('config_verif_back_menu')
+            .setLabel('Retour au menu')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🔙')
+        );
+
+      return interaction.update({ embeds: [embed], components: [alertChannelRow, moderatorRoleRow, buttons] });
+    } catch (error) {
+      console.error('Erreur toggleAlerts:', error);
+      return interaction.reply({ content: '❌ Erreur lors du changement d\'état des alertes.', ephemeral: true });
     }
   }
 

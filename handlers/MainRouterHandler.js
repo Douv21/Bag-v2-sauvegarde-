@@ -936,6 +936,50 @@ class MainRouterHandler {
                 }
             }
 
+            // Sélecteur de rôle: rôle de quarantaine
+            if (customId === 'config_verif_quarantine_role') {
+                if (this.securityConfigHandler) {
+                    await this.securityConfigHandler.handleQuarantineRoleSelect(interaction);
+                    return true;
+                } else {
+                    await interaction.reply({ content: '❌ Module sécurité indisponible.', ephemeral: true });
+                    return true;
+                }
+            }
+
+            // Sélecteur de rôle: rôle vérifié
+            if (customId === 'config_verif_verified_role') {
+                if (this.securityConfigHandler) {
+                    await this.securityConfigHandler.handleVerifiedRoleSelect(interaction);
+                    return true;
+                } else {
+                    await interaction.reply({ content: '❌ Module sécurité indisponible.', ephemeral: true });
+                    return true;
+                }
+            }
+
+            // Sélecteur de canal: canal d'alertes
+            if (customId === 'config_verif_alert_channel') {
+                if (this.securityConfigHandler) {
+                    await this.securityConfigHandler.handleAlertChannelSelect(interaction);
+                    return true;
+                } else {
+                    await interaction.reply({ content: '❌ Module sécurité indisponible.', ephemeral: true });
+                    return true;
+                }
+            }
+
+            // Sélecteur de rôle: rôle modérateur pour mentions
+            if (customId === 'config_verif_moderator_role') {
+                if (this.securityConfigHandler) {
+                    await this.securityConfigHandler.handleModeratorRoleSelect(interaction);
+                    return true;
+                } else {
+                    await interaction.reply({ content: '❌ Module sécurité indisponible.', ephemeral: true });
+                    return true;
+                }
+            }
+
             return false;
         } catch (error) {
             console.error('❌ Erreur select menu interaction:', error);
