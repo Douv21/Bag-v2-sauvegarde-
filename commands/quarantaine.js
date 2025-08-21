@@ -562,6 +562,28 @@ module.exports = {
         )
         .setTimestamp();
 
+      // Ajouter un aperçu des erreurs si présent
+      if (stats.errors > 0 && Array.isArray(stats.errorDetails) && stats.errorDetails.length > 0) {
+        const preview = stats.errorDetails
+          .slice(0, 15)
+          .map(e => `• #${e.name} (ID: ${e.id}) — ${e.error}`)
+          .join('\n');
+
+        embed.addFields({
+          name: `⚠️ Salons en erreur (${Math.min(15, stats.errorDetails.length)}/${stats.errorDetails.length})`,
+          value: preview || '—',
+          inline: false
+        });
+
+        if (stats.errorDetails.length > 15) {
+          embed.addFields({
+            name: '🔎 Astuce',
+            value: 'Relancez la commande et regardez les logs du bot pour la liste complète, ou corrigez ces salons manuellement.',
+            inline: false
+          });
+        }
+      }
+
       // Ajouter un avertissement si il y a eu des erreurs
       if (stats.errors > 0) {
         embed.addFields({
