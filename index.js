@@ -61,6 +61,7 @@ const ReminderInteractionHandler = require('./handlers/ReminderInteractionHandle
 const ModerationManager = require('./managers/ModerationManager');
 const MusicManagerRouter = require('./managers/MusicManager');
 const SecurityButtonHandler = require('./handlers/SecurityButtonHandler');
+const ChannelCreateHandler = require('./handlers/ChannelCreateHandler');
 
 class BagBotRender {
     constructor() {
@@ -87,6 +88,7 @@ class BagBotRender {
         const LogManager = require('./managers/LogManager');
         this.logManager = new LogManager(this.dataManager, this.client);
         this.securityButtonHandler = new SecurityButtonHandler(this.moderationManager);
+        this.channelCreateHandler = new ChannelCreateHandler(this.moderationManager);
         // Optionnel: conserver config-bump uniquement pour UI? On va retirer bump complet; pas d'UI bump.
         this.mainRouterHandler = new MainRouterHandler(this.dataManager);
         this.commandHandler = new CommandHandler(this.client, this.dataManager);
@@ -953,7 +955,11 @@ class BagBotRender {
         });
 
         // Logs channels create/delete/update
-		this.client.on('channelCreate', async (channel) => { try { await this.logManager.logChannelCreate(channel); } catch {} });
+		this.client.on('channelCreate', async (channel) => {
+			try { await this.logManager.logChannelCreate(channel); } catch {}
+			// Appliquer immédiatement les restrictions de quarantaine sur les nouveaux canaux
+			try { if (this.channelCreateHandler) await this.channelCreateHandler.handleChannelCreate(channel); } catch {}
+		});
 		this.client.on('channelDelete', async (channel) => { try { await this.logManager.logChannelDelete(channel); } catch {} });
 		this.client.on('channelUpdate', async (oldChannel, newChannel) => { try { await this.logManager.logChannelUpdate(oldChannel, newChannel); } catch {} });
 

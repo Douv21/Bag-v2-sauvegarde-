@@ -1,4 +1,5 @@
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const QuarantineChannelManager = require('./QuarantineChannelManager');
 
 class SecurityButtonHandler {
   constructor(moderationManager) {
@@ -66,21 +67,28 @@ class SecurityButtonHandler {
         });
       }
 
-      const config = await this.moderationManager.getSecurityConfig(interaction.guild.id);
-      
-      // Retirer le rôle de quarantaine
-      if (config.accessControl?.quarantineRoleId) {
-        const quarantineRole = interaction.guild.roles.cache.get(config.accessControl.quarantineRoleId);
-        if (quarantineRole && member.roles.cache.has(quarantineRole.id)) {
-          await member.roles.remove(quarantineRole, `Approuvé par ${interaction.user.tag}`);
-        }
-      }
+      const reason = `Approuvé par ${interaction.user.tag}`;
 
-      // Ajouter le rôle vérifié
-      if (config.accessControl?.verifiedRoleId) {
-        const verifiedRole = interaction.guild.roles.cache.get(config.accessControl.verifiedRoleId);
-        if (verifiedRole) {
-          await member.roles.add(verifiedRole, `Approuvé par ${interaction.user.tag}`);
+      // Utiliser le système centralisé si disponible pour nettoyer permissions et canaux
+      if (typeof interaction.client.grantAccess === 'function') {
+        await interaction.client.grantAccess(member, reason);
+      } else {
+        const config = await this.moderationManager.getSecurityConfig(interaction.guild.id);
+        
+        // Retirer le rôle de quarantaine
+        if (config.accessControl?.quarantineRoleId) {
+          const quarantineRole = interaction.guild.roles.cache.get(config.accessControl.quarantineRoleId);
+          if (quarantineRole && member.roles.cache.has(quarantineRole.id)) {
+            await member.roles.remove(quarantineRole, reason);
+          }
+        }
+
+        // Ajouter le rôle vérifié
+        if (config.accessControl?.verifiedRoleId) {
+          const verifiedRole = interaction.guild.roles.cache.get(config.accessControl.verifiedRoleId);
+          if (verifiedRole) {
+            await member.roles.add(verifiedRole, reason);
+          }
         }
       }
 
@@ -162,14 +170,15 @@ class SecurityButtonHandler {
         });
       }
 
-      const config = await this.moderationManager.getSecurityConfig(interaction.guild.id);
-      
-      // Ajouter le rôle de quarantaine
-      if (config.accessControl?.quarantineRoleId) {
-        const quarantineRole = interaction.guild.roles.cache.get(config.accessControl.quarantineRoleId);
-        if (quarantineRole) {
-          await member.roles.add(quarantineRole, `Mis en quarantaine par ${interaction.user.tag}`);
-        }
+      const details = { reason: `Mis en quarantaine par ${interaction.user.tag}`, score: 0 };
+
+      // Utiliser la méthode centrale si disponible (isolation stricte + canaux privés)
+      if (typeof interaction.client.quarantineMember === 'function') {
+        await interaction.client.quarantineMember(member, 'SECURITY_BUTTON', details);
+      } else {
+        // Fallback: créer les canaux + configurer les permissions via le gestionnaire
+        const qManager = new QuarantineChannelManager(this.moderationManager);
+        await qManager.createQuarantineChannels(member, details.reason);
       }
 
       // Notifier le membre
