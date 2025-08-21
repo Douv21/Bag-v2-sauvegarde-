@@ -66,6 +66,9 @@ class MongoBackupManager {
             'moderation_config.json': 'backup_moderation_config',
             'moderation_state.json': 'backup_moderation_state',
             'warnings.json': 'backup_warnings',
+            // Sécurité/quarantaine
+            'security_config.json': 'backup_security_config',
+            'quarantine_records.json': 'backup_quarantine_records',
             
             // Fichiers fonctionnalités - collections séparées
             'confessions.json': 'backup_confessions_system',
@@ -137,7 +140,7 @@ class MongoBackupManager {
             
             // Configuration karma et récompenses
             'karma_config.json': 'karma',
-        'karma_discounts.json': 'karma',
+            'karma_discounts.json': 'karma',
             'daily.json': 'daily_config',
             'message_rewards.json': 'message_rewards',
             'actions.json': 'actions_config',
@@ -150,7 +153,10 @@ class MongoBackupManager {
             
             // Configuration staff et administration
             'staff_config.json': 'staff_config',
-            'karma_discounts.json': 'karma'
+            'karma_discounts.json': 'karma',
+            // Sécurité/quarantaine
+            'security_config.json': 'security_config',
+            'quarantine_records.json': 'quarantine_records'
         };
     }
 

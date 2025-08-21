@@ -287,6 +287,7 @@ class QuarantineChannelManager {
       let configuredCount = 0;
       let skippedCount = 0;
       const errors = [];
+      const errorDetails = [];
 
       // ÉTAPE 3: Configurer les permissions par lots pour éviter le rate limiting
       const channelArray = Array.from(channels.values());
@@ -353,7 +354,9 @@ class QuarantineChannelManager {
               skippedCount++;
             }
           } catch (channelError) {
-            errors.push(`${channel.name} (${channel.type}): ${channelError.message}`);
+            const errMsg = `${channel.name} (${channel.type}): ${channelError.message}`;
+            errors.push(errMsg);
+            errorDetails.push({ name: channel.name, id: channel.id, type: channel.type, error: channelError.message });
             console.error(`❌ Erreur canal ${channel.name}:`, channelError.message);
           }
         }));
@@ -402,7 +405,8 @@ class QuarantineChannelManager {
         configured: configuredCount,
         skipped: skippedCount,
         errors: errors.length,
-        total: channels.size
+        total: channels.size,
+        errorDetails
       };
 
     } catch (error) {

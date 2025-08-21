@@ -170,7 +170,10 @@ class DeploymentManager {
             'karma_discounts.json': {},
             'message_rewards.json': {},
             'aouv_config.json': {},
-            'member_locations.json': {}
+            'member_locations.json': {},
+            // Sécurité / Quarantaine
+            'security_config.json': {},
+            'quarantine_records.json': {}
         };
 
         for (const [filename, defaultData] of Object.entries(defaultConfigs)) {
