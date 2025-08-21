@@ -40,12 +40,12 @@ async function handleButton(interaction) {
       case 'music_toggle': {
         const info = getQueueInfo(interaction.guildId);
         if (info?.current) {
-          try {
-            await pause(interaction.guildId);
-            msg = '⏸️ Lecture en pause.';
-          } catch {
+          if (info.paused) {
             await resume(interaction.guildId);
             msg = '▶️ Lecture relancée.';
+          } else {
+            await pause(interaction.guildId);
+            msg = '⏸️ Lecture en pause.';
           }
         } else {
           msg = '😴 Aucune lecture en cours.';
