@@ -1,13 +1,9 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ChannelType, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('config-verif')
-    .setDescription('Configuration unifiée du système de vérification et sécurité')
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('menu')
-        .setDescription('Ouvrir le menu de configuration principal'))
+    .setName('config-verif-menu')
+    .setDescription('Menu de configuration du système de vérification et sécurité')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
 
   cooldown: 5,
@@ -22,19 +18,12 @@ module.exports = {
       return interaction.reply({ content: '❌ Système de modération non disponible.', flags: 64 });
     }
 
-    const subcommand = interaction.options.getSubcommand();
     const guildId = interaction.guild.id;
 
     try {
-      switch (subcommand) {
-        case 'menu':
-          await this.handleMainMenu(interaction, mod, guildId);
-          break;
-        default:
-          return interaction.reply({ content: '❌ Sous-commande non reconnue.', flags: 64 });
-      }
+      await this.handleMainMenu(interaction, mod, guildId);
     } catch (error) {
-      console.error('Erreur config sécurité:', error);
+      console.error('Erreur config-verif-menu:', error);
       return interaction.reply({ content: '❌ Erreur lors de la configuration.', flags: 64 });
     }
   },
