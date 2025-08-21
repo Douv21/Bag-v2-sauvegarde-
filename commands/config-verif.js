@@ -8,72 +8,6 @@ module.exports = {
       subcommand
         .setName('menu')
         .setDescription('Ouvrir le menu de configuration principal'))
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('voir')
-        .setDescription('Voir la configuration actuelle'))
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('auto-verif')
-        .setDescription('Configurer la vérification automatique à l\'arrivée')
-        .addBooleanOption(o => o.setName('activer').setDescription('Activer la vérification automatique').setRequired(true))
-        .addIntegerOption(o => o.setName('age-minimum').setDescription('Âge minimum du compte en jours').setMinValue(0).setMaxValue(365))
-        .addIntegerOption(o => o.setName('score-risque-max').setDescription('Score de risque maximum (0-100)').setMinValue(0).setMaxValue(100))
-        .addIntegerOption(o => o.setName('seuil-multicompte').setDescription('Seuil de détection multi-comptes (%)').setMinValue(30).setMaxValue(100)))
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('quarantaine')
-        .setDescription('Configurer le système de quarantaine (canaux créés automatiquement)')
-        .addRoleOption(o => o.setName('role-quarantaine').setDescription('Rôle de quarantaine (canaux privés créés automatiquement)').setRequired(true))
-        .addRoleOption(o => o.setName('role-verifie').setDescription('Rôle pour membres vérifiés après libération')))
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('actions-auto')
-        .setDescription('Configurer les actions automatiques')
-        .addStringOption(o => o.setName('compte-recent').setDescription('Action pour compte trop récent').addChoices(
-          { name: '🔒 Quarantaine automatique', value: 'QUARANTINE' },
-          { name: '👨‍💼 Approbation admin requise', value: 'ADMIN_APPROVAL' },
-          { name: '👢 Kick automatique', value: 'KICK' },
-          { name: '🔨 Ban automatique', value: 'BAN' },
-          { name: '📢 Alerte seulement', value: 'ALERT' }
-        ))
-        .addStringOption(o => o.setName('multicompte').setDescription('Action pour multi-comptes suspects').addChoices(
-          { name: '🔒 Quarantaine automatique', value: 'QUARANTINE' },
-          { name: '👨‍💼 Approbation admin requise', value: 'ADMIN_APPROVAL' },
-          { name: '👢 Kick automatique', value: 'KICK' },
-          { name: '🔨 Ban automatique', value: 'BAN' },
-          { name: '📢 Alerte seulement', value: 'ALERT' }
-        ))
-        .addStringOption(o => o.setName('nom-suspect').setDescription('Action pour nom suspect').addChoices(
-          { name: '🔒 Quarantaine automatique', value: 'QUARANTINE' },
-          { name: '👨‍💼 Approbation admin requise', value: 'ADMIN_APPROVAL' },
-          { name: '👢 Kick automatique', value: 'KICK' },
-          { name: '📢 Alerte seulement', value: 'ALERT' }
-        )))
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('notifications')
-        .setDescription('Configurer les notifications admin')
-        .addChannelOption(o => o.setName('canal-alertes').setDescription('Canal pour alertes sécurité').addChannelTypes(ChannelType.GuildText))
-        .addRoleOption(o => o.setName('role-admin').setDescription('Rôle admin à mentionner'))
-        .addIntegerOption(o => o.setName('delai-decision').setDescription('Délai avant action auto (minutes)').setMinValue(5).setMaxValue(1440)))
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('exemptions')
-        .setDescription('Gérer les exemptions de vérification')
-        .addStringOption(o => o.setName('action').setDescription('Action').setRequired(true).addChoices(
-          { name: 'Voir la liste', value: 'view' },
-          { name: 'Ajouter utilisateur', value: 'add_user' },
-          { name: 'Retirer utilisateur', value: 'remove_user' },
-          { name: 'Ajouter rôle', value: 'add_role' },
-          { name: 'Retirer rôle', value: 'remove_role' }
-        ))
-        .addUserOption(o => o.setName('utilisateur').setDescription('Utilisateur à ajouter/retirer'))
-        .addRoleOption(o => o.setName('role').setDescription('Rôle à ajouter/retirer')))
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('reset')
-        .setDescription('Réinitialiser la configuration (ATTENTION: supprime tout)'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
 
   cooldown: 5,
@@ -96,27 +30,8 @@ module.exports = {
         case 'menu':
           await this.handleMainMenu(interaction, mod, guildId);
           break;
-        case 'voir':
-          await this.handleViewConfig(interaction, mod, guildId);
-          break;
-        case 'auto-verif':
-          await this.handleAutoVerification(interaction, mod, guildId);
-          break;
-        case 'quarantaine':
-          await this.handleQuarantineConfig(interaction, mod, guildId);
-          break;
-        case 'actions-auto':
-          await this.handleAutoActions(interaction, mod, guildId);
-          break;
-        case 'notifications':
-          await this.handleNotifications(interaction, mod, guildId);
-          break;
-        case 'exemptions':
-          await this.handleExemptions(interaction, mod, guildId);
-          break;
-        case 'reset':
-          await this.handleReset(interaction, mod, guildId);
-          break;
+        default:
+          return interaction.reply({ content: '❌ Sous-commande non reconnue.', flags: 64 });
       }
     } catch (error) {
       console.error('Erreur config sécurité:', error);
