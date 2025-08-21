@@ -233,7 +233,18 @@ class QuarantineChannelManager {
     try {
       console.log(`🔧 Configuration des permissions du rôle de quarantaine: ${quarantineRole.name}`);
       
-      // Obtenir tous les canaux du serveur (sauf les canaux de quarantaine)
+      // ÉTAPE 1: Configurer les permissions par défaut du rôle au niveau serveur
+      console.log('🔒 Configuration des permissions par défaut du rôle...');
+      try {
+        await quarantineRole.edit({
+          permissions: [] // Retirer toutes les permissions par défaut
+        }, 'Configuration automatique - Isolation complète');
+        console.log('✅ Permissions par défaut du rôle supprimées');
+      } catch (roleError) {
+        console.warn('⚠️ Impossible de modifier les permissions par défaut du rôle:', roleError.message);
+      }
+
+      // ÉTAPE 2: Obtenir TOUS les canaux du serveur (sauf les canaux de quarantaine)
       const channels = guild.channels.cache.filter(channel => {
         // Exclure les canaux de quarantaine
         if (channel.parent && channel.parent.name.toLowerCase().includes('quarantaine')) {
@@ -242,46 +253,143 @@ class QuarantineChannelManager {
         if (channel.name.toLowerCase().includes('quarantaine')) {
           return false;
         }
-        // Inclure seulement les canaux texte, vocaux et catégories
-        return [ChannelType.GuildText, ChannelType.GuildVoice, ChannelType.GuildCategory].includes(channel.type);
+        
+        // Inclure TOUS les types de canaux où l'accès peut être contrôlé
+        return [
+          ChannelType.GuildText,           // Canaux texte
+          ChannelType.GuildVoice,          // Canaux vocaux
+          ChannelType.GuildCategory,       // Catégories
+          ChannelType.GuildAnnouncement,   // Canaux d'annonces
+          ChannelType.GuildStageVoice,     // Canaux de conférence
+          ChannelType.GuildForum,          // Forums
+          ChannelType.PublicThread,        // Threads publics
+          ChannelType.PrivateThread,       // Threads privés
+          ChannelType.AnnouncementThread   // Threads d'annonces
+        ].includes(channel.type);
       });
 
+      console.log(`📊 ${channels.size} canaux à configurer`);
+
       let configuredCount = 0;
+      let skippedCount = 0;
       const errors = [];
 
-      for (const channel of channels.values()) {
-        try {
-          // Vérifier si le rôle a déjà des permissions configurées sur ce canal
-          const existingOverwrite = channel.permissionOverwrites.cache.get(quarantineRole.id);
-          
-          if (!existingOverwrite || !existingOverwrite.deny.has(PermissionFlagsBits.ViewChannel)) {
-            // Configurer les permissions pour refuser l'accès
-            await channel.permissionOverwrites.edit(quarantineRole, {
-              ViewChannel: false,
-              SendMessages: false,
-              Connect: false,
-              Speak: false,
-              SendMessagesInThreads: false,
-              CreatePrivateThreads: false,
-              CreatePublicThreads: false,
-              UseEmbeddedActivities: false,
-              UseApplicationCommands: false
-            }, {
-              reason: 'Configuration automatique du rôle de quarantaine'
-            });
+      // ÉTAPE 3: Configurer les permissions par lots pour éviter le rate limiting
+      const channelArray = Array.from(channels.values());
+      const batchSize = 5; // Traiter 5 canaux à la fois
+
+      for (let i = 0; i < channelArray.length; i += batchSize) {
+        const batch = channelArray.slice(i, i + batchSize);
+        
+        await Promise.all(batch.map(async (channel) => {
+          try {
+            // Vérifier si le rôle a déjà des permissions configurées correctement
+            const existingOverwrite = channel.permissionOverwrites.cache.get(quarantineRole.id);
             
-            configuredCount++;
+            // Configurer seulement si nécessaire
+            const needsConfiguration = !existingOverwrite || 
+              !existingOverwrite.deny.has(PermissionFlagsBits.ViewChannel) ||
+              !existingOverwrite.deny.has(PermissionFlagsBits.SendMessages) ||
+              !existingOverwrite.deny.has(PermissionFlagsBits.Connect);
+
+            if (needsConfiguration) {
+              // Configuration complète des permissions restrictives
+              const restrictivePermissions = {
+                // Permissions de base
+                ViewChannel: false,
+                SendMessages: false,
+                ReadMessageHistory: false,
+                
+                // Permissions vocales
+                Connect: false,
+                Speak: false,
+                Stream: false,
+                UseVAD: false,
+                
+                // Permissions avancées
+                SendMessagesInThreads: false,
+                CreatePrivateThreads: false,
+                CreatePublicThreads: false,
+                UseEmbeddedActivities: false,
+                UseApplicationCommands: false,
+                SendTTSMessages: false,
+                AddReactions: false,
+                EmbedLinks: false,
+                AttachFiles: false,
+                UseExternalEmojis: false,
+                UseExternalStickers: false,
+                MentionEveryone: false,
+                
+                // Permissions de modération (toujours refusées)
+                ManageMessages: false,
+                ManageThreads: false,
+                
+                // Permissions spécifiques aux forums et stages
+                SendVoiceMessages: false,
+                RequestToSpeak: false
+              };
+
+              await channel.permissionOverwrites.edit(quarantineRole, restrictivePermissions, {
+                reason: 'Configuration automatique du rôle de quarantaine - Isolation complète'
+              });
+              
+              configuredCount++;
+              console.log(`🔒 Canal configuré: ${channel.name} (${channel.type})`);
+            } else {
+              skippedCount++;
+            }
+          } catch (channelError) {
+            errors.push(`${channel.name} (${channel.type}): ${channelError.message}`);
+            console.error(`❌ Erreur canal ${channel.name}:`, channelError.message);
           }
-        } catch (channelError) {
-          errors.push(`${channel.name}: ${channelError.message}`);
+        }));
+
+        // Petit délai entre les lots pour éviter le rate limiting
+        if (i + batchSize < channelArray.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
 
-      console.log(`✅ Permissions configurées sur ${configuredCount} canaux pour le rôle ${quarantineRole.name}`);
+      // ÉTAPE 4: Vérifier les permissions sur @everyone pour s'assurer de l'isolation
+      console.log('🔍 Vérification des permissions @everyone...');
+      let everyoneConfigured = 0;
+      
+      for (const channel of channels.values()) {
+        try {
+          const everyoneOverwrite = channel.permissionOverwrites.cache.get(guild.roles.everyone.id);
+          
+          // S'assurer que @everyone peut voir le canal (sinon les restrictions n'ont pas de sens)
+          if (!everyoneOverwrite || everyoneOverwrite.deny.has(PermissionFlagsBits.ViewChannel)) {
+            // Ne pas modifier @everyone automatiquement, juste le signaler
+            console.log(`⚠️ Canal ${channel.name}: @everyone ne peut pas voir ce canal`);
+          }
+        } catch (everyoneError) {
+          console.warn(`⚠️ Impossible de vérifier @everyone sur ${channel.name}:`, everyoneError.message);
+        }
+      }
+
+      // ÉTAPE 5: Rapport final
+      console.log(`✅ Configuration terminée pour le rôle ${quarantineRole.name}`);
+      console.log(`📊 Statistiques:`);
+      console.log(`   • Canaux configurés: ${configuredCount}`);
+      console.log(`   • Canaux ignorés (déjà configurés): ${skippedCount}`);
+      console.log(`   • Erreurs: ${errors.length}`);
       
       if (errors.length > 0) {
-        console.warn(`⚠️ Erreurs de configuration sur ${errors.length} canaux:`, errors.slice(0, 5));
+        console.warn(`⚠️ Erreurs de configuration sur ${errors.length} canaux:`);
+        errors.slice(0, 10).forEach(error => console.warn(`   • ${error}`));
+        if (errors.length > 10) {
+          console.warn(`   • Et ${errors.length - 10} autres erreurs...`);
+        }
       }
+
+      // Retourner les statistiques pour usage dans les commandes
+      return {
+        configured: configuredCount,
+        skipped: skippedCount,
+        errors: errors.length,
+        total: channels.size
+      };
 
     } catch (error) {
       console.error('Erreur configuration permissions quarantaine:', error);
@@ -475,6 +583,145 @@ class QuarantineChannelManager {
     } catch (error) {
       console.error('Erreur liste membres quarantaine:', error);
       return [];
+    }
+  }
+
+  /**
+   * Appliquer automatiquement les restrictions de quarantaine sur un nouveau canal
+   * Cette méthode doit être appelée quand un nouveau canal est créé sur le serveur
+   * @param {Channel} channel - Le nouveau canal créé
+   * @param {Guild} guild - Le serveur
+   */
+  async applyQuarantineRestrictionsToNewChannel(channel, guild) {
+    try {
+      const config = await this.moderationManager.getSecurityConfig(guild.id);
+      const quarantineRoleId = config.accessControl?.quarantineRoleId;
+
+      if (!quarantineRoleId) return;
+
+      const quarantineRole = guild.roles.cache.get(quarantineRoleId);
+      if (!quarantineRole) return;
+
+      // Ne pas appliquer sur les canaux de quarantaine
+      if (channel.parent && channel.parent.name.toLowerCase().includes('quarantaine')) {
+        return;
+      }
+      if (channel.name.toLowerCase().includes('quarantaine')) {
+        return;
+      }
+
+      // Appliquer les restrictions sur le nouveau canal
+      const restrictivePermissions = {
+        ViewChannel: false,
+        SendMessages: false,
+        ReadMessageHistory: false,
+        Connect: false,
+        Speak: false,
+        Stream: false,
+        UseVAD: false,
+        SendMessagesInThreads: false,
+        CreatePrivateThreads: false,
+        CreatePublicThreads: false,
+        UseEmbeddedActivities: false,
+        UseApplicationCommands: false,
+        SendTTSMessages: false,
+        AddReactions: false,
+        EmbedLinks: false,
+        AttachFiles: false,
+        UseExternalEmojis: false,
+        UseExternalStickers: false,
+        MentionEveryone: false,
+        ManageMessages: false,
+        ManageThreads: false,
+        SendVoiceMessages: false,
+        RequestToSpeak: false
+      };
+
+      await channel.permissionOverwrites.edit(quarantineRole, restrictivePermissions, {
+        reason: 'Application automatique des restrictions de quarantaine sur nouveau canal'
+      });
+
+      console.log(`🔒 Restrictions de quarantaine appliquées sur le nouveau canal: ${channel.name}`);
+
+    } catch (error) {
+      console.error('Erreur application restrictions nouveau canal:', error);
+    }
+  }
+
+  /**
+   * Vérifier et corriger l'isolation d'un membre en quarantaine
+   * @param {GuildMember} member - Le membre en quarantaine
+   * @returns {Object} Rapport de vérification
+   */
+  async verifyAndFixQuarantineIsolation(member) {
+    try {
+      const config = await this.moderationManager.getSecurityConfig(member.guild.id);
+      const quarantineRoleId = config.accessControl?.quarantineRoleId;
+
+      if (!quarantineRoleId) {
+        throw new Error('Aucun rôle de quarantaine configuré');
+      }
+
+      const quarantineRole = member.guild.roles.cache.get(quarantineRoleId);
+      if (!quarantineRole) {
+        throw new Error('Rôle de quarantaine introuvable');
+      }
+
+      // Vérifier si le membre a le rôle
+      if (!member.roles.cache.has(quarantineRoleId)) {
+        throw new Error('Le membre n\'a pas le rôle de quarantaine');
+      }
+
+      console.log(`🔍 Vérification de l'isolation de quarantaine pour ${member.user.tag}`);
+
+      // Reconfigurer les permissions sur tous les canaux
+      const stats = await this.configureQuarantineRolePermissions(member.guild, quarantineRole);
+
+      // Vérifier l'accès actuel du membre
+      const accessibleChannels = [];
+      const restrictedChannels = [];
+
+      for (const channel of member.guild.channels.cache.values()) {
+        // Ignorer les canaux de quarantaine
+        if ((channel.parent && channel.parent.name.toLowerCase().includes('quarantaine')) ||
+            channel.name.toLowerCase().includes('quarantaine')) {
+          continue;
+        }
+
+        // Vérifier si le membre peut voir le canal
+        const permissions = channel.permissionsFor(member);
+        if (permissions && permissions.has(PermissionFlagsBits.ViewChannel)) {
+          accessibleChannels.push({
+            name: channel.name,
+            type: channel.type,
+            id: channel.id
+          });
+        } else {
+          restrictedChannels.push({
+            name: channel.name,
+            type: channel.type,
+            id: channel.id
+          });
+        }
+      }
+
+      return {
+        success: true,
+        member: member.user.tag,
+        stats,
+        accessibleChannels: accessibleChannels.length,
+        restrictedChannels: restrictedChannels.length,
+        accessibleChannelsList: accessibleChannels.slice(0, 5), // Premiers 5 pour debug
+        message: `Isolation vérifiée et corrigée. ${restrictedChannels.length} canaux restreints, ${accessibleChannels.length} accessibles.`
+      };
+
+    } catch (error) {
+      console.error('Erreur vérification isolation quarantaine:', error);
+      return {
+        success: false,
+        error: error.message,
+        member: member.user.tag
+      };
     }
   }
 }
