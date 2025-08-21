@@ -936,6 +936,17 @@ class MainRouterHandler {
                 }
             }
 
+            // Nouvelles sélections: choix d'action automatique
+            if (customId === 'config_verif_action_recentAccount' || customId === 'config_verif_action_multiAccount' || customId === 'config_verif_action_suspiciousName') {
+                if (this.securityConfigHandler) {
+                    await this.securityConfigHandler.handleAutoActionSelect(interaction);
+                    return true;
+                } else {
+                    await interaction.reply({ content: '❌ Module sécurité indisponible.', ephemeral: true });
+                    return true;
+                }
+            }
+
             // Sélecteur de rôle: rôle de quarantaine
             if (customId === 'config_verif_quarantine_role') {
                 if (this.securityConfigHandler) {
