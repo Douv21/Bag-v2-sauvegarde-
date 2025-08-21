@@ -487,6 +487,14 @@ class ConfessionHandler {
             .setMinValues(0)
             .setMaxValues(5);
 
+        const actionsMenu = new StringSelectMenuBuilder()
+            .setCustomId('confession_log_ping_roles_actions')
+            .setPlaceholder('Actions...')
+            .addOptions([
+                { label: '🗑️ Retirer tous les rôles ping logs', value: 'clear_log_ping_roles', description: 'Supprimer tous les rôles ping des logs' },
+                { label: '🧹 Retirer des rôles spécifiques', value: 'remove_some_log_ping_roles', description: 'Choisir des rôles à retirer' }
+            ]);
+
         const backMenu = new StringSelectMenuBuilder()
             .setCustomId('confession_logs_back')
             .setPlaceholder('Actions...')
@@ -496,6 +504,7 @@ class ConfessionHandler {
 
         const rows = [
             new ActionRowBuilder().addComponents(roleSelect),
+            new ActionRowBuilder().addComponents(actionsMenu),
             new ActionRowBuilder().addComponents(backMenu)
         ];
 
@@ -517,6 +526,14 @@ class ConfessionHandler {
             .setMinValues(0)
             .setMaxValues(5);
 
+        const actionsMenu = new StringSelectMenuBuilder()
+            .setCustomId('confession_ping_roles_actions')
+            .setPlaceholder('Actions...')
+            .addOptions([
+                { label: '🗑️ Retirer tous les rôles ping confessions', value: 'clear_confession_ping_roles', description: 'Supprimer tous les rôles ping confessions' },
+                { label: '🧹 Retirer des rôles spécifiques', value: 'remove_some_confession_ping_roles', description: 'Choisir des rôles à retirer' }
+            ]);
+
         const backMenu = new StringSelectMenuBuilder()
             .setCustomId('confession_logs_back')
             .setPlaceholder('Actions...')
@@ -526,6 +543,7 @@ class ConfessionHandler {
 
         const rows = [
             new ActionRowBuilder().addComponents(roleSelect),
+            new ActionRowBuilder().addComponents(actionsMenu),
             new ActionRowBuilder().addComponents(backMenu)
         ];
 
@@ -829,6 +847,14 @@ class ConfessionHandler {
             case 'confession_remove_channel_select':
                 await this.removeConfessionChannel(interaction, selectedValue);
                 break;
+
+            case 'confession_remove_log_ping_roles_select':
+                await this.removeLogPingRoles(interaction, interaction.values);
+                break;
+
+            case 'confession_remove_confession_ping_roles_select':
+                await this.removeConfessionPingRoles(interaction, interaction.values);
+                break;
                 
             default:
                 await interaction.reply({ content: '❌ Sélecteur non reconnu', flags: 64 });
@@ -952,6 +978,174 @@ class ConfessionHandler {
         }).join(', ');
         
         await this.handleLogsConfig(interaction);
+    }
+
+    async handleLogPingRolesActions(interaction) {
+        const guildId = interaction.guild.id;
+        const action = Array.isArray(interaction.values) ? interaction.values[0] : interaction.values;
+        const config = await this.dataManager.getData('config');
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) config.confessions[guildId] = {};
+
+        if (action === 'clear_log_ping_roles') {
+            config.confessions[guildId].logPingRoles = [];
+            await this.dataManager.saveData('config', config);
+            await this.showLogPingRolesMenu(interaction);
+            return;
+        }
+
+        if (action === 'remove_some_log_ping_roles') {
+            return await this.showRemoveLogPingRolesList(interaction);
+        }
+
+        await interaction.reply({ content: '❌ Action inconnue.', flags: 64 });
+    }
+
+    async handleConfessionPingRolesActions(interaction) {
+        const guildId = interaction.guild.id;
+        const action = Array.isArray(interaction.values) ? interaction.values[0] : interaction.values;
+        const config = await this.dataManager.getData('config');
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) config.confessions[guildId] = {};
+
+        if (action === 'clear_confession_ping_roles') {
+            config.confessions[guildId].confessionPingRoles = [];
+            await this.dataManager.saveData('config', config);
+            await this.showConfessionPingRolesMenu(interaction);
+            return;
+        }
+
+        if (action === 'remove_some_confession_ping_roles') {
+            return await this.showRemoveConfessionPingRolesList(interaction);
+        }
+
+        await interaction.reply({ content: '❌ Action inconnue.', flags: 64 });
+    }
+
+    async showRemoveLogPingRolesList(interaction) {
+        const guildId = interaction.guild.id;
+        const config = await this.dataManager.getData('config');
+        const existing = config.confessions?.[guildId]?.logPingRoles || [];
+
+        if (!existing.length) {
+            await interaction.update({
+                embeds: [new EmbedBuilder()
+                    .setColor('#ff9800')
+                    .setTitle('⚠️ Aucun rôle ping logs configuré')
+                    .setDescription('Aucun rôle n\'est actuellement mentionné dans les logs.')],
+                components: []
+            });
+            return;
+        }
+
+        const options = existing.map(roleId => {
+            const role = interaction.guild.roles.cache.get(roleId);
+            return {
+                label: role?.name || 'Rôle supprimé',
+                value: roleId,
+                description: role ? `Retirer ${role.name}` : `Retirer rôle supprimé (${roleId})`
+            };
+        });
+
+        const select = new StringSelectMenuBuilder()
+            .setCustomId('confession_remove_log_ping_roles_select')
+            .setPlaceholder('🧹 Choisissez les rôles à retirer')
+            .setMinValues(1)
+            .setMaxValues(options.length)
+            .addOptions(options);
+
+        const backMenu = new StringSelectMenuBuilder()
+            .setCustomId('confession_logs_back')
+            .setPlaceholder('Actions...')
+            .addOptions([
+                { label: '🔙 Retour Logs Admin', value: 'back_logs', description: 'Retour au menu logs', emoji: '🔙' }
+            ]);
+
+        await interaction.update({
+            embeds: [new EmbedBuilder()
+                .setColor('#f44336')
+                .setTitle('🧹 Retirer des rôles ping logs')
+                .setDescription('Sélectionnez un ou plusieurs rôles à retirer des pings des logs.')],
+            components: [
+                new ActionRowBuilder().addComponents(select),
+                new ActionRowBuilder().addComponents(backMenu)
+            ]
+        });
+    }
+
+    async showRemoveConfessionPingRolesList(interaction) {
+        const guildId = interaction.guild.id;
+        const config = await this.dataManager.getData('config');
+        const existing = config.confessions?.[guildId]?.confessionPingRoles || [];
+
+        if (!existing.length) {
+            await interaction.update({
+                embeds: [new EmbedBuilder()
+                    .setColor('#ff9800')
+                    .setTitle('⚠️ Aucun rôle ping confessions configuré')
+                    .setDescription('Aucun rôle n\'est actuellement mentionné lors des confessions.')],
+                components: []
+            });
+            return;
+        }
+
+        const options = existing.map(roleId => {
+            const role = interaction.guild.roles.cache.get(roleId);
+            return {
+                label: role?.name || 'Rôle supprimé',
+                value: roleId,
+                description: role ? `Retirer ${role.name}` : `Retirer rôle supprimé (${roleId})`
+            };
+        });
+
+        const select = new StringSelectMenuBuilder()
+            .setCustomId('confession_remove_confession_ping_roles_select')
+            .setPlaceholder('🧹 Choisissez les rôles à retirer')
+            .setMinValues(1)
+            .setMaxValues(options.length)
+            .addOptions(options);
+
+        const backMenu = new StringSelectMenuBuilder()
+            .setCustomId('confession_logs_back')
+            .setPlaceholder('Actions...')
+            .addOptions([
+                { label: '🔙 Retour Logs Admin', value: 'back_logs', description: 'Retour au menu logs', emoji: '🔙' }
+            ]);
+
+        await interaction.update({
+            embeds: [new EmbedBuilder()
+                .setColor('#f44336')
+                .setTitle('🧹 Retirer des rôles ping confessions')
+                .setDescription('Sélectionnez un ou plusieurs rôles à retirer des pings de confessions.')],
+            components: [
+                new ActionRowBuilder().addComponents(select),
+                new ActionRowBuilder().addComponents(backMenu)
+            ]
+        });
+    }
+
+    async removeLogPingRoles(interaction, roleIdsToRemove) {
+        const guildId = interaction.guild.id;
+        const config = await this.dataManager.getData('config');
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) config.confessions[guildId] = {};
+        const current = config.confessions[guildId].logPingRoles || [];
+        config.confessions[guildId].logPingRoles = current.filter(id => !roleIdsToRemove.includes(id));
+        await this.dataManager.saveData('config', config);
+
+        await this.showLogPingRolesMenu(interaction);
+    }
+
+    async removeConfessionPingRoles(interaction, roleIdsToRemove) {
+        const guildId = interaction.guild.id;
+        const config = await this.dataManager.getData('config');
+        if (!config.confessions) config.confessions = {};
+        if (!config.confessions[guildId]) config.confessions[guildId] = {};
+        const current = config.confessions[guildId].confessionPingRoles || [];
+        config.confessions[guildId].confessionPingRoles = current.filter(id => !roleIdsToRemove.includes(id));
+        await this.dataManager.saveData('config', config);
+
+        await this.showConfessionPingRolesMenu(interaction);
     }
 
     async saveLogChannel(interaction, channelId) {

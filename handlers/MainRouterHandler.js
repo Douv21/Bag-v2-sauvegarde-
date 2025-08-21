@@ -627,6 +627,17 @@ class MainRouterHandler {
                 }
             }
 
+            // Actions pour la gestion des rôles ping (logs et confessions)
+            if (customId === 'confession_log_ping_roles_actions') {
+                await this.confessionHandler.handleLogPingRolesActions(interaction);
+                return true;
+            }
+
+            if (customId === 'confession_ping_roles_actions') {
+                await this.confessionHandler.handleConfessionPingRolesActions(interaction);
+                return true;
+            }
+
             // Sélecteurs spécialisés (canal/roles/niveau/archive...) qui déclenchent un enregistrement immédiat
             const specializedConfessionSelects = [
                 'confession_log_channel_select',
@@ -635,7 +646,9 @@ class MainRouterHandler {
                 'confession_thread_name_select',
                 'confession_remove_channel_select',
                 'confession_log_ping_roles_select',
-                'confession_ping_roles_select'
+                'confession_ping_roles_select',
+                'confession_remove_log_ping_roles_select',
+                'confession_remove_confession_ping_roles_select'
             ];
 
             if (specializedConfessionSelects.includes(customId)) {
