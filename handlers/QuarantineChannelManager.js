@@ -51,7 +51,7 @@ class QuarantineChannelManager {
           },
           {
             id: quarantineRoleId,
-            allow: [PermissionFlagsBits.ViewChannel]
+            deny: [PermissionFlagsBits.ViewChannel]
           },
           // Permissions pour les modérateurs
           ...this.getModeratorPermissions(member.guild, config)
@@ -79,7 +79,7 @@ class QuarantineChannelManager {
           },
           {
             id: quarantineRoleId,
-            allow: [PermissionFlagsBits.ViewChannel]
+            deny: [PermissionFlagsBits.ViewChannel]
           },
           // Permissions pour les modérateurs
           ...this.getModeratorPermissions(member.guild, config)
@@ -427,8 +427,6 @@ class QuarantineChannelManager {
       const guild = member.guild;
       const channels = guild.channels.cache.filter(channel => {
         if (excludeChannelIds.includes(channel.id)) return false;
-        if (quarantineCategory && channel.parentId === quarantineCategory.id) return false;
-        if (channel.name?.toLowerCase?.().includes('quarantaine')) return false;
         return [
           ChannelType.GuildText,
           ChannelType.GuildVoice,
