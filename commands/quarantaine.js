@@ -34,6 +34,15 @@ module.exports = {
       subcommand
         .setName('configurer-permissions')
         .setDescription('Reconfigurer les permissions du rôle de quarantaine sur tous les canaux'))
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('verifier-isolation')
+        .setDescription('Vérifier et corriger l\'isolation complète d\'un membre en quarantaine')
+        .addUserOption(o => o.setName('membre').setDescription('Membre à vérifier').setRequired(true)))
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('diagnostic')
+        .setDescription('Diagnostic complet du système de quarantaine du serveur'))
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers.toString()),
 
   cooldown: 5,
@@ -71,6 +80,12 @@ module.exports = {
           break;
         case 'configurer-permissions':
           await this.handleConfigurePermissions(interaction);
+          break;
+        case 'verifier-isolation':
+          await this.handleVerifyIsolation(interaction);
+          break;
+        case 'diagnostic':
+          await this.handleDiagnostic(interaction);
           break;
       }
     } catch (error) {
@@ -515,11 +530,11 @@ module.exports = {
       }
 
       // Reconfigurer les permissions
-      await this.quarantineManager.configureQuarantineRolePermissions(interaction.guild, quarantineRole);
+      const stats = await this.quarantineManager.configureQuarantineRolePermissions(interaction.guild, quarantineRole);
 
       const embed = new EmbedBuilder()
         .setTitle('✅ Permissions de quarantaine reconfigurées')
-        .setColor(0x51cf66)
+        .setColor(stats.errors === 0 ? 0x51cf66 : 0xff922b)
         .addFields(
           {
             name: '🔒 Rôle configuré',
@@ -527,17 +542,34 @@ module.exports = {
             inline: true
           },
           {
-            name: '📊 Configuration appliquée',
-            value: `• Accès refusé à tous les canaux généraux\n• Permissions configurées automatiquement\n• Canaux de quarantaine exemptés`,
+            name: '📊 Statistiques de configuration',
+            value: `**Canaux configurés :** ${stats.configured}\n` +
+                   `**Canaux ignorés :** ${stats.skipped}\n` +
+                   `**Erreurs :** ${stats.errors}\n` +
+                   `**Total traité :** ${stats.total}`,
+            inline: false
+          },
+          {
+            name: '🔧 Restrictions appliquées',
+            value: `• Accès refusé à tous les canaux généraux\n• Permissions par défaut du rôle supprimées\n• Configuration complète des permissions restrictives\n• Canaux de quarantaine exemptés`,
             inline: false
           },
           {
             name: '💡 Informations',
-            value: `• Les membres avec ce rôle ne peuvent accéder qu'aux canaux de quarantaine\n• Les nouveaux canaux hériteront automatiquement des restrictions\n• Les permissions sont appliquées en temps réel`,
+            value: `• Isolation complète garantie pour les membres en quarantaine\n• Traitement par lots pour éviter les limitations\n• Vérification automatique des permissions existantes\n• Support de tous les types de canaux`,
             inline: false
           }
         )
         .setTimestamp();
+
+      // Ajouter un avertissement si il y a eu des erreurs
+      if (stats.errors > 0) {
+        embed.addFields({
+          name: '⚠️ Attention',
+          value: `${stats.errors} erreur(s) détectée(s) lors de la configuration.\nVérifiez les logs du bot pour plus de détails.\nCertains canaux peuvent nécessiter une configuration manuelle.`,
+          inline: false
+        });
+      }
 
       return interaction.editReply({ embeds: [embed] });
 
@@ -547,6 +579,223 @@ module.exports = {
         content: `❌ **Erreur lors de la configuration**\n\n` +
                  `${error.message}\n\n` +
                  `Vérifiez que le bot a les permissions nécessaires pour gérer les canaux.`
+      });
+    }
+  },
+
+  async handleVerifyIsolation(interaction) {
+    const member = interaction.options.getMember('membre');
+
+    if (!member) {
+      return interaction.reply({ content: '❌ Membre introuvable sur ce serveur.', ephemeral: true });
+    }
+
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+      // Vérifier et corriger l'isolation
+      const report = await this.quarantineManager.verifyAndFixQuarantineIsolation(member);
+
+      if (!report.success) {
+        return interaction.editReply({
+          content: `❌ **Erreur lors de la vérification**\n\n${report.error}`
+        });
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle('🔍 Vérification d\'isolation - Quarantaine')
+        .setDescription(`Vérification terminée pour **${report.member}**`)
+        .setColor(report.accessibleChannels === 0 ? 0x51cf66 : 0xff922b)
+        .addFields(
+          {
+            name: '📊 Résultats de la vérification',
+            value: `**Canaux restreints :** ${report.restrictedChannels}\n` +
+                   `**Canaux accessibles :** ${report.accessibleChannels}\n` +
+                   `**Statut :** ${report.accessibleChannels === 0 ? '✅ Isolation complète' : '⚠️ Isolation partielle'}`,
+            inline: false
+          },
+          {
+            name: '🔧 Configuration appliquée',
+            value: `**Canaux configurés :** ${report.stats.configured}\n` +
+                   `**Canaux ignorés :** ${report.stats.skipped}\n` +
+                   `**Erreurs :** ${report.stats.errors}\n` +
+                   `**Total :** ${report.stats.total}`,
+            inline: false
+          }
+        )
+        .setTimestamp();
+
+      // Ajouter détails des canaux accessibles si il y en a
+      if (report.accessibleChannels > 0 && report.accessibleChannelsList.length > 0) {
+        let accessibleList = '';
+        for (const channel of report.accessibleChannelsList) {
+          accessibleList += `• ${channel.name} (${channel.type})\n`;
+        }
+        if (report.accessibleChannels > 5) {
+          accessibleList += `• Et ${report.accessibleChannels - 5} autres...`;
+        }
+
+        embed.addFields({
+          name: '⚠️ Canaux encore accessibles',
+          value: accessibleList,
+          inline: false
+        });
+
+        embed.addFields({
+          name: '💡 Actions recommandées',
+          value: `• Vérifiez les permissions spéciales de ces canaux\n` +
+                 `• Assurez-vous que le rôle de quarantaine est bien configuré\n` +
+                 `• Relancez \`/quarantaine configurer-permissions\` si nécessaire`,
+          inline: false
+        });
+      }
+
+      return interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Erreur vérification isolation:', error);
+      return interaction.editReply({
+        content: `❌ **Erreur lors de la vérification**\n\n` +
+                 `${error.message}`
+      });
+    }
+  },
+
+  async handleDiagnostic(interaction) {
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+      const config = await this.quarantineManager.moderationManager.getSecurityConfig(interaction.guild.id);
+      const guild = interaction.guild;
+
+      // Vérifications de base
+      const hasQuarantineRole = config.accessControl?.quarantineRoleId;
+      const quarantineRole = hasQuarantineRole ? guild.roles.cache.get(config.accessControl.quarantineRoleId) : null;
+      const quarantinedMembers = await this.quarantineManager.listQuarantinedMembers(guild);
+
+      // Vérifier les canaux de quarantaine
+      const quarantineCategory = guild.channels.cache.find(
+        c => c.type === 4 && c.name.toLowerCase().includes('quarantaine')
+      );
+      const quarantineChannels = quarantineCategory ? quarantineCategory.children.cache.size : 0;
+
+      // Analyser les permissions sur quelques canaux
+      let channelAnalysis = {
+        total: 0,
+        configured: 0,
+        missing: 0,
+        errors: []
+      };
+
+      if (quarantineRole) {
+        const testChannels = guild.channels.cache
+          .filter(c => [0, 2].includes(c.type) && !c.name.toLowerCase().includes('quarantaine'))
+          .first(10);
+
+        channelAnalysis.total = testChannels.size;
+
+        for (const channel of testChannels.values()) {
+          try {
+            const overwrite = channel.permissionOverwrites.cache.get(quarantineRole.id);
+            if (overwrite && overwrite.deny.has(PermissionFlagsBits.ViewChannel)) {
+              channelAnalysis.configured++;
+            } else {
+              channelAnalysis.missing++;
+            }
+          } catch (error) {
+            channelAnalysis.errors.push(channel.name);
+          }
+        }
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle('🔍 Diagnostic du système de quarantaine')
+        .setDescription(`Analyse complète du système de quarantaine de **${guild.name}**`)
+        .setColor(hasQuarantineRole && quarantineRole ? 0x51cf66 : 0xff6b6b)
+        .setTimestamp();
+
+      // Configuration de base
+      embed.addFields({
+        name: '⚙️ Configuration de base',
+        value: `**Système activé :** ${config.enabled ? '✅ Oui' : '❌ Non'}\n` +
+               `**Rôle de quarantaine :** ${quarantineRole ? `✅ ${quarantineRole.name}` : '❌ Non configuré'}\n` +
+               `**Rôle vérifié :** ${config.accessControl?.verifiedRoleId ? '✅ Configuré' : '❌ Non configuré'}\n` +
+               `**Canal d'alertes :** ${config.autoAlerts?.alertChannelId ? '✅ Configuré' : '❌ Non configuré'}`,
+        inline: false
+      });
+
+      // État actuel
+      embed.addFields({
+        name: '📊 État actuel',
+        value: `**Membres en quarantaine :** ${quarantinedMembers.length}\n` +
+               `**Catégorie quarantaine :** ${quarantineCategory ? '✅ Présente' : '❌ Absente'}\n` +
+               `**Canaux de quarantaine :** ${quarantineChannels}\n` +
+               `**Canaux orphelins :** ${Math.max(0, quarantineChannels - quarantinedMembers.length * 2)}`,
+        inline: false
+      });
+
+      // Analyse des permissions
+      if (quarantineRole) {
+        const permissionStatus = channelAnalysis.configured === channelAnalysis.total ? '✅ Complètes' :
+                               channelAnalysis.configured > 0 ? '⚠️ Partielles' : '❌ Manquantes';
+
+        embed.addFields({
+          name: '🔒 Analyse des permissions (échantillon)',
+          value: `**Statut :** ${permissionStatus}\n` +
+                 `**Canaux testés :** ${channelAnalysis.total}\n` +
+                 `**Correctement configurés :** ${channelAnalysis.configured}\n` +
+                 `**Manquants :** ${channelAnalysis.missing}\n` +
+                 `**Erreurs :** ${channelAnalysis.errors.length}`,
+          inline: false
+        });
+      }
+
+      // Recommandations
+      let recommendations = [];
+      
+      if (!hasQuarantineRole || !quarantineRole) {
+        recommendations.push('• Configurez le rôle de quarantaine avec `/config-verif quarantaine`');
+      }
+      
+      if (channelAnalysis.missing > 0) {
+        recommendations.push('• Reconfigurez les permissions avec `/quarantaine configurer-permissions`');
+      }
+      
+      if (quarantineChannels > quarantinedMembers.length * 2) {
+        recommendations.push('• Nettoyez les canaux orphelins avec `/quarantaine nettoyer`');
+      }
+      
+      if (!config.autoAlerts?.alertChannelId) {
+        recommendations.push('• Configurez un canal d\'alertes avec `/config-verif admins`');
+      }
+
+      if (recommendations.length === 0) {
+        recommendations.push('✅ Le système semble correctement configuré');
+      }
+
+      embed.addFields({
+        name: '💡 Recommandations',
+        value: recommendations.join('\n'),
+        inline: false
+      });
+
+      // Actions de maintenance
+      embed.addFields({
+        name: '🛠️ Actions de maintenance disponibles',
+        value: `• \`/quarantaine configurer-permissions\` - Reconfigurer toutes les permissions\n` +
+               `• \`/quarantaine nettoyer\` - Nettoyer les canaux orphelins\n` +
+               `• \`/quarantaine verifier-isolation membre:@user\` - Vérifier un membre spécifique\n` +
+               `• \`/config-verif\` - Modifier la configuration de sécurité`,
+        inline: false
+      });
+
+      return interaction.editReply({ embeds: [embed] });
+
+    } catch (error) {
+      console.error('Erreur diagnostic quarantaine:', error);
+      return interaction.editReply({
+        content: `❌ **Erreur lors du diagnostic**\n\n` +
+                 `${error.message}`
       });
     }
   }
