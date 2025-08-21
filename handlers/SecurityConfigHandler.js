@@ -75,12 +75,12 @@ class SecurityConfigHandler {
         description += `• **Seuil multi-comptes :** ${config.autoVerification.multiAccountThreshold}%\n`;
       }
 
-      description += '\n💡 **Pour modifier :**\n';
-      description += '• Utilisez `/config-verif auto-verif`\n';
-      description += '• Configurez les actions avec `/config-verif actions-auto`';
+      description += '\n💡 Configuration rapide :\n';
+      description += '• Utilisez le bouton ci-dessous pour activer/désactiver\n';
+      description += '• Utilisez "Retour au menu" pour naviguer vers d’autres sections';
     } else {
-      description += '💡 **Pour activer :**\n';
-      description += 'Utilisez `/config-verif auto-verif activer:true`';
+      description += '💡 Pour activer :\n';
+      description += '• Cliquez sur le bouton "Activer" ci-dessous';
     }
 
     embed.setDescription(description);
@@ -142,8 +142,8 @@ class SecurityConfigHandler {
       description += '• `/quarantaine liste` - Voir les quarantaines actives';
     } else {
       description += '❌ **Système non configuré**\n\n';
-      description += '💡 **Pour configurer :**\n';
-      description += 'Utilisez `/config-verif quarantaine role-quarantaine:@RoleQuarantaine`';
+      description += '💡 Pour configurer :\n';
+      description += '• Cette configuration sera disponible via ce menu.';
     }
 
     embed.setDescription(description);
@@ -198,8 +198,8 @@ class SecurityConfigHandler {
       description += '❌ **Aucune action configurée**\n';
     }
 
-    description += '\n💡 **Pour configurer :**\n';
-    description += 'Utilisez `/config-verif actions-auto`\n\n';
+    description += '\n💡 Configuration :\n';
+    description += '• Bientôt configurable via ce menu\n\n';
 
     description += '⚠️ **Important :**\n';
     description += '• Les actions automatiques s\'exécutent sans intervention\n';
@@ -255,8 +255,8 @@ class SecurityConfigHandler {
       description += '• Actions par défaut si pas de réponse\n';
       description += '• Historique complet des décisions';
     } else {
-      description += '💡 **Pour configurer :**\n';
-      description += 'Utilisez `/config-verif notifications canal-alertes:#votre-canal`';
+      description += '💡 Configuration :\n';
+      description += '• Bientôt configurable via ce menu';
     }
 
     embed.setDescription(description);
@@ -304,8 +304,8 @@ class SecurityConfigHandler {
 
       description += 'ℹ️ **Les membres exemptés ne passent pas par la vérification automatique.**';
     } else {
-      description += '💡 **Pour ajouter des exemptions :**\n';
-      description += 'Utilisez `/config-verif exemptions`\n\n';
+      description += '💡 Pour ajouter des exemptions :\n';
+      description += '• Bientôt configurable via ce menu\n\n';
       description += 'ℹ️ **Tous les nouveaux membres seront vérifiés automatiquement.**';
     }
 
@@ -436,6 +436,9 @@ class SecurityConfigHandler {
       const action = interaction.customId.replace('config_verif_', '');
       
       switch (action) {
+        case 'toggle_auto':
+          await this.toggleAutoVerification(interaction);
+          break;
         case 'enable':
           await this.toggleSystemEnable(interaction);
           break;
@@ -444,6 +447,9 @@ class SecurityConfigHandler {
           break;
         case 'help':
           await this.showHelpGuide(interaction);
+          break;
+        case 'show_exemptions':
+          await this.showExemptionsList(interaction);
           break;
         case 'reset_confirm':
           await this.confirmSystemReset(interaction);
@@ -614,6 +620,126 @@ class SecurityConfigHandler {
       return interaction.reply({ 
         content: '❌ Erreur lors du changement d\'état du système.', 
         ephemeral: true 
+      });
+    }
+  }
+
+  /**
+   * Activer/Désactiver la vérification automatique et mettre à jour la vue
+   */
+  async toggleAutoVerification(interaction) {
+    try {
+      const guildId = interaction.guild.id;
+      const current = await this.moderationManager.getSecurityConfig(guildId);
+      const currentEnabled = !!current.autoVerification?.enabled;
+
+      const updated = await this.moderationManager.updateSecurityConfig(guildId, {
+        autoVerification: { enabled: !currentEnabled }
+      });
+
+      // Recréer l'embed de la section Auto Verification
+      const embed = new EmbedBuilder()
+        .setTitle('🔍 Configuration de la vérification automatique')
+        .setColor(updated.autoVerification?.enabled ? 0x51cf66 : 0x6c757d)
+        .setTimestamp();
+
+      let description = `**État :** ${updated.autoVerification?.enabled ? '✅ Activée' : '❌ Désactivée'}\n\n`;
+      if (updated.autoVerification?.enabled) {
+        description += '⚙️ **Paramètres actuels :**\n';
+        if (updated.autoVerification.minimumAccountAge) {
+          description += `• **Âge minimum :** ${updated.autoVerification.minimumAccountAge} jour(s)\n`;
+        }
+        if (updated.autoVerification.maxRiskScore) {
+          description += `• **Score de risque max :** ${updated.autoVerification.maxRiskScore}/100\n`;
+        }
+        if (updated.autoVerification.multiAccountThreshold) {
+          description += `• **Seuil multi-comptes :** ${updated.autoVerification.multiAccountThreshold}%\n`;
+        }
+        description += '\n💡 Configuration rapide :\n';
+        description += '• Utilisez le bouton ci-dessous pour activer/désactiver\n';
+        description += '• Utilisez "Retour au menu" pour naviguer vers d’autres sections';
+      } else {
+        description += '💡 Pour activer :\n';
+        description += '• Cliquez sur le bouton "Activer" ci-dessous';
+      }
+      embed.setDescription(description);
+
+      const buttons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_toggle_auto')
+            .setLabel(updated.autoVerification?.enabled ? 'Désactiver' : 'Activer')
+            .setStyle(updated.autoVerification?.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+            .setEmoji(updated.autoVerification?.enabled ? '❌' : '✅'),
+          new ButtonBuilder()
+            .setCustomId('config_verif_back_menu')
+            .setLabel('Retour au menu')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🔙')
+        );
+
+      // Mettre à jour le message en place
+      return interaction.update({ embeds: [embed], components: [buttons] });
+    } catch (error) {
+      console.error('Erreur toggle auto verification:', error);
+      return interaction.reply({
+        content: '❌ Erreur lors du changement d\'état de la vérification automatique.',
+        ephemeral: true
+      });
+    }
+  }
+
+  /**
+   * Afficher la liste détaillée des exemptions (utilisateurs/rôles)
+   */
+  async showExemptionsList(interaction) {
+    try {
+      const config = await this.moderationManager.getSecurityConfig(interaction.guild.id);
+      const userIds = config.whitelist?.userIds || [];
+      const roleIds = config.whitelist?.roleIds || [];
+
+      const embed = new EmbedBuilder()
+        .setTitle('📋 Liste des exemptions')
+        .setColor(0x51cf66)
+        .setTimestamp();
+
+      if (userIds.length === 0 && roleIds.length === 0) {
+        embed.setDescription('Aucune exemption configurée.');
+      } else {
+        if (userIds.length > 0) {
+          const usersText = userIds
+            .slice(0, 20)
+            .map(id => `<@${id}>`)
+            .join(', ');
+          embed.addFields({ name: `👥 Utilisateurs (${userIds.length})`, value: usersText || '—', inline: false });
+        }
+        if (roleIds.length > 0) {
+          const rolesText = roleIds
+            .slice(0, 20)
+            .map(id => `<@&${id}>`)
+            .join(', ');
+          embed.addFields({ name: `🎭 Rôles (${roleIds.length})`, value: rolesText || '—', inline: false });
+        }
+        if (userIds.length + roleIds.length > 20) {
+          embed.addFields({ name: 'ℹ️ Remarque', value: 'Liste tronquée à 20 éléments pour l\'aperçu.', inline: false });
+        }
+      }
+
+      const buttons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_back_menu')
+            .setLabel('Retour au menu')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🔙')
+        );
+
+      return interaction.update({ embeds: [embed], components: [buttons] });
+    } catch (error) {
+      console.error('Erreur showExemptionsList:', error);
+      return interaction.reply({
+        content: '❌ Erreur lors de l\'affichage des exemptions.',
+        ephemeral: true
       });
     }
   }
