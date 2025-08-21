@@ -242,6 +242,86 @@ async function handleKarmaWeeklyDaySelection(interaction, dayValue) {
     }
 }
 
+// Vérifie et exécute le reset hebdomadaire du karma selon la configuration
+async function checkAndRunKarmaWeeklyReset() {
+    try {
+        const dataManager = require('./utils/simpleDataManager');
+        const karmaConfig = dataManager.getData('karma_config.json');
+        const weekly = karmaConfig.weeklyReset || { enabled: false };
+
+        if (!weekly.enabled) return false;
+
+        const now = new Date();
+        const lastResetDate = weekly.lastReset ? new Date(weekly.lastReset) : null;
+        const currentDay = now.getDay(); // 0 = Dimanche, 1 = Lundi, ...
+        const resetDay = typeof weekly.dayOfWeek === 'number' ? weekly.dayOfWeek : parseInt(String(weekly.dayOfWeek || 1), 10) || 1;
+
+        const alreadyResetToday = lastResetDate && lastResetDate.toDateString() === now.toDateString();
+        if (currentDay === resetDay && !alreadyResetToday) {
+            await performAutomaticKarmaWeeklyReset(dataManager, karmaConfig);
+            return true;
+        }
+        return false;
+    } catch (e) {
+        console.error('❌ Erreur check reset hebdomadaire karma:', e);
+        return false;
+    }
+}
+
+// Effectue la réinitialisation hebdomadaire du karma dans economy.json
+async function performAutomaticKarmaWeeklyReset(dataManager, karmaConfig) {
+    console.log('🔄 Réinitialisation hebdomadaire du karma (automatique)...');
+    const economyData = dataManager.getData('economy.json');
+    let resetCount = 0;
+    let rewardCount = 0;
+
+    // Déterminer les récompenses à partir de la configuration
+    const rewardsCfg = (karmaConfig && karmaConfig.rewards) || {
+        saint: { money: 500 },
+        good: { money: 200 },
+        neutral: { money: 0 },
+        bad: { money: -100 },
+        evil: { money: -300 }
+    };
+
+    const getLevelFromNet = (net) => {
+        if (net >= 10) return 'saint';
+        if (net >= 1) return 'good';
+        if (net === 0) return 'neutral';
+        if (net >= -9) return 'bad';
+        return 'evil';
+    };
+
+    for (const [key, userData] of Object.entries(economyData)) {
+        if (!key.includes('_')) continue; // ignorer les clés de configuration
+
+        if (userData && (userData.goodKarma !== undefined || userData.badKarma !== undefined)) {
+            const good = Number(userData.goodKarma || 0);
+            const bad = Number(userData.badKarma || 0);
+            const hadKarma = good !== 0 || bad !== 0;
+            // Distribuer éventuelles récompenses/sanctions avant reset
+            const net = good + bad; // bad est négatif
+            const level = getLevelFromNet(net);
+            const levelReward = rewardsCfg[level]?.money || 0;
+            if (levelReward !== 0) {
+                userData.balance = Number(userData.balance || 0) + Number(levelReward);
+                rewardCount++;
+            }
+            if (hadKarma) resetCount++;
+            userData.goodKarma = 0;
+            userData.badKarma = 0;
+            // Remettre les récompenses appliquées pour permettre de re-gagner après reset
+            if (Array.isArray(userData.appliedRewards)) userData.appliedRewards = [];
+            economyData[key] = userData;
+        }
+    }
+
+    dataManager.setData('economy.json', economyData);
+    karmaConfig.weeklyReset = { ...(karmaConfig.weeklyReset || {}), lastReset: Date.now() };
+    dataManager.setData('karma_config.json', karmaConfig);
+    console.log(`✅ Karma reset hebdomadaire effectué pour ${resetCount} utilisateur(s) • Récompenses distribuées: ${rewardCount}`);
+}
+
 class RenderSolutionBot {
     constructor() {
         this.initializeWebServer();
@@ -955,6 +1035,23 @@ class RenderSolutionBot {
             }
 
             await this.deployCommands();
+
+            // Planification du reset hebdomadaire du karma (vérification horaire)
+            try {
+                // Vérification immédiate au démarrage
+                await checkAndRunKarmaWeeklyReset();
+                // Puis toutes les heures
+                setInterval(async () => {
+                    try {
+                        await checkAndRunKarmaWeeklyReset();
+                    } catch (err) {
+                        console.error('❌ Erreur checkAndRunKarmaWeeklyReset:', err);
+                    }
+                }, 60 * 60 * 1000);
+                console.log('🕒 Planification du reset hebdomadaire du karma activée (check hourly)');
+            } catch (schedulerError) {
+                console.error('❌ Erreur initialisation scheduler karma:', schedulerError);
+            }
         });
 
         this.client.on('interactionCreate', async interaction => {
