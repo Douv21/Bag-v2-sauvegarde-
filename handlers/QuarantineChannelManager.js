@@ -92,6 +92,13 @@ class QuarantineChannelManager {
       // Ajouter le rôle de quarantaine
       await member.roles.add(quarantineRole, reason);
 
+      // Appliquer des refus au niveau du membre pour garantir l'isolation même si des autorisations au niveau membre existent ailleurs
+      try {
+        await this.applyMemberLevelIsolation(member, category, [textChannel.id, voiceChannel.id]);
+      } catch (isolationErr) {
+        console.warn('⚠️ Échec application des refus au niveau membre:', isolationErr?.message || isolationErr);
+      }
+
       // Enregistrer les canaux
       this.quarantineChannels.set(member.user.id, {
         textChannel,
@@ -137,6 +144,13 @@ class QuarantineChannelManager {
         if (verifiedRole) {
           await member.roles.add(verifiedRole, reason);
         }
+      }
+
+      // Restaurer les accès aux canaux (suppression des overrides spécifiques au membre)
+      try {
+        await this.restoreMemberChannelAccess(member);
+      } catch (restErr) {
+        console.warn('⚠️ Échec restauration des accès canaux:', restErr?.message || restErr);
       }
 
       // Supprimer les canaux de quarantaine
@@ -398,6 +412,111 @@ class QuarantineChannelManager {
   }
 
   /**
+   * Appliquer des refus explicites au niveau du membre sur tous les canaux hors quarantaine
+   * pour garantir l'isolation même si des autorisations spécifiques existaient.
+   * @param {GuildMember} member
+   * @param {CategoryChannel} quarantineCategory
+   * @param {Array<string>} excludeChannelIds - Liste d'IDs de canaux à exclure (canaux de quarantaine)
+   */
+  async applyMemberLevelIsolation(member, quarantineCategory, excludeChannelIds = []) {
+    try {
+      const guild = member.guild;
+      const channels = guild.channels.cache.filter(channel => {
+        if (excludeChannelIds.includes(channel.id)) return false;
+        if (quarantineCategory && channel.parentId === quarantineCategory.id) return false;
+        if (channel.name?.toLowerCase?.().includes('quarantaine')) return false;
+        return [
+          ChannelType.GuildText,
+          ChannelType.GuildVoice,
+          ChannelType.GuildCategory,
+          ChannelType.GuildAnnouncement,
+          ChannelType.GuildStageVoice,
+          ChannelType.GuildForum,
+          ChannelType.PublicThread,
+          ChannelType.PrivateThread,
+          ChannelType.AnnouncementThread
+        ].includes(channel.type);
+      });
+
+      const channelArray = Array.from(channels.values());
+      const batchSize = 6;
+      for (let i = 0; i < channelArray.length; i += batchSize) {
+        const batch = channelArray.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (channel) => {
+          try {
+            await channel.permissionOverwrites.edit(member.id, {
+              ViewChannel: false,
+              SendMessages: false,
+              ReadMessageHistory: false,
+              Connect: false,
+              Speak: false,
+              Stream: false,
+              UseVAD: false,
+              SendMessagesInThreads: false,
+              CreatePrivateThreads: false,
+              CreatePublicThreads: false,
+              UseEmbeddedActivities: false,
+              UseApplicationCommands: false,
+              SendTTSMessages: false,
+              AddReactions: false,
+              EmbedLinks: false,
+              AttachFiles: false,
+              UseExternalEmojis: false,
+              UseExternalStickers: false,
+              MentionEveryone: false,
+              ManageMessages: false,
+              ManageThreads: false,
+              SendVoiceMessages: false,
+              RequestToSpeak: false
+            }, { reason: `Isolation de quarantaine: ${member.user.tag}` });
+          } catch (error) {
+            console.warn(`⚠️ Impossible d'appliquer isolation membre sur ${channel.name}:`, error?.message || error);
+          }
+        }));
+        if (i + batchSize < channelArray.length) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+
+      console.log(`🔐 Refus explicites appliqués pour ${member.user.tag} sur ${channelArray.length} canaux`);
+    } catch (error) {
+      console.error('Erreur applyMemberLevelIsolation:', error);
+    }
+  }
+
+  /**
+   * Supprimer les overrides spécifiques au membre sur tous les canaux
+   * @param {GuildMember} member
+   */
+  async restoreMemberChannelAccess(member) {
+    try {
+      const guild = member.guild;
+      const channelArray = Array.from(guild.channels.cache.values());
+      const batchSize = 10;
+      for (let i = 0; i < channelArray.length; i += batchSize) {
+        const batch = channelArray.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (channel) => {
+          try {
+            const memberOverwrite = channel.permissionOverwrites?.cache?.get?.(member.id);
+            if (memberOverwrite) {
+              await memberOverwrite.delete(`Libération de quarantaine: ${member.user.tag}`);
+            }
+          } catch (error) {
+            console.warn(`⚠️ Impossible de supprimer override membre sur ${channel.name}:`, error?.message || error);
+          }
+        }));
+        if (i + batchSize < channelArray.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+
+      console.log(`🔓 Overrides spécifiques supprimés pour ${member.user.tag}`);
+    } catch (error) {
+      console.error('Erreur restoreMemberChannelAccess:', error);
+    }
+  }
+
+  /**
    * Obtenir les permissions pour les modérateurs
    * @param {Guild} guild - Le serveur
    * @param {Object} config - Configuration de sécurité
@@ -610,7 +729,7 @@ class QuarantineChannelManager {
         return;
       }
 
-      // Appliquer les restrictions sur le nouveau canal
+      // Appliquer les restrictions sur le nouveau canal (rôle)
       const restrictivePermissions = {
         ViewChannel: false,
         SendMessages: false,
@@ -640,6 +759,25 @@ class QuarantineChannelManager {
       await channel.permissionOverwrites.edit(quarantineRole, restrictivePermissions, {
         reason: 'Application automatique des restrictions de quarantaine sur nouveau canal'
       });
+
+      // Appliquer aussi des refus au niveau des membres actuellement en quarantaine
+      try {
+        const quarantinedMembers = await this.listQuarantinedMembers(guild);
+        if (Array.isArray(quarantinedMembers) && quarantinedMembers.length > 0) {
+          for (const info of quarantinedMembers) {
+            const qMember = info.member;
+            try {
+              await channel.permissionOverwrites.edit(qMember.id, restrictivePermissions, {
+                reason: 'Isolation de quarantaine sur nouveau canal (niveau membre)'
+              });
+            } catch (mErr) {
+              console.warn(`⚠️ Impossible de définir override membre pour ${qMember.user.tag} sur ${channel.name}:`, mErr?.message || mErr);
+            }
+          }
+        }
+      } catch (membersErr) {
+        console.warn('⚠️ Échec application des refus niveau membre sur nouveau canal:', membersErr?.message || membersErr);
+      }
 
       console.log(`🔒 Restrictions de quarantaine appliquées sur le nouveau canal: ${channel.name}`);
 
@@ -674,8 +812,11 @@ class QuarantineChannelManager {
 
       console.log(`🔍 Vérification de l'isolation de quarantaine pour ${member.user.tag}`);
 
-      // Reconfigurer les permissions sur tous les canaux
+      // Reconfigurer les permissions sur tous les canaux (rôle)
       const stats = await this.configureQuarantineRolePermissions(member.guild, quarantineRole);
+
+      // Appliquer aussi des refus au niveau membre pour contrer d'éventuels allow spécifiques
+      await this.applyMemberLevelIsolation(member, null, []);
 
       // Vérifier l'accès actuel du membre
       const accessibleChannels = [];

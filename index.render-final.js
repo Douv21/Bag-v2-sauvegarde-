@@ -1290,7 +1290,19 @@ class RenderSolutionBot {
         });
 
 		// Logs channels create/delete/update
-		this.client.on('channelCreate', async (channel) => { try { if (this.logManager) await this.logManager.logChannelCreate(channel); } catch {} });
+		this.client.on('channelCreate', async (channel) => {
+			try {
+				if (this.logManager) await this.logManager.logChannelCreate(channel);
+			} catch {}
+			// Appliquer automatiquement les restrictions de quarantaine sur les nouveaux canaux
+			try {
+				const QuarantineChannelManager = require('./handlers/QuarantineChannelManager');
+				if (!this.__quarantineManager) {
+					this.__quarantineManager = new QuarantineChannelManager(this.moderationManager);
+				}
+				await this.__quarantineManager.applyQuarantineRestrictionsToNewChannel(channel, channel.guild);
+			} catch {}
+		});
 		this.client.on('channelDelete', async (channel) => { try { if (this.logManager) await this.logManager.logChannelDelete(channel); } catch {} });
 		this.client.on('channelUpdate', async (oldChannel, newChannel) => { try { if (this.logManager) await this.logManager.logChannelUpdate(oldChannel, newChannel); } catch {} });
 
