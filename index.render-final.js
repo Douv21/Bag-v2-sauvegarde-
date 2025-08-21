@@ -1390,6 +1390,8 @@ class RenderSolutionBot {
         try {
             const MainRouterHandler = require('./handlers/MainRouterHandler');
             const router = new MainRouterHandler(dataManager);
+            // Associer le client pour initialiser SecurityConfigHandler (nécessaire pour /config-verif-menu)
+            try { router.setClient(this.client); } catch {}
 
             if (interaction.isChatInputCommand()) {
                 const command = this.commands.get(interaction.commandName);
@@ -2438,6 +2440,8 @@ class RenderSolutionBot {
                     // Autres modals...
                     const MainRouterHandler = require('./handlers/MainRouterHandler');
                     const router = new MainRouterHandler(dataManager);
+                    // Associer le client pour initialiser SecurityConfigHandler (nécessaire pour /config-verif-menu)
+                    try { router.setClient(this.client); } catch {}
                     
                     const handled = await router.handleInteraction(interaction);
                     
