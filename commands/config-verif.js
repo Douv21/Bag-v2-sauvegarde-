@@ -8,6 +8,10 @@ module.exports = {
       subcommand
         .setName('menu')
         .setDescription('Ouvrir le menu de configuration principal'))
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('verif-menu')
+        .setDescription('Ouvrir le menu de configuration de vérification'))
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
 
   cooldown: 5,
@@ -28,6 +32,9 @@ module.exports = {
     try {
       switch (subcommand) {
         case 'menu':
+          await this.handleMainMenu(interaction, mod, guildId);
+          break;
+        case 'verif-menu':
           await this.handleMainMenu(interaction, mod, guildId);
           break;
         default:
