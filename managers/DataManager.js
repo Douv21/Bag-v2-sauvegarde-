@@ -68,7 +68,9 @@ class DataManager {
             // Historique cross-serveur
             'global_moderation_history': 'global_moderation_history.json',
             // Configuration sécurité
-            'security_config': 'security_config.json'
+            'security_config': 'security_config.json',
+            // Enregistrements de quarantaine
+            'quarantine_records': 'quarantine_records.json'
         };
 
         // Initialiser le LevelBackupManager
@@ -296,7 +298,10 @@ class DataManager {
                 guilds: {}
             },
             // Snapshots de rôles pour logs
-            'member_roles': {}
+            'member_roles': {},
+            // Système de sécurité / quarantaine
+            'security_config': {},
+            'quarantine_records': {}
         };
 
         return defaults[type] || {};

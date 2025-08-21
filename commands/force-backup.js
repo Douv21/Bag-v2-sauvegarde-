@@ -67,7 +67,7 @@ module.exports = {
                 } catch {}
                 embed.addFields({
                     name: '📁 Fichiers Sauvegardés',
-                    value: '• `level_config.json` - Config niveaux (incl. Booster)\n• `level_users.json` - Données niveaux\n• `economy.json` - Économie\n• `confessions.json` - Confessions\n• `counting.json` - Comptage\n• `autothread.json` - Auto-thread\n• `shop.json` - Boutique\n• `karma_config.json` - Karma\n• `message_rewards.json` - Récompenses messages\n• `member_locations.json` - Localisation',
+                    value: '• `level_config.json` - Config niveaux (incl. Booster)\n• `level_users.json` - Données niveaux\n• `economy.json` - Économie\n• `confessions.json` - Confessions\n• `counting.json` - Comptage\n• `autothread.json` - Auto-thread\n• `shop.json` - Boutique\n• `karma_config.json` - Karma\n• `message_rewards.json` - Récompenses messages\n• `member_locations.json` - Localisation\n• `security_config.json` - Sécurité (rôle quarantaine, seuils)\n• `quarantine_records.json` - Quarantaines actives/historiques',
                     inline: false
                 });
             } else {
