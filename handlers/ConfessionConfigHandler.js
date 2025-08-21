@@ -3,10 +3,12 @@
  */
 
 const { EmbedBuilder, ChannelSelectMenuBuilder, ActionRowBuilder, StringSelectMenuBuilder, RoleSelectMenuBuilder } = require('discord.js');
+const ConfessionHandler = require('./ConfessionHandler');
 
 class ConfessionConfigHandler {
     constructor(dataManager) {
         this.dataManager = dataManager;
+        this.confessionHandler = new ConfessionHandler(dataManager);
     }
 
     async showMainConfigMenu(interaction) {
@@ -136,39 +138,13 @@ class ConfessionConfigHandler {
     }
 
     async showAdminLogsConfig(interaction) {
-        const embed = new EmbedBuilder()
-            .setColor('#3498db')
-            .setTitle('📊 Configuration Logs Admin')
-            .setDescription('Configuration des logs administrateur')
-            .addFields([{ name: '🚧 En développement', value: 'Cette section sera bientôt disponible', inline: false }]);
-
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('confession_logs_back')
-            .setPlaceholder('Actions...')
-            .addOptions([
-                { label: '🔄 Retour Menu Principal', value: 'back_main', description: 'Retour au menu principal' }
-            ]);
-
-        const row = new ActionRowBuilder().addComponents(selectMenu);
-        await interaction.update({ embeds: [embed], components: [row] });
+        // Déléguer au handler complet des confessions
+        return await this.confessionHandler.handleLogsConfig(interaction);
     }
 
     async showAutoThreadConfig(interaction) {
-        const embed = new EmbedBuilder()
-            .setColor('#9b59b6')
-            .setTitle('🧵 Auto-Thread Confessions')
-            .setDescription('Configuration threads automatiques')
-            .addFields([{ name: '🚧 En développement', value: 'Cette section sera bientôt disponible', inline: false }]);
-
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('confession_autothread_back')
-            .setPlaceholder('Actions...')
-            .addOptions([
-                { label: '🔄 Retour Menu Principal', value: 'back_main', description: 'Retour au menu principal' }
-            ]);
-
-        const row = new ActionRowBuilder().addComponents(selectMenu);
-        await interaction.update({ embeds: [embed], components: [row] });
+        // Déléguer au handler complet des confessions
+        return await this.confessionHandler.handleAutoThreadConfig(interaction);
     }
 
     // Méthodes d'alias pour compatibility
