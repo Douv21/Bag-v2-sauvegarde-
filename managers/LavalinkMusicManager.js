@@ -30,6 +30,13 @@ let shoukaku = null;
 let nodes = [];
 let clientRef = null;
 
+// HQ audio options
+const HQ_ENABLE = process.env.MUSIC_HQ_ENABLE === 'false' || process.env.LAVALINK_HQ_FILTERS === 'false' ? false : true;
+const DEFAULT_VOLUME = Math.max(0, Math.min(100, parseInt(process.env.MUSIC_DEFAULT_VOLUME || process.env.LAVALINK_DEFAULT_VOLUME || '85', 10) || 85));
+const USE_YTM = process.env.MUSIC_USE_YTM === 'true' || process.env.LAVALINK_USE_YTM === 'true';
+let AudioFilters;
+try { AudioFilters = require('./AudioFilters'); } catch (_) { AudioFilters = null; }
+
 function getGuildColor(guild) {
 	try {
 		const me = guild?.members?.me;
@@ -285,6 +292,19 @@ async function ensurePlayer(voiceChannel) {
 	const player = await shoukaku.joinVoiceChannel({ guildId, channelId: voiceChannel.id, shardId: voiceChannel.guild.shardId });
 	state.player = player;
 	state.voiceChannelId = voiceChannel.id;
+
+	// Apply defaults for volume and HQ filters
+	try {
+		state.volume = DEFAULT_VOLUME;
+		await state.player.setGlobalVolume(state.volume);
+	} catch {}
+	try {
+		if (HQ_ENABLE && AudioFilters) {
+			const filters = AudioFilters.buildHQFilters?.('balanced');
+			if (filters) await state.player.setFilters(filters);
+		}
+	} catch {}
+
 	state.player.on('end', async () => {
 		state.current = null;
 		if (state.queue.length > 0) await playNext(guildId);
@@ -300,7 +320,7 @@ async function resolveTrack(query) {
 	const node = shoukaku.getIdealNode();
 	if (!node) throw new Error('LAVALINK_NOT_READY');
 	const isUrl = /^https?:\/\//i.test(query);
-	const q = isUrl ? query : `ytsearch:${query}`;
+	const q = isUrl ? query : (USE_YTM ? `ytmsearch:${query}` : `ytsearch:${query}`);
 	const res = await node.rest.resolve(q);
 	const type = String(res?.loadType || res?.type || '').toLowerCase();
 	if (!res || type === 'empty' || type === 'no_matches') throw new Error('NO_RESULT');
@@ -322,6 +342,13 @@ async function playNext(guildId) {
 	} else {
 		await state.player.playTrack({ track: { identifier: next.url || next.title } }, false);
 	}
+	// Re-apply HQ filters after starting a new track to ensure persistence
+	try {
+		if (HQ_ENABLE && AudioFilters) {
+			const filters = AudioFilters.buildHQFilters?.('balanced');
+			if (filters) await state.player.setFilters(filters);
+		}
+	} catch {}
 	try {
 		if (state.textChannel) {
 			if (state.playerMessageId) {
