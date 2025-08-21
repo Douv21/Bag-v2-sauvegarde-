@@ -445,6 +445,21 @@ class SecurityConfigHandler {
         case 'show_exemptions':
           await this.showDetailedExemptions(interaction);
           break;
+        case 'enable':
+          await this.toggleSystemEnabled(interaction);
+          break;
+        case 'reset':
+          await this.showResetConfirmation(interaction);
+          break;
+        case 'help':
+          await this.showHelpGuide(interaction);
+          break;
+        case 'reset_confirm':
+          await this.confirmReset(interaction);
+          break;
+        case 'reset_cancel':
+          await this.cancelReset(interaction);
+          break;
         default:
           return interaction.reply({ 
             content: '❌ Action non reconnue.', 
@@ -549,6 +564,277 @@ class SecurityConfigHandler {
       embeds: [embed], 
       components: [row, buttons]
     });
+  }
+
+  /**
+   * Activer/désactiver le système de sécurité
+   */
+  async toggleSystemEnabled(interaction) {
+    try {
+      const guildId = interaction.guild.id;
+      const config = await this.moderationManager.getSecurityConfig(guildId);
+      const newState = !config.enabled;
+
+      await this.moderationManager.updateSecurityConfig(guildId, { enabled: newState });
+
+      const embed = new EmbedBuilder()
+        .setTitle('⚙️ Système de sécurité')
+        .setDescription(`Système ${newState ? '**activé**' : '**désactivé**'} avec succès.`)
+        .setColor(newState ? 0x51cf66 : 0x6c757d)
+        .setTimestamp();
+
+      return interaction.reply({ 
+        embeds: [embed], 
+        ephemeral: true 
+      });
+    } catch (error) {
+      console.error('Erreur toggle système:', error);
+      return interaction.reply({ 
+        content: '❌ Erreur lors de la modification du système.', 
+        ephemeral: true 
+      });
+    }
+  }
+
+  /**
+   * Afficher la confirmation de réinitialisation
+   */
+  async showResetConfirmation(interaction) {
+    const embed = new EmbedBuilder()
+      .setTitle('⚠️ Confirmation de réinitialisation')
+      .setDescription('**Attention !** Cette action va supprimer toute la configuration de vérification.\n\nÊtes-vous sûr de vouloir continuer ?')
+      .setColor(0xff6b6b)
+      .setTimestamp();
+
+    const buttons = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('config_verif_reset_confirm')
+          .setLabel('Confirmer la réinitialisation')
+          .setStyle(ButtonStyle.Danger)
+          .setEmoji('🗑️'),
+        new ButtonBuilder()
+          .setCustomId('config_verif_reset_cancel')
+          .setLabel('Annuler')
+          .setStyle(ButtonStyle.Secondary)
+          .setEmoji('❌')
+      );
+
+    return interaction.reply({ 
+      embeds: [embed], 
+      components: [buttons], 
+      ephemeral: true 
+    });
+  }
+
+  /**
+   * Confirmer la réinitialisation
+   */
+  async confirmReset(interaction) {
+    try {
+      const guildId = interaction.guild.id;
+      
+      // Réinitialiser la configuration
+      await this.moderationManager.resetSecurityConfig(guildId);
+
+      const embed = new EmbedBuilder()
+        .setTitle('✅ Réinitialisation terminée')
+        .setDescription('La configuration de sécurité a été réinitialisée avec succès.')
+        .setColor(0x51cf66)
+        .setTimestamp();
+
+      return interaction.update({ 
+        embeds: [embed], 
+        components: []
+      });
+    } catch (error) {
+      console.error('Erreur reset config:', error);
+      return interaction.reply({ 
+        content: '❌ Erreur lors de la réinitialisation.', 
+        ephemeral: true 
+      });
+    }
+  }
+
+  /**
+   * Annuler la réinitialisation
+   */
+  async cancelReset(interaction) {
+    const embed = new EmbedBuilder()
+      .setTitle('❌ Réinitialisation annulée')
+      .setDescription('La configuration de sécurité n\'a pas été modifiée.')
+      .setColor(0x6c757d)
+      .setTimestamp();
+
+    return interaction.update({ 
+      embeds: [embed], 
+      components: []
+    });
+  }
+
+  /**
+   * Afficher le guide d'aide
+   */
+  async showHelpGuide(interaction) {
+    const embed = new EmbedBuilder()
+      .setTitle('❓ Guide d\'aide - Système de Vérification')
+      .setColor(0x3498db)
+      .setTimestamp();
+
+    embed.addFields(
+      {
+        name: '🔍 Vérification automatique',
+        value: 'Analyse automatique des nouveaux membres basée sur l\'âge du compte, score de risque, et détection multi-comptes.',
+        inline: false
+      },
+      {
+        name: '🔒 Système de quarantaine',
+        value: 'Isolation des membres suspects dans des canaux privés avec gestion automatique des permissions.',
+        inline: false
+      },
+      {
+        name: '⚡ Actions automatiques',
+        value: 'Définit ce qui arrive aux membres suspects : alerte, quarantaine, kick, ban, ou approbation admin.',
+        inline: false
+      },
+      {
+        name: '📢 Notifications',
+        value: 'Alertes automatiques aux modérateurs avec boutons d\'action pour décisions rapides.',
+        inline: false
+      },
+      {
+        name: '📝 Exemptions',
+        value: 'Liste des utilisateurs et rôles qui ne passent pas par la vérification automatique.',
+        inline: false
+      }
+    );
+
+    embed.setFooter({ text: 'Utilisez les menus pour configurer chaque section' });
+
+    const backButton = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('config_verif_back_menu')
+          .setLabel('Retour au menu')
+          .setStyle(ButtonStyle.Secondary)
+          .setEmoji('🔙')
+      );
+
+    return interaction.reply({ 
+      embeds: [embed], 
+      components: [backButton], 
+      ephemeral: true 
+    });
+  }
+
+  /**
+   * Basculer la vérification automatique
+   */
+  async toggleAutoVerification(interaction) {
+    try {
+      const guildId = interaction.guild.id;
+      const config = await this.moderationManager.getSecurityConfig(guildId);
+      const newState = !config.autoVerification?.enabled;
+
+      await this.moderationManager.updateSecurityConfig(guildId, {
+        autoVerification: { enabled: newState }
+      });
+
+      const embed = new EmbedBuilder()
+        .setTitle('🔍 Vérification automatique')
+        .setDescription(`Vérification automatique ${newState ? '**activée**' : '**désactivée**'} avec succès.`)
+        .setColor(newState ? 0x51cf66 : 0x6c757d)
+        .setTimestamp();
+
+      return interaction.reply({ 
+        embeds: [embed], 
+        ephemeral: true 
+      });
+    } catch (error) {
+      console.error('Erreur toggle auto-verif:', error);
+      return interaction.reply({ 
+        content: '❌ Erreur lors de la modification.', 
+        ephemeral: true 
+      });
+    }
+  }
+
+  /**
+   * Afficher les exemptions détaillées
+   */
+  async showDetailedExemptions(interaction) {
+    try {
+      const guildId = interaction.guild.id;
+      const config = await this.moderationManager.getSecurityConfig(guildId);
+
+      const embed = new EmbedBuilder()
+        .setTitle('📝 Liste des exemptions de vérification')
+        .setColor(0x51cf66)
+        .setTimestamp();
+
+      // Utilisateurs exemptés
+      if (config.whitelist?.userIds?.length > 0) {
+        let userList = '';
+        for (const userId of config.whitelist.userIds.slice(0, 10)) {
+          try {
+            const user = await interaction.client.users.fetch(userId);
+            userList += `• ${user.tag}\n`;
+          } catch {
+            userList += `• Utilisateur inconnu (${userId})\n`;
+          }
+        }
+        
+        embed.addFields({
+          name: `👥 Utilisateurs exemptés (${config.whitelist.userIds.length})`,
+          value: userList || 'Aucun',
+          inline: false
+        });
+      }
+
+      // Rôles exemptés
+      if (config.whitelist?.roleIds?.length > 0) {
+        let roleList = '';
+        for (const roleId of config.whitelist.roleIds.slice(0, 10)) {
+          const role = interaction.guild.roles.cache.get(roleId);
+          roleList += `• ${role ? role.name : 'Rôle inconnu'}\n`;
+        }
+        
+        embed.addFields({
+          name: `🎭 Rôles exemptés (${config.whitelist.roleIds.length})`,
+          value: roleList || 'Aucun',
+          inline: false
+        });
+      }
+
+      if (!config.whitelist?.userIds?.length && !config.whitelist?.roleIds?.length) {
+        embed.addFields({
+          name: 'ℹ️ Aucune exemption',
+          value: 'Tous les nouveaux membres seront vérifiés automatiquement.',
+          inline: false
+        });
+      }
+
+      const backButton = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_back_menu')
+            .setLabel('Retour au menu')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🔙')
+        );
+
+      return interaction.reply({ 
+        embeds: [embed], 
+        components: [backButton], 
+        ephemeral: true 
+      });
+    } catch (error) {
+      console.error('Erreur affichage exemptions:', error);
+      return interaction.reply({ 
+        content: '❌ Erreur lors de l\'affichage des exemptions.', 
+        ephemeral: true 
+      });
+    }
   }
 
   /**
