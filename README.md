@@ -67,6 +67,26 @@ LAVALINK_NODES=[
 ]
 ```
 
+- Options avancées de stabilité:
+```env
+# Ajouter les nœuds publics en plus de vos nœuds (SSL et non-SSL)
+LAVALINK_APPEND_PUBLIC=true
+# Mélanger l’ordre des nœuds au démarrage (répartition des connexions)
+LAVALINK_SHUFFLE_NODES=true
+# Désactiver totalement les nœuds publics (si vous avez vos propres nœuds)
+LAVALINK_DISABLE_PUBLIC=false
+```
+
+Exemple (nœuds multiples + ajout des publics):
+```env
+LAVALINK_NODES=[
+  {"name":"self-ssl","url":"lavalink.my-domain.com:443","auth":"my-secret","secure":true},
+  {"name":"self-nonssl","url":"10.0.0.12:2333","auth":"my-secret","secure":false}
+]
+LAVALINK_APPEND_PUBLIC=true
+LAVALINK_SHUFFLE_NODES=true
+```
+
 Le routeur `managers/MusicManager` utilise uniquement Lavalink. Commandes: `/play`, `/pause`, `/skip`, `/stop`, `/queue`, `/volume`, `/nowplaying`.
 
 Exemple (nœud public sécurisé):
