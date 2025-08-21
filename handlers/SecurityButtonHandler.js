@@ -73,23 +73,8 @@ class SecurityButtonHandler {
       if (typeof interaction.client.grantAccess === 'function') {
         await interaction.client.grantAccess(member, reason);
       } else {
-        const config = await this.moderationManager.getSecurityConfig(interaction.guild.id);
-        
-        // Retirer le rôle de quarantaine
-        if (config.accessControl?.quarantineRoleId) {
-          const quarantineRole = interaction.guild.roles.cache.get(config.accessControl.quarantineRoleId);
-          if (quarantineRole && member.roles.cache.has(quarantineRole.id)) {
-            await member.roles.remove(quarantineRole, reason);
-          }
-        }
-
-        // Ajouter le rôle vérifié
-        if (config.accessControl?.verifiedRoleId) {
-          const verifiedRole = interaction.guild.roles.cache.get(config.accessControl.verifiedRoleId);
-          if (verifiedRole) {
-            await member.roles.add(verifiedRole, reason);
-          }
-        }
+        const qManager = new QuarantineChannelManager(this.moderationManager);
+        await qManager.releaseFromQuarantine(member, reason);
       }
 
       // Notifier le membre
