@@ -436,14 +436,23 @@ class SecurityConfigHandler {
       const action = interaction.customId.replace('config_verif_', '');
       
       switch (action) {
+        case 'enable':
+          await this.toggleSystemEnable(interaction);
+          break;
+        case 'reset':
+          await this.handleSystemReset(interaction);
+          break;
+        case 'help':
+          await this.showHelpGuide(interaction);
+          break;
+        case 'reset_confirm':
+          await this.confirmSystemReset(interaction);
+          break;
+        case 'reset_cancel':
+          await this.cancelSystemReset(interaction);
+          break;
         case 'back_menu':
-          await this.showMainMenu(interaction);
-          break;
-        case 'toggle_auto':
-          await this.toggleAutoVerification(interaction);
-          break;
-        case 'show_exemptions':
-          await this.showDetailedExemptions(interaction);
+          await this.showMainMenuUpdate(interaction);
           break;
         default:
           return interaction.reply({ 
@@ -564,6 +573,349 @@ class SecurityConfigHandler {
       'ADMIN_APPROVAL': '👨‍💼 Demander approbation admin'
     };
     return displays[action] || action;
+  }
+
+  /**
+   * Basculer l'activation/désactivation du système
+   */
+  async toggleSystemEnable(interaction) {
+    try {
+      const guildId = interaction.guild.id;
+      const config = await this.moderationManager.getSecurityConfig(guildId);
+      const newState = !config.enabled;
+      
+      await this.moderationManager.updateSecurityConfig(guildId, { enabled: newState });
+      
+      const embed = new EmbedBuilder()
+        .setTitle('⚙️ Système de Vérification')
+        .setDescription(`Le système de vérification a été **${newState ? 'activé' : 'désactivé'}**.`)
+        .setColor(newState ? 0x51cf66 : 0x6c757d)
+        .setTimestamp();
+
+      if (newState) {
+        embed.addFields({
+          name: '✅ Système activé',
+          value: 'Le système de vérification est maintenant opérationnel.\nLes nouveaux membres seront vérifiés selon la configuration actuelle.',
+          inline: false
+        });
+      } else {
+        embed.addFields({
+          name: '❌ Système désactivé',
+          value: 'Le système de vérification est maintenant inactif.\nTous les nouveaux membres pourront rejoindre librement.',
+          inline: false
+        });
+      }
+
+      // Recréer le menu principal avec le nouvel état
+      await this.showMainMenuUpdate(interaction, embed);
+      
+    } catch (error) {
+      console.error('Erreur toggle système:', error);
+      return interaction.reply({ 
+        content: '❌ Erreur lors du changement d\'état du système.', 
+        ephemeral: true 
+      });
+    }
+  }
+
+  /**
+   * Gérer la réinitialisation du système
+   */
+  async handleSystemReset(interaction) {
+    try {
+      const embed = new EmbedBuilder()
+        .setTitle('⚠️ Confirmation de réinitialisation')
+        .setDescription('**Attention !** Cette action va supprimer toute la configuration de vérification.\n\n' +
+                       '**Sera supprimé :**\n' +
+                       '• Configuration de vérification automatique\n' +
+                       '• Paramètres de quarantaine\n' +
+                       '• Actions automatiques\n' +
+                       '• Notifications et alertes\n' +
+                       '• Liste des exemptions\n\n' +
+                       'Êtes-vous sûr de vouloir continuer ?')
+        .setColor(0xff6b6b)
+        .setTimestamp();
+
+      const buttons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_reset_confirm')
+            .setLabel('Confirmer la réinitialisation')
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji('🗑️'),
+          new ButtonBuilder()
+            .setCustomId('config_verif_reset_cancel')
+            .setLabel('Annuler')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('❌')
+        );
+
+      return interaction.reply({ 
+        embeds: [embed], 
+        components: [buttons], 
+        ephemeral: true 
+      });
+      
+    } catch (error) {
+      console.error('Erreur reset système:', error);
+      return interaction.reply({ 
+        content: '❌ Erreur lors de la préparation de la réinitialisation.', 
+        ephemeral: true 
+      });
+    }
+  }
+
+  /**
+   * Confirmer la réinitialisation du système
+   */
+  async confirmSystemReset(interaction) {
+    try {
+      const guildId = interaction.guild.id;
+      
+      // Réinitialiser la configuration
+      await this.moderationManager.resetSecurityConfig(guildId);
+      
+      const embed = new EmbedBuilder()
+        .setTitle('✅ Réinitialisation terminée')
+        .setDescription('La configuration du système de vérification a été complètement réinitialisée.')
+        .setColor(0x51cf66)
+        .setTimestamp();
+
+      embed.addFields({
+        name: '🔄 Configuration réinitialisée',
+        value: '• Système désactivé\n' +
+               '• Vérification automatique désactivée\n' +
+               '• Paramètres de quarantaine supprimés\n' +
+               '• Actions automatiques supprimées\n' +
+               '• Notifications supprimées\n' +
+               '• Liste des exemptions vidée',
+        inline: false
+      });
+
+      return interaction.update({ 
+        embeds: [embed], 
+        components: [] 
+      });
+      
+    } catch (error) {
+      console.error('Erreur confirm reset:', error);
+      return interaction.reply({ 
+        content: '❌ Erreur lors de la réinitialisation du système.', 
+        ephemeral: true 
+      });
+    }
+  }
+
+  /**
+   * Annuler la réinitialisation du système
+   */
+  async cancelSystemReset(interaction) {
+    try {
+      const embed = new EmbedBuilder()
+        .setTitle('❌ Réinitialisation annulée')
+        .setDescription('La réinitialisation a été annulée. La configuration actuelle est conservée.')
+        .setColor(0x6c757d)
+        .setTimestamp();
+
+      return interaction.update({ 
+        embeds: [embed], 
+        components: [] 
+      });
+      
+    } catch (error) {
+      console.error('Erreur cancel reset:', error);
+      return interaction.reply({ 
+        content: '❌ Erreur lors de l\'annulation.', 
+        ephemeral: true 
+      });
+    }
+  }
+
+  /**
+   * Afficher le guide d'aide
+   */
+  async showHelpGuide(interaction) {
+    try {
+      const embed = new EmbedBuilder()
+        .setTitle('❓ Guide d\'aide - Configuration de Vérification')
+        .setDescription('Guide complet pour configurer le système de vérification et sécurité')
+        .setColor(0x3498db)
+        .setTimestamp();
+
+      embed.addFields(
+        {
+          name: '🔍 Vérification automatique',
+          value: '• **Âge minimum** : Définit l\'âge minimum requis pour un compte Discord\n' +
+                '• **Score de risque** : Évalue automatiquement le risque d\'un utilisateur\n' +
+                '• **Multi-comptes** : Détecte les comptes multiples suspects',
+          inline: false
+        },
+        {
+          name: '🔒 Système de quarantaine',
+          value: '• **Rôle quarantaine** : Rôle attribué aux membres suspects\n' +
+                '• **Canaux privés** : Création automatique de canaux pour chaque membre\n' +
+                '• **Permissions** : Configuration automatique des accès',
+          inline: false
+        },
+        {
+          name: '⚡ Actions automatiques',
+          value: '• **Quarantaine** : Mise en quarantaine automatique\n' +
+                '• **Approbation admin** : Demande validation manuelle\n' +
+                '• **Kick/Ban** : Actions immédiates (attention !)\n' +
+                '• **Alerte** : Notification simple sans action',
+          inline: false
+        },
+        {
+          name: '📢 Notifications',
+          value: '• **Canal d\'alertes** : Où envoyer les notifications\n' +
+                '• **Rôle admin** : Qui mentionner en cas d\'alerte\n' +
+                '• **Délai décision** : Temps avant action automatique',
+          inline: false
+        },
+        {
+          name: '📝 Exemptions',
+          value: '• **Utilisateurs** : Comptes exemptés de vérification\n' +
+                '• **Rôles** : Rôles exemptés automatiquement\n' +
+                '• **Gestion** : Ajout/suppression facile',
+          inline: false
+        },
+        {
+          name: '⚙️ Conseils de configuration',
+          value: '1. **Commencez par la quarantaine** plutôt que kick/ban\n' +
+                '2. **Testez avec des comptes de test** avant activation\n' +
+                '3. **Configurez les notifications** pour surveiller\n' +
+                '4. **Ajoutez des exemptions** pour les bots et admins\n' +
+                '5. **Surveillez les logs** après activation',
+          inline: false
+        }
+      );
+
+      const backButton = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_back_menu')
+            .setLabel('Retour au menu')
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji('🔙')
+        );
+
+      return interaction.reply({ 
+        embeds: [embed], 
+        components: [backButton], 
+        ephemeral: true 
+      });
+      
+    } catch (error) {
+      console.error('Erreur guide aide:', error);
+      return interaction.reply({ 
+        content: '❌ Erreur lors de l\'affichage du guide d\'aide.', 
+        ephemeral: true 
+      });
+    }
+  }
+
+  /**
+   * Mettre à jour le menu principal avec un embed personnalisé
+   */
+  async showMainMenuUpdate(interaction, customEmbed = null) {
+    try {
+      const config = await this.moderationManager.getSecurityConfig(interaction.guild.id);
+      
+      let embed;
+      if (customEmbed) {
+        embed = customEmbed;
+      } else {
+        embed = new EmbedBuilder()
+          .setTitle('⚙️ Configuration Système de Vérification')
+          .setDescription('Sélectionnez une option de configuration ci-dessous')
+          .setColor(config.enabled ? 0x51cf66 : 0x6c757d)
+          .setTimestamp();
+
+        // État actuel
+        embed.addFields({
+          name: '📊 État actuel',
+          value: `**Système :** ${config.enabled ? '✅ Activé' : '❌ Désactivé'}\n` +
+                `**Vérification auto :** ${config.autoVerification?.enabled ? '✅ Activée' : '❌ Désactivée'}\n` +
+                `**Quarantaine :** ${config.accessControl?.quarantineRoleId ? '✅ Configurée' : '❌ Non configurée'}\n` +
+                `**Notifications :** ${config.autoAlerts?.alertChannelId ? '✅ Configurées' : '❌ Non configurées'}`,
+          inline: false
+        });
+      }
+
+      const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId('config_verif_menu')
+        .setPlaceholder('Choisissez une section à configurer')
+        .addOptions([
+          {
+            label: '🔍 Vérification automatique',
+            description: 'Configurer la vérification à l\'arrivée des membres',
+            value: 'auto_verification',
+            emoji: '🔍'
+          },
+          {
+            label: '🔒 Système de quarantaine',
+            description: 'Configurer les rôles et canaux de quarantaine',
+            value: 'quarantine_system',
+            emoji: '🔒'
+          },
+          {
+            label: '⚡ Actions automatiques',
+            description: 'Définir les actions pour chaque type de suspect',
+            value: 'auto_actions',
+            emoji: '⚡'
+          },
+          {
+            label: '📢 Notifications admin',
+            description: 'Configurer les alertes et délais de décision',
+            value: 'notifications',
+            emoji: '📢'
+          },
+          {
+            label: '📝 Exemptions',
+            description: 'Gérer la liste des utilisateurs/rôles exemptés',
+            value: 'exemptions',
+            emoji: '📝'
+          },
+          {
+            label: '📊 Voir configuration',
+            description: 'Afficher la configuration complète actuelle',
+            value: 'view_config',
+            emoji: '📊'
+          }
+        ]);
+
+      const buttons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('config_verif_enable')
+            .setLabel(config.enabled ? 'Désactiver système' : 'Activer système')
+            .setStyle(config.enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+            .setEmoji(config.enabled ? '❌' : '✅'),
+          new ButtonBuilder()
+            .setCustomId('config_verif_reset')
+            .setLabel('Réinitialiser')
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji('🗑️'),
+          new ButtonBuilder()
+            .setCustomId('config_verif_help')
+            .setLabel('Guide d\'aide')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('❓')
+        );
+
+      const row = new ActionRowBuilder().addComponents(selectMenu);
+
+      return interaction.update({ 
+        embeds: [embed], 
+        components: [row, buttons]
+      });
+    } catch (error) {
+      console.error('Erreur showMainMenuUpdate:', error);
+      return interaction.reply({ 
+        content: '❌ Erreur lors de la mise à jour du menu.', 
+        ephemeral: true 
+      });
+    }
   }
 }
 
