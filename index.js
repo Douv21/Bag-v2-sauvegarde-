@@ -641,10 +641,10 @@ class BagBotRender {
             }
         });
 
-        // Dashboard routes (placeholder)
+        // Dashboard routes (serve React SPA build)
         this.app.get('/dashboard', (req, res) => {
             res.set('Cache-Control', 'no-store, must-revalidate');
-            res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+            res.sendFile(path.join(__dirname, 'public', 'dashboard', 'index.html'));
         });
 
         this.app.get('/dashboard/:guildId', (req, res) => {
