@@ -125,6 +125,11 @@
             .sidebar.open { transform: translateX(0); }
             .hamb { display:inline-flex; align-items:center; gap:10px; }
             .header { gap:12px; }
+            /* Bottom nav */
+            .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0d0d0d; border-top:1px solid #161616; display:flex; justify-content:space-around; padding:10px 8px; z-index: 90; }
+            .bottom-nav a { color:#bbb; text-align:center; font-size:12px; text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:4px; }
+            .bottom-nav a.active { color:#fff; }
+            .main { padding-bottom: 72px; }
         }
     </style>
 </head>
@@ -469,6 +474,15 @@
         </main>
     </div>
 
+    <!-- Mobile bottom navigation -->
+    <nav class="bottom-nav" id="bottomNav" style="display:none;">
+        <a href="#overview" data-route="overview"><span>🏠</span><span>Accueil</span></a>
+        <a href="#config" data-route="config"><span>⚙️</span><span>Config</span></a>
+        <a href="#modules" data-route="modules"><span>🧩</span><span>Modules</span></a>
+        <a href="#logs" data-route="logs"><span>📜</span><span>Logs</span></a>
+        <a href="#stats" data-route="stats"><span>📊</span><span>Stats</span></a>
+    </nav>
+    
     <script>
         const $ = (sel) => document.querySelector(sel);
         const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -493,6 +507,17 @@
         setActiveRoute(location.hash.replace('#','') || 'overview');
         $('#hamb')?.addEventListener('click', () => $('#sidebar').classList.toggle('open'));
         $$('#nav a').forEach(a => a.addEventListener('click', (e) => setActiveRoute(a.dataset.route)));
+
+        // Bottom nav activation on mobile
+        function toggleBottomNav() {
+            const nav = $('#bottomNav');
+            if (window.innerWidth < 980) { nav.style.display = 'flex'; } else { nav.style.display = 'none'; }
+            const route = location.hash.replace('#','') || 'overview';
+            $$('#bottomNav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
+        }
+        toggleBottomNav();
+        window.addEventListener('resize', toggleBottomNav);
+        $$('#bottomNav a').forEach(a => a.addEventListener('click', () => setActiveRoute(a.dataset.route)));
 
         // Theme switching (client-side only)
         function setTheme(mode) {
