@@ -16,11 +16,24 @@ module.exports = {
     const dashboardUrl = `${baseUrl}/dashboard${guildId ? `?guildId=${guildId}` : ''}`;
 
     const embed = new EmbedBuilder()
-      .setTitle('📊 Tableau de bord — BAG v2')
-      .setDescription('Accès au tableau de bord minimal, avec statistiques en temps réel (membres actifs, messages du jour, etc.).')
-      .addFields({ name: 'Lien', value: `[Ouvrir le tableau de bord](${dashboardUrl})` })
-      .setColor('#ff2e88');
+      .setColor(0xff2e88)
+      .setTitle('BAG Dashboard')
+      .setURL(dashboardUrl)
+      .setDescription('Gérez votre serveur en toute simplicité: modération, économie, niveaux, logs et plus encore.')
+      .setThumbnail(`${baseUrl}/logo-bag-premium.svg`)
+      .setImage(`${baseUrl}/dashboard-hero.jpg`)
+      .addFields(
+        { name: 'Aperçu', value: '• Navigation claire par catégories\n• Commandes documentées et filtrables\n• Paramètres clés accessibles rapidement' }
+      )
+      .setFooter({ text: 'BAG Bot • Dashboard', iconURL: `${baseUrl}/logo-bag.svg` });
 
-    return interaction.reply({ embeds: [embed], ephemeral: true });
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setLabel('Ouvrir le dashboard')
+        .setStyle(ButtonStyle.Link)
+        .setURL(dashboardUrl)
+    );
+
+    return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
   }
 };
