@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { Dialog, DialogContent, DialogDescription, DialogHeader as DialogHeaderRoot, DialogTitle as DialogTitleRoot, DialogTrigger } from "@/components/ui/dialog"
 
 type Category = {
   icon: string
@@ -26,6 +29,50 @@ const categories: Category[] = [
   { icon: "🔢", title: "Comptage", desc: "Système de comptage et mini-jeux mathématiques", slug: "comptage" },
 ]
 
+const categorySubmenus: Record<string, Array<{ name: string; description?: string }>> = {
+  moderation: [
+    { name: "/ban", description: "Bannir un utilisateur" },
+    { name: "/kick", description: "Expulser un utilisateur" },
+    { name: "/mute", description: "Rendre muet un utilisateur" },
+  ],
+  economie: [
+    { name: "/balance", description: "Voir le solde" },
+    { name: "/daily", description: "Récompense quotidienne" },
+    { name: "/shop", description: "Accéder à la boutique" },
+  ],
+  level: [
+    { name: "/rank", description: "Voir sa carte d'XP" },
+    { name: "/leaderboard", description: "Classement du serveur" },
+  ],
+  confessions: [
+    { name: "/confess", description: "Envoyer une confession anonyme" },
+    { name: "/confess-manage", description: "Gérer les confessions" },
+  ],
+  aouv: [
+    { name: "/prompt-add", description: "Ajouter un prompt" },
+    { name: "/prompt-list", description: "Lister les prompts" },
+  ],
+  "verification-utilisateur": [
+    { name: "/verify-setup", description: "Configurer la vérification" },
+    { name: "/quarantine", description: "Gérer les quarantaines" },
+  ],
+  logs: [
+    { name: "/logs-setup", description: "Configurer les logs" },
+  ],
+  autothread: [
+    { name: "/autothread-enable", description: "Activer l'AutoThread" },
+  ],
+  comptage: [
+    { name: "/count-setup", description: "Configurer le comptage" },
+    { name: "/math", description: "Jouer aux mini-jeux" },
+  ],
+}
+
+type GuildMetadata = {
+  roles: Array<{ id: string; name: string }>
+  channels: Array<{ id: string; name: string; type?: string }>
+}
+
 const LINKS = {
   invite: "#",
   support: "#",
@@ -33,6 +80,41 @@ const LINKS = {
 }
 
 export default function Dashboard() {
+  const searchParams = useSearchParams()
+  const guildId = useMemo(() => searchParams.get("guildId") || "", [searchParams])
+
+  const [metadata, setMetadata] = useState<GuildMetadata | null>(null)
+  const [metaLoading, setMetaLoading] = useState(false)
+  const [metaError, setMetaError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!guildId) return
+    let cancelled = false
+    async function load() {
+      try {
+        setMetaLoading(true)
+        setMetaError(null)
+        const res = await fetch(`/api/guilds/${guildId}/metadata`, { cache: "no-store" })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = (await res.json()) as GuildMetadata
+        if (!cancelled) setMetadata(data)
+      } catch (err: unknown) {
+        if (!cancelled) setMetaError("Impossible de charger les rôles et salons")
+      } finally {
+        if (!cancelled) setMetaLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [guildId])
+
+  const stopCardNavigation = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Top Nav */}
@@ -109,6 +191,69 @@ export default function Dashboard() {
         </div>
       </section>
 
+      {/* Server metadata: roles & channels */}
+      <section className="mx-auto w-full max-w-6xl px-4 py-6">
+        {!guildId ? (
+          <Card className="border border-border/60 bg-card/60">
+            <CardHeader>
+              <CardTitle className="text-base">Métadonnées serveur</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Ajoute <code className="rounded bg-muted px-1 py-0.5">?guildId=TON_ID</code> à l’URL pour afficher les noms de rôles et de salons.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Card className="border border-border/60 bg-card/60">
+              <CardHeader>
+                <CardTitle className="text-base">Rôles</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {metaLoading ? (
+                  <p className="text-sm text-muted-foreground">Chargement…</p>
+                ) : metaError ? (
+                  <p className="text-sm text-red-500">{metaError}</p>
+                ) : (
+                  <ul className="max-h-56 space-y-2 overflow-y-auto pr-2">
+                    {metadata?.roles?.length ? (
+                      metadata.roles.slice(0, 24).map((r) => (
+                        <li key={r.id} className="truncate text-sm text-muted-foreground">{r.name}</li>
+                      ))
+                    ) : (
+                      <li className="text-sm text-muted-foreground">Aucun rôle trouvé</li>
+                    )}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+            <Card className="border border-border/60 bg-card/60">
+              <CardHeader>
+                <CardTitle className="text-base">Salons</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {metaLoading ? (
+                  <p className="text-sm text-muted-foreground">Chargement…</p>
+                ) : metaError ? (
+                  <p className="text-sm text-red-500">{metaError}</p>
+                ) : (
+                  <ul className="max-h-56 space-y-2 overflow-y-auto pr-2">
+                    {metadata?.channels?.length ? (
+                      metadata.channels.slice(0, 24).map((c) => (
+                        <li key={c.id} className="truncate text-sm text-muted-foreground">{c.name}</li>
+                      ))
+                    ) : (
+                      <li className="text-sm text-muted-foreground">Aucun salon trouvé</li>
+                    )}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </section>
+
       {/* Categories Grid */}
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:py-10">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -131,9 +276,34 @@ export default function Dashboard() {
                 <CardContent>
                   <p className="line-clamp-2 text-sm text-muted-foreground">{cat.desc}</p>
                   <div className="mt-4">
-                    <Button variant="link" className="px-0 text-primary transition-colors group-hover:text-primary">
-                      Voir les commandes →
-                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="link" className="px-0 text-primary" onClick={stopCardNavigation}>
+                          Voir les commandes →
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-lg">
+                        <DialogHeaderRoot>
+                          <DialogTitleRoot>{cat.title} – Commandes</DialogTitleRoot>
+                          <DialogDescription>
+                            Accède rapidement aux sous‑menus et commandes disponibles.
+                          </DialogDescription>
+                        </DialogHeaderRoot>
+                        <div className="mt-2 max-h-72 space-y-1 overflow-y-auto pr-2">
+                          {(categorySubmenus[cat.slug] || []).map((item, idx) => (
+                            <div key={idx} className="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-sm">
+                              <div className="font-medium">{item.name}</div>
+                              {item.description ? (
+                                <div className="text-muted-foreground">{item.description}</div>
+                              ) : null}
+                            </div>
+                          ))}
+                          {!(categorySubmenus[cat.slug] || []).length ? (
+                            <div className="text-sm text-muted-foreground">Aucun sous‑menu défini pour le moment.</div>
+                          ) : null}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </CardContent>
               </Card>
