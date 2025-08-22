@@ -45,6 +45,12 @@ class SecurityButtonHandler {
         case 'details':
           await this.handleDetails(interaction, member, targetUser);
           break;
+        case 'kick':
+          await this.handleKick(interaction, member, targetUser);
+          break;
+        case 'ban':
+          await this.handleBan(interaction, member, targetUser);
+          break;
         default:
           return interaction.reply({ content: '❌ Action inconnue.', flags: 64 });
       }
@@ -254,6 +260,95 @@ class SecurityButtonHandler {
         content: '❌ Erreur lors de la récupération des détails.', 
         flags: 64 
       });
+    }
+  }
+
+  async handleKick(interaction, member, targetUser) {
+    try {
+      // Vérifier permissions du modérateur
+      if (!interaction.member?.permissions?.has(PermissionFlagsBits.KickMembers)) {
+        return interaction.reply({ content: '❌ Permission requise: KickMembers.', flags: 64 });
+      }
+
+      // Vérifier que le bot a les permissions requises
+      const me = interaction.guild.members.me;
+      if (!me?.permissions?.has(PermissionFlagsBits.KickMembers)) {
+        return interaction.reply({ content: '❌ Je n\'ai pas la permission de kick.', flags: 64 });
+      }
+
+      if (!member) {
+        return interaction.reply({ content: `❌ ${targetUser.tag} n'est plus sur le serveur.`, flags: 64 });
+      }
+
+      // Notifier l'utilisateur
+      try {
+        await targetUser.send(
+          `👢 **Expulsé - ${interaction.guild.name}**\n\n` +
+          `Vous avez été expulsé par un administrateur.\n` +
+          `**Modérateur :** ${interaction.user.tag}`
+        );
+      } catch {}
+
+      await member.kick(`Kick via vérif par ${interaction.user.tag}`);
+
+      const embed = new EmbedBuilder()
+        .setTitle('👢 MEMBRE EXPULSÉ')
+        .setDescription(`**${targetUser.tag}** a été expulsé par ${interaction.user}`)
+        .setColor(0xff6b6b)
+        .setTimestamp();
+
+      await interaction.update({ embeds: [embed], components: [] });
+
+      console.log(`👢 Membre kick: ${targetUser.tag} par ${interaction.user.tag}`);
+    } catch (error) {
+      console.error('Erreur kick via bouton:', error);
+      return interaction.reply({ content: '❌ Erreur lors du kick.', flags: 64 });
+    }
+  }
+
+  async handleBan(interaction, member, targetUser) {
+    try {
+      // Vérifier permissions du modérateur
+      if (!interaction.member?.permissions?.has(PermissionFlagsBits.BanMembers)) {
+        return interaction.reply({ content: '❌ Permission requise: BanMembers.', flags: 64 });
+      }
+
+      // Vérifier que le bot a les permissions requises
+      const me = interaction.guild.members.me;
+      if (!me?.permissions?.has(PermissionFlagsBits.BanMembers)) {
+        return interaction.reply({ content: '❌ Je n\'ai pas la permission de ban.', flags: 64 });
+      }
+
+      // Notifier l'utilisateur
+      try {
+        await targetUser.send(
+          `🔨 **Banni - ${interaction.guild.name}**\n\n` +
+          `Vous avez été banni par un administrateur.\n` +
+          `**Modérateur :** ${interaction.user.tag}`
+        );
+      } catch {}
+
+      // Si le membre n'est plus présent, on peut quand même ban via ID
+      if (member) {
+        await member.ban({ reason: `Ban via vérif par ${interaction.user.tag}`, deleteMessageDays: 1 });
+      } else {
+        await interaction.guild.members.ban(targetUser.id, { reason: `Ban via vérif par ${interaction.user.tag}`, deleteMessageSeconds: 86400 }).catch(() => null);
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle('🔨 MEMBRE BANNI')
+        .setDescription(`**${targetUser.tag}** a été banni par ${interaction.user}`)
+        .setColor(0x000000)
+        .setTimestamp();
+
+      await interaction.update({ embeds: [embed], components: [] });
+
+      console.log(`🔨 Membre banni: ${targetUser.tag} par ${interaction.user.tag}`);
+    } catch (error) {
+      console.error('Erreur ban via bouton:', error);
+      try {
+        await interaction.reply({ content: '❌ Erreur lors du ban.', flags: 64 });
+      } catch {}
     }
   }
 

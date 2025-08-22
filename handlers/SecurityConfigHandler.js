@@ -25,6 +25,9 @@ class SecurityConfigHandler {
         case 'auto_actions':
           await this.showAutoActionsConfig(interaction, config);
           break;
+        case 'risk_actions':
+          await this.showRiskActionsConfig(interaction, config);
+          break;
         case 'notifications':
           await this.showNotificationsConfig(interaction, config);
           break;
@@ -211,7 +214,16 @@ class SecurityConfigHandler {
         description += `👤 **Nom suspect :** ${this.getActionDisplay(actions.suspiciousName)}\n`;
       }
 
-      if (!actions.recentAccount && !actions.multiAccount && !actions.suspiciousName) {
+      const riskActions = config.autoVerification.riskActions || {};
+      if (Object.keys(riskActions).length > 0) {
+        description += '\n📊 **Actions par niveau de risque :**\n';
+        if (riskActions.low) description += `• Faible: ${this.getActionDisplay(riskActions.low)}\n`;
+        if (riskActions.medium) description += `• Moyen: ${this.getActionDisplay(riskActions.medium)}\n`;
+        if (riskActions.high) description += `• Élevé: ${this.getActionDisplay(riskActions.high)}\n`;
+        if (riskActions.critical) description += `• Critique: ${this.getActionDisplay(riskActions.critical)}\n`;
+      }
+
+      if (!actions.recentAccount && !actions.multiAccount && !actions.suspiciousName && Object.keys(riskActions).length === 0) {
         description += 'Aucune action configurée\n';
       }
     } else {
@@ -254,6 +266,11 @@ class SecurityConfigHandler {
     );
 
     const buttons = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('config_verif_risk_actions')
+        .setLabel('Actions par risque')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji('📊'),
       new ButtonBuilder()
         .setCustomId('config_verif_back_menu')
         .setLabel('Retour au menu')
@@ -532,6 +549,9 @@ class SecurityConfigHandler {
           break;
         case 'toggle_alerts':
           await this.toggleAlerts(interaction);
+          break;
+        case 'risk_actions':
+          await this.showRiskActionsConfig(interaction, await this.moderationManager.getSecurityConfig(interaction.guild.id));
           break;
         default:
           return interaction.reply({ 
@@ -1078,7 +1098,8 @@ class SecurityConfigHandler {
       'KICK': '👢 Expulsion automatique',
       'BAN': '🔨 Bannissement automatique',
       'QUARANTINE': '🔒 Mise en quarantaine',
-      'ADMIN_APPROVAL': '👨‍💼 Demander approbation admin'
+      'ADMIN_APPROVAL': '👨‍💼 Demander approbation admin',
+      'APPROVE': '✅ Approuver'
     };
     return displays[action] || action;
   }
@@ -1093,7 +1114,8 @@ class SecurityConfigHandler {
       { label: '🔒 Mise en quarantaine', value: 'QUARANTINE', emoji: '🔒', description: "Restreindre l'accès" },
       { label: '👨‍💼 Approbation admin', value: 'ADMIN_APPROVAL', emoji: '👨‍💼', description: 'Demander une décision' },
       { label: '👢 Expulsion automatique', value: 'KICK', emoji: '👢', description: 'Expulser le membre' },
-      { label: '🔨 Bannissement automatique', value: 'BAN', emoji: '🔨', description: 'Bannir le membre' }
+      { label: '🔨 Bannissement automatique', value: 'BAN', emoji: '🔨', description: 'Bannir le membre' },
+      { label: '✅ Approuver (aucune action)', value: 'APPROVE', emoji: '✅', description: 'Ne rien faire' }
     ];
   }
 
@@ -1278,58 +1300,38 @@ class SecurityConfigHandler {
       const guildId = interaction.guild.id;
       const current = await this.moderationManager.getSecurityConfig(guildId);
       const currentActions = current.autoVerification?.actions || {};
+      const currentRiskActions = current.autoVerification?.riskActions || {};
 
-      const updated = await this.moderationManager.updateSecurityConfig(guildId, {
-        autoVerification: {
-          actions: {
-            ...currentActions,
-            [actionType]: selected
+      let updates;
+      if (actionType.startsWith('risk_')) {
+        const riskKey = actionType.split('_')[1]; // low|medium|high|critical
+        updates = {
+          autoVerification: {
+            riskActions: {
+              ...currentRiskActions,
+              [riskKey]: selected
+            }
           }
-        }
-      });
+        };
+      } else {
+        updates = {
+          autoVerification: {
+            actions: {
+              ...currentActions,
+              [actionType]: selected
+            }
+          }
+        };
+      }
 
-      // Reconstruire la vue
-      const embed = new EmbedBuilder()
-        .setTitle('⚡ Configuration des actions automatiques')
-        .setColor(0x3498db)
-        .setTimestamp();
+      const updated = await this.moderationManager.updateSecurityConfig(guildId, updates);
 
-      const actions = updated.autoVerification?.actions || {};
-      let description = '⚙️ **Actions configurées :**\n\n';
-      if (actions.recentAccount) description += `🕐 **Compte récent :** ${this.getActionDisplay(actions.recentAccount)}\n`;
-      if (actions.multiAccount) description += `🔍 **Multi-comptes :** ${this.getActionDisplay(actions.multiAccount)}\n`;
-      if (actions.suspiciousName) description += `👤 **Nom suspect :** ${this.getActionDisplay(actions.suspiciousName)}\n`;
-      if (!actions.recentAccount && !actions.multiAccount && !actions.suspiciousName) description += 'Aucune action configurée\n';
-      description += '\n⚠️ **Important :**\n';
-      description += '• Les actions automatiques s\'exécutent sans intervention\n';
-      description += '• Recommandé : Commencer par "Quarantaine" ou "Approbation admin"\n';
-      description += '• Les actions "Kick" et "Ban" sont irréversibles';
-      embed.setDescription(description);
-
-      const opts = this.buildAutoActionOptions();
-      const rowRecent = new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId('config_verif_action_recentAccount')
-          .setPlaceholder('Action pour compte récent')
-          .addOptions(opts.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: actions.recentAccount === o.value })))
-      );
-      const rowMulti = new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId('config_verif_action_multiAccount')
-          .setPlaceholder('Action pour multi-comptes')
-          .addOptions(opts.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: actions.multiAccount === o.value })))
-      );
-      const rowName = new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId('config_verif_action_suspiciousName')
-          .setPlaceholder('Action pour nom suspect')
-          .addOptions(opts.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: actions.suspiciousName === o.value })))
-      );
-      const buttons = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('config_verif_back_menu').setLabel('Retour au menu').setStyle(ButtonStyle.Secondary).setEmoji('🔙')
-      );
-
-      return interaction.update({ embeds: [embed], components: [rowRecent, rowMulti, rowName, buttons] });
+      // Reconstruire la vue appropriée
+      if (actionType.startsWith('risk_')) {
+        await this.showRiskActionsConfig(interaction, updated);
+      } else {
+        await this.showAutoActionsConfig(interaction, updated);
+      }
     } catch (error) {
       console.error('Erreur handleAutoActionSelect:', error);
       return interaction.reply({ content: '❌ Erreur lors de la mise à jour des actions automatiques.', ephemeral: true });
@@ -1634,6 +1636,75 @@ class SecurityConfigHandler {
         ephemeral: true 
       });
     }
+  }
+
+  async showRiskActionsConfig(interaction, config) {
+    const embed = new EmbedBuilder()
+      .setTitle('📊 Actions automatiques par niveau de risque')
+      .setColor(0x9b59b6)
+      .setTimestamp();
+
+    let description = 'Définissez l\'action automatique selon le score de risque détecté.\n\n';
+    description += 'Seuils actuels (config > thresholds):\n';
+    description += `• Faible < ${config.thresholds?.mediumRisk ?? 40}\n`;
+    description += `• Moyen ≥ ${config.thresholds?.mediumRisk ?? 40} et < ${config.thresholds?.highRisk ?? 70}\n`;
+    description += `• Élevé ≥ ${config.thresholds?.highRisk ?? 70} et < ${config.thresholds?.criticalRisk ?? 85}\n`;
+    description += `• Critique ≥ ${config.thresholds?.criticalRisk ?? 85}\n`;
+
+    const current = config.autoVerification?.riskActions || {};
+    if (Object.keys(current).length > 0) {
+      description += '\nActuel :\n';
+      if (current.low) description += `• Faible: ${this.getActionDisplay(current.low)}\n`;
+      if (current.medium) description += `• Moyen: ${this.getActionDisplay(current.medium)}\n`;
+      if (current.high) description += `• Élevé: ${this.getActionDisplay(current.high)}\n`;
+      if (current.critical) description += `• Critique: ${this.getActionDisplay(current.critical)}\n`;
+    }
+
+    embed.setDescription(description);
+
+    const options = this.buildAutoActionOptions();
+
+    const rowLow = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('config_verif_action_risk_low')
+        .setPlaceholder('Action pour risque Faible')
+        .addOptions(options.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: current.low === o.value })))
+    );
+
+    const rowMedium = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('config_verif_action_risk_medium')
+        .setPlaceholder('Action pour risque Moyen')
+        .addOptions(options.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: current.medium === o.value })))
+    );
+
+    const rowHigh = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('config_verif_action_risk_high')
+        .setPlaceholder('Action pour risque Élevé')
+        .addOptions(options.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: current.high === o.value })))
+    );
+
+    const rowCritical = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('config_verif_action_risk_critical')
+        .setPlaceholder('Action pour risque Critique')
+        .addOptions(options.map(o => ({ label: o.label, value: o.value, emoji: o.emoji, description: o.description, default: current.critical === o.value })))
+    );
+
+    const buttons = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('config_verif_back_menu')
+        .setLabel('Retour au menu')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('🔙')
+    );
+
+    return interaction.reply({
+      embeds: [embed],
+      components: [rowLow, rowMedium, rowHigh, rowCritical, buttons],
+      ephemeral: true
+    });
   }
 }
 

@@ -102,6 +102,7 @@ class AutoVerificationHandler {
    */
   determineAction(analysis, config) {
     const actions = config.autoVerification?.actions || {};
+    const riskActions = config.autoVerification?.riskActions || {};
     
     // Priorité 1: Compte trop récent
     if (config.autoVerification?.minimumAccountAge && 
@@ -129,6 +130,20 @@ class AutoVerificationHandler {
     // Priorité 5: Suspect de raid
     if (analysis.isRaidSuspect) {
       return 'ADMIN_APPROVAL';
+    }
+    
+    // Actions par niveau de risque si définies
+    if (riskActions && Object.keys(riskActions).length > 0) {
+      const t = config.thresholds || {};
+      const medium = t.mediumRisk ?? 40;
+      const high = t.highRisk ?? 70;
+      const critical = t.criticalRisk ?? 85;
+      const score = analysis.riskScore;
+
+      if (score >= critical && riskActions.critical) return riskActions.critical;
+      if (score >= high && riskActions.high) return riskActions.high;
+      if (score >= medium && riskActions.medium) return riskActions.medium;
+      if (score < medium && riskActions.low) return riskActions.low;
     }
     
     // Aucun problème détecté
@@ -168,6 +183,10 @@ class AutoVerificationHandler {
         
       case 'ALERT':
         await this.sendAlert(member, analysis, config);
+        break;
+
+      case 'WARN':
+        await this.sendWarning(member, analysis, config);
         break;
         
       default:
@@ -343,6 +362,35 @@ class AutoVerificationHandler {
   }
 
   /**
+   * Envoyer un avertissement au membre
+   */
+  async sendWarning(member, analysis, config) {
+    try {
+      // DM au membre
+      try {
+        await member.send(
+          `⚠️ **Avertissement - ${member.guild.name}**\n\n` +
+          `Votre compte présente des signaux de risque.\n` +
+          `**Score de risque :** ${analysis.riskScore}/100\n` +
+          `Merci de respecter les règles du serveur.`
+        );
+      } catch {}
+
+      // Alerte aux admins
+      const alertChannel = member.guild.channels.cache.get(config.autoAlerts?.alertChannelId);
+      if (alertChannel) {
+        const embed = this.createVerificationEmbed(member, analysis, 'ALERT');
+        embed.setTitle('⚠️ Avertissement envoyé');
+        await alertChannel.send({ embeds: [embed] });
+      }
+
+      console.log(`⚠️ Avertissement envoyé à ${member.user.tag}`);
+    } catch (error) {
+      console.error('Erreur envoi avertissement:', error);
+    }
+  }
+
+  /**
    * Créer l'embed de vérification
    */
   createVerificationEmbed(member, analysis, status) {
@@ -404,15 +452,20 @@ class AutoVerificationHandler {
           .setStyle(ButtonStyle.Success)
           .setEmoji('✅'),
         new ButtonBuilder()
-          .setCustomId(`security_deny_${userId}`)
-          .setLabel('Refuser & Kick')
-          .setStyle(ButtonStyle.Danger)
-          .setEmoji('❌'),
-        new ButtonBuilder()
           .setCustomId(`security_quarantine_${userId}`)
           .setLabel('Quarantaine')
           .setStyle(ButtonStyle.Secondary)
           .setEmoji('🔒'),
+        new ButtonBuilder()
+          .setCustomId(`security_kick_${userId}`)
+          .setLabel('Kick')
+          .setStyle(ButtonStyle.Danger)
+          .setEmoji('👢'),
+        new ButtonBuilder()
+          .setCustomId(`security_ban_${userId}`)
+          .setLabel('Ban')
+          .setStyle(ButtonStyle.Danger)
+          .setEmoji('🔨'),
         new ButtonBuilder()
           .setCustomId(`security_details_${userId}`)
           .setLabel('Détails')
