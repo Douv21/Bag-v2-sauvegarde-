@@ -643,6 +643,7 @@ class BagBotRender {
 
         // Dashboard routes (placeholder)
         this.app.get('/dashboard', (req, res) => {
+            res.set('Cache-Control', 'no-store, must-revalidate');
             res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
         });
 
@@ -652,7 +653,15 @@ class BagBotRender {
         });
 
         // Static files for dashboard
-        this.app.use(express.static(path.join(__dirname, 'public')));
+        this.app.use(express.static(path.join(__dirname, 'public'), {
+            setHeaders: (res, filePath) => {
+                if (path.extname(filePath).toLowerCase() === '.html') {
+                    res.setHeader('Cache-Control', 'no-store, must-revalidate');
+                } else {
+                    res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
+                }
+            }
+        }));
     }
 
     // Méthodes pour récupérer les statistiques
