@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -76,6 +75,27 @@ type GuildMetadata = {
 
 type SubmenuItem = { name: string; description?: string }
 
+type GenericConfig = Record<string, any>
+type ConfigState = { loading: boolean; data: GenericConfig | null; error?: string; saving?: boolean; savedAt?: number }
+
+const LOGO_URL = "https://cdn.discordapp.com/attachments/1408458115283812484/1408458115770482778/20250305162902.png?ex=68a9d056&is=68a87ed6&hm=3189c1bb0c0b3b9dd3d818ea9608a9d9088d3fef798c36f920d60d64eef998e0&"
+
+function Logo({ size = 36, className = "" }: { size?: number; className?: string }) {
+  const [src, setSrc] = useState<string>(LOGO_URL)
+  return (
+    // native <img> for robust fallback; Discord CDN sometimes blocks referers or expires
+    <img
+      src={src}
+      alt="BAG Logo"
+      width={size}
+      height={size}
+      className={`rounded ${className}`}
+      referrerPolicy="no-referrer"
+      onError={() => setSrc("/bag-fallback.svg")}
+    />
+  )
+}
+
 const LINKS = {
   invite: "https://discord.com/oauth2/authorize?client_id=1394318358228369538&permissions=8&integration_type=0&scope=bot",
   support: "https://discord.gg/W52qQtNqFt",
@@ -94,6 +114,7 @@ export default function Dashboard() {
   const [metaLoading, setMetaLoading] = useState(false)
   const [metaError, setMetaError] = useState<string | null>(null)
   const [submenus, setSubmenus] = useState<Record<string, { loading: boolean; items: SubmenuItem[]; error?: string }>>({})
+  const [configs, setConfigs] = useState<Record<string, ConfigState>>({})
 
   useEffect(() => {
     if (!guildId) return
@@ -136,6 +157,47 @@ export default function Dashboard() {
     }
   }
 
+  const getConfigUrl = (slug: string) => (apiBase ? `${apiBase}/dashboard/${slug}/config` : `/api/dashboard/${slug}/config`)
+
+  const loadConfig = async (slug: string) => {
+    const existing = configs[slug]
+    if (existing?.loading || existing?.data) return
+    setConfigs((c) => ({ ...c, [slug]: { loading: true, data: null, error: undefined } }))
+    try {
+      const res = await fetch(getConfigUrl(slug), { cache: "no-store" })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = (await res.json()) as GenericConfig
+      setConfigs((c) => ({ ...c, [slug]: { loading: false, data } }))
+    } catch (err) {
+      setConfigs((c) => ({ ...c, [slug]: { loading: false, data: null, error: "Impossible de charger la configuration" } }))
+    }
+  }
+
+  const updateConfigField = (slug: string, key: string, value: any) => {
+    setConfigs((c) => {
+      const prev = c[slug]
+      const data = { ...(prev?.data || {}), [key]: value }
+      return { ...c, [slug]: { ...(prev || { loading: false }), data } }
+    })
+  }
+
+  const saveConfig = async (slug: string) => {
+    const current = configs[slug]
+    if (!current?.data || current.saving) return
+    setConfigs((c) => ({ ...c, [slug]: { ...current, saving: true, error: undefined } }))
+    try {
+      const res = await fetch(getConfigUrl(slug), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(current.data),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setConfigs((c) => ({ ...c, [slug]: { ...c[slug]!, saving: false, savedAt: Date.now() } }))
+    } catch (err) {
+      setConfigs((c) => ({ ...c, [slug]: { ...c[slug]!, saving: false, error: "Échec de la sauvegarde" } }))
+    }
+  }
+
   const stopCardNavigation = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -149,7 +211,7 @@ export default function Dashboard() {
       <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <Image src="https://cdn.discordapp.com/attachments/1408458115283812484/1408458115770482778/20250305162902.png?ex=68a9d056&is=68a87ed6&hm=3189c1bb0c0b3b9dd3d818ea9608a9d9088d3fef798c36f920d60d64eef998e0&" alt="BAG Logo" width={36} height={36} className="rounded" unoptimized />
+            <Logo size={36} />
             <span className="font-semibold tracking-tight">BAG</span>
           </div>
           <nav className="hidden gap-2 sm:flex">
@@ -173,7 +235,7 @@ export default function Dashboard() {
               <SheetContent side="right" className="w-72 sm:w-80">
                 <SheetHeader>
                   <SheetTitle className="flex items-center gap-2">
-                    <Image src="https://cdn.discordapp.com/attachments/1408458115283812484/1408458115770482778/20250305162902.png?ex=68a9d056&is=68a87ed6&hm=3189c1bb0c0b3b9dd3d818ea9608a9d9088d3fef798c36f920d60d64eef998e0&" alt="BAG Logo" width={20} height={20} className="rounded" unoptimized />
+                    <Logo size={20} />
                     <span>BAG</span>
                   </SheetTitle>
                 </SheetHeader>
@@ -199,7 +261,7 @@ export default function Dashboard() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_60%_at_50%_-10%,rgba(120,119,198,0.15),transparent_70%)]" />
         <div className="relative mx-auto max-w-6xl px-4 py-10 sm:py-14">
           <div className="flex flex-col items-center text-center">
-            <Image src="https://cdn.discordapp.com/attachments/1408458115283812484/1408458115770482778/20250305162902.png?ex=68a9d056&is=68a87ed6&hm=3189c1bb0c0b3b9dd3d818ea9608a9d9088d3fef798c36f920d60d64eef998e0&" alt="BAG Logo" width={96} height={96} className="mb-4 rounded" unoptimized />
+            <Logo size={96} className="mb-4" />
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">BAG Dashboard</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
               Administration et documentation centrales
@@ -304,41 +366,193 @@ export default function Dashboard() {
                 <CardContent>
                   <p className="line-clamp-2 text-sm text-muted-foreground">{cat.desc}</p>
                   <div className="mt-4">
-                    <Dialog onOpenChange={(open) => { if (open) loadSubmenus(cat.slug) }}>
+                    <Dialog onOpenChange={(open) => { if (open) { loadConfig(cat.slug) } }}>
                       <DialogTrigger asChild>
                         <Button variant="link" className="px-0 text-primary" onClick={stopCardNavigation}>
-                          Voir les commandes →
+                          Voir la configuration →
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-lg">
+                      <DialogContent className="max-w-2xl">
                         <DialogHeaderRoot>
-                          <DialogTitleRoot>{cat.title} – Commandes</DialogTitleRoot>
+                          <DialogTitleRoot>{cat.title} – Configuration</DialogTitleRoot>
                           <DialogDescription>
-                            Accède rapidement aux sous‑menus et commandes disponibles.
+                            Modifie la configuration de ce module. Un aperçu est affiché lorsque c’est possible.
                           </DialogDescription>
                         </DialogHeaderRoot>
-                        <div className="mt-2 max-h-72 space-y-1 overflow-y-auto pr-2">
-                          {submenus[cat.slug]?.loading ? (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
-                            </div>
-                          ) : submenus[cat.slug]?.error ? (
-                            <div className="text-sm text-red-500">{submenus[cat.slug]?.error}</div>
+                        <div className="mt-2 max-h-[70vh] overflow-y-auto pr-2">
+                          {configs[cat.slug]?.loading ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Chargement…</div>
+                          ) : configs[cat.slug]?.error ? (
+                            <div className="text-sm text-red-500">{configs[cat.slug]?.error}</div>
                           ) : (
-                            <> 
-                              { (submenus[cat.slug]?.items?.length ? submenus[cat.slug]!.items : (categorySubmenus[cat.slug] || []))
-                                .map((item, idx) => (
-                                  <div key={idx} className="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-sm">
-                                    <div className="font-medium">{item.name}</div>
-                                    {item.description ? (
-                                      <div className="text-muted-foreground">{item.description}</div>
-                                    ) : null}
+                            <div className="grid gap-4">
+                              {/* Formulaire généré automatiquement */}
+                              <div className="grid gap-3">
+                                {Object.entries(configs[cat.slug]?.data || {}).map(([key, val]) => {
+                                  const lower = key.toLowerCase()
+                                  const isBool = typeof val === "boolean"
+                                  const isNum = typeof val === "number"
+                                  const isStr = typeof val === "string"
+                                  const isColor = isStr && /(color|couleur)/i.test(key)
+                                  const isImage = isStr && /(image|logo|banner|url)/i.test(key)
+                                  const isRoleLike = isStr && /(role|roleid)/i.test(lower)
+                                  const isChannelLike = isStr && /(channel|salon|channelid)/i.test(lower)
+                                  const isPrimitive = isBool || isNum || isStr
+                                  return (
+                                    <div key={key} className="grid gap-1.5">
+                                      <label className="text-sm font-medium">{key}</label>
+                                      {isBool ? (
+                                        <label className="inline-flex items-center gap-2 text-sm">
+                                          <input
+                                            type="checkbox"
+                                            className="h-4 w-4"
+                                            checked={!!val}
+                                            onChange={(e) => updateConfigField(cat.slug, key, e.target.checked)}
+                                          />
+                                          <span className="text-muted-foreground">{val ? "Activé" : "Désactivé"}</span>
+                                        </label>
+                                      ) : isNum ? (
+                                        <input
+                                          type="number"
+                                          className="w-full rounded-md border border-border/60 bg-background px-2 py-1 text-sm"
+                                          value={Number.isFinite(val) ? val : 0}
+                                          onChange={(e) => updateConfigField(cat.slug, key, Number(e.target.value))}
+                                        />
+                                      ) : isColor ? (
+                                        <div className="flex items-center gap-2">
+                                          <input
+                                            type="color"
+                                            className="h-8 w-10 cursor-pointer rounded-md border border-border/60 bg-muted/20"
+                                            value={(val as string) || "#000000"}
+                                            onChange={(e) => updateConfigField(cat.slug, key, e.target.value)}
+                                          />
+                                          <input
+                                            type="text"
+                                            className="w-full rounded-md border border-border/60 bg-background px-2 py-1 text-sm"
+                                            value={val as string}
+                                            onChange={(e) => updateConfigField(cat.slug, key, e.target.value)}
+                                          />
+                                        </div>
+                                      ) : isChannelLike && metadata?.channels?.length ? (
+                                        <select
+                                          className="w-full rounded-md border border-border/60 bg-background px-2 py-1 text-sm"
+                                          value={val as string}
+                                          onChange={(e) => updateConfigField(cat.slug, key, e.target.value)}
+                                        >
+                                          <option value="">— choisir un salon —</option>
+                                          {metadata.channels.map((c) => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                          ))}
+                                        </select>
+                                      ) : isRoleLike && metadata?.roles?.length ? (
+                                        <select
+                                          className="w-full rounded-md border border-border/60 bg-background px-2 py-1 text-sm"
+                                          value={val as string}
+                                          onChange={(e) => updateConfigField(cat.slug, key, e.target.value)}
+                                        >
+                                          <option value="">— choisir un rôle —</option>
+                                          {metadata.roles.map((r) => (
+                                            <option key={r.id} value={r.id}>{r.name}</option>
+                                          ))}
+                                        </select>
+                                      ) : isImage ? (
+                                        <div className="grid gap-2">
+                                          <input
+                                            type="url"
+                                            className="w-full rounded-md border border-border/60 bg-background px-2 py-1 text-sm"
+                                            value={val as string}
+                                            onChange={(e) => updateConfigField(cat.slug, key, e.target.value)}
+                                            placeholder="https://…"
+                                          />
+                                          {(val as string)?.trim() ? (
+                                            <img
+                                              src={val as string}
+                                              alt={key}
+                                              className="max-h-40 w-auto rounded-md border border-border/60 bg-muted/10 object-contain"
+                                              referrerPolicy="no-referrer"
+                                              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/bag-fallback.svg" }}
+                                            />
+                                          ) : null}
+                                        </div>
+                                      ) : isStr ? (
+                                        <input
+                                          type="text"
+                                          className="w-full rounded-md border border-border/60 bg-background px-2 py-1 text-sm"
+                                          value={val as string}
+                                          onChange={(e) => updateConfigField(cat.slug, key, e.target.value)}
+                                        />
+                                      ) : (
+                                        <textarea
+                                          className="min-h-[84px] w-full rounded-md border border-border/60 bg-background px-2 py-1 text-sm"
+                                          value={(() => { try { return JSON.stringify(val, null, 2) } catch { return String(val) } })()}
+                                          onChange={(e) => {
+                                            try {
+                                              const next = JSON.parse(e.target.value)
+                                              updateConfigField(cat.slug, key, next)
+                                            } catch {
+                                              // keep as text until valid JSON
+                                            }
+                                          }}
+                                        />
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+
+                              {/* Aperçu simple basé sur quelques clés usuelles */}
+                              <div className="grid gap-2">
+                                <div className="text-sm font-medium">Aperçu</div>
+                                <div className="rounded-md border border-border/60 bg-muted/10 p-3">
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className="h-6 w-6 rounded"
+                                      style={{
+                                        background:
+                                          (configs[cat.slug]?.data?.primaryColor as string) ||
+                                          (configs[cat.slug]?.data?.color as string) ||
+                                          (configs[cat.slug]?.data?.couleur as string) ||
+                                          "#6b7280",
+                                      }}
+                                    />
+                                    <div className="text-sm text-muted-foreground">
+                                      {(configs[cat.slug]?.data?.title as string) || `${cat.title}`}
+                                    </div>
                                   </div>
-                                ))}
-                              {!(submenus[cat.slug]?.items?.length || (categorySubmenus[cat.slug] || []).length) ? (
-                                <div className="text-sm text-muted-foreground">Aucun sous‑menu défini pour le moment.</div>
-                              ) : null}
-                            </>
+                                  {(() => {
+                                    const img =
+                                      (configs[cat.slug]?.data?.image as string) ||
+                                      (configs[cat.slug]?.data?.logo as string) ||
+                                      (configs[cat.slug]?.data?.banner as string)
+                                    if (!img) return null
+                                    return (
+                                      <div className="mt-2">
+                                        <img
+                                          src={img}
+                                          alt="preview"
+                                          className="max-h-40 w-auto rounded-md border border-border/60 bg-muted/10 object-contain"
+                                          referrerPolicy="no-referrer"
+                                          onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/bag-fallback.svg" }}
+                                        />
+                                      </div>
+                                    )
+                                  })()}
+                                </div>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="mt-2 flex items-center justify-end gap-3">
+                                {configs[cat.slug]?.savedAt ? (
+                                  <span className="text-xs text-muted-foreground">Sauvegardé</span>
+                                ) : null}
+                                <Button
+                                  onClick={() => saveConfig(cat.slug)}
+                                  disabled={configs[cat.slug]?.saving}
+                                >
+                                  {configs[cat.slug]?.saving ? "Sauvegarde…" : "Enregistrer"}
+                                </Button>
+                              </div>
+                            </div>
                           )}
                         </div>
                       </DialogContent>
@@ -355,7 +569,7 @@ export default function Dashboard() {
       <footer className="border-t border-border/50 py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-muted-foreground sm:flex-row">
           <div className="flex items-center gap-2">
-            <Image src="https://cdn.discordapp.com/attachments/1408458115283812484/1408458115770482778/20250305162902.png?ex=68a9d056&is=68a87ed6&hm=3189c1bb0c0b3b9dd3d818ea9608a9d9088d3fef798c36f920d60d64eef998e0&" alt="BAG Logo" width={20} height={20} className="rounded" unoptimized />
+            <Logo size={20} />
             <span>BAG</span>
           </div>
           <div className="flex items-center gap-4">
