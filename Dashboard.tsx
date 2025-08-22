@@ -4,6 +4,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Menu } from "lucide-react"
 
 type Category = {
   icon: string
@@ -51,6 +53,34 @@ export default function Dashboard() {
               <Link href={LINKS.settings}>Paramètres</Link>
             </Button>
           </nav>
+          <div className="sm:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button size="icon" variant="ghost" aria-label="Ouvrir le menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72 sm:w-80">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <Image src="https://cdn.discordapp.com/attachments/1408458115283812484/1408458115770482778/20250305162902.png?ex=68a9d056&is=68a87ed6&hm=3189c1bb0c0b3b9dd3d818ea9608a9d9088d3fef798c36f920d60d64eef998e0&" alt="BAG Logo" width={20} height={20} className="rounded" unoptimized />
+                    <span>BAG</span>
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="mt-4 grid gap-2">
+                  <Button asChild variant="secondary" className="justify-start">
+                    <a href={LINKS.invite} target="_blank" rel="noreferrer">Inviter le bot</a>
+                  </Button>
+                  <Button asChild variant="outline" className="justify-start">
+                    <a href={LINKS.support} target="_blank" rel="noreferrer">Support</a>
+                  </Button>
+                  <Button asChild className="justify-start">
+                    <Link href={LINKS.settings}>Paramètres</Link>
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </header>
 
