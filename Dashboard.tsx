@@ -9,6 +9,7 @@ import { Menu } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogDescription, DialogHeader as DialogHeaderRoot, DialogTitle as DialogTitleRoot, DialogTrigger } from "@/components/ui/dialog"
+import { Loader2 } from "lucide-react"
 
 type Category = {
   icon: string
@@ -73,6 +74,8 @@ type GuildMetadata = {
   channels: Array<{ id: string; name: string; type?: string }>
 }
 
+type SubmenuItem = { name: string; description?: string }
+
 const LINKS = {
   invite: "#",
   support: "#",
@@ -82,10 +85,15 @@ const LINKS = {
 export default function Dashboard() {
   const searchParams = useSearchParams()
   const guildId = useMemo(() => searchParams.get("guildId") || "", [searchParams])
+  const apiBase = useMemo(
+    () => ((process.env.NEXT_PUBLIC_BAG_API_BASE_URL as string | undefined) || "").replace(/\/$/, ""),
+    []
+  )
 
   const [metadata, setMetadata] = useState<GuildMetadata | null>(null)
   const [metaLoading, setMetaLoading] = useState(false)
   const [metaError, setMetaError] = useState<string | null>(null)
+  const [submenus, setSubmenus] = useState<Record<string, { loading: boolean; items: SubmenuItem[]; error?: string }>>({})
 
   useEffect(() => {
     if (!guildId) return
@@ -94,7 +102,10 @@ export default function Dashboard() {
       try {
         setMetaLoading(true)
         setMetaError(null)
-        const res = await fetch(`/api/guilds/${guildId}/metadata`, { cache: "no-store" })
+        const metadataUrl = apiBase
+          ? `${apiBase}/guilds/${guildId}/metadata`
+          : `/api/guilds/${guildId}/metadata`
+        const res = await fetch(metadataUrl, { cache: "no-store" })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = (await res.json()) as GuildMetadata
         if (!cancelled) setMetadata(data)
@@ -108,7 +119,22 @@ export default function Dashboard() {
     return () => {
       cancelled = true
     }
-  }, [guildId])
+  }, [guildId, apiBase])
+
+  const loadSubmenus = async (slug: string) => {
+    const current = submenus[slug]
+    if (current?.loading || (current && current.items.length > 0)) return
+    setSubmenus((s) => ({ ...s, [slug]: { loading: true, items: [], error: undefined } }))
+    try {
+      const url = apiBase ? `${apiBase}/dashboard/${slug}/commands` : `/api/dashboard/${slug}/commands`
+      const res = await fetch(url, { cache: "no-store" })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const items = (await res.json()) as SubmenuItem[]
+      setSubmenus((s) => ({ ...s, [slug]: { loading: false, items } }))
+    } catch (e) {
+      setSubmenus((s) => ({ ...s, [slug]: { loading: false, items: [], error: "Chargement des sous‑menus impossible" } }))
+    }
+  }
 
   const stopCardNavigation = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -276,7 +302,7 @@ export default function Dashboard() {
                 <CardContent>
                   <p className="line-clamp-2 text-sm text-muted-foreground">{cat.desc}</p>
                   <div className="mt-4">
-                    <Dialog>
+                    <Dialog onOpenChange={(open) => { if (open) loadSubmenus(cat.slug) }}>
                       <DialogTrigger asChild>
                         <Button variant="link" className="px-0 text-primary" onClick={stopCardNavigation}>
                           Voir les commandes →
@@ -290,17 +316,28 @@ export default function Dashboard() {
                           </DialogDescription>
                         </DialogHeaderRoot>
                         <div className="mt-2 max-h-72 space-y-1 overflow-y-auto pr-2">
-                          {(categorySubmenus[cat.slug] || []).map((item, idx) => (
-                            <div key={idx} className="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-sm">
-                              <div className="font-medium">{item.name}</div>
-                              {item.description ? (
-                                <div className="text-muted-foreground">{item.description}</div>
-                              ) : null}
+                          {submenus[cat.slug]?.loading ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
                             </div>
-                          ))}
-                          {!(categorySubmenus[cat.slug] || []).length ? (
-                            <div className="text-sm text-muted-foreground">Aucun sous‑menu défini pour le moment.</div>
-                          ) : null}
+                          ) : submenus[cat.slug]?.error ? (
+                            <div className="text-sm text-red-500">{submenus[cat.slug]?.error}</div>
+                          ) : (
+                            <> 
+                              { (submenus[cat.slug]?.items?.length ? submenus[cat.slug]!.items : (categorySubmenus[cat.slug] || []))
+                                .map((item, idx) => (
+                                  <div key={idx} className="rounded-md border border-border/60 bg-muted/20 px-3 py-2 text-sm">
+                                    <div className="font-medium">{item.name}</div>
+                                    {item.description ? (
+                                      <div className="text-muted-foreground">{item.description}</div>
+                                    ) : null}
+                                  </div>
+                                ))}
+                              {!(submenus[cat.slug]?.items?.length || (categorySubmenus[cat.slug] || []).length) ? (
+                                <div className="text-sm text-muted-foreground">Aucun sous‑menu défini pour le moment.</div>
+                              ) : null}
+                            </>
+                          )}
                         </div>
                       </DialogContent>
                     </Dialog>
