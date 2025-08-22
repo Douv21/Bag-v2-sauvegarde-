@@ -973,6 +973,17 @@ class MainRouterHandler {
                 }
             }
 
+            // Sélections: actions par niveau de risque
+            if (customId === 'config_verif_action_risk_low' || customId === 'config_verif_action_risk_medium' || customId === 'config_verif_action_risk_high' || customId === 'config_verif_action_risk_critical') {
+                if (this.securityConfigHandler) {
+                    await this.securityConfigHandler.handleAutoActionSelect(interaction);
+                    return true;
+                } else {
+                    await interaction.reply({ content: '❌ Module sécurité indisponible.', ephemeral: true });
+                    return true;
+                }
+            }
+
             // Sélecteur de rôle: rôle de quarantaine
             if (customId === 'config_verif_quarantine_role') {
                 if (this.securityConfigHandler) {
