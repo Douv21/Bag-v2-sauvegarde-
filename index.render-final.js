@@ -502,6 +502,17 @@ class RenderSolutionBot {
             }
         }));
 
+        // Alias pour servir le JSON des catégories du dashboard à la racine également
+        app.get('/commands.json', (req, res) => {
+            res.sendFile(path.join(__dirname, 'public', 'dashboard', 'commands.json'));
+        });
+
+        // Fallback SPA pour les routes client (/dashboard/*, /docs/*)
+        app.get(['/dashboard/*', '/docs/*'], (req, res) => {
+            res.set('Cache-Control', 'no-store, must-revalidate');
+            res.sendFile(path.join(__dirname, 'public', 'dashboard', 'index.html'));
+        });
+
         // === Dashboard API désactivée temporairement ===
         app.get('/api/dashboard/overview', (req, res) => {
             res.status(503).json({ error: 'dashboard_disabled' });
