@@ -94,6 +94,7 @@ class CommandHandler {
                     try {
                         const guildId = interaction.guild?.id || null;
                         await this.dataManager.incrementCommandCount(guildId);
+                        await this.dataManager.incrementCommandByName(guildId, interaction.commandName);
                     } catch {}
                 } catch (error) {
                     console.error(`❌ Erreur commande ${interaction.commandName}:`, error);

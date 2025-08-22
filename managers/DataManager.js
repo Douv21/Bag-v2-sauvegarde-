@@ -434,7 +434,7 @@ class DataManager {
             const actions = await this.getData('actions');
             const userStats = await this.getData('user_stats');
             const metrics = await this.getData('metrics');
-
+            
             // Totaux (potentiellement filtrés par guilde)
             const totalUsers = guildIdFilter
                 ? Object.keys(users).filter(k => String(k).includes(guildIdFilter)).length
@@ -445,7 +445,7 @@ class DataManager {
             const totalActions = actions && typeof actions === 'object'
                 ? (guildIdFilter ? Object.keys(actions).filter(k => String(k).includes(guildIdFilter)).length : Object.keys(actions).length)
                 : 0;
-
+            
             // Membres actifs (dernières 24h) à partir de user_stats
             const now = Date.now();
             const oneDayMs = 24 * 60 * 60 * 1000;
@@ -460,17 +460,29 @@ class DataManager {
                     }
                 }
             } catch {}
-
+            
             // Messages/Commandes du jour depuis metrics
             const todayKey = this.getTodayKey();
             let todayMessages = (metrics?.messagesPerDay && Number(metrics.messagesPerDay[todayKey])) || 0;
             let commandsUsed = (metrics?.commandsPerDay && Number(metrics.commandsPerDay[todayKey])) || 0;
+            let topCommand = null;
+            let topCommandCount = 0;
             if (guildIdFilter && metrics?.guilds?.[guildIdFilter]) {
                 const g = metrics.guilds[guildIdFilter];
                 todayMessages = (g.messagesPerDay && Number(g.messagesPerDay[todayKey])) || 0;
                 commandsUsed = (g.commandsPerDay && Number(g.commandsPerDay[todayKey])) || 0;
+                if (g.commandsByName) {
+                    for (const [name, cnt] of Object.entries(g.commandsByName)) {
+                        if (Number(cnt) > topCommandCount) { topCommandCount = Number(cnt); topCommand = name; }
+                    }
+                }
+            } else {
+                const byName = metrics?.commandsByName || {};
+                for (const [name, cnt] of Object.entries(byName)) {
+                    if (Number(cnt) > topCommandCount) { topCommandCount = Number(cnt); topCommand = name; }
+                }
             }
-
+            
             // Argent total (somme des balances des utilisateurs)
             let totalMoney = 0;
             if (guildIdFilter) {
@@ -482,7 +494,7 @@ class DataManager {
             } else {
                 totalMoney = Object.values(users || {}).reduce((sum, u) => sum + (Number(u.balance) || 0), 0);
             }
-
+            
             return {
                 totalUsers,
                 totalConfessions,
@@ -493,7 +505,9 @@ class DataManager {
                 activeMembers,
                 todayMessages,
                 commandsUsed,
-                totalMoney
+                totalMoney,
+                topCommand,
+                topCommandCount
             };
         } catch (error) {
             console.error('❌ Erreur stats:', error);
@@ -667,19 +681,35 @@ class DataManager {
             const today = this.getTodayKey();
             if (!metrics.commandsPerDay) metrics.commandsPerDay = {};
             metrics.commandsPerDay[today] = (Number(metrics.commandsPerDay[today]) || 0) + 1;
-
+            
             if (guildId) {
                 if (!metrics.guilds) metrics.guilds = {};
-                if (!metrics.guilds[guildId]) metrics.guilds[guildId] = { messagesPerDay: {}, commandsPerDay: {} };
+                if (!metrics.guilds[guildId]) metrics.guilds[guildId] = { messagesPerDay: {}, commandsPerDay: {}, commandsByName: {} };
                 const g = metrics.guilds[guildId];
                 if (!g.commandsPerDay) g.commandsPerDay = {};
                 g.commandsPerDay[today] = (Number(g.commandsPerDay[today]) || 0) + 1;
             }
-
+            
             await this.saveData('metrics', metrics);
         } catch (e) {
             // silencieux
         }
+    }
+    
+    async incrementCommandByName(guildId, commandName) {
+        try {
+            const metrics = await this.getData('metrics');
+            if (!metrics.commandsByName) metrics.commandsByName = {};
+            metrics.commandsByName[commandName] = (Number(metrics.commandsByName[commandName]) || 0) + 1;
+            if (guildId) {
+                if (!metrics.guilds) metrics.guilds = {};
+                if (!metrics.guilds[guildId]) metrics.guilds[guildId] = { messagesPerDay: {}, commandsPerDay: {}, commandsByName: {} };
+                const g = metrics.guilds[guildId];
+                if (!g.commandsByName) g.commandsByName = {};
+                g.commandsByName[commandName] = (Number(g.commandsByName[commandName]) || 0) + 1;
+            }
+            await this.saveData('metrics', metrics);
+        } catch (e) {}
     }
 }
 
