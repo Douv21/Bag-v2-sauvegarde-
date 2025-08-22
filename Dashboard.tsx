@@ -141,6 +141,8 @@ export default function Dashboard() {
     e.stopPropagation()
   }
 
+  const withGuild = (path: string) => (guildId ? `${path}${path.includes("?") ? "&" : "?"}guildId=${guildId}` : path)
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Top Nav */}
@@ -158,7 +160,7 @@ export default function Dashboard() {
               <a href={LINKS.support} target="_blank" rel="noreferrer">Support</a>
             </Button>
             <Button asChild>
-              <Link href={LINKS.settings}>Paramètres</Link>
+              <Link href={withGuild(LINKS.settings)}>Paramètres</Link>
             </Button>
           </nav>
           <div className="sm:hidden">
@@ -183,7 +185,7 @@ export default function Dashboard() {
                     <a href={LINKS.support} target="_blank" rel="noreferrer">Support</a>
                   </Button>
                   <Button asChild className="justify-start">
-                    <Link href={LINKS.settings}>Paramètres</Link>
+                    <Link href={withGuild(LINKS.settings)}>Paramètres</Link>
                   </Button>
                 </div>
               </SheetContent>
@@ -210,7 +212,7 @@ export default function Dashboard() {
                 <a href={LINKS.support} target="_blank" rel="noreferrer">Support</a>
               </Button>
               <Button asChild>
-                <Link href={LINKS.settings}>Paramètres</Link>
+                <Link href={withGuild(LINKS.settings)}>Paramètres</Link>
               </Button>
             </div>
           </div>
@@ -286,7 +288,7 @@ export default function Dashboard() {
           {categories.map((cat) => (
             <Link
               key={cat.slug}
-              href={`/dashboard/${cat.slug}`}
+              href={withGuild(`/dashboard/${cat.slug}`)}
               aria-label={`${cat.title} – ouvrir`}
               className="group block h-full"
             >
