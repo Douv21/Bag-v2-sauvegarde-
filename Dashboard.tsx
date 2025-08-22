@@ -77,8 +77,8 @@ type GuildMetadata = {
 type SubmenuItem = { name: string; description?: string }
 
 const LINKS = {
-  invite: "#",
-  support: "#",
+  invite: "https://discord.com/oauth2/authorize?client_id=1394318358228369538&permissions=8&integration_type=0&scope=bot",
+  support: "https://discord.gg/W52qQtNqFt",
   settings: "/dashboard/settings",
 }
 
