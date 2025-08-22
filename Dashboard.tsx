@@ -37,7 +37,7 @@ export default function Dashboard() {
       <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <Image src="/bag-logo.png" alt="BAG Logo" width={36} height={36} className="rounded" />
+            <Image src="https://cdn.discordapp.com/attachments/1408458115283812484/1408458115770482778/20250305162902.png?ex=68a9d056&is=68a87ed6&hm=3189c1bb0c0b3b9dd3d818ea9608a9d9088d3fef798c36f920d60d64eef998e0&" alt="BAG Logo" width={36} height={36} className="rounded" unoptimized />
             <span className="font-semibold tracking-tight">BAG</span>
           </div>
           <nav className="hidden gap-2 sm:flex">
@@ -59,7 +59,7 @@ export default function Dashboard() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_60%_at_50%_-10%,rgba(120,119,198,0.15),transparent_70%)]" />
         <div className="relative mx-auto max-w-6xl px-4 py-10 sm:py-14">
           <div className="flex flex-col items-center text-center">
-            <Image src="/bag-logo.png" alt="BAG Logo" width={96} height={96} className="mb-4 rounded" />
+            <Image src="https://cdn.discordapp.com/attachments/1408458115283812484/1408458115770482778/20250305162902.png?ex=68a9d056&is=68a87ed6&hm=3189c1bb0c0b3b9dd3d818ea9608a9d9088d3fef798c36f920d60d64eef998e0&" alt="BAG Logo" width={96} height={96} className="mb-4 rounded" unoptimized />
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">BAG Dashboard</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
               Administration et documentation centrales
@@ -116,7 +116,7 @@ export default function Dashboard() {
       <footer className="border-t border-border/50 py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-muted-foreground sm:flex-row">
           <div className="flex items-center gap-2">
-            <Image src="/bag-logo.png" alt="BAG Logo" width={20} height={20} className="rounded" />
+            <Image src="https://cdn.discordapp.com/attachments/1408458115283812484/1408458115770482778/20250305162902.png?ex=68a9d056&is=68a87ed6&hm=3189c1bb0c0b3b9dd3d818ea9608a9d9088d3fef798c36f920d60d64eef998e0&" alt="BAG Logo" width={20} height={20} className="rounded" unoptimized />
             <span>BAG</span>
           </div>
           <div className="flex items-center gap-4">
