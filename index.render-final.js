@@ -727,7 +727,7 @@ class RenderSolutionBot {
                         banTime: 86400
                     }
                 };
-
+                
                 res.json({ success: true, data: configs });
             } catch (error) {
                 console.error('Erreur chargement configs:', error);
@@ -765,9 +765,218 @@ class RenderSolutionBot {
                             autoDelete: false,
                             minLength: 10,
                             maxLength: 2000
+                        },
+                        moderation: {
+                            autoMod: true,
+                            warnLimit: 3,
+                            muteTime: 600,
+                            banTime: 86400
                         }
                     }
                 });
+            }
+        });
+
+        // === Levels config REST endpoints ===
+        app.get('/api/levels/config', (req, res) => {
+            try {
+                const levelManager = require('./utils/levelManager');
+                const config = levelManager.loadConfig();
+                res.json({ success: true, data: config });
+            } catch (error) {
+                console.error('GET /api/levels/config error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        app.post('/api/levels/config', (req, res) => {
+            try {
+                const levelManager = require('./utils/levelManager');
+                const current = levelManager.loadConfig();
+                const body = req.body || {};
+                const next = { ...current };
+                if (body.textXP && typeof body.textXP === 'object') next.textXP = { ...current.textXP, ...body.textXP };
+                if (body.voiceXP && typeof body.voiceXP === 'object') next.voiceXP = { ...current.voiceXP, ...body.voiceXP };
+                if (body.notifications && typeof body.notifications === 'object') next.notifications = { ...current.notifications, ...body.notifications };
+                if (body.levelFormula && typeof body.levelFormula === 'object') next.levelFormula = { ...current.levelFormula, ...body.levelFormula };
+                if (body.roleRewards && (Array.isArray(body.roleRewards) || typeof body.roleRewards === 'object')) next.roleRewards = body.roleRewards;
+                if (body.styleBackgrounds && typeof body.styleBackgrounds === 'object') next.styleBackgrounds = { ...current.styleBackgrounds, ...body.styleBackgrounds };
+                levelManager.saveConfig(next);
+                res.json({ success: true, data: next });
+            } catch (error) {
+                console.error('POST /api/levels/config error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        app.post('/api/levels/notifications', (req, res) => {
+            try {
+                const levelManager = require('./utils/levelManager');
+                const cfg = levelManager.loadConfig();
+                const { enabled, channelId, cardStyle } = req.body || {};
+                if (typeof enabled === 'boolean') cfg.notifications.enabled = enabled;
+                if (typeof channelId === 'string') {
+                    cfg.notifications.channelId = channelId;
+                    cfg.notifications.channel = channelId; // compat
+                }
+                if (typeof cardStyle === 'string' && cardStyle.trim()) cfg.notifications.cardStyle = cardStyle.trim();
+                levelManager.saveConfig(cfg);
+                res.json({ success: true, data: cfg.notifications });
+            } catch (error) {
+                console.error('POST /api/levels/notifications error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        app.post('/api/levels/role-rewards', (req, res) => {
+            try {
+                const levelManager = require('./utils/levelManager');
+                const cfg = levelManager.loadConfig();
+                const { action, level, roleId } = req.body || {};
+                const lvl = parseInt(level, 10);
+                if (!['add','update','remove'].includes(action) || !(lvl >= 1)) {
+                    return res.status(400).json({ success: false, error: 'INVALID_PARAMS' });
+                }
+                // Normaliser en mapping objet
+                let mapping = {};
+                if (Array.isArray(cfg.roleRewards)) {
+                    for (const r of cfg.roleRewards) { if (r && typeof r.level === 'number' && r.roleId) mapping[r.level] = r.roleId; }
+                } else if (cfg.roleRewards && typeof cfg.roleRewards === 'object') {
+                    mapping = { ...cfg.roleRewards };
+                }
+                if (action === 'remove') {
+                    delete mapping[lvl];
+                } else {
+                    if (!roleId || typeof roleId !== 'string') return res.status(400).json({ success: false, error: 'ROLE_ID_REQUIRED' });
+                    mapping[lvl] = roleId;
+                }
+                cfg.roleRewards = mapping;
+                levelManager.saveConfig(cfg);
+                res.json({ success: true, data: cfg.roleRewards });
+            } catch (error) {
+                console.error('POST /api/levels/role-rewards error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        app.post('/api/levels/style-backgrounds', (req, res) => {
+            try {
+                const levelManager = require('./utils/levelManager');
+                const cfg = levelManager.loadConfig();
+                const { style, roleKey, target, remove } = req.body || {};
+                if (!style || typeof style !== 'string') return res.status(400).json({ success: false, error: 'STYLE_REQUIRED' });
+                cfg.styleBackgrounds = cfg.styleBackgrounds || {};
+                cfg.styleBackgrounds[style] = cfg.styleBackgrounds[style] || { default: '', byRole: {} };
+                cfg.styleBackgrounds[style].byRole = cfg.styleBackgrounds[style].byRole || {};
+                if (remove && roleKey) {
+                    delete cfg.styleBackgrounds[style].byRole[roleKey];
+                } else if (roleKey && typeof target === 'string') {
+                    cfg.styleBackgrounds[style].byRole[roleKey] = target;
+                }
+                levelManager.saveConfig(cfg);
+                res.json({ success: true, data: cfg.styleBackgrounds[style] });
+            } catch (error) {
+                console.error('POST /api/levels/style-backgrounds error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        app.get('/api/levels/preview', async (req, res) => {
+            try {
+                const levelManager = require('./utils/levelManager');
+                const generator = require('./utils/levelCardGenerator');
+                const cfg = levelManager.loadConfig();
+                const style = String(req.query.style || cfg.notifications?.cardStyle || 'holographic');
+                const user = { username: 'Preview', displayName: 'Aperçu', avatarURL: 'https://cdn.discordapp.com/embed/avatars/0.png', roles: [] };
+                const buffer = await generator.generateCard(user, { xp: 500, totalMessages: 42, totalVoiceTime: 60000 }, 4, 5, null, style);
+                if (!buffer) return res.status(500).json({ success: false, error: 'PREVIEW_FAILED' });
+                res.set('Content-Type', 'image/png');
+                res.send(buffer);
+            } catch (error) {
+                console.error('GET /api/levels/preview error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // === Guild channels listing ===
+        app.get('/api/guilds/:guildId/channels', async (req, res) => {
+            try {
+                const guildId = req.params.guildId;
+                const client = this.client;
+                if (!client || !client.isReady()) return res.json([]);
+                const guild = client.guilds.cache.get(guildId);
+                if (!guild) return res.json([]);
+                const channels = await guild.channels.fetch();
+                const result = [];
+                channels.forEach((ch) => {
+                    try {
+                        if (ch && ch.isTextBased && ch.isTextBased()) {
+                            result.push({ id: ch.id, name: ch.name, type: 'text' });
+                        }
+                    } catch (_) {}
+                });
+                res.json(result);
+            } catch (error) {
+                console.error('GET /api/guilds/:guildId/channels error:', error);
+                res.status(500).json([]);
+            }
+        });
+
+        // === Economy actions REST endpoints ===
+        app.get('/api/economy/actions', (req, res) => {
+            try {
+                const dm = require('./utils/simpleDataManager');
+                const eco = dm.getData('economy.json');
+                const actions = eco.actions || {};
+                const normalized = {};
+                for (const [key, v] of Object.entries(actions)) {
+                    if (typeof v !== 'object') continue;
+                    normalized[key] = {
+                        minReward: v.minReward ?? v.montant?.minAmount ?? null,
+                        maxReward: v.maxReward ?? v.montant?.maxAmount ?? null,
+                        cooldownSec: typeof v.cooldown === 'number' ? Math.round(v.cooldown / 1000) : (typeof v.cooldown === 'object' ? Math.round((v.cooldown.cooldown || 0) / 1000) : null),
+                        goodKarma: v.goodKarma ?? v.karma?.goodKarma ?? 0,
+                        badKarma: v.badKarma ?? v.karma?.badKarma ?? 0,
+                        enabled: v.enabled !== false
+                    };
+                }
+                res.json({ success: true, data: normalized });
+            } catch (error) {
+                console.error('GET /api/economy/actions error:', error);
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        app.post('/api/economy/actions/:action', (req, res) => {
+            try {
+                const dm = require('./utils/simpleDataManager');
+                const eco = dm.getData('economy.json');
+                eco.actions = eco.actions || {};
+                const key = req.params.action;
+                const body = req.body || {};
+                const cur = eco.actions[key] || {};
+                const next = { ...cur };
+                if (body.minReward !== undefined) next.minReward = Number(body.minReward);
+                if (body.maxReward !== undefined) next.maxReward = Number(body.maxReward);
+                if (body.cooldownSec !== undefined) next.cooldown = Math.max(0, Number(body.cooldownSec)) * 1000;
+                if (body.goodKarma !== undefined) next.goodKarma = Number(body.goodKarma);
+                if (body.badKarma !== undefined) next.badKarma = Number(body.badKarma);
+                if (body.enabled !== undefined) next.enabled = Boolean(body.enabled);
+                // Compat champs imbriqués
+                next.montant = {
+                    minAmount: next.minReward ?? next.montant?.minAmount ?? null,
+                    maxAmount: next.maxReward ?? next.montant?.maxAmount ?? null
+                };
+                next.karma = {
+                    goodKarma: next.goodKarma ?? next.karma?.goodKarma ?? 0,
+                    badKarma: next.badKarma ?? next.karma?.badKarma ?? 0
+                };
+                eco.actions[key] = next;
+                dm.setData('economy.json', eco);
+                res.json({ success: true, data: eco.actions[key] });
+            } catch (error) {
+                console.error('POST /api/economy/actions/:action error:', error);
+                res.status(500).json({ success: false, error: error.message });
             }
         });
 
