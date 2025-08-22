@@ -318,6 +318,159 @@
                             <div class="row"><div class="toggle" id="alertsToggle"></div><div class="muted">Alertes</div></div>
                         </div>
                     </div>
+
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Économie — Configuration & Aperçu</div>
+                        <div class="grid" style="grid-template-columns: repeat(12,1fr); gap:10px;">
+                            <div style="grid-column: span 7;" class="col">
+                                <div class="row"><label style="width:160px">🎁 Daily (€)</label><input id="econDaily" type="number" class="input" placeholder="100" style="max-width:160px;"></div>
+                                <div class="row"><label style="width:160px">💼 Travail min/max (€)</label><input id="econWorkMin" type="number" class="input" placeholder="50" style="max-width:120px;"> <input id="econWorkMax" type="number" class="input" placeholder="200" style="max-width:120px;"></div>
+                                <div class="row"><label style="width:160px">💹 Intérêt (%)</label><input id="econInterest" type="number" step="0.01" class="input" placeholder="0.02" style="max-width:160px;"></div>
+                                <div class="row"><button id="saveEconomy" class="btn">Enregistrer</button><span id="economyMsg" class="muted"></span></div>
+                            </div>
+                            <div style="grid-column: span 5;">
+                                <div id="economyPreview" class="card" style="background:#0f0f0f;">
+                                    <div class="muted">Aperçu</div>
+                                    <div id="economyPreviewText" style="margin-top:6px; line-height:1.5"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Niveaux — Configuration & Aperçu</div>
+                        <div class="grid" style="grid-template-columns: repeat(12,1fr); gap:10px;">
+                            <div style="grid-column: span 7;" class="col">
+                                <div class="row"><label style="width:180px">🔤 Texte XP min/max</label><input id="lvlTextMin" type="number" class="input" placeholder="5" style="max-width:120px;"> <input id="lvlTextMax" type="number" class="input" placeholder="15" style="max-width:120px;"></div>
+                                <div class="row"><label style="width:180px">🔔 Notifications</label><div id="lvlNotif" class="toggle"></div></div>
+                                <div class="row"><label style="width:180px">🎴 Style carte</label>
+                                    <select id="lvlStyle" class="select" style="max-width:200px;">
+                                        <option value="holographic">holographic</option>
+                                        <option value="gamer">gamer</option>
+                                        <option value="amour">amour</option>
+                                        <option value="sensuel">sensuel</option>
+                                        <option value="futuristic">futuristic</option>
+                                        <option value="elegant">elegant</option>
+                                        <option value="gaming">gaming</option>
+                                        <option value="minimal">minimal</option>
+                                    </select>
+                                </div>
+                                <div class="row"><button id="saveLevels" class="btn">Enregistrer</button><span id="levelsMsg" class="muted"></span></div>
+                            </div>
+                            <div style="grid-column: span 5;">
+                                <div id="levelsPreview" class="card" style="background:#0f0f0f;">
+                                    <div class="muted">Aperçu</div>
+                                    <div id="levelsPreviewText" style="margin-top:6px; line-height:1.5"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Karma — Configuration & Aperçu</div>
+                        <div class="grid" style="grid-template-columns: repeat(12,1fr); gap:10px;">
+                            <div style="grid-column: span 7;" class="col">
+                                <div class="row"><label style="width:180px">🌞 Bonus quotidien</label><input id="karmaDailyBonus" type="number" class="input" placeholder="5" style="max-width:160px;"></div>
+                                <div class="row"><label style="width:180px">💬 Karma/message</label><input id="karmaMsgReward" type="number" class="input" placeholder="1" style="max-width:160px;"></div>
+                                <div class="row"><label style="width:180px">💭 Karma/confession</label><input id="karmaConfReward" type="number" class="input" placeholder="10" style="max-width:160px;"></div>
+                                <div class="row"><label style="width:180px">🔝 Karma max</label><input id="karmaMax" type="number" class="input" placeholder="1000" style="max-width:160px;"></div>
+                                <div class="row"><button id="saveKarma" class="btn">Enregistrer</button><span id="karmaMsg" class="muted"></span></div>
+                            </div>
+                            <div style="grid-column: span 5;">
+                                <div id="karmaPreview" class="card" style="background:#0f0f0f;">
+                                    <div class="muted">Aperçu</div>
+                                    <div id="karmaPreviewText" style="margin-top:6px; line-height:1.5"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Confessions — Configuration & Aperçu</div>
+                        <div class="grid" style="grid-template-columns: repeat(12,1fr); gap:10px;">
+                            <div style="grid-column: span 7;" class="col">
+                                <div class="row"><label style="width:180px">📺 Canal ID</label><input id="confChannelId" class="input" placeholder="1234567890" style="max-width:220px;"></div>
+                                <div class="row"><label style="width:180px">🛡️ Modération</label><div id="confModeration" class="toggle"></div></div>
+                                <div class="row"><label style="width:180px">🗑️ Auto-suppression</label><div id="confAutoDelete" class="toggle"></div></div>
+                                <div class="row"><label style="width:180px">📏 Longueur min/max</label><input id="confMinLen" type="number" class="input" placeholder="10" style="max-width:120px;"> <input id="confMaxLen" type="number" class="input" placeholder="2000" style="max-width:120px;"></div>
+                                <div class="row"><button id="saveConf" class="btn">Enregistrer</button><span id="confMsg" class="muted"></span></div>
+                            </div>
+                            <div style="grid-column: span 5;">
+                                <div id="confPreview" class="card" style="background:#0f0f0f;">
+                                    <div class="muted">Aperçu</div>
+                                    <div id="confPreviewText" style="margin-top:6px; line-height:1.5"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Comptage — Configuration & Aperçu</div>
+                        <div class="grid" style="grid-template-columns: repeat(12,1fr); gap:10px;">
+                            <div style="grid-column: span 7;" class="col">
+                                <div class="row"><label style="width:180px">🧮 Mode math</label><div id="countMath" class="toggle"></div></div>
+                                <div class="row"><label style="width:180px">😀 Réactions</label><div id="countReactions" class="toggle"></div></div>
+                                <div class="row"><button id="saveCounting" class="btn">Enregistrer</button><span id="countingMsg" class="muted"></span></div>
+                            </div>
+                            <div style="grid-column: span 5;">
+                                <div id="countingPreview" class="card" style="background:#0f0f0f;">
+                                    <div class="muted">Aperçu</div>
+                                    <div id="countingPreviewText" style="margin-top:6px; line-height:1.5"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Auto-thread — Configuration & Aperçu</div>
+                        <div class="grid" style="grid-template-columns: repeat(12,1fr); gap:10px;">
+                            <div style="grid-column: span 7;" class="col">
+                                <div class="row"><label style="width:200px">🔄 Auto-archivage</label><div id="autoArchive" class="toggle"></div></div>
+                                <div class="row"><label style="width:200px">⏰ Délai (min)</label><input id="archiveDelay" type="number" class="input" placeholder="60" style="max-width:160px;"></div>
+                                <div class="row"><button id="saveAutothread" class="btn">Enregistrer</button><span id="autothreadMsg" class="muted"></span></div>
+                            </div>
+                            <div style="grid-column: span 5;">
+                                <div id="autothreadPreview" class="card" style="background:#0f0f0f;">
+                                    <div class="muted">Aperçu</div>
+                                    <div id="autothreadPreviewText" style="margin-top:6px; line-height:1.5"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Boutique — Configuration & Aperçu</div>
+                        <div class="grid" style="grid-template-columns: repeat(12,1fr); gap:10px;">
+                            <div style="grid-column: span 7;" class="col">
+                                <div class="row"><label style="width:180px">💱 Devise</label><input id="shopCurrency" class="input" placeholder="💰" style="max-width:120px;"></div>
+                                <div class="row"><label style="width:180px">📊 Taxe (%)</label><input id="shopTaxRate" type="number" step="0.1" class="input" placeholder="0" style="max-width:160px;"></div>
+                                <div class="row"><button id="saveShop" class="btn">Enregistrer</button><span id="shopMsg" class="muted"></span></div>
+                            </div>
+                            <div style="grid-column: span 5;">
+                                <div id="shopPreview" class="card" style="background:#0f0f0f;">
+                                    <div class="muted">Aperçu</div>
+                                    <div id="shopPreviewText" style="margin-top:6px; line-height:1.5"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Modération — Configuration & Aperçu</div>
+                        <div class="grid" style="grid-template-columns: repeat(12,1fr); gap:10px;">
+                            <div style="grid-column: span 7;" class="col">
+                                <div class="row"><label style="width:200px">📝 Logs activés</label><div id="modLogsEnabled" class="toggle"></div></div>
+                                <div class="row"><label style="width:200px">📺 Canal logs ID</label><input id="modLogChannelId" class="input" placeholder="1234567890" style="max-width:220px;"></div>
+                                <div class="row"><button id="saveModeration" class="btn">Enregistrer</button><span id="moderationMsg" class="muted"></span></div>
+                            </div>
+                            <div style="grid-column: span 5;">
+                                <div id="moderationPreview" class="card" style="background:#0f0f0f;">
+                                    <div class="muted">Aperçu</div>
+                                    <div id="moderationPreviewText" style="margin-top:6px; line-height:1.5"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -554,6 +707,17 @@
             return v.toFixed(1) + ' ' + units[i];
         }
 
+        // Inject guild filter from URL when present
+        const __params = new URLSearchParams(window.location.search || '');
+        const __GUILD_ID = __params.get('guildId');
+        const withGid = (url) => {
+            if (!__GUILD_ID) return url;
+            const [base, q] = url.split('?');
+            const sp = new URLSearchParams(q || '');
+            sp.set('guildId', __GUILD_ID);
+            return base + '?' + sp.toString();
+        };
+
         // Load header info
         (async function initHeader(){
             const health = await safeJson('/health');
@@ -570,9 +734,9 @@
         // Overview wiring
         let lineBackups, pieServers, miniActive, miniBackups, uptimeGauge, lineInteractive, pieInteractive, barStacked;
         (async function initOverview(){
-            const stats = await safeJson('/api/stats');
-            const seven = await safeJson('/api/metrics/last7days');
-            const servers = await safeJson('/api/servers/distribution');
+            const stats = await safeJson(withGid('/api/stats'));
+            const seven = await safeJson(withGid('/api/metrics/last7days'));
+            const servers = await safeJson(withGid('/api/servers/distribution'));
             const guildsList = await safeJson('/api/guilds');
 
             if (stats && !stats.__error) {
@@ -583,7 +747,7 @@
             }
 
             if (guildsList && guildsList.success) {
-                $('#kpi-servers').textContent = guildsList.data.length;
+                $('#kpi-servers').textContent = __GUILD_ID ? 1 : guildsList.data.length;
             }
 
             // Mini charts
@@ -729,7 +893,15 @@
                 $('#alertChannel').innerHTML = (ch.data||[]).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             }
             $('#alertGuild').addEventListener('change', loadChannels);
-            if (guilds.data?.length) { $('#alertGuild').value = guilds.data[0].id; await loadChannels(); }
+            if ((guilds.data||[]).length) {
+                if (__GUILD_ID && (guilds.data||[]).some(g => g.id === __GUILD_ID)) {
+                    $('#alertGuild').value = __GUILD_ID;
+                    await loadChannels();
+                } else {
+                    $('#alertGuild').value = guilds.data[0].id;
+                    await loadChannels();
+                }
+            }
 
             const updatePreview = ()=> {
                 const crit = $('#alertDiscord').classList.contains('on') ? '🔴 Critique' : '⚪ Info';
@@ -751,8 +923,8 @@
 
         // Detailed stats charts
         (async function initStats(){
-            const seven = await safeJson('/api/metrics/last7days');
-            const servers = await safeJson('/api/servers/distribution');
+            const seven = await safeJson(withGid('/api/metrics/last7days'));
+            const servers = await safeJson(withGid('/api/servers/distribution'));
             const red = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#D32F2F';
 
             const ctx1 = document.getElementById('lineInteractive').getContext('2d');
@@ -797,6 +969,174 @@
                 const r = await fetch('/api/config/embed_preview', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
                 const j = await r.json(); $('#saveEmbedMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
             });
+        })();
+
+        // === Config Sections (load, preview, save) ===
+        (function initConfigSections(){
+            const setToggle = (el, on)=> el?.classList.toggle('on', !!on);
+            const getToggle = (el)=> !!el?.classList.contains('on');
+            const post = async (name, body)=>{
+                try {
+                    const r = await fetch(`/api/config/${name}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+                    return await r.json();
+                } catch (e) { return { success:false, error: e.message }; }
+            };
+            const get = async (name)=> await safeJson(`/api/config/${name}`);
+
+            // Économie
+            (async function(){
+                const resp = await get('economy'); const data = resp.success ? (resp.data||{}) : {};
+                $('#econDaily').value = data.dailyReward ?? 100;
+                $('#econWorkMin').value = data.workReward?.min ?? 50;
+                $('#econWorkMax').value = data.workReward?.max ?? 200;
+                $('#econInterest').value = data.interestRate ?? 0.02;
+                const render = ()=> {
+                    const daily = Number($('#econDaily').value||0);
+                    const wmin = Number($('#econWorkMin').value||0);
+                    const wmax = Number($('#econWorkMax').value||0);
+                    const ir = Number($('#econInterest').value||0);
+                    $('#economyPreviewText').textContent = `Daily: ${daily}€ • Travail: ${wmin}-${wmax}€ • Intérêt: ${(ir*100).toFixed(2)}%`;
+                };
+                ['input','change'].forEach(evt => ['#econDaily','#econWorkMin','#econWorkMax','#econInterest'].forEach(sel => $(sel).addEventListener(evt, render)));
+                render();
+                $('#saveEconomy').addEventListener('click', async ()=>{
+                    const payload = { dailyReward: Number($('#econDaily').value||0), workReward: { min: Number($('#econWorkMin').value||0), max: Number($('#econWorkMax').value||0) }, interestRate: Number($('#econInterest').value||0) };
+                    const j = await post('economy', payload); $('#economyMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+                });
+            })();
+
+            // Niveaux
+            (async function(){
+                const resp = await get('level_config'); const data = resp.success ? (resp.data||{}) : {};
+                $('#lvlTextMin').value = data.textXP?.min ?? 5;
+                $('#lvlTextMax').value = data.textXP?.max ?? 15;
+                setToggle($('#lvlNotif'), data.notifications?.enabled ?? true);
+                $('#lvlStyle').value = data.notifications?.cardStyle || 'holographic';
+                const render = ()=> {
+                    const tmin = Number($('#lvlTextMin').value||0); const tmax = Number($('#lvlTextMax').value||0);
+                    const notif = getToggle($('#lvlNotif')); const style = $('#lvlStyle').value;
+                    $('#levelsPreviewText').textContent = `Texte XP: ${tmin}-${tmax} • Notifs: ${notif? 'On':'Off'} • Style: ${style}`;
+                };
+                ['#lvlNotif','#lvlStyle','#lvlTextMin','#lvlTextMax'].forEach(sel => $(sel).addEventListener('change', render));
+                $('#lvlNotif').addEventListener('click', ()=> { $('#lvlNotif').classList.toggle('on'); render(); });
+                render();
+                $('#saveLevels').addEventListener('click', async ()=>{
+                    const payload = {
+                        textXP: { min: Number($('#lvlTextMin').value||0), max: Number($('#lvlTextMax').value||0), cooldown: (data.textXP?.cooldown ?? 60000) },
+                        notifications: { enabled: getToggle($('#lvlNotif')), channelId: (data.notifications?.channelId ?? null), cardStyle: $('#lvlStyle').value }
+                    };
+                    const j = await post('level_config', payload); $('#levelsMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+                });
+            })();
+
+            // Karma
+            (async function(){
+                const resp = await get('karma_config'); const data = resp.success ? (resp.data||{}) : {};
+                $('#karmaDailyBonus').value = data.dailyBonus ?? 5;
+                $('#karmaMsgReward').value = data.messageReward ?? 1;
+                $('#karmaConfReward').value = data.confessionReward ?? 10;
+                $('#karmaMax').value = data.maxKarma ?? 1000;
+                const render = ()=> {
+                    $('#karmaPreviewText').textContent = `Bonus jour: ${Number($('#karmaDailyBonus').value||0)} • Message: ${Number($('#karmaMsgReward').value||0)} • Confession: ${Number($('#karmaConfReward').value||0)} • Max: ${Number($('#karmaMax').value||0)}`;
+                };
+                ['input','change'].forEach(evt => ['#karmaDailyBonus','#karmaMsgReward','#karmaConfReward','#karmaMax'].forEach(sel => $(sel).addEventListener(evt, render)));
+                render();
+                $('#saveKarma').addEventListener('click', async ()=>{
+                    const payload = { dailyBonus: Number($('#karmaDailyBonus').value||0), messageReward: Number($('#karmaMsgReward').value||0), confessionReward: Number($('#karmaConfReward').value||0), maxKarma: Number($('#karmaMax').value||0) };
+                    const j = await post('karma_config', payload); $('#karmaMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+                });
+            })();
+
+            // Confessions
+            (async function(){
+                const resp = await get('confessions'); const data = resp.success ? (resp.data||{}) : {};
+                $('#confChannelId').value = data.channelId || '';
+                setToggle($('#confModeration'), data.moderationEnabled !== false);
+                setToggle($('#confAutoDelete'), !!data.autoDelete);
+                $('#confMinLen').value = data.minLength ?? 10;
+                $('#confMaxLen').value = data.maxLength ?? 2000;
+                const render = ()=> {
+                    const mod = getToggle($('#confModeration')); const aut = getToggle($('#confAutoDelete'));
+                    const ch = ($('#confChannelId').value||'—'); const mi = Number($('#confMinLen').value||0); const ma = Number($('#confMaxLen').value||0);
+                    $('#confPreviewText').textContent = `Canal: ${ch} • Modération: ${mod? 'On':'Off'} • AutoDel: ${aut? 'On':'Off'} • Longeur: ${mi}-${ma}`;
+                };
+                ['#confChannelId','#confModeration','#confAutoDelete','#confMinLen','#confMaxLen'].forEach(sel => $(sel).addEventListener('change', render));
+                $('#confModeration').addEventListener('click', ()=> { $('#confModeration').classList.toggle('on'); render(); });
+                $('#confAutoDelete').addEventListener('click', ()=> { $('#confAutoDelete').classList.toggle('on'); render(); });
+                render();
+                $('#saveConf').addEventListener('click', async ()=>{
+                    const payload = { channelId: ($('#confChannelId').value||'').trim() || null, moderationEnabled: getToggle($('#confModeration')), autoDelete: getToggle($('#confAutoDelete')), minLength: Number($('#confMinLen').value||0), maxLength: Number($('#confMaxLen').value||0) };
+                    const j = await post('confessions', payload); $('#confMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+                });
+            })();
+
+            // Comptage
+            (async function(){
+                const resp = await get('counting'); const data = resp.success ? (resp.data||{}) : {};
+                setToggle($('#countMath'), data.mathEnabled ?? true);
+                setToggle($('#countReactions'), data.reactionsEnabled ?? true);
+                const render = ()=> {
+                    $('#countingPreviewText').textContent = `Math: ${getToggle($('#countMath'))? 'On':'Off'} • Réactions: ${getToggle($('#countReactions'))? 'On':'Off'}`;
+                };
+                ['#countMath','#countReactions'].forEach(sel => $(sel).addEventListener('change', render));
+                $('#countMath').addEventListener('click', ()=> { $('#countMath').classList.toggle('on'); render(); });
+                $('#countReactions').addEventListener('click', ()=> { $('#countReactions').classList.toggle('on'); render(); });
+                render();
+                $('#saveCounting').addEventListener('click', async ()=>{
+                    const payload = { mathEnabled: getToggle($('#countMath')), reactionsEnabled: getToggle($('#countReactions')) };
+                    const j = await post('counting', payload); $('#countingMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+                });
+            })();
+
+            // Auto-thread
+            (async function(){
+                const resp = await get('autothread'); const data = resp.success ? (resp.data||{}) : {};
+                setToggle($('#autoArchive'), !!data.autoArchive);
+                $('#archiveDelay').value = data.archiveDelay ?? 60;
+                const render = ()=> {
+                    $('#autothreadPreviewText').textContent = `Auto-archivage: ${getToggle($('#autoArchive'))? 'On':'Off'} • Délai: ${Number($('#archiveDelay').value||0)} min`;
+                };
+                ['#autoArchive','#archiveDelay'].forEach(sel => $(sel).addEventListener('change', render));
+                $('#autoArchive').addEventListener('click', ()=> { $('#autoArchive').classList.toggle('on'); render(); });
+                render();
+                $('#saveAutothread').addEventListener('click', async ()=>{
+                    const payload = { autoArchive: getToggle($('#autoArchive')), archiveDelay: Number($('#archiveDelay').value||0) };
+                    const j = await post('autothread', payload); $('#autothreadMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+                });
+            })();
+
+            // Boutique
+            (async function(){
+                const resp = await get('shop'); const data = resp.success ? (resp.data||{}) : {};
+                $('#shopCurrency').value = data.currency || '💰';
+                $('#shopTaxRate').value = data.taxRate ?? 0;
+                const render = ()=> {
+                    $('#shopPreviewText').textContent = `Devise: ${($('#shopCurrency').value||'💰')} • Taxe: ${Number($('#shopTaxRate').value||0)}%`;
+                };
+                ['#shopCurrency','#shopTaxRate'].forEach(sel => $(sel).addEventListener('change', render));
+                render();
+                $('#saveShop').addEventListener('click', async ()=>{
+                    const payload = { currency: ($('#shopCurrency').value||'💰'), taxRate: Number($('#shopTaxRate').value||0) };
+                    const j = await post('shop', payload); $('#shopMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+                });
+            })();
+
+            // Modération
+            (async function(){
+                const resp = await get('moderation_config'); const data = resp.success ? (resp.data||{}) : {};
+                setToggle($('#modLogsEnabled'), data.logsEnabled ?? false);
+                $('#modLogChannelId').value = data.logChannelId || '';
+                const render = ()=> {
+                    $('#moderationPreviewText').textContent = `Logs: ${getToggle($('#modLogsEnabled'))? 'On':'Off'} • Canal: ${($('#modLogChannelId').value||'—')}`;
+                };
+                ['#modLogsEnabled','#modLogChannelId'].forEach(sel => $(sel).addEventListener('change', render));
+                $('#modLogsEnabled').addEventListener('click', ()=> { $('#modLogsEnabled').classList.toggle('on'); render(); });
+                render();
+                $('#saveModeration').addEventListener('click', async ()=>{
+                    const payload = { logsEnabled: getToggle($('#modLogsEnabled')), logChannelId: ($('#modLogChannelId').value||'').trim() || null };
+                    const j = await post('moderation_config', payload); $('#moderationMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+                });
+            })();
         })();
     </script>
 </body>
