@@ -3,314 +3,776 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BAG v2 — Tableau de bord</title>
+    <title>BAG v2 — Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#0a0a0a; color:#ffffff; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; }
-        .box { text-align:center; padding:2rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; max-width:760px; width:90%; }
-        h1 { margin:0 0 0.5rem; font-size:1.8rem; }
-        p { color:#bbbbbb; margin:0.5rem 0 1rem; }
-        a { color:#ff6666; text-decoration:none; }
-        .links { margin-top:1rem; display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap; }
-        .btn { padding:0.6rem 1rem; border-radius:8px; background:#1a1a1a; border:1px solid #333333; color:#ffffff; }
-        .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:1rem; margin-top:1.25rem; text-align:left; }
-        .card { background:#111111; border:1px solid #2a2a2a; border-radius:10px; padding:1rem; }
-        .card h3 { margin:0 0 .5rem; font-size:1.1rem; }
-        .kv { display:flex; justify-content:space-between; gap:1rem; padding:.25rem 0; color:#cccccc; }
-        .muted { color:#9a9a9a; }
-        .error { color:#ff7777; }
-        code { background:#161616; border:1px solid #2a2a2a; padding:2px 6px; border-radius:6px; color:#ddd; }
-        .uploader { display:flex; flex-direction:column; gap:.5rem; }
-        .uploader input[type="file"] { display:block; }
-        .row { display:flex; gap:.5rem; align-items:center; }
-        .select { background:#1a1a1a; color:#fff; border:1px solid #333; border-radius:8px; padding:.5rem; }
-        .btn-primary { padding:0.6rem 1rem; border-radius:8px; background:#e53e3e; border:1px solid #9b2c2c; color:#ffffff; cursor:pointer; }
-        .preview { width:100%; max-height:160px; object-fit:cover; border-radius:8px; border:1px solid #333; background:#161616; }
+        :root {
+            --bg-0: #111111;
+            --bg-1: #1A1A1A;
+            --bg-2: #0a0a0a;
+            --text: #F5F5F5;
+            --muted: #BDBDBD;
+            --accent: #D32F2F;
+            --accent-2: #E53935;
+            --card: #121212;
+            --card-border: #242424;
+            --success: #2e7d32;
+            --danger: #c62828;
+            --warning: #f57c00;
+            --radius: 22px;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            background: radial-gradient(1000px 600px at 60% 20%, #1A1A1A 0%, #111111 65%, #0a0a0a 100%);
+            color: var(--text);
+            font-family: 'Roboto', system-ui, -apple-system, Segoe UI, sans-serif;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        .app {
+            display: grid;
+            grid-template-columns: 270px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: sticky; top: 0; height: 100vh;
+            background: #000000;
+            border-right: 1px solid #161616;
+            padding: 20px 16px;
+        }
+        .logoWrap { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius); cursor: pointer; }
+        .logoWrap:hover { background: rgba(211,47,47,0.08); }
+        .logoImg { width: 54px; height: 54px; border-radius: 50%; background:#111; display:block; }
+        .brand { font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: .5px; }
+        .nav { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+        .nav a { display:flex; align-items:center; gap:10px; padding: 12px 14px; border-radius: 14px; color:#ddd; transition: .2s; }
+        .nav a .ic { width: 28px; text-align:center; font-size: 18px; }
+        .nav a:hover { color:#fff; background: rgba(211,47,47,0.1); }
+        .nav a.active { background: var(--bg-1); color: var(--text); border:1px solid #1f1f1f; box-shadow: 0 0 0 1px rgba(211,47,47,.25) inset; }
+
+        .sidebarFooter { position:absolute; bottom: 16px; left: 16px; right: 16px; opacity:.8; font-size:12px; color:var(--muted); }
+
+        /* Main */
+        .main { padding: 24px 28px; }
+        .header {
+            display:flex; align-items:center; justify-content: space-between; margin-bottom: 18px;
+        }
+        .title { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 28px; }
+        .userBox { display:flex; align-items:center; gap:10px; }
+        .avatar { width:38px; height:38px; border-radius:50%; background:#111; border:1px solid #222; }
+
+        /* Cards and layout */
+        .grid { display:grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+        .card { background: var(--card); border:1px solid var(--card-border); border-radius: var(--radius); padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+        .cardTitle { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 10px; letter-spacing:.3px; }
+        .kpi { display:flex; align-items: center; justify-content: space-between; }
+        .kpiValue { font-family: 'Montserrat'; font-size: 28px; font-weight: 800; letter-spacing:.5px; }
+        .muted { color: var(--muted); font-size: 12px; }
+        .sep { height:1px; background:#1e1e1e; margin:10px 0; border-radius: 1px; }
+
+        /* Buttons */
+        .btn { appearance:none; border:none; background: #1c1c1c; color:#fff; padding:10px 14px; border-radius: 999px; border:1px solid #2a2a2a; cursor:pointer; transition:.2s; }
+        .btn:hover { background:#222; }
+        .btnPrimary { background: var(--accent); border:1px solid #9b2c2c; box-shadow: 0 8px 24px rgba(211,47,47,.25); }
+        .btnPrimary:hover { background: var(--accent-2); box-shadow: 0 10px 30px rgba(229,57,53,.35); }
+
+        /* Forms */
+        .row { display:flex; align-items:center; gap:10px; }
+        .col { display:flex; flex-direction: column; gap:10px; }
+        .input, .select, .textarea { width:100%; background:#111; border:1px solid #2a2a2a; color:#fff; padding:10px 12px; border-radius: 12px; }
+        .textarea { min-height: 88px; resize: vertical; }
+        .toggle { position: relative; width: 50px; height: 28px; background:#1b1b1b; border:1px solid #2a2a2a; border-radius:999px; cursor:pointer; transition:.2s; }
+        .toggle::after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#444; transition:.2s; }
+        .toggle.on { background: var(--accent); border-color:#9b2c2c; box-shadow: inset 0 0 0 2px rgba(255,255,255,.07); }
+        .toggle.on::after { left:25px; background:#fff; }
+
+        /* Section visibility */
+        .section { display:none; animation: fadeIn .35s ease; }
+        .section.active { display:block; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(8px);} to {opacity:1; transform: translateY(0);} }
+
+        /* Charts containers */
+        .chartWrap { height: 240px; }
+        .miniChart { height: 70px; }
+        .circle { width: 120px; height:120px; margin-left:auto; }
+
+        /* Badges */
+        .badge { display:inline-block; font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid #2a2a2a; background:#111; color:#ddd; }
+        .badge.crit { background:#2b0d0d; color:#ffb3b3; border-color:#4a1717; }
+        .badge.warn { background:#2a1a09; color:#ffd1a1; border-color:#4a310f; }
+        .badge.info { background:#1a1a1a; color:#eee; }
+
+        /* Tables */
+        table { width:100%; border-collapse: collapse; }
+        th, td { text-align:left; padding:12px; border-bottom: 1px solid #1f1f1f; font-size: 14px; }
+        th { color:#e0e0e0; font-weight:600; font-family: 'Montserrat'; }
+        tr:hover td { background:#141414; }
+
+        /* Helper */
+        .help { color: var(--accent-2); font-weight:700; margin-left: 6px; cursor: help; }
+
+        /* Responsive */
+        .hamb { display:none; }
+        @media (max-width: 980px) {
+            .app { grid-template-columns: 1fr; }
+            .sidebar { position: fixed; z-index: 100; transform: translateX(-100%); transition:.25s; width: 78%; max-width: 320px; }
+            .sidebar.open { transform: translateX(0); }
+            .hamb { display:inline-flex; align-items:center; gap:10px; }
+            .header { gap:12px; }
+        }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h1>Tableau de bord — BAG v2</h1>
-        <p>Version minimale affichant l’état du service et les statistiques clés du serveur.</p>
-        <div class="links">
-            <a class="btn" href="/index.html">Accueil</a>
-            <a class="btn" href="/health" target="_blank">Santé (JSON)</a>
-            <a class="btn" href="/api/stats" target="_blank">Statistiques (JSON)</a>
-        </div>
+    <div class="app">
+        <aside class="sidebar" id="sidebar">
+            <a class="logoWrap" href="#overview" data-route="overview">
+                <img class="logoImg" src="/logo-bag-premium.svg" alt="BAG"/>
+                <div>
+                    <div class="brand">BAG v2</div>
+                    <div class="muted" style="font-size:12px;">Dashboard</div>
+                </div>
+            </a>
+            <nav class="nav" id="nav">
+                <a href="#overview" data-route="overview" class="active"><span class="ic">🏠</span>Vue d’ensemble</a>
+                <a href="#config" data-route="config"><span class="ic">⚙️</span>Configuration & Personnalisation</a>
+                <a href="#modules" data-route="modules"><span class="ic">🧩</span>Commandes & Modules</a>
+                <a href="#logs" data-route="logs"><span class="ic">📜</span>Logs & Historique</a>
+                <a href="#alerts" data-route="alerts"><span class="ic">🔔</span>Alertes & Notifications</a>
+                <a href="#stats" data-route="stats"><span class="ic">📊</span>Statistiques détaillées</a>
+                <a href="#auth" data-route="auth"><span class="ic">🔑</span>Authentification & Assistance</a>
+            </nav>
+            <div class="sidebarFooter">© BAG • Style rouge/noir • v2</div>
+        </aside>
+        <main class="main">
+            <div class="header">
+                <div class="row">
+                    <button id="hamb" class="btn hamb">☰</button>
+                    <div class="title">Bienvenue, <span id="userName">Utilisateur Discord</span></div>
+                </div>
+                <div class="userBox">
+                    <img class="avatar" id="avatar" src="/logo-bag.svg" alt="avatar"/>
+                </div>
+            </div>
 
-        <div class="grid">
-            <div class="card">
-                <h3>État du service</h3>
-                <div id="health">
-                    <div class="muted">Chargement...</div>
-                </div>
-            </div>
-            <div class="card">
-                <h3>Statistiques serveur</h3>
-                <div id="stats">
-                    <div class="muted">Chargement...</div>
-                </div>
-            </div>
-            <div class="card">
-                <h3>Fond de carte (upload)</h3>
-                <div class="uploader">
-                    <div class="row">
-                        <label for="style">Style</label>
-                        <select id="style" class="select">
-                            <option value="holographic">holographic</option>
-                            <option value="gamer">gamer</option>
-                            <option value="amour">amour</option>
-                            <option value="sensuel">sensuel</option>
-                            <option value="futuristic">futuristic</option>
-                            <option value="elegant">elegant</option>
-                            <option value="gaming">gaming</option>
-                            <option value="minimal">minimal</option>
-                        </select>
+            <!-- Overview -->
+            <section id="section-overview" class="section active">
+                <div class="grid" style="grid-template-rows:auto;">
+                    <!-- KPI cards 2x3 -->
+                    <div class="card" style="grid-column: span 4;">
+                        <div class="cardTitle">👥 Utilisateurs actifs (24h)</div>
+                        <div class="kpi">
+                            <div>
+                                <div class="kpiValue" id="kpi-active">0</div>
+                                <div class="muted">membres distincts</div>
+                            </div>
+                            <div class="miniChart"><canvas id="miniActive"></canvas></div>
+                        </div>
                     </div>
-                    <input id="file" type="file" accept="image/png,image/jpeg,image/webp" />
-                    <img id="preview" class="preview" alt="Prévisualisation" />
-                    <button id="uploadBtn" class="btn-primary">Téléverser</button>
-                    <div id="uploadMsg" class="muted"></div>
+                    <div class="card" style="grid-column: span 4;">
+                        <div class="cardTitle">🌐 Serveurs connectés</div>
+                        <div class="kpi">
+                            <div>
+                                <div class="kpiValue" id="kpi-servers">0</div>
+                                <div class="muted">guildes</div>
+                            </div>
+                            <span class="badge info">live</span>
+                        </div>
+                    </div>
+                    <div class="card" style="grid-column: span 4;">
+                        <div class="cardTitle">⏱ Uptime</div>
+                        <div class="kpi">
+                            <div>
+                                <div class="kpiValue" id="kpi-uptime">0h 0m</div>
+                                <div class="muted">depuis le dernier redémarrage</div>
+                            </div>
+                            <div class="circle"><canvas id="uptimeGauge"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="grid-column: span 4;">
+                        <div class="cardTitle">💾 Sauvegardes effectuées</div>
+                        <div class="kpi">
+                            <div>
+                                <div class="kpiValue" id="kpi-backups">0</div>
+                                <div class="muted">7 derniers jours</div>
+                            </div>
+                            <div class="miniChart"><canvas id="miniBackups"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="card" style="grid-column: span 4;">
+                        <div class="cardTitle">⚡ Commande la plus utilisée</div>
+                        <div class="kpi">
+                            <div>
+                                <div class="kpiValue" id="kpi-topcmd">—</div>
+                                <div class="muted">utilisations aujourd’hui</div>
+                            </div>
+                            <span class="badge">cmd</span>
+                        </div>
+                    </div>
+                    <div class="card" style="grid-column: span 4;">
+                        <div class="cardTitle">💰 Argent total</div>
+                        <div class="kpi">
+                            <div>
+                                <div class="kpiValue" id="kpi-money">0</div>
+                                <div class="muted">toutes guildes</div>
+                            </div>
+                            <span class="badge warn">économie</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick graphs -->
+                    <div class="card" style="grid-column: span 8;">
+                        <div class="cardTitle">Courbe des sauvegardes (7 derniers jours)</div>
+                        <div class="chartWrap"><canvas id="lineBackups"></canvas></div>
+                    </div>
+                    <div class="card" style="grid-column: span 4;">
+                        <div class="cardTitle">Répartition des serveurs</div>
+                        <div class="chartWrap"><canvas id="pieServers"></canvas></div>
+                    </div>
                 </div>
-            </div>
-			<div class="card">
-				<h3>Paramètres Niveaux</h3>
-				<div class="row" style="margin-bottom:.5rem">
-					<label>XP Texte (min/max/cooldown ms)</label>
-				</div>
-				<div class="row">
-					<input id="lvl_text_min" type="number" class="select" style="width:33%" placeholder="min" />
-					<input id="lvl_text_max" type="number" class="select" style="width:33%" placeholder="max" />
-					<input id="lvl_text_cd" type="number" class="select" style="width:34%" placeholder="cooldown" />
-				</div>
-				<div class="row" style="margin-top:.5rem">
-					<label>Style de carte</label>
-					<select id="lvl_card_style" class="select" style="flex:1">
-						<option value="holographic">holographic</option>
-						<option value="gamer">gamer</option>
-						<option value="amour">amour</option>
-						<option value="sensuel">sensuel</option>
-						<option value="futuristic">futuristic</option>
-						<option value="elegant">elegant</option>
-						<option value="gaming">gaming</option>
-						<option value="minimal">minimal</option>
-					</select>
-				</div>
-				<button id="saveLevels" class="btn-primary" style="margin-top:.5rem">Sauvegarder niveaux</button>
-				<div id="saveLevelsMsg" class="muted"></div>
-			</div>
-			<div class="card">
-				<h3>Paramètres Économie</h3>
-				<div class="row">
-					<label>Daily Reward</label>
-					<input id="eco_daily" type="number" class="select" style="flex:1" placeholder="100" />
-				</div>
-				<div class="row" style="margin-top:.5rem">
-					<label>Intérêt (%)</label>
-					<input id="eco_interest" type="number" step="0.001" class="select" style="flex:1" placeholder="0.02" />
-				</div>
-				<button id="saveEconomy" class="btn-primary" style="margin-top:.5rem">Sauvegarder économie</button>
-				<div id="saveEconomyMsg" class="muted"></div>
-			</div>
-			<div class="card">
-				<h3>Paramètres Confessions</h3>
-				<div class="row">
-					<label>Canal ID</label>
-					<input id="conf_channel" type="text" class="select" style="flex:1" placeholder="1234567890" />
-				</div>
-				<div class="row" style="margin-top:.5rem">
-					<label>Modération</label>
-					<select id="conf_mod" class="select" style="flex:1">
-						<option value="true">activée</option>
-						<option value="false">désactivée</option>
-					</select>
-				</div>
-				<div class="row" style="margin-top:.5rem">
-					<label>Auto-suppression</label>
-					<select id="conf_auto" class="select" style="flex:1">
-						<option value="false">non</option>
-						<option value="true">oui</option>
-					</select>
-				</div>
-				<button id="saveConf" class="btn-primary" style="margin-top:.5rem">Sauvegarder confessions</button>
-				<div id="saveConfMsg" class="muted"></div>
-			</div>
-		</div>
-		
-		<script>
-			async function safeJson(url) {
-				try {
-					const res = await fetch(url);
-					if (!res.ok) throw new Error(String(res.status));
-					return await res.json();
-				} catch (e) {
-					return { __error: e.message };
-				}
-			}
+            </section>
 
-			function setKV(container, entries) {
-				container.innerHTML = entries.map(([k,v]) => `\n                <div class=\"kv\">\n                    <span>${k}</span>\n                    <span>${v}</span>\n                </div>\n            `).join('');
-			}
+            <!-- Configuration & Personnalisation -->
+            <section id="section-config" class="section">
+                <div class="grid">
+                    <div class="card" style="grid-column: span 4;">
+                        <div class="cardTitle">Palette thématique</div>
+                        <div class="col">
+                            <div class="row">
+                                <button class="btnPrimary" data-theme="red">Rouge BAG</button>
+                                <button class="btn" data-theme="dark">Noir profond</button>
+                                <button class="btn" data-theme="light">Blanc cassé</button>
+                            </div>
+                            <div class="muted">La couleur affecte boutons et accents.</div>
+                        </div>
+                    </div>
+                    <div class="card" style="grid-column: span 8;">
+                        <div class="cardTitle">Personnalisation des embeds <span class="help" title="Aperçu en direct d’un message embed Discord">?</span></div>
+                        <div class="grid" style="grid-template-columns: repeat(12,1fr); gap:12px;">
+                            <div style="grid-column: span 6;" class="col">
+                                <div class="row"><label style="width:140px">🎨 Bordure</label><input id="embedColor" type="color" value="#D32F2F" class="input"/></div>
+                                <div class="row"><label style="width:140px">📝 Titre</label><input id="embedTitle" class="input" placeholder="Titre"/></div>
+                                <div class="row"><label style="width:140px">📄 Description</label><textarea id="embedDesc" class="textarea" placeholder="Votre description..."></textarea></div>
+                                <div class="row"><label style="width:140px">🦶 Footer</label><input id="embedFooter" class="input" placeholder="footer"/></div>
+                                <div class="row"><label style="width:140px">🖼 Image</label><input id="embedImage" class="input" placeholder="URL de l’image"/></div>
+                                <div class="row"><label style="width:140px">🔖 Icône/Logo</label><input id="embedIcon" class="input" placeholder="URL icône"/></div>
+                                <div class="row"><button id="saveEmbedCfg" class="btnPrimary">Enregistrer</button><span id="saveEmbedMsg" class="muted"></span></div>
+                            </div>
+                            <div style="grid-column: span 6;">
+                                <div id="embedPreview" class="card" style="background:#0e0e0e; border-color:#2a2a2a;">
+                                    <div style="border-left:6px solid var(--accent); padding:14px; border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00));">
+                                        <div class="row" style="gap:12px; align-items:flex-start;">
+                                            <img id="embedPreviewIcon" src="/logo-bag.svg" alt="icon" style="width:36px; height:36px; border-radius:8px; border:1px solid #333; background:#111;"/>
+                                            <div style="flex:1;">
+                                                <div id="embedPreviewTitle" style="font-weight:700; font-family: 'Montserrat'; margin-bottom:6px;">Exemple de titre</div>
+                                                <div id="embedPreviewDesc" class="muted">Ceci est un exemple de description pour l’aperçu en direct.</div>
+                                                <div id="embedPreviewFooter" class="muted" style="margin-top:8px; font-size:12px;">Footer</div>
+                                            </div>
+                                        </div>
+                                        <img id="embedPreviewImage" style="width:100%; margin-top:10px; border-radius:12px; display:none;"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-			(async function init() {
-				const healthEl = document.getElementById('health');
-				const statsEl = document.getElementById('stats');
-				const params = new URLSearchParams(window.location.search);
-				const guildId = params.get('guildId');
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Image de fond (upload)</div>
+                        <div class="col">
+                            <div class="row">
+                                <label>Style</label>
+                                <select id="style" class="select" style="max-width:220px;">
+                                    <option value="holographic">holographic</option>
+                                    <option value="gamer">gamer</option>
+                                    <option value="amour">amour</option>
+                                    <option value="sensuel">sensuel</option>
+                                    <option value="futuristic">futuristic</option>
+                                    <option value="elegant">elegant</option>
+                                    <option value="gaming">gaming</option>
+                                    <option value="minimal">minimal</option>
+                                </select>
+                            </div>
+                            <div class="row"><input id="file" type="file" accept="image/png,image/jpeg,image/webp" class="input"/></div>
+                            <img id="preview" class="card" style="max-height:160px; object-fit:cover; display:none;"/>
+                            <div class="row"><button id="uploadBtn" class="btnPrimary">Téléverser</button><span id="uploadMsg" class="muted"></span></div>
+                        </div>
+                    </div>
 
-				const [health, stats] = await Promise.all([
-					safeJson('/health'),
-					safeJson(guildId ? `/api/stats?guildId=${encodeURIComponent(guildId)}` : '/api/stats')
-				]);
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Paramètres rapides</div>
+                        <div class="col">
+                            <div class="row"><label>Préfixe</label><input id="prefix" class="input" placeholder="!" style="max-width:120px;"/><button id="savePrefix" class="btn">Enregistrer</button><span id="prefixMsg" class="muted"></span></div>
+                            <div class="row"><div class="toggle" id="autoBackupToggle"></div><div class="muted">Sauvegarde auto</div></div>
+                            <div class="row"><div class="toggle" id="logsToggle"></div><div class="muted">Logs</div></div>
+                            <div class="row"><div class="toggle" id="alertsToggle"></div><div class="muted">Alertes</div></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-				if (health.__error) {
-					healthEl.innerHTML = `<div class=\"error\">Erreur: ${health.__error}</div>`;
-				} else {
-					setKV(healthEl, [
-						['Statut', health.status || '—'],
-						['Discord', health.discord || '—'],
-						['Uptime', (typeof health.uptime === 'number') ? `${Math.floor(health.uptime/3600)}h ${Math.floor((health.uptime%3600)/60)}m` : '—'],
-						['Serveurs (guildes)', health.guilds ?? '—'],
-						['Commandes chargées', health.commands ?? '—']
-					]);
-				}
+            <!-- Modules -->
+            <section id="section-modules" class="section">
+                <div class="grid">
+                    <div class="card" style="grid-column: span 12;">
+                        <div class="cardTitle">Modules</div>
+                        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px,1fr));">
+                            <div class="card"><div class="row" style="justify-content:space-between;"><div>💾 Sauvegarde auto</div><div class="toggle" data-mod="autobackup"></div></div></div>
+                            <div class="card"><div class="row" style="justify-content:space-between;"><div>📜 Logs</div><div class="toggle" data-mod="logs"></div></div></div>
+                            <div class="card"><div class="row" style="justify-content:space-between;"><div>🔔 Alertes</div><div class="toggle" data-mod="alerts"></div></div></div>
+                            <div class="card"><div class="row" style="justify-content:space-between;"><div>💬 Confessions</div><div class="toggle" data-mod="confessions"></div></div></div>
+                            <div class="card"><div class="row" style="justify-content:space-between;"><div>⭐ Niveaux</div><div class="toggle" data-mod="levels"></div></div></div>
+                        </div>
+                        <div class="row" style="margin-top:12px;"><button id="saveModules" class="btnPrimary">Sauvegarder</button><span id="modulesMsg" class="muted"></span></div>
+                    </div>
 
-				const s = stats && stats.success === true && stats.data ? stats.data : stats;
-				if (s.__error) {
-					statsEl.innerHTML = `<div class=\"error\">Erreur: ${s.__error}</div>`;
-				} else {
-					setKV(statsEl, [
-						['Membres actifs (24h)', s.activeMembers ?? 0],
-						['Messages du jour', s.todayMessages ?? 0],
-						['Commandes utilisées (jour)', s.commandsUsed ?? 0],
-						['Argent total (€)', (typeof s.totalMoney === 'number') ? s.totalMoney.toLocaleString('fr-FR') : (s.totalMoney ?? 0)],
-						['Utilisateurs total', s.totalUsers ?? 0],
-						['Confessions total', s.totalConfessions ?? 0]
-					]);
-				}
+                    <div class="card" style="grid-column: span 12;">
+                        <div class="cardTitle">Permissions & Préfixes</div>
+                        <div class="row" style="gap:12px; margin-bottom:8px;">
+                            <input class="input" id="permSearch" placeholder="Rechercher un rôle" style="max-width:240px;"/>
+                            <button id="savePerms" class="btn">Enregistrer</button>
+                            <span id="permsMsg" class="muted"></span>
+                        </div>
+                        <div class="card" style="background:#0f0f0f;">
+                            <table>
+                                <thead><tr><th>Rôle</th><th>Exécuter commandes</th><th>Admin Dashboard</th></tr></thead>
+                                <tbody id="permTable"><tr><td class="muted" colspan="3">Chargement...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-				// Uploader logic
-				const fileInput = document.getElementById('file');
-				const styleInput = document.getElementById('style');
-				const preview = document.getElementById('preview');
-				const uploadBtn = document.getElementById('uploadBtn');
-				const uploadMsg = document.getElementById('uploadMsg');
+            <!-- Logs & Historique -->
+            <section id="section-logs" class="section">
+                <div class="grid">
+                    <div class="card" style="grid-column: span 12;">
+                        <div class="row" style="justify-content: space-between; align-items:flex-end;">
+                            <div>
+                                <div class="cardTitle">Logs & Historique des sauvegardes</div>
+                                <div class="muted">Filtrez par serveur, statut ou période</div>
+                            </div>
+                            <div class="row">
+                                <input id="logSearch" class="input" placeholder="Rechercher serveur"/>
+                                <select id="logStatus" class="select"><option value="">Tous statuts</option><option value="success">Succès</option><option value="failed">Échec</option></select>
+                                <input id="fromDate" type="date" class="input"/>
+                                <input id="toDate" type="date" class="input"/>
+                            </div>
+                        </div>
+                        <div class="card" style="background:#0f0f0f; margin-top:12px;">
+                            <table>
+                                <thead>
+                                    <tr><th>Date</th><th>Serveur</th><th>Type</th><th>Statut</th><th>Taille</th></tr>
+                                </thead>
+                                <tbody id="logsBody"><tr><td class="muted" colspan="5">Chargement...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-				fileInput.addEventListener('change', () => {
-					const f = fileInput.files && fileInput.files[0];
-					if (!f) { preview.src = ''; return; }
-					const reader = new FileReader();
-					reader.onload = e => { preview.src = e.target.result; };
-					reader.readAsDataURL(f);
-				});
+            <!-- Alertes & Notifications -->
+            <section id="section-alerts" class="section">
+                <div class="grid">
+                    <div class="card" style="grid-column: span 12;">
+                        <div class="cardTitle">Canaux et méthodes d’alerte</div>
+                        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px;">
+                            <div class="card">
+                                <div class="row" style="justify-content:space-between;">
+                                    <div>Discord embed</div>
+                                    <div class="toggle" id="alertDiscord"></div>
+                                </div>
+                                <div class="sep"></div>
+                                <div class="row">
+                                    <select id="alertGuild" class="select" style="flex:1"></select>
+                                    <select id="alertChannel" class="select" style="flex:1"></select>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="row" style="justify-content:space-between;">
+                                    <div>Email</div>
+                                    <div class="toggle" id="alertEmail"></div>
+                                </div>
+                                <div class="sep"></div>
+                                <input id="emailTo" class="input" placeholder="votre@mail.com"/>
+                            </div>
+                            <div class="card">
+                                <div class="row" style="justify-content:space-between;">
+                                    <div>Webhook</div>
+                                    <div class="toggle" id="alertWebhook"></div>
+                                </div>
+                                <div class="sep"></div>
+                                <input id="webhookUrl" class="input" placeholder="https://..."/>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:12px;">
+                            <span class="badge info">Niveaux d’importance:</span>
+                            <span class="badge">⚪ Info</span>
+                            <span class="badge warn">🟠 Avertissement</span>
+                            <span class="badge crit">🔴 Critique</span>
+                        </div>
+                        <div class="row" style="margin-top:12px;">
+                            <button id="saveAlerts" class="btnPrimary">Enregistrer</button>
+                            <span id="alertsMsg" class="muted"></span>
+                        </div>
+                        <div class="card" style="margin-top:12px; background:#0f0f0f;">
+                            <div class="cardTitle">Prévisualisation</div>
+                            <div id="alertPreview" class="muted">Un message d’alerte apparaîtra ici.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-				uploadBtn.addEventListener('click', async () => {
-					uploadMsg.textContent = 'Téléversement en cours...';
-					const f = fileInput.files && fileInput.files[0];
-					if (!f) { uploadMsg.textContent = 'Veuillez choisir une image.'; return; }
-					const fd = new FormData();
-					fd.append('style', styleInput.value);
-					fd.append('image', f);
-					try {
-						const res = await fetch('/api/upload/style-background', { method: 'POST', body: fd });
-						const json = await res.json();
-						if (!json.success) throw new Error(json.error || 'Erreur inconnue');
-						uploadMsg.textContent = '✅ Image enregistrée. Style mis à jour.';
-					} catch (e) {
-						uploadMsg.textContent = '❌ ' + e.message;
-					}
-				});
-			})();
+            <!-- Statistiques détaillées -->
+            <section id="section-stats" class="section">
+                <div class="grid">
+                    <div class="card" style="grid-column: span 12;">
+                        <div class="row" style="justify-content: space-between;">
+                            <div class="cardTitle">Graphiques interactifs</div>
+                            <div class="row">
+                                <button id="exportCSV" class="btn">Export CSV</button>
+                                <button id="exportJSON" class="btnPrimary">Export JSON</button>
+                            </div>
+                        </div>
+                        <div class="chartWrap"><canvas id="lineInteractive"></canvas></div>
+                        <div class="grid" style="margin-top:12px;">
+                            <div class="card" style="grid-column: span 6;"><div class="cardTitle">Répartition par serveur</div><div class="chartWrap"><canvas id="pieInteractive"></canvas></div></div>
+                            <div class="card" style="grid-column: span 6;"><div class="cardTitle">Commandes vs Messages</div><div class="chartWrap"><canvas id="barStacked"></canvas></div></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-			(async function initConfigs() {
-				try {
-					const resp = await fetch('/api/configs');
-					const json = await resp.json();
-					if (json && json.success && json.data) {
-						const cfg = json.data;
-						// Levels
-						if (cfg.levels) {
-							document.getElementById('lvl_text_min').value = cfg.levels.textXP?.min ?? '';
-							document.getElementById('lvl_text_max').value = cfg.levels.textXP?.max ?? '';
-							document.getElementById('lvl_text_cd').value = cfg.levels.textXP?.cooldown ?? '';
-							document.getElementById('lvl_card_style').value = cfg.levels.notifications?.cardStyle || 'holographic';
-						}
-						// Economy
-						if (cfg.economy) {
-							document.getElementById('eco_daily').value = cfg.economy.dailyReward ?? '';
-							document.getElementById('eco_interest').value = cfg.economy.interestRate ?? '';
-						}
-						// Confessions
-						if (cfg.confessions) {
-							document.getElementById('conf_channel').value = cfg.confessions.channelId ?? '';
-							document.getElementById('conf_mod').value = String(cfg.confessions.moderationEnabled !== false);
-							document.getElementById('conf_auto').value = String(!!cfg.confessions.autoDelete);
-						}
-					}
-				} catch (e) {
-					// silencieux
-				}
-			})();
+            <!-- Auth & Assistance -->
+            <section id="section-auth" class="section">
+                <div class="grid">
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Connexion Discord</div>
+                        <a class="btnPrimary" href="#">Se connecter avec Discord</a>
+                        <div class="muted" style="margin-top:10px;">OAuth2 – identité et guildes</div>
+                    </div>
+                    <div class="card" style="grid-column: span 6;">
+                        <div class="cardTitle">Assistance</div>
+                        <div class="col">
+                            <div>🛈 Des <span class="help">?</span> sont visibles à côté des champs pour obtenir de l’aide rapide.</div>
+                            <details class="card"><summary><strong>FAQ</strong> – Comment activer la sauvegarde auto ?</summary><div class="muted" style="margin-top:8px;">Activez le module « Sauvegarde auto » puis configurez la fréquence côté bot.</div></details>
+                            <details class="card"><summary><strong>FAQ</strong> – Où changer le style des cartes de niveaux ?</summary><div class="muted" style="margin-top:8px;">Dans Configuration → Image de fond (upload), choisissez un style et importez votre image.</div></details>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
 
-			document.getElementById('saveLevels').addEventListener('click', async () => {
-				const msg = document.getElementById('saveLevelsMsg');
-				msg.textContent = 'Sauvegarde...';
-				try {
-					const payload = {
-						textXP: {
-							min: Number(document.getElementById('lvl_text_min').value || 0),
-							max: Number(document.getElementById('lvl_text_max').value || 0),
-							cooldown: Number(document.getElementById('lvl_text_cd').value || 0)
-						},
-						notifications: {
-							enabled: true,
-							channelId: null,
-							cardStyle: document.getElementById('lvl_card_style').value
-						}
-					};
-					const res = await fetch('/api/config/level_config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-					const json = await res.json();
-					if (!json.success) throw new Error(json.error || 'erreur');
-					msg.textContent = '✅ Niveaux enregistrés';
-				} catch (e) {
-					msg.textContent = '❌ ' + e.message;
-				}
-			});
+    <script>
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+        const sections = {
+            overview: $('#section-overview'),
+            config: $('#section-config'),
+            modules: $('#section-modules'),
+            logs: $('#section-logs'),
+            alerts: $('#section-alerts'),
+            stats: $('#section-stats'),
+            auth: $('#section-auth')
+        };
 
-			document.getElementById('saveEconomy').addEventListener('click', async () => {
-				const msg = document.getElementById('saveEconomyMsg');
-				msg.textContent = 'Sauvegarde...';
-				try {
-					const payload = {
-						dailyReward: Number(document.getElementById('eco_daily').value || 0),
-						interestRate: Number(document.getElementById('eco_interest').value || 0)
-					};
-					const res = await fetch('/api/config/economy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-					const json = await res.json();
-					if (!json.success) throw new Error(json.error || 'erreur');
-					msg.textContent = '✅ Économie enregistrée';
-				} catch (e) {
-					msg.textContent = '❌ ' + e.message;
-				}
-			});
+        // Router-like navigation
+        function setActiveRoute(route) {
+            Object.entries(sections).forEach(([key, el]) => el.classList.toggle('active', key === route));
+            $$('#nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
+            if (window.innerWidth < 980) $('#sidebar').classList.remove('open');
+        }
 
-			document.getElementById('saveConf').addEventListener('click', async () => {
-				const msg = document.getElementById('saveConfMsg');
-				msg.textContent = 'Sauvegarde...';
-				try {
-					const payload = {
-						channelId: (document.getElementById('conf_channel').value || '').trim() || null,
-						moderationEnabled: document.getElementById('conf_mod').value === 'true',
-						autoDelete: document.getElementById('conf_auto').value === 'true'
-					};
-					const res = await fetch('/api/config/confessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-					const json = await res.json();
-					if (!json.success) throw new Error(json.error || 'erreur');
-					msg.textContent = '✅ Confessions enregistrées';
-				} catch (e) {
-					msg.textContent = '❌ ' + e.message;
-				}
-			});
-		</script>
+        window.addEventListener('hashchange', () => setActiveRoute(location.hash.replace('#','') || 'overview'));
+        setActiveRoute(location.hash.replace('#','') || 'overview');
+        $('#hamb')?.addEventListener('click', () => $('#sidebar').classList.toggle('open'));
+        $$('#nav a').forEach(a => a.addEventListener('click', (e) => setActiveRoute(a.dataset.route)));
 
+        // Theme switching (client-side only)
+        function setTheme(mode) {
+            if (mode === 'red') {
+                document.documentElement.style.setProperty('--accent', '#D32F2F');
+                document.documentElement.style.setProperty('--accent-2', '#E53935');
+            } else if (mode === 'light') {
+                document.documentElement.style.setProperty('--bg-0', '#f5f5f5');
+                document.documentElement.style.setProperty('--bg-1', '#ffffff');
+                document.documentElement.style.setProperty('--text', '#111');
+            } else {
+                document.documentElement.style.setProperty('--accent', '#b71c1c');
+                document.documentElement.style.setProperty('--accent-2', '#D32F2F');
+                document.documentElement.style.setProperty('--bg-0', '#111111');
+                document.documentElement.style.setProperty('--bg-1', '#1A1A1A');
+                document.documentElement.style.setProperty('--text', '#F5F5F5');
+            }
+        }
+        $$('[data-theme]')?.forEach(btn => btn.addEventListener('click', () => setTheme(btn.dataset.theme)));
+
+        // Helpers
+        async function safeJson(url) {
+            try {
+                const r = await fetch(url);
+                if (!r.ok) throw new Error(String(r.status));
+                return await r.json();
+            } catch (e) { return { __error: e.message }; }
+        }
+        function fmtBytes(bytes) {
+            if (!bytes) return '0 B';
+            const units = ['B','KB','MB','GB'];
+            let i = 0; let v = bytes;
+            while (v >= 1024 && i < units.length-1) { v/=1024; i++; }
+            return v.toFixed(1) + ' ' + units[i];
+        }
+
+        // Load header info
+        (async function initHeader(){
+            const health = await safeJson('/health');
+            const root = await safeJson('/');
+            if (!health.__error) {
+                const up = Math.floor(health.uptime/3600)+ 'h ' + Math.floor((health.uptime%3600)/60)+'m';
+                $('#kpi-uptime').textContent = up;
+            }
+            if (!root.__error && root.bot) {
+                $('#userName').textContent = root.bot;
+            }
+        })();
+
+        // Overview wiring
+        let lineBackups, pieServers, miniActive, miniBackups, uptimeGauge, lineInteractive, pieInteractive, barStacked;
+        (async function initOverview(){
+            const stats = await safeJson('/api/stats');
+            const seven = await safeJson('/api/metrics/last7days');
+            const servers = await safeJson('/api/servers/distribution');
+            const guildsList = await safeJson('/api/guilds');
+
+            if (stats && !stats.__error) {
+                const s = stats.success === true && stats.data ? stats.data : stats;
+                $('#kpi-active').textContent = s.activeMembers ?? 0;
+                $('#kpi-money').textContent = (typeof s.totalMoney === 'number') ? s.totalMoney.toLocaleString('fr-FR') : (s.totalMoney || 0);
+                $('#kpi-topcmd').textContent = (s.commandsUsed || 0) + '×';
+            }
+
+            if (guildsList && guildsList.success) {
+                $('#kpi-servers').textContent = guildsList.data.length;
+            }
+
+            // Mini charts
+            const red = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#D32F2F';
+            const ctxMiniA = document.getElementById('miniActive').getContext('2d');
+            miniActive = new Chart(ctxMiniA, { type:'line', data:{ labels: (seven.data?.labels||[]), datasets:[{ data: (seven.data?.messages||[]), borderColor:red, pointRadius:0, tension:.35 }] }, options:{ plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}}, responsive:true, maintainAspectRatio:false } });
+
+            const ctxMiniB = document.getElementById('miniBackups').getContext('2d');
+            miniBackups = new Chart(ctxMiniB, { type:'line', data:{ labels:(seven.data?.labels||[]), datasets:[{ data:(seven.data?.backups||[]), borderColor:'#E53935', pointRadius:0, tension:.35 }] }, options:{ plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}}, responsive:true, maintainAspectRatio:false } });
+            $('#kpi-backups').textContent = (seven.data?.backups||[]).reduce((a,b)=>a+b,0);
+
+            // Line backups
+            const ctxLine = document.getElementById('lineBackups').getContext('2d');
+            lineBackups = new Chart(ctxLine, { type:'line', data:{ labels:(seven.data?.labels||[]), datasets:[{ label:'Sauvegardes', data:(seven.data?.backups||[]), borderColor:red, backgroundColor:'rgba(211,47,47,.15)', tension:.35, fill:true }] }, options:{ plugins:{legend:{labels:{color:'#ddd'}}}, scales:{ x:{ ticks:{color:'#aaa'}}, y:{ ticks:{color:'#aaa'}} } } });
+
+            // Pie servers
+            const ctxPie = document.getElementById('pieServers').getContext('2d');
+            const colors = (servers.data?.labels||[]).map((_,i)=>`hsl(${(i*37)%360} 70% 45%)`);
+            pieServers = new Chart(ctxPie, { type:'pie', data:{ labels:(servers.data?.labels||[]), datasets:[{ data:(servers.data?.values||[]), backgroundColor: colors }] }, options:{ plugins:{legend:{labels:{color:'#ddd'}}} } });
+
+            // Uptime gauge using doughnut
+            const ctxGauge = document.getElementById('uptimeGauge').getContext('2d');
+            const uptimeSec = (await safeJson('/health')).uptime || 0;
+            const pct = Math.min(1, uptimeSec / (24*3600));
+            uptimeGauge = new Chart(ctxGauge, { type:'doughnut', data:{ labels:['Uptime','Reste'], datasets:[{ data:[pct, 1-pct], backgroundColor:[red,'#333'], borderWidth:0 }] }, options:{ cutout:'70%', plugins:{legend:{display:false}} } });
+        })();
+
+        // Upload background
+        (function initUploader(){
+            const fileInput = $('#file');
+            const styleInput = $('#style');
+            const preview = $('#preview');
+            const uploadBtn = $('#uploadBtn');
+            const uploadMsg = $('#uploadMsg');
+            fileInput?.addEventListener('change', ()=>{
+                const f = fileInput.files?.[0]; if (!f) { preview.style.display='none'; return; }
+                const r = new FileReader(); r.onload = e => { preview.src = e.target.result; preview.style.display='block'; }; r.readAsDataURL(f);
+            });
+            uploadBtn?.addEventListener('click', async ()=>{
+                uploadMsg.textContent = 'Téléversement...';
+                const f = fileInput.files?.[0]; if (!f) { uploadMsg.textContent = 'Veuillez choisir une image.'; return; }
+                const fd = new FormData(); fd.append('style', styleInput.value); fd.append('image', f);
+                try { const res = await fetch('/api/upload/style-background', { method:'POST', body: fd }); const j = await res.json(); if (!j.success) throw new Error(j.error||'Erreur'); uploadMsg.textContent = '✅ Image enregistrée.'; } catch(e) { uploadMsg.textContent = '❌ '+e.message; }
+            });
+        })();
+
+        // Config quick: prefix + modules (generic persistence)
+        (async function initConfig(){
+            // Load prefix
+            const pr = await safeJson('/api/config/prefix');
+            if (pr.success) $('#prefix').value = pr.data?.value || '!';
+            $('#savePrefix').addEventListener('click', async ()=>{
+                const val = ($('#prefix').value||'!').trim();
+                const res = await fetch('/api/config/prefix', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ value: val }) });
+                const j = await res.json(); $('#prefixMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+            });
+
+            // Load modules
+            const m = await safeJson('/api/config/modules');
+            const cur = m.success ? (m.data||{}) : {};
+            const setToggle = (el, on)=>{ el.classList.toggle('on', !!on); };
+            setToggle($('#autoBackupToggle'), cur.autobackup);
+            setToggle($('#logsToggle'), cur.logs);
+            setToggle($('#alertsToggle'), cur.alerts);
+            $$('.toggle[data-mod]')?.forEach(t => setToggle(t, cur[t.dataset.mod]));
+
+            const toggleClick = (e)=> e.currentTarget.classList.toggle('on');
+            $$('.toggle').forEach(t => t.addEventListener('click', toggleClick));
+
+            $('#saveModules').addEventListener('click', async ()=>{
+                const payload = { autobackup: $('#autoBackupToggle').classList.contains('on'), logs: $('#logsToggle').classList.contains('on'), alerts: $('#alertsToggle').classList.contains('on') };
+                $$('.toggle[data-mod]')?.forEach(t => payload[t.dataset.mod] = t.classList.contains('on'));
+                const res = await fetch('/api/config/modules', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                const j = await res.json(); $('#modulesMsg').textContent = j.success ? '✅ Modules enregistrés' : '❌ Erreur';
+            });
+        })();
+
+        // Permissions table (demo persistence)
+        (async function initPerms(){
+            const tbody = $('#permTable');
+            const guilds = await safeJson('/api/guilds');
+            const rows = (guilds.data||[]).slice(0,6).map(g => ({ role: '@'+g.name, exec: true, admin: false }));
+            tbody.innerHTML = rows.map(r => `<tr><td>${r.role}</td><td><input type="checkbox" ${r.exec?'checked':''}></td><td><input type="checkbox" ${r.admin?'checked':''}></td></tr>`).join('');
+            $('#savePerms').addEventListener('click', async ()=>{ $('#permsMsg').textContent = '✅ Enregistré (démo)'; });
+        })();
+
+        // Logs table from backups
+        (async function initLogs(){
+            const data = await safeJson('/api/backups');
+            const tbody = $('#logsBody');
+            const render = (rows) => {
+                if (!rows || !rows.length) { tbody.innerHTML = `<tr><td class="muted" colspan="5">Aucune donnée</td></tr>`; return; }
+                tbody.innerHTML = rows.map(r => {
+                    const d = r.dateISO ? new Date(r.dateISO) : null;
+                    return `<tr>
+                        <td>${d? d.toLocaleString('fr-FR'): r.id}</td>
+                        <td>Global</td>
+                        <td>Backup</td>
+                        <td>${r.status === 'success' ? '<span class="badge">🟢 Succès</span>' : '<span class="badge crit">🔴 Échec</span>'}</td>
+                        <td>${fmtBytes(r.sizeBytes)}</td>
+                    </tr>`
+                }).join('');
+            };
+            let rows = data.data||[]; render(rows);
+            const applyFilters = ()=>{
+                const q = ($('#logSearch').value||'').toLowerCase();
+                const st = $('#logStatus').value;
+                const from = $('#fromDate').value ? new Date($('#fromDate').value) : null;
+                const to = $('#toDate').value ? new Date($('#toDate').value) : null;
+                const f = rows.filter(r => {
+                    const okServer = q ? 'global'.includes(q) : true;
+                    const okStatus = st ? r.status === st : true;
+                    const t = r.dateISO ? new Date(r.dateISO) : null;
+                    const okFrom = from ? (t && t >= from) : true;
+                    const okTo = to ? (t && t <= new Date(to.getTime()+24*3600*1000)) : true;
+                    return okServer && okStatus && okFrom && okTo;
+                });
+                render(f);
+            };
+            ['input','change'].forEach(evt => {
+                $('#logSearch').addEventListener(evt, applyFilters);
+                $('#logStatus').addEventListener(evt, applyFilters);
+                $('#fromDate').addEventListener(evt, applyFilters);
+                $('#toDate').addEventListener(evt, applyFilters);
+            });
+        })();
+
+        // Alerts section
+        (async function initAlerts(){
+            const cfg = await safeJson('/api/config/alerts');
+            const cur = cfg.success ? (cfg.data||{}) : {};
+            const set = (id, on)=> $('#'+id).classList.toggle('on', !!on);
+            set('alertDiscord', cur.discord?.enabled);
+            set('alertEmail', cur.email?.enabled);
+            set('alertWebhook', cur.webhook?.enabled);
+            if (cur.email?.to) $('#emailTo').value = cur.email.to;
+            if (cur.webhook?.url) $('#webhookUrl').value = cur.webhook.url;
+
+            const guilds = await safeJson('/api/guilds');
+            $('#alertGuild').innerHTML = (guilds.data||[]).map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+            async function loadChannels(){
+                const gid = $('#alertGuild').value; const ch = await safeJson(`/api/guilds/${gid}/channels`);
+                $('#alertChannel').innerHTML = (ch.data||[]).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+            $('#alertGuild').addEventListener('change', loadChannels);
+            if (guilds.data?.length) { $('#alertGuild').value = guilds.data[0].id; await loadChannels(); }
+
+            const updatePreview = ()=> {
+                const crit = $('#alertDiscord').classList.contains('on') ? '🔴 Critique' : '⚪ Info';
+                $('#alertPreview').textContent = `Exemple d’alerte (${crit}) → Discord/Email/Webhook`;
+            };
+            updatePreview();
+            $$('#section-alerts .toggle, #emailTo, #webhookUrl').forEach(el => el.addEventListener('change', updatePreview));
+
+            $('#saveAlerts').addEventListener('click', async ()=>{
+                const payload = {
+                    discord: { enabled: $('#alertDiscord').classList.contains('on'), guildId: $('#alertGuild').value, channelId: $('#alertChannel').value },
+                    email: { enabled: $('#alertEmail').classList.contains('on'), to: ($('#emailTo').value||'').trim() },
+                    webhook: { enabled: $('#alertWebhook').classList.contains('on'), url: ($('#webhookUrl').value||'').trim() }
+                };
+                const r = await fetch('/api/config/alerts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                const j = await r.json(); $('#alertsMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+            });
+        })();
+
+        // Detailed stats charts
+        (async function initStats(){
+            const seven = await safeJson('/api/metrics/last7days');
+            const servers = await safeJson('/api/servers/distribution');
+            const red = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#D32F2F';
+
+            const ctx1 = document.getElementById('lineInteractive').getContext('2d');
+            lineInteractive = new Chart(ctx1, { type:'line', data:{ labels:seven.data?.labels||[], datasets:[{ label:'Sauvegardes', data:seven.data?.backups||[], borderColor:red, backgroundColor:'rgba(211,47,47,.15)', tension:.35, fill:true }] }, options:{ plugins:{legend:{labels:{color:'#ddd'}}}, scales:{ x:{ ticks:{color:'#aaa'}}, y:{ ticks:{color:'#aaa'}} } } });
+
+            const ctx2 = document.getElementById('pieInteractive').getContext('2d');
+            const colors = (servers.data?.labels||[]).map((_,i)=>`hsl(${(i*37)%360} 70% 45%)`);
+            pieInteractive = new Chart(ctx2, { type:'pie', data:{ labels:servers.data?.labels||[], datasets:[{ data:servers.data?.values||[], backgroundColor: colors }] }, options:{ plugins:{legend:{labels:{color:'#ddd'}}} } });
+
+            const ctx3 = document.getElementById('barStacked').getContext('2d');
+            barStacked = new Chart(ctx3, { type:'bar', data:{ labels:seven.data?.labels||[], datasets:[ { label:'Commandes', data:seven.data?.commands||[], backgroundColor:'rgba(211,47,47,.6)' }, { label:'Messages', data:seven.data?.messages||[], backgroundColor:'rgba(255,255,255,.2)' } ] }, options:{ plugins:{legend:{labels:{color:'#ddd'}}}, scales:{ x:{ stacked:true, ticks:{color:'#aaa'}}, y:{ stacked:true, ticks:{color:'#aaa'}} } } });
+
+            // Export
+            $('#exportJSON').addEventListener('click', ()=>{
+                const blob = new Blob([JSON.stringify(seven.data||{}, null, 2)], { type:'application/json' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'stats-7j.json'; a.click(); URL.revokeObjectURL(a.href);
+            });
+            $('#exportCSV').addEventListener('click', ()=>{
+                const L = seven.data?.labels||[]; const A = seven.data?.backups||[]; const M = seven.data?.messages||[]; const C = seven.data?.commands||[];
+                const rows = ['date,backups,messages,commands', ...L.map((l,i)=>`${l},${A[i]||0},${M[i]||0},${C[i]||0}`)];
+                const blob = new Blob([rows.join('\n')], { type:'text/csv' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'stats-7j.csv'; a.click(); URL.revokeObjectURL(a.href);
+            });
+        })();
+
+        // Embed live preview + save
+        (function initEmbed(){
+            const update = ()=>{
+                const c = $('#embedColor').value; document.documentElement.style.setProperty('--accent', c);
+                $('#embedPreview').style.borderColor = c;
+                $('#embedPreviewTitle').textContent = $('#embedTitle').value || 'Exemple de titre';
+                $('#embedPreviewDesc').textContent = $('#embedDesc').value || 'Ceci est un exemple de description pour l’aperçu en direct.';
+                $('#embedPreviewFooter').textContent = $('#embedFooter').value || 'Footer';
+                const icon = ($('#embedIcon').value||'').trim(); $('#embedPreviewIcon').src = icon || '/logo-bag.svg';
+                const img = ($('#embedImage').value||'').trim();
+                if (img) { $('#embedPreviewImage').src = img; $('#embedPreviewImage').style.display='block'; } else { $('#embedPreviewImage').style.display='none'; }
+            };
+            ['input','change'].forEach(evt => ['#embedColor','#embedTitle','#embedDesc','#embedFooter','#embedImage','#embedIcon'].forEach(sel => $(sel).addEventListener(evt, update)));
+            update();
+            $('#saveEmbedCfg').addEventListener('click', async ()=>{
+                const payload = { color: $('#embedColor').value, title: $('#embedTitle').value, description: $('#embedDesc').value, footer: $('#embedFooter').value, image: $('#embedImage').value, icon: $('#embedIcon').value };
+                const r = await fetch('/api/config/embed_preview', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                const j = await r.json(); $('#saveEmbedMsg').textContent = j.success? '✅ Enregistré' : '❌ Erreur';
+            });
+        })();
+    </script>
 </body>
 </html>
