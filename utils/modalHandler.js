@@ -27,6 +27,8 @@ class ModalHandler {
             'multiplier_modal',
             'add_role_reward_modal',
             'level_for_role',
+            'style_backgrounds_modal',
+            'style_backgrounds_default_modal',
             // Modals AOUV
             'aouv_prompt_add_modal',
             'aouv_prompt_add_bulk_modal',
