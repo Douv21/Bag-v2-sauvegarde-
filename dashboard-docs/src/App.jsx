@@ -12,7 +12,7 @@ function useCommandsData() {
 
   useEffect(() => {
     let cancelled = false
-    fetch('/commands.json')
+    fetch(`${import.meta.env.BASE_URL}commands.json`)
       .then((r) => {
         if (!r.ok) throw new Error('Erreur chargement JSON')
         return r.json()
@@ -71,9 +71,9 @@ function Sidebar({ categories, active, onSelect }) {
 
 function DiscordEmbed({ title, children }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-neutral-900/60">
-      <div className="border-l-4 border-indigo-500 rounded-l-lg p-4">
-        <div className="text-indigo-300 font-semibold mb-1">{title}</div>
+    <div className="rounded-lg border border-[#1f2226] bg-[#2b2d31]">
+      <div className="border-l-4 border-[#5865F2] rounded-l-lg p-4">
+        <div className="text-[#cfd4db] font-semibold mb-1">{title}</div>
         <div className="text-white/80 text-sm leading-relaxed">{children}</div>
       </div>
     </div>

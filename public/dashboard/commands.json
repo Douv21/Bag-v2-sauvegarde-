@@ -1,0 +1,102 @@
+{
+  "categories": [
+    {
+      "name": "Modération",
+      "commands": [
+        { "name": "/ban", "description": "Bannir un utilisateur", "usage": "/ban @user [raison]" },
+        { "name": "/unban", "description": "Débannir un utilisateur", "usage": "/unban @user" },
+        { "name": "/kick", "description": "Expulser un utilisateur", "usage": "/kick @user [raison]" },
+        { "name": "/masskick", "description": "Expulser plusieurs utilisateurs", "usage": "/masskick [liste]" },
+        { "name": "/massban", "description": "Bannir plusieurs utilisateurs", "usage": "/massban [liste]" },
+        { "name": "/mute", "description": "Réduire un utilisateur au silence", "usage": "/mute @user [durée]" },
+        { "name": "/unmute", "description": "Rendre la parole à un utilisateur", "usage": "/unmute @user" },
+        { "name": "/clear", "description": "Vider un salon", "usage": "/clear [nombre]" },
+        { "name": "/warn", "description": "Avertir un utilisateur", "usage": "/warn @user [raison]" }
+      ]
+    },
+    {
+      "name": "Économie",
+      "commands": [
+        { "name": "/crime", "description": "Tenter un crime pour gagner/perdre de l’argent", "usage": "/crime" },
+        { "name": "/voler", "description": "Voler un autre utilisateur", "usage": "/voler @user" },
+        { "name": "/pêcher", "description": "Aller pêcher pour trouver des objets", "usage": "/pêcher" },
+        { "name": "/embrasser", "description": "Action fun qui peut rapporter du karma", "usage": "/embrasser @user" },
+        { "name": "/baiser", "description": "Action spéciale (bonus économie ou karma)", "usage": "/baiser @user" },
+        { "name": "/karma", "description": "Afficher ton karma", "usage": "/karma" },
+        { "name": "/boutique", "description": "Voir la boutique", "usage": "/boutique" },
+        { "name": "/daily", "description": "Récompense journalière", "usage": "/daily" },
+        { "name": "/message", "description": "Gagner des points via les messages", "usage": "/message" }
+      ]
+    },
+    {
+      "name": "Level",
+      "commands": [
+        { "name": "/style-carte", "description": "Changer le style de ta carte de niveau", "usage": "/style-carte" },
+        { "name": "/xp-message", "description": "Voir ton XP gagnée via les messages", "usage": "/xp-message" },
+        { "name": "/xp-vocal", "description": "Voir ton XP gagnée via les salons vocaux", "usage": "/xp-vocal" },
+        { "name": "/notification", "description": "Activer/désactiver les notifications de level-up", "usage": "/notification" }
+      ]
+    },
+    {
+      "name": "Confessions",
+      "commands": [
+        { "name": "/confess", "description": "Envoyer une confession anonyme", "usage": "/confess [message]" },
+        { "name": "/confession-log", "description": "Configurer les logs admin pour confessions", "usage": "/confession-log #salon" },
+        { "name": "/confession-channel", "description": "Définir le channel de confessions", "usage": "/confession-channel #salon" },
+        { "name": "/confession-autothread", "description": "Activer la création automatique de threads", "usage": "/confession-autothread on/off" }
+      ]
+    },
+    {
+      "name": "AouV",
+      "commands": [
+        { "name": "/aouv-add-channel", "description": "Ajouter un channel à AouV", "usage": "/aouv-add-channel #salon" },
+        { "name": "/aouv-edit-channel", "description": "Modifier un channel AouV", "usage": "/aouv-edit-channel #salon" },
+        { "name": "/aouv-remove-channel", "description": "Supprimer un channel AouV", "usage": "/aouv-remove-channel #salon" },
+        { "name": "/aouv-prompt", "description": "Ajouter/modifier/supprimer un prompt intégré", "usage": "/aouv-prompt ..." },
+        { "name": "/aouv-nsfw", "description": "Gérer les prompts et channels NSFW", "usage": "/aouv-nsfw ..." }
+      ]
+    },
+    {
+      "name": "Vérification utilisateur",
+      "commands": [
+        { "name": "/verify-channel", "description": "Configurer le salon de vérification", "usage": "/verify-channel #salon" },
+        { "name": "/verify-notification", "description": "Activer les notifications de vérification", "usage": "/verify-notification on/off" },
+        { "name": "/verify-auto", "description": "Activer la vérification automatique", "usage": "/verify-auto on/off" },
+        { "name": "/verify-quarantaine", "description": "Mettre en place un système de quarantaine", "usage": "/verify-quarantaine on/off" }
+      ]
+    },
+    {
+      "name": "Logs",
+      "commands": [
+        { "name": "/logs-message", "description": "Activer logs messages", "usage": "/logs-message on/off" },
+        { "name": "/logs-modération", "description": "Activer logs modération", "usage": "/logs-modération on/off" },
+        { "name": "/logs-arrivee", "description": "Logs arrivées/départs", "usage": "/logs-arrivee on/off" },
+        { "name": "/logs-boost", "description": "Logs des boosts serveur", "usage": "/logs-boost on/off" },
+        { "name": "/logs-pseudo", "description": "Logs des changements de pseudo", "usage": "/logs-pseudo on/off" },
+        { "name": "/logs-vocaux", "description": "Logs des connexions/déconnexions vocales", "usage": "/logs-vocaux on/off" }
+      ]
+    },
+    {
+      "name": "AutoThread",
+      "commands": [
+        { "name": "/autothread", "description": "Activer/désactiver AutoThread", "usage": "/autothread on/off" },
+        { "name": "/autothread-channel", "description": "Configurer le channel cible", "usage": "/autothread-channel #salon" },
+        { "name": "/autothread-name", "description": "Définir le nom par défaut des threads", "usage": "/autothread-name Nom" }
+      ]
+    },
+    {
+      "name": "Comptage",
+      "commands": [
+        { "name": "/count-channel", "description": "Configurer le salon de comptage", "usage": "/count-channel #salon" },
+        { "name": "/count-math", "description": "Activer mode mathématiques", "usage": "/count-math on/off" },
+        { "name": "/count-champion", "description": "Voir le champion du comptage", "usage": "/count-champion" }
+      ]
+    }
+  ],
+  "settings": {
+    "prefix": "!",
+    "autoroles": ["Membre", "Nouveau"],
+    "logs": "Salon #logs",
+    "security_level": "Élevé"
+  }
+}
