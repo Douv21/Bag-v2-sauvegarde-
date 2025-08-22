@@ -259,16 +259,16 @@ class BagBotRender {
                 res.status(500).json({ error: error.message });
             }
         });
-
+        
         // Dashboard temporairement désactivé
         this.app.get('/api/dashboard/overview', (req, res) => {
             res.status(503).json({ error: 'dashboard_disabled' });
         });
-
+        
         this.app.get('/api/dashboard/servers', (req, res) => {
             res.status(503).json({ error: 'dashboard_disabled' });
         });
-
+        
         this.app.get('/api/data/:type', async (req, res) => {
             try {
                 const { type } = req.params;
@@ -278,7 +278,7 @@ class BagBotRender {
                 res.status(500).json({ error: error.message });
             }
         });
-
+        
         // Generic config endpoints for dashboard sections (economy, levels, karma, confessions, counting, autothread, shop, logs, bump, music)
         this.app.get('/api/config/:name', async (req, res) => {
             try {
@@ -288,11 +288,24 @@ class BagBotRender {
                     'level_config': 'level_config.json',
                     'karma_config': 'karma_config.json',
                     'confessions': 'confessions.json',
-                    'moderation_config': 'moderation_config.json'
+                    'moderation_config': 'moderation_config.json',
+                    // Ajouts pour unifier avec les fichiers racine utilisés par le bot
+                    'autothread': 'autothread.json',
+                    'shop': 'shop.json',
+                    'counting': 'counting.json'
                 };
                 const fs = require('fs');
                 const path = require('path');
                 let data = {};
+                // Cas spéciaux: valeurs stockées dans config.json
+                if (['prefix','modules','alerts','embed_preview'].includes(name)) {
+                    const cfg = await this.dataManager.getData('config');
+                    if (name === 'prefix') data = { value: cfg.prefix || '!' };
+                    else if (name === 'modules') data = cfg.modules || {};
+                    else if (name === 'alerts') data = cfg.alerts || {};
+                    else if (name === 'embed_preview') data = cfg.embed_preview || {};
+                    return res.json({ success: true, data });
+                }
                 if (knownRootFiles[name]) {
                     // Lire depuis data/<file>.json
                     data = await this.dataManager.loadData(knownRootFiles[name], {});
@@ -312,7 +325,7 @@ class BagBotRender {
                 res.status(500).json({ success: false, error: error.message });
             }
         });
-
+        
         this.app.post('/api/config/:name', async (req, res) => {
             try {
                 const { name } = req.params;
@@ -324,9 +337,28 @@ class BagBotRender {
                     'level_config': 'level_config.json',
                     'karma_config': 'karma_config.json',
                     'confessions': 'confessions.json',
-                    'moderation_config': 'moderation_config.json'
+                    'moderation_config': 'moderation_config.json',
+                    // Ajouts pour unifier avec les fichiers racine utilisés par le bot
+                    'autothread': 'autothread.json',
+                    'shop': 'shop.json',
+                    'counting': 'counting.json'
                 };
-
+                // Cas spéciaux: écrire dans config.json
+                if (['prefix','modules','alerts','embed_preview'].includes(name)) {
+                    const cfg = await this.dataManager.getData('config');
+                    if (name === 'prefix') {
+                        cfg.prefix = (String(payload.value || '!').trim()) || '!';
+                    } else if (name === 'modules') {
+                        cfg.modules = payload || {};
+                    } else if (name === 'alerts') {
+                        cfg.alerts = payload || {};
+                    } else if (name === 'embed_preview') {
+                        cfg.embed_preview = payload || {};
+                    }
+                    await this.dataManager.saveData('config', cfg);
+                    return res.json({ success: true });
+                }
+                
                 if (knownRootFiles[name]) {
                     // Écrire dans data/<file>.json via DataManager (atomique + répertoires)
                     const ok = await this.dataManager.saveRawFile(knownRootFiles[name], payload);
@@ -349,7 +381,7 @@ class BagBotRender {
                 res.status(500).json({ success: false, error: error.message });
             }
         });
-
+        
         // Aggregated configs for dashboard preload
         this.app.get('/api/configs', async (req, res) => {
             try {
@@ -357,7 +389,7 @@ class BagBotRender {
                 const levelConfig = await this.dataManager.loadData('level_config.json', {});
                 const karmaConfig = await this.dataManager.loadData('karma_config.json', {});
                 const confessionConfig = await this.dataManager.loadData('confessions.json', {});
-
+                
                 const configs = {
                     economy: {
                         dailyReward: economyConfig.dailyReward || 100,
@@ -390,7 +422,7 @@ class BagBotRender {
                         maxLength: confessionConfig.maxLength || 2000
                     }
                 };
-
+                
                 res.json({ success: true, data: configs });
             } catch (error) {
                 console.error('GET /api/configs error:', error);
