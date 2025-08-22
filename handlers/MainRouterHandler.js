@@ -315,6 +315,10 @@ class MainRouterHandler {
                     await this.levelHandler.handleStyleBackgroundsModal(interaction, customId);
                     return true;
                 }
+                if (customId.startsWith('add_role_reward_modal')) {
+                    await this.levelHandler.handleAddRoleRewardModal(interaction);
+                    return true;
+                }
             }
 
             // === MODALS AUTOTHREAD SYSTEM ===
@@ -864,6 +868,11 @@ class MainRouterHandler {
 
                 if (customId === 'notifications_config_menu') {
                     await this.levelHandler.handleNotificationsConfigAction(interaction);
+                    return true;
+                }
+
+                if (customId === 'role_rewards_config_menu') {
+                    await this.levelHandler.handleRoleRewardsConfigAction(interaction);
                     return true;
                 }
 
