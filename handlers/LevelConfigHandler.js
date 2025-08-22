@@ -834,6 +834,157 @@ class LevelConfigHandler {
             });
         }
     }
+
+    async handleLevelButton(interaction, customId) {
+        try {
+            const selected = (customId || '').replace('level_', '');
+            switch (selected) {
+                case 'text_xp':
+                    return await this.handleTextXPConfig(interaction);
+                case 'voice_xp':
+                    return await this.handleVoiceXPConfig(interaction);
+                case 'notifications':
+                    return await this.handleNotificationsConfig(interaction);
+                case 'role_rewards':
+                    return await this.handleRoleRewardsConfig(interaction);
+                case 'level_formula':
+                    return await this.handleLevelFormulaConfig(interaction);
+                case 'leaderboard':
+                    return await this.handleLeaderboardActions(interaction);
+                default:
+                    return await this.handleLevelConfigMenu(interaction);
+            }
+        } catch (error) {
+            console.error('Erreur handleLevelButton:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: '❌ Erreur lors du traitement du menu.', flags: 64 });
+            }
+        }
+    }
+
+    async handleNotificationsConfigAction(interaction) {
+        try {
+            const selectedValue = Array.isArray(interaction.values) ? interaction.values[0] : null;
+            const { ActionRowBuilder, StringSelectMenuBuilder, ChannelSelectMenuBuilder } = require('discord.js');
+            const config = levelManager.loadConfig();
+
+            switch (selectedValue) {
+                case 'toggle_notifications':
+                    config.notifications.enabled = !config.notifications.enabled;
+                    levelManager.saveConfig(config);
+                    return await this.showNotificationsConfig(interaction);
+
+                case 'notification_channel': {
+                    const channelRow = new ActionRowBuilder().addComponents(
+                        new ChannelSelectMenuBuilder()
+                            .setCustomId('level_notification_channel')
+                            .setPlaceholder('Sélectionnez un canal pour les notifications')
+                            .addChannelTypes(0)
+                    );
+                    return await interaction.update({ components: [channelRow] });
+                }
+
+                case 'card_style': {
+                    const styles = ['holographic','gamer','amour','sensuel','futuristic','elegant','minimal','gaming'];
+                    const styleRow = new ActionRowBuilder().addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId('level_card_style')
+                            .setPlaceholder('Choisissez un style de carte...')
+                            .addOptions(styles.map(s => ({ label: s, value: s })))
+                    );
+                    return await interaction.update({ components: [styleRow] });
+                }
+
+                case 'style_backgrounds':
+                    return await this.showStyleBackgroundsConfig(interaction);
+
+                case 'back_main':
+                    return await this.handleLevelConfigMenu(interaction);
+
+                default:
+                    return await interaction.reply({ content: '❌ Option non reconnue.', flags: 64 });
+            }
+        } catch (error) {
+            console.error('Erreur handleNotificationsConfigAction:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: '❌ Erreur lors du traitement.', flags: 64 });
+            }
+        }
+    }
+
+    async handleLevelNotificationChannel(interaction) {
+        try {
+            const channelId = Array.isArray(interaction.values) ? interaction.values[0] : null;
+            if (!channelId) {
+                return await interaction.reply({ content: '❌ Aucun canal sélectionné.', flags: 64 });
+            }
+            const config = levelManager.loadConfig();
+            config.notifications = config.notifications || {};
+            config.notifications.channelId = channelId;
+            config.notifications.channel = channelId;
+            levelManager.saveConfig(config);
+            return await this.showNotificationsConfig(interaction);
+        } catch (error) {
+            console.error('Erreur handleLevelNotificationChannel:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: '❌ Erreur lors de l’enregistrement du canal.', flags: 64 });
+            }
+        }
+    }
+
+    async handleLevelCardStyle(interaction) {
+        try {
+            const style = Array.isArray(interaction.values) ? interaction.values[0] : null;
+            if (!style) {
+                return await interaction.reply({ content: '❌ Aucun style sélectionné.', flags: 64 });
+            }
+            const config = levelManager.loadConfig();
+            config.notifications = config.notifications || {};
+            config.notifications.cardStyle = style;
+            levelManager.saveConfig(config);
+
+            let files = undefined;
+            try {
+                const preview = await this.generatePreviewCard(interaction, style);
+                if (preview) {
+                    files = [{ attachment: preview, name: `preview_${style}.png` }];
+                }
+            } catch (e) {
+                console.log('⚠️ Impossible de générer l’aperçu de la carte:', e.message);
+            }
+
+            await interaction.update({ content: `✅ Style mis à jour: ${style}`, embeds: [], components: [], files });
+            setTimeout(async () => {
+                try {
+                    await this.showNotificationsConfig({
+                        ...interaction,
+                        update: (options) => interaction.editReply(options)
+                    });
+                } catch {}
+            }, 2000);
+        } catch (error) {
+            console.error('Erreur handleLevelCardStyle:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: '❌ Erreur lors de la mise à jour du style.', flags: 64 });
+            }
+        }
+    }
+
+    async handleStyleBackgroundsStyle(interaction) {
+        return this.handleStyleBackgroundsAction(interaction, 'style_backgrounds_style');
+    }
+
+    async handleStyleBackgroundsRole(interaction, customId) {
+        return this.handleStyleBackgroundsAction(interaction, customId);
+    }
+
+    async handleStyleBackgroundsActions(interaction, customId) {
+        return this.handleStyleBackgroundsAction(interaction, customId);
+    }
+
+    async handleStyleBackgroundsModal(interaction, customId) {
+        return this.handleStyleBackgroundsAction(interaction, customId);
+    }
 }
 
 module.exports = LevelConfigHandler;

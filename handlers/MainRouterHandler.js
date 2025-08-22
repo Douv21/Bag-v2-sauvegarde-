@@ -862,6 +862,11 @@ class MainRouterHandler {
                     return true;
                 }
 
+                if (customId === 'notifications_config_menu') {
+                    await this.levelHandler.handleNotificationsConfigAction(interaction);
+                    return true;
+                }
+
                 if (customId === 'style_backgrounds_style') {
                     await this.levelHandler.handleStyleBackgroundsStyle(interaction);
                     return true;
