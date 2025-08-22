@@ -985,6 +985,190 @@ class LevelConfigHandler {
     async handleStyleBackgroundsModal(interaction, customId) {
         return this.handleStyleBackgroundsAction(interaction, customId);
     }
+
+    // === Récompenses de rôles ===
+    async handleRoleRewardsConfigAction(interaction) {
+        try {
+            const selectedValue = Array.isArray(interaction.values) ? interaction.values[0] : null;
+            if (!selectedValue) {
+                return await interaction.reply({ content: '❌ Aucune option sélectionnée.', flags: 64 });
+            }
+
+            const { ActionRowBuilder, RoleSelectMenuBuilder, StringSelectMenuBuilder, EmbedBuilder } = require('discord.js');
+            const config = levelManager.loadConfig();
+
+            switch (selectedValue) {
+                case 'add_role_reward': {
+                    const roleRow = new ActionRowBuilder().addComponents(
+                        new RoleSelectMenuBuilder()
+                            .setCustomId('add_role_reward_select')
+                            .setPlaceholder('Choisissez le rôle à attribuer...')
+                            .setMinValues(1)
+                            .setMaxValues(1)
+                    );
+                    return await interaction.update({ components: [roleRow] });
+                }
+
+                case 'list_rewards': {
+                    const entries = [];
+                    if (Array.isArray(config.roleRewards)) {
+                        for (const r of config.roleRewards) {
+                            if (r && typeof r.level === 'number' && r.roleId) {
+                                entries.push(`• Niveau ${r.level} → <@&${r.roleId}>`);
+                            }
+                        }
+                    } else if (config.roleRewards && typeof config.roleRewards === 'object') {
+                        for (const [lvl, rid] of Object.entries(config.roleRewards)) {
+                            entries.push(`• Niveau ${lvl} → <@&${rid}>`);
+                        }
+                    }
+
+                    const embed = new EmbedBuilder()
+                        .setTitle('🎁 Récompenses configurées')
+                        .setDescription(entries.length ? entries.join('\n') : 'Aucune récompense configurée')
+                        .setColor('#5865F2');
+                    return await interaction.update({ embeds: [embed], components: [] });
+                }
+
+                case 'remove_reward': {
+                    const options = [];
+                    if (Array.isArray(config.roleRewards)) {
+                        for (const r of config.roleRewards) {
+                            if (r && typeof r.level === 'number') {
+                                options.push({ label: `Niveau ${r.level}`, value: String(r.level) });
+                            }
+                        }
+                    } else if (config.roleRewards && typeof config.roleRewards === 'object') {
+                        for (const lvl of Object.keys(config.roleRewards)) {
+                            options.push({ label: `Niveau ${lvl}`, value: String(lvl) });
+                        }
+                    }
+
+                    if (options.length === 0) {
+                        return await interaction.update({ content: '❌ Aucune récompense à supprimer.', embeds: [], components: [] });
+                    }
+
+                    const row = new ActionRowBuilder().addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId('remove_role_reward')
+                            .setPlaceholder('Choisissez une récompense à supprimer...')
+                            .addOptions(options)
+                    );
+                    return await interaction.update({ components: [row] });
+                }
+
+                case 'back_main':
+                    return await this.handleLevelConfigMenu(interaction);
+
+                default:
+                    return await interaction.reply({ content: '❌ Option non reconnue.', flags: 64 });
+            }
+        } catch (error) {
+            console.error('Erreur handleRoleRewardsConfigAction:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: '❌ Erreur lors du traitement.', flags: 64 });
+            }
+        }
+    }
+
+    async handleAddRoleRewardSelect(interaction) {
+        try {
+            const roleId = Array.isArray(interaction.values) ? interaction.values[0] : null;
+            if (!roleId) {
+                return await interaction.reply({ content: '❌ Aucun rôle sélectionné.', flags: 64 });
+            }
+
+            const modal = new ModalBuilder()
+                .setCustomId(`add_role_reward_modal_${roleId}`)
+                .setTitle('Ajouter Récompense de Rôle');
+
+            const levelInput = new TextInputBuilder()
+                .setCustomId('level')
+                .setLabel('Niveau requis (1-100)')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+                .setMinLength(1)
+                .setMaxLength(3);
+
+            modal.addComponents(new ActionRowBuilder().addComponents(levelInput));
+            await interaction.showModal(modal);
+        } catch (error) {
+            console.error('Erreur handleAddRoleRewardSelect:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: '❌ Erreur lors de la préparation du modal.', flags: 64 });
+            }
+        }
+    }
+
+    async handleAddRoleRewardModal(interaction) {
+        try {
+            const customId = String(interaction.customId || '');
+            let roleId = null;
+            if (customId.startsWith('add_role_reward_modal_')) {
+                roleId = customId.replace('add_role_reward_modal_', '');
+            }
+            if (!roleId) {
+                try { roleId = interaction.fields.getTextInputValue('role_id'); } catch {}
+            }
+
+            const levelVal = interaction.fields.getTextInputValue('level');
+            const level = parseInt(levelVal, 10);
+            if (!roleId || !Number.isFinite(level) || level < 1 || level > 100) {
+                return await interaction.reply({ content: '❌ Valeurs invalides. Vérifiez le niveau (1-100) et le rôle.', flags: 64 });
+            }
+
+            const config = levelManager.loadConfig();
+            // Normaliser roleRewards en objet
+            if (!config.roleRewards) config.roleRewards = {};
+            if (Array.isArray(config.roleRewards)) {
+                const obj = {};
+                for (const r of config.roleRewards) {
+                    if (r && typeof r.level === 'number' && r.roleId) obj[String(r.level)] = r.roleId;
+                }
+                config.roleRewards = obj;
+            }
+
+            config.roleRewards[String(level)] = roleId;
+            levelManager.saveConfig(config);
+
+            await interaction.reply({ content: `✅ Récompense enregistrée: Niveau ${level} → <@&${roleId}>`, flags: 64 });
+        } catch (error) {
+            console.error('Erreur handleAddRoleRewardModal:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: '❌ Erreur lors de l\'enregistrement de la récompense.', flags: 64 });
+            }
+        }
+    }
+
+    async handleRemoveRoleReward(interaction) {
+        try {
+            const levelStr = Array.isArray(interaction.values) ? interaction.values[0] : null;
+            if (!levelStr) {
+                return await interaction.reply({ content: '❌ Aucun niveau sélectionné.', flags: 64 });
+            }
+            const config = levelManager.loadConfig();
+
+            let removed = false;
+            if (Array.isArray(config.roleRewards)) {
+                const before = config.roleRewards.length;
+                config.roleRewards = config.roleRewards.filter(r => String(r.level) !== String(levelStr));
+                removed = config.roleRewards.length < before;
+            } else if (config.roleRewards && typeof config.roleRewards === 'object') {
+                if (config.roleRewards[levelStr]) {
+                    delete config.roleRewards[levelStr];
+                    removed = true;
+                }
+            }
+
+            levelManager.saveConfig(config);
+            await interaction.update({ content: removed ? `🗑️ Récompense supprimée pour le niveau ${levelStr}.` : '❌ Rien à supprimer.', embeds: [], components: [] });
+        } catch (error) {
+            console.error('Erreur handleRemoveRoleReward:', error);
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: '❌ Erreur lors de la suppression.', flags: 64 });
+            }
+        }
+    }
 }
 
 module.exports = LevelConfigHandler;
