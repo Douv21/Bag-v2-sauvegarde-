@@ -404,15 +404,20 @@ class AutoVerificationHandler {
           .setStyle(ButtonStyle.Success)
           .setEmoji('✅'),
         new ButtonBuilder()
-          .setCustomId(`security_deny_${userId}`)
-          .setLabel('Refuser & Kick')
-          .setStyle(ButtonStyle.Danger)
-          .setEmoji('❌'),
-        new ButtonBuilder()
           .setCustomId(`security_quarantine_${userId}`)
           .setLabel('Quarantaine')
           .setStyle(ButtonStyle.Secondary)
           .setEmoji('🔒'),
+        new ButtonBuilder()
+          .setCustomId(`security_kick_${userId}`)
+          .setLabel('Kick')
+          .setStyle(ButtonStyle.Danger)
+          .setEmoji('👢'),
+        new ButtonBuilder()
+          .setCustomId(`security_ban_${userId}`)
+          .setLabel('Ban')
+          .setStyle(ButtonStyle.Danger)
+          .setEmoji('🔨'),
         new ButtonBuilder()
           .setCustomId(`security_details_${userId}`)
           .setLabel('Détails')

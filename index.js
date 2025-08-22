@@ -1276,13 +1276,17 @@ class BagBotRender {
                     .setLabel('✅ Approuver')
                     .setStyle(ButtonStyle.Success),
                 new ButtonBuilder()
-                    .setCustomId(`security_deny_${member.user.id}`)
-                    .setLabel('❌ Refuser')
-                    .setStyle(ButtonStyle.Danger),
-                new ButtonBuilder()
                     .setCustomId(`security_quarantine_${member.user.id}`)
                     .setLabel('🔒 Quarantaine')
                     .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId(`security_kick_${member.user.id}`)
+                    .setLabel('👢 Kick')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId(`security_ban_${member.user.id}`)
+                    .setLabel('🔨 Ban')
+                    .setStyle(ButtonStyle.Danger),
                 new ButtonBuilder()
                     .setCustomId(`security_details_${member.user.id}`)
                     .setLabel('🔍 Détails')

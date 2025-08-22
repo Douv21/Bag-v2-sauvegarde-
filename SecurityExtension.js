@@ -271,13 +271,17 @@ async requestAdminApproval(member, reason, details) {
             .setLabel('✅ Approuver')
             .setStyle(ButtonStyle.Success),
           new ButtonBuilder()
-            .setCustomId(`security_deny_${member.user.id}`)
-            .setLabel('❌ Refuser')
-            .setStyle(ButtonStyle.Danger),
-          new ButtonBuilder()
             .setCustomId(`security_quarantine_${member.user.id}`)
             .setLabel('🔒 Quarantaine')
             .setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder()
+            .setCustomId(`security_kick_${member.user.id}`)
+            .setLabel('👢 Kick')
+            .setStyle(ButtonStyle.Danger),
+          new ButtonBuilder()
+            .setCustomId(`security_ban_${member.user.id}`)
+            .setLabel('🔨 Ban')
+            .setStyle(ButtonStyle.Danger),
           new ButtonBuilder()
             .setCustomId(`security_details_${member.user.id}`)
             .setLabel('🔍 Détails')
@@ -368,64 +372,4 @@ async autoBanMember(member, reason, details) {
       `Votre compte a été identifié comme présentant un risque élevé.\n\n` +
       `**Raison :** ${reason}\n` +
       `**Score de risque :** ${details.score}/100\n\n` +
-      `Si vous pensez qu'il s'agit d'une erreur, contactez les administrateurs.`
-    ).catch(() => {});
-
-    await member.ban({ reason: `Sécurité automatique: ${reason}` });
-    
-    await this.addBanToHistory(member.user.id, member.guild.id, `Auto-ban: ${reason}`, null);
-    await this.sendSecurityAlert(member, `AUTO-BAN: ${reason}`, details);
-    console.log(`🔨 Auto-ban: ${member.user.tag} dans ${member.guild.name}`);
-  } catch (error) {
-    console.error('Erreur auto-ban:', error);
-  }
-}
-
-async notifyAdminsQuarantine(member, reason, details) {
-  const alertChannel = await this.findSecurityLogChannel(member.guild);
-  if (!alertChannel) return;
-
-  const { EmbedBuilder } = require('discord.js');
-  const embed = new EmbedBuilder()
-    .setTitle('🔒 MEMBRE EN QUARANTAINE')
-    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-    .setColor(0xffd43b)
-    .setTimestamp();
-
-  embed.addFields({
-    name: '👤 Membre',
-    value: `${member.user.tag}\n<@${member.user.id}>`,
-    inline: true
-  });
-
-  embed.addFields({
-    name: '📊 Analyse',
-    value: `**Score :** ${details.score}/100\n**Raison :** ${reason}`,
-    inline: true
-  });
-
-  embed.addFields({
-    name: '💡 Actions disponibles',
-    value: '`/verifier @membre` - Analyse complète\n`/ban @membre` - Bannir\n`/kick @membre` - Expulser',
-    inline: false
-  });
-
-  await alertChannel.send({ embeds: [embed] });
-}
-
-module.exports = {
-  // Exporter les méthodes pour les ajouter au ModerationManager
-  getDefaultSecurityConfig,
-  getSecurityConfig,
-  updateSecurityConfig,
-  deepMerge,
-  isUserWhitelisted,
-  processNewMemberAccess,
-  handleAccessDenied,
-  quarantineMember,
-  requestAdminApproval,
-  grantAccess,
-  autoKickMember,
-  autoBanMember,
-  notifyAdminsQuarantine
-};
+      `
