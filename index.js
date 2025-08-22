@@ -398,6 +398,145 @@ class BagBotRender {
             }
         });
 
+        // Guilds list for UI selectors and server distribution
+        this.app.get('/api/guilds', async (req, res) => {
+            try {
+                const guilds = Array.from(this.client.guilds.cache.values()).map(g => ({
+                    id: g.id,
+                    name: g.name,
+                    memberCount: typeof g.memberCount === 'number' ? g.memberCount : (g.approximateMemberCount || 0),
+                    icon: g.iconURL?.() || null
+                }));
+                res.json({ success: true, data: guilds });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Channels list for a given guild (text channels only)
+        this.app.get('/api/guilds/:guildId/channels', async (req, res) => {
+            try {
+                const { guildId } = req.params;
+                const guild = this.client.guilds.cache.get(guildId);
+                if (!guild) return res.json({ success: true, data: [] });
+                try { await guild.channels.fetch(); } catch {}
+                const channels = Array.from(guild.channels.cache.values())
+                    .filter(ch => ch && typeof ch.type !== 'undefined' && (ch.type === 0 || (typeof ch.isTextBased === 'function' && ch.isTextBased())))
+                    .map(ch => ({ id: ch.id, name: ch.name }))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                res.json({ success: true, data: channels });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Backups listing for Logs & Historique
+        this.app.get('/api/backups', async (req, res) => {
+            try {
+                const backupsRoot = path.join(__dirname, 'data', 'backups');
+                if (!fs.existsSync(backupsRoot)) return res.json({ success: true, data: [] });
+                const dirs = fs.readdirSync(backupsRoot).filter(name => {
+                    try { return fs.statSync(path.join(backupsRoot, name)).isDirectory(); } catch { return false; }
+                });
+
+                const getDirSize = (dirPath) => {
+                    let total = 0;
+                    let filesCount = 0;
+                    const walk = (p) => {
+                        const entries = fs.readdirSync(p);
+                        for (const e of entries) {
+                            const full = path.join(p, e);
+                            const st = fs.statSync(full);
+                            if (st.isDirectory()) walk(full); else { total += st.size; filesCount++; }
+                        }
+                    };
+                    walk(dirPath);
+                    return { sizeBytes: total, filesCount };
+                };
+
+                const rows = dirs.map(name => {
+                    const full = path.join(backupsRoot, name);
+                    const { sizeBytes, filesCount } = getDirSize(full);
+                    // Try to parse ISO-ish timestamp from folder name
+                    let dateISO = null;
+                    try {
+                        const cleaned = name.replace(/-/g, ':').replace('T', 'T').replace(/:Z$/, 'Z');
+                        // Reverse previous replace used when saving (which replaced : and . with -)
+                        // Fallback to constructing from segments
+                        const parts = name.split('T');
+                        if (parts.length === 2) {
+                            const d = parts[0];
+                            const t = parts[1].replace(/-/g, ':');
+                            dateISO = new Date(`${d}T${t}`).toISOString();
+                        }
+                    } catch {}
+                    return {
+                        id: name,
+                        dateISO: dateISO,
+                        status: 'success',
+                        sizeBytes,
+                        filesCount
+                    };
+                }).sort((a, b) => (b.dateISO || '').localeCompare(a.dateISO || ''));
+
+                res.json({ success: true, data: rows });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Last 7 days metrics for charts
+        this.app.get('/api/metrics/last7days', async (req, res) => {
+            try {
+                const metrics = await this.dataManager.getData('metrics');
+                const toKey = (d) => {
+                    const y = d.getUTCFullYear();
+                    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+                    const day = String(d.getUTCDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                };
+                const labels = [];
+                const messages = [];
+                const commands = [];
+                const backupsCount = [];
+
+                // Build backup counts per day
+                const backupsRoot = path.join(__dirname, 'data', 'backups');
+                let backupDirs = [];
+                if (fs.existsSync(backupsRoot)) {
+                    backupDirs = fs.readdirSync(backupsRoot).filter(name => {
+                        try { return fs.statSync(path.join(backupsRoot, name)).isDirectory(); } catch { return false; }
+                    });
+                }
+
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+                    const key = toKey(d);
+                    labels.push(key);
+                    messages.push(Number(metrics?.messagesPerDay?.[key] || 0));
+                    commands.push(Number(metrics?.commandsPerDay?.[key] || 0));
+                    const backupForDay = backupDirs.filter(dir => dir.startsWith(key)).length;
+                    backupsCount.push(backupForDay);
+                }
+
+                res.json({ success: true, data: { labels, messages, commands, backups: backupsCount } });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Servers distribution for pie chart
+        this.app.get('/api/servers/distribution', async (req, res) => {
+            try {
+                const guilds = Array.from(this.client.guilds.cache.values());
+                const labels = guilds.map(g => g.name);
+                const values = guilds.map(g => (typeof g.memberCount === 'number' ? g.memberCount : (g.approximateMemberCount || 0)));
+                res.json({ success: true, data: { labels, values } });
+            } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
         // Moderation endpoints per guild
         this.app.get('/api/moderation/:guildId', async (req, res) => {
             try {
