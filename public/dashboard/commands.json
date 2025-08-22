@@ -1,119 +1,76 @@
 {
   "dashboard": {
-    "logo": "/bag-logo.png",
+    "logo": "https://cdn.discordapp.com/attachments/1408458115283812484/1408458115770482778/20250305162902.png?ex=68a9d056&is=68a87ed6&hm=3189c1bb0c0b3b9dd3d818ea9608a9d9088d3fef798c36f920d60d64eef998e0&",
     "categories": [
-      { "name": "Modération", "icon": "🛡️", "description": "Gérer les utilisateurs et sécuriser ton serveur", "link": "/docs/moderation" },
-      { "name": "Économie", "icon": "💰", "description": "Monnaie, karma, boutique, daily…", "link": "/docs/economie" },
-      { "name": "Level", "icon": "📈", "description": "XP messages/vocaux, style de cartes, notifications", "link": "/docs/level" },
-      { "name": "Confessions", "icon": "🤫", "description": "Confessions anonymes, logs admin, auto-threads", "link": "/docs/confessions" },
-      { "name": "AouV", "icon": "🎮", "description": "Gérer channels, prompts (intégrés & NSFW)", "link": "/docs/aouv" },
-      { "name": "Vérification utilisateur", "icon": "✅", "description": "Notifications, auto, quarantaine", "link": "/docs/verification" },
-      { "name": "Logs", "icon": "📜", "description": "Messages, modération, arrivées/départs, boost, pseudos, vocaux", "link": "/docs/logs" },
-      { "name": "AutoThread", "icon": "🧵", "description": "Activer/Désactiver, channel, nom des threads", "link": "/docs/autothread" },
-      { "name": "Comptage", "icon": "🔢", "description": "Salon, mode maths, champion", "link": "/docs/comptage" }
-    ]
-  },
-  "categories": [
-    {
-      "name": "Modération",
-      "slug": "moderation",
-      "commands": [
-        { "name": "/ban", "description": "Bannir un utilisateur", "usage": "/ban @user [raison]" },
-        { "name": "/unban", "description": "Débannir un utilisateur", "usage": "/unban @user" },
-        { "name": "/kick", "description": "Expulser un utilisateur", "usage": "/kick @user [raison]" },
-        { "name": "/masskick", "description": "Expulser plusieurs utilisateurs", "usage": "/masskick @user1 @user2" },
-        { "name": "/massban", "description": "Bannir plusieurs utilisateurs", "usage": "/massban @user1 @user2" },
-        { "name": "/mute", "description": "Rendre muet un utilisateur", "usage": "/mute @user [durée]" },
-        { "name": "/unmute", "description": "Rendre la parole à un utilisateur", "usage": "/unmute @user" },
-        { "name": "/clear", "description": "Vider un salon", "usage": "/clear [nombre]" },
-        { "name": "/warn", "description": "Avertir un utilisateur", "usage": "/warn @user [raison]" }
-      ]
-    },
-    {
-      "name": "Économie",
-      "slug": "economie",
-      "commands": [
-        { "name": "/crime", "description": "Tenter un crime (risque/récompense)", "usage": "/crime" },
-        { "name": "/voler", "description": "Voler un utilisateur", "usage": "/voler @user" },
-        { "name": "/pêcher", "description": "Aller pêcher des objets", "usage": "/pêcher" },
-        { "name": "/embrasser", "description": "Action fun (karma+)", "usage": "/embrasser @user" },
-        { "name": "/baiser", "description": "Action spéciale (bonus)", "usage": "/baiser @user" },
-        { "name": "/karma", "description": "Afficher ton karma", "usage": "/karma" },
-        { "name": "/boutique", "description": "Voir la boutique", "usage": "/boutique" },
-        { "name": "/daily", "description": "Récompense journalière", "usage": "/daily" },
-        { "name": "/message", "description": "Gains liés aux messages", "usage": "/message" }
-      ]
-    },
-    {
-      "name": "Level",
-      "slug": "level",
-      "commands": [
-        { "name": "/style-carte", "description": "Changer le style de carte", "usage": "/style-carte" },
-        { "name": "/xp-message", "description": "XP gagnée via messages", "usage": "/xp-message" },
-        { "name": "/xp-vocal", "description": "XP gagnée via vocaux", "usage": "/xp-vocal" },
-        { "name": "/notification", "description": "Activer/désactiver les notifications", "usage": "/notification on/off" }
-      ]
-    },
-    {
-      "name": "Confessions",
-      "slug": "confessions",
-      "commands": [
-        { "name": "/confess", "description": "Envoyer une confession anonyme", "usage": "/confess [message]" },
-        { "name": "/confession-log", "description": "Configurer log admin", "usage": "/confession-log #salon" },
-        { "name": "/confession-channel", "description": "Définir le channel", "usage": "/confession-channel #salon" },
-        { "name": "/confession-autothread", "description": "Activer la création auto de threads", "usage": "/confession-autothread on/off" }
-      ]
-    },
-    {
-      "name": "AouV",
-      "slug": "aouv",
-      "commands": [
-        { "name": "/aouv-add-channel", "description": "Ajouter un channel AouV", "usage": "/aouv-add-channel #salon" },
-        { "name": "/aouv-edit-channel", "description": "Modifier un channel AouV", "usage": "/aouv-edit-channel #salon" },
-        { "name": "/aouv-remove-channel", "description": "Supprimer un channel AouV", "usage": "/aouv-remove-channel #salon" },
-        { "name": "/aouv-prompt", "description": "Gérer les prompts intégrés", "usage": "/aouv-prompt ..." },
-        { "name": "/aouv-nsfw", "description": "Gérer prompts/channels NSFW", "usage": "/aouv-nsfw ..." }
-      ]
-    },
-    {
-      "name": "Vérification utilisateur",
-      "slug": "verification",
-      "commands": [
-        { "name": "/verify-channel", "description": "Configurer le salon de vérification", "usage": "/verify-channel #salon" },
-        { "name": "/verify-notification", "description": "Notifications de vérification", "usage": "/verify-notification on/off" },
-        { "name": "/verify-auto", "description": "Vérification automatique", "usage": "/verify-auto on/off" },
-        { "name": "/verify-quarantaine", "description": "Système de quarantaine", "usage": "/verify-quarantaine on/off" }
-      ]
-    },
-    {
-      "name": "Logs",
-      "slug": "logs",
-      "commands": [
-        { "name": "/logs-message", "description": "Logs des messages", "usage": "/logs-message on/off" },
-        { "name": "/logs-modération", "description": "Logs de modération", "usage": "/logs-modération on/off" },
-        { "name": "/logs-arrivee", "description": "Arrivées/Départs", "usage": "/logs-arrivee on/off" },
-        { "name": "/logs-boost", "description": "Boosts serveur", "usage": "/logs-boost on/off" },
-        { "name": "/logs-pseudo", "description": "Changements de pseudo", "usage": "/logs-pseudo on/off" },
-        { "name": "/logs-vocaux", "description": "Connexions/déconnexions vocaux", "usage": "/logs-vocaux on/off" }
-      ]
-    },
-    {
-      "name": "AutoThread",
-      "slug": "autothread",
-      "commands": [
-        { "name": "/autothread", "description": "Activer/Désactiver", "usage": "/autothread on/off" },
-        { "name": "/autothread-channel", "description": "Configurer le channel", "usage": "/autothread-channel #salon" },
-        { "name": "/autothread-name", "description": "Nom par défaut des threads", "usage": "/autothread-name Nom" }
-      ]
-    },
-    {
-      "name": "Comptage",
-      "slug": "comptage",
-      "commands": [
-        { "name": "/count-channel", "description": "Configurer le salon de comptage", "usage": "/count-channel #salon" },
-        { "name": "/count-math", "description": "Mode mathématiques", "usage": "/count-math on/off" },
-        { "name": "/count-champion", "description": "Voir le champion", "usage": "/count-champion" }
-      ]
+      { "name": "Modération", "icon": "🛡️", "description": "Gérer les utilisateurs et sécuriser ton serveur", "link": "/docs/moderation",
+        "children": [
+          { "name": "Sanctions", "icon": "⚖️", "link": "/docs/moderation/sanctions" },
+          { "name": "AutoMod", "icon": "🤖", "link": "/docs/moderation/automod" },
+          { "name": "Rôles", "icon": "👤", "link": "/docs/moderation/roles" }
+        ]
+      },
+      { "name": "Économie", "icon": "💰", "description": "Système de monnaie, karma et boutique", "link": "/docs/economie",
+        "children": [
+          { "name": "Boutique", "icon": "🏪", "link": "/docs/economie/boutique" },
+          { "name": "Karma", "icon": "🧠", "link": "/docs/economie/karma" },
+          { "name": "Daily", "icon": "⏰", "link": "/docs/economie/daily" }
+        ]
+      },
+      { "name": "Level", "icon": "📈", "description": "Système d’XP et cartes personnalisées", "link": "/docs/level",
+        "children": [
+          { "name": "Cartes", "icon": "🖼️", "link": "/docs/level/cartes" },
+          { "name": "Configuration", "icon": "⚙️", "link": "/docs/level/config" },
+          { "name": "Récompenses", "icon": "🏆", "link": "/docs/level/recompenses" }
+        ]
+      },
+      { "name": "Confessions", "icon": "🤫", "description": "Envoyer et gérer des confessions anonymes", "link": "/docs/confessions",
+        "children": [
+          { "name": "Statistiques", "icon": "📊", "link": "/docs/confessions/stats" },
+          { "name": "Paramètres", "icon": "⚙️", "link": "/docs/confessions/params" },
+          { "name": "Modération", "icon": "🛡️", "link": "/docs/confessions/moderation" }
+        ]
+      },
+      { "name": "AouV", "icon": "🎮", "description": "Ajouter, modifier ou supprimer prompts et channels", "link": "/docs/aouv",
+        "children": [
+          { "name": "Prompts", "icon": "💬", "link": "/docs/aouv/prompts" },
+          { "name": "Canaux", "icon": "#️⃣", "link": "/docs/aouv/channels" },
+          { "name": "Scores", "icon": "🏅", "link": "/docs/aouv/scores" }
+        ]
+      },
+      { "name": "Vérification utilisateur", "icon": "✅", "description": "Automatiser la vérification et les quarantaines", "link": "/docs/verification",
+        "children": [
+          { "name": "Configuration", "icon": "⚙️", "link": "/docs/verification/config" },
+          { "name": "Quarantaines", "icon": "🚧", "link": "/docs/verification/quarantine" },
+          { "name": "Logs", "icon": "📜", "link": "/docs/verification/logs" }
+        ]
+      },
+      { "name": "Logs", "icon": "📜", "description": "Suivre les événements du serveur", "link": "/docs/logs",
+        "children": [
+          { "name": "Messages", "icon": "💬", "link": "/docs/logs/messages" },
+          { "name": "Actions", "icon": "🛠️", "link": "/docs/logs/actions" },
+          { "name": "Erreurs", "icon": "❗", "link": "/docs/logs/erreurs" }
+        ]
+      },
+      { "name": "AutoThread", "icon": "🧵", "description": "Créer automatiquement des threads", "link": "/docs/autothread",
+        "children": [
+          { "name": "Canaux", "icon": "#️⃣", "link": "/docs/autothread/canaux" },
+          { "name": "Règles", "icon": "📐", "link": "/docs/autothread/regles" },
+          { "name": "Statistiques", "icon": "📊", "link": "/docs/autothread/stats" }
+        ]
+      },
+      { "name": "Comptage", "icon": "🔢", "description": "Système de comptage et mini-jeux mathématiques", "link": "/docs/comptage",
+        "children": [
+          { "name": "Canaux", "icon": "#️⃣", "link": "/docs/comptage/canaux" },
+          { "name": "Math", "icon": "➕", "link": "/docs/comptage/math" },
+          { "name": "Classements", "icon": "🏅", "link": "/docs/comptage/classements" }
+        ]
+      }
+    ],
+    "settings": {
+      "prefix": "!",
+      "autoroles": ["Membre", "Nouveau"],
+      "logs": "#logs",
+      "security_level": "Élevé"
     }
-  ]
+  }
 }
