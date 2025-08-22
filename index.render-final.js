@@ -480,10 +480,10 @@ class RenderSolutionBot {
             }
         });
 
-        // Dashboard routes (placeholder)
+        // Dashboard route - serves Vite build output
         app.get('/dashboard', (req, res) => {
             res.set('Cache-Control', 'no-store, must-revalidate');
-            res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+            res.sendFile(path.join(__dirname, 'public', 'dashboard', 'index.html'));
         });
 
         app.get('/dashboard/:guildId', (req, res) => {
