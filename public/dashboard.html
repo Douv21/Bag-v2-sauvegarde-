@@ -554,6 +554,17 @@
             return v.toFixed(1) + ' ' + units[i];
         }
 
+        // Inject guild filter from URL when present
+        const __params = new URLSearchParams(window.location.search || '');
+        const __GUILD_ID = __params.get('guildId');
+        const withGid = (url) => {
+            if (!__GUILD_ID) return url;
+            const [base, q] = url.split('?');
+            const sp = new URLSearchParams(q || '');
+            sp.set('guildId', __GUILD_ID);
+            return base + '?' + sp.toString();
+        };
+
         // Load header info
         (async function initHeader(){
             const health = await safeJson('/health');
@@ -570,9 +581,9 @@
         // Overview wiring
         let lineBackups, pieServers, miniActive, miniBackups, uptimeGauge, lineInteractive, pieInteractive, barStacked;
         (async function initOverview(){
-            const stats = await safeJson('/api/stats');
-            const seven = await safeJson('/api/metrics/last7days');
-            const servers = await safeJson('/api/servers/distribution');
+            const stats = await safeJson(withGid('/api/stats'));
+            const seven = await safeJson(withGid('/api/metrics/last7days'));
+            const servers = await safeJson(withGid('/api/servers/distribution'));
             const guildsList = await safeJson('/api/guilds');
 
             if (stats && !stats.__error) {
@@ -583,7 +594,7 @@
             }
 
             if (guildsList && guildsList.success) {
-                $('#kpi-servers').textContent = guildsList.data.length;
+                $('#kpi-servers').textContent = __GUILD_ID ? 1 : guildsList.data.length;
             }
 
             // Mini charts
@@ -729,7 +740,15 @@
                 $('#alertChannel').innerHTML = (ch.data||[]).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             }
             $('#alertGuild').addEventListener('change', loadChannels);
-            if (guilds.data?.length) { $('#alertGuild').value = guilds.data[0].id; await loadChannels(); }
+            if ((guilds.data||[]).length) {
+                if (__GUILD_ID && (guilds.data||[]).some(g => g.id === __GUILD_ID)) {
+                    $('#alertGuild').value = __GUILD_ID;
+                    await loadChannels();
+                } else {
+                    $('#alertGuild').value = guilds.data[0].id;
+                    await loadChannels();
+                }
+            }
 
             const updatePreview = ()=> {
                 const crit = $('#alertDiscord').classList.contains('on') ? '🔴 Critique' : '⚪ Info';
@@ -751,8 +770,8 @@
 
         // Detailed stats charts
         (async function initStats(){
-            const seven = await safeJson('/api/metrics/last7days');
-            const servers = await safeJson('/api/servers/distribution');
+            const seven = await safeJson(withGid('/api/metrics/last7days'));
+            const servers = await safeJson(withGid('/api/servers/distribution'));
             const red = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#D32F2F';
 
             const ctx1 = document.getElementById('lineInteractive').getContext('2d');
