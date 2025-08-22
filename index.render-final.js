@@ -486,7 +486,7 @@ class RenderSolutionBot {
             res.sendFile(path.join(__dirname, 'public', 'dashboard', 'index.html'));
         });
 
-        app.get('/dashboard/:guildId', (req, res) => {
+        app.get('/dashboard/:guildId(\\d+)', (req, res) => {
             const gid = req.params.guildId;
             res.redirect(`/dashboard?guildId=${encodeURIComponent(gid)}`);
         });
