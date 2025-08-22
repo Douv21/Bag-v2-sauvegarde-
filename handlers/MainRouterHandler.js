@@ -1028,6 +1028,57 @@ class MainRouterHandler {
                 }
             }
 
+            // === SELECT MENUS DASHBOARD ===
+            if (this.dashboardHandler && customId === 'dashboard_sections') {
+                await this.dashboardHandler.handleDashboardInteraction(interaction);
+                return true;
+            }
+
+            if (this.dashboardHandler && customId === 'economy_dashboard_options') {
+                const value = Array.isArray(interaction.values) ? interaction.values[0] : undefined;
+                if (value === 'back_main_dashboard') {
+                    await this.dashboardHandler.showMainDashboard(interaction);
+                    return true;
+                }
+                return true;
+            }
+
+            if (this.dashboardHandler && customId === 'confessions_dashboard_options') {
+                const value = Array.isArray(interaction.values) ? interaction.values[0] : undefined;
+                if (value === 'back_main_dashboard') {
+                    await this.dashboardHandler.showMainDashboard(interaction);
+                    return true;
+                }
+                return true;
+            }
+
+            if (this.dashboardHandler && customId === 'counting_dashboard_options') {
+                const value = Array.isArray(interaction.values) ? interaction.values[0] : undefined;
+                if (value === 'back_main_dashboard') {
+                    await this.dashboardHandler.showMainDashboard(interaction);
+                    return true;
+                }
+                return true;
+            }
+
+            if (this.dashboardHandler && customId === 'autothread_dashboard_options') {
+                const value = Array.isArray(interaction.values) ? interaction.values[0] : undefined;
+                if (value === 'back_main_dashboard') {
+                    await this.dashboardHandler.showMainDashboard(interaction);
+                    return true;
+                }
+                return true;
+            }
+
+            if (this.dashboardHandler && customId === 'shop_dashboard_options') {
+                const value = Array.isArray(interaction.values) ? interaction.values[0] : undefined;
+                if (value === 'back_main_dashboard') {
+                    await this.dashboardHandler.showMainDashboard(interaction);
+                    return true;
+                }
+                return true;
+            }
+
             return false;
         } catch (error) {
             console.error('❌ Erreur select menu interaction:', error);
@@ -1111,112 +1162,112 @@ class MainRouterHandler {
                         return true;
                     }
 
-                    styleRole = await createAndPositionColorRole(
-                        interaction.guild, 
-                        meForPosition, 
-                        style, 
-                        'Création automatique du rôle de couleur (sélecteur)'
-                    );
+                    					styleRole = await createAndPositionColorRole(
+						interaction.guild, 
+						meForPosition, 
+						style, 
+						'Création automatique du rôle de couleur (sélecteur)'
+					);
 
-                    if (!styleRole) {
-                        await interaction.editReply({ content: '❌ Impossible de créer le rôle de couleur.' });
-                        return true;
-                    }
-                }
+					if (!styleRole) {
+						await interaction.editReply({ content: '❌ Impossible de créer le rôle de couleur.' });
+						return true;
+					}
+				}
 
-                // Vérifier que le bot peut gérer ce rôle
-                const me = interaction.guild.members.me;
-                if (!me || me.roles.highest.comparePositionTo(styleRole) <= 0) {
-                    await interaction.editReply({ 
-                        content: `❌ Je ne peux pas assigner le rôle ${styleRole.toString()} (position trop haute). Place mon rôle au-dessus.` 
-                    });
-                    return true;
-                }
+				// Vérifier que le bot peut gérer ce rôle
+				const me = interaction.guild.members.me;
+				if (!me || me.roles.highest.comparePositionTo(styleRole) <= 0) {
+					await interaction.editReply({ 
+						content: `❌ Je ne peux pas assigner le rôle ${styleRole.toString()} (position trop haute). Place mon rôle au-dessus.` 
+					});
+					return true;
+				}
 
-                await targetMember.roles.add(styleRole, 'Attribution de la couleur via sélecteur');
+				await targetMember.roles.add(styleRole, 'Attribution de la couleur via sélecteur');
 
-                const embed = new EmbedBuilder()
-                    .setTitle(`Style appliqué à ${targetMember.displayName}`)
-                    .setDescription(`Rôle attribué: ${styleRole.toString()}\nClé: ${style.key}\nHex: ${style.color}`)
-                    .setColor(style.color);
+				const embed = new EmbedBuilder()
+					.setTitle(`Style appliqué à ${targetMember.displayName}`)
+					.setDescription(`Rôle attribué: ${styleRole.toString()}\nClé: ${style.key}\nHex: ${style.color}`)
+					.setColor(style.color);
 
-                await interaction.editReply({ 
-                    content: `✅ Couleur attribuée à ${targetMember.toString()} → ${style.name} (${style.color})`, 
-                    embeds: [embed] 
-                });
-            }
+				await interaction.editReply({ 
+					content: `✅ Couleur attribuée à ${targetMember.toString()} → ${style.name} (${style.color})`, 
+					embeds: [embed] 
+				});
+			}
 
-            return true;
-        } catch (error) {
-            console.error('❌ Erreur color role select:', error);
-            try {
-                const content = `❌ Action impossible. Vérifie mes permissions et la position des rôles.\nErreur: ${error.message}`;
-                if (interaction.deferred) {
-                    await interaction.editReply({ content });
-                } else {
-                    await interaction.reply({ content, ephemeral: true });
-                }
-            } catch (e) {
-                console.error('❌ Impossible de répondre à l\'interaction:', e);
-            }
-            return true;
-        }
-    }
+			return true;
+		} catch (error) {
+			console.error('❌ Erreur color role select:', error);
+			try {
+				const content = `❌ Action impossible. Vérifie mes permissions et la position des rôles.\nErreur: ${error.message}`;
+				if (interaction.deferred) {
+					await interaction.editReply({ content });
+				} else {
+					await interaction.reply({ content, ephemeral: true });
+				}
+			} catch (e) {
+				console.error('❌ Impossible de répondre à l\'interaction:', e);
+			}
+			return true;
+		}
+	}
 
-    // Méthode pour gérer l'interface de modération
-    async handleModerationUI(interaction, menuType) {
-        try {
-            const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
-            
-            const embed = new EmbedBuilder()
-                .setTitle('⚙️ Configuration de Modération')
-                .setDescription('Configurez les paramètres de modération de votre serveur')
-                .setColor('#FF6B6B')
-                .addFields([
-                    { name: '🛡️ Système de Sécurité', value: 'Configuration des vérifications automatiques', inline: true },
-                    { name: '⚠️ Avertissements', value: 'Gestion des avertissements et sanctions', inline: true },
-                    { name: '🔨 Actions Auto', value: 'Configuration des actions automatiques', inline: true }
-                ])
-                .setTimestamp();
+	// Méthode pour gérer l'interface de modération
+	async handleModerationUI(interaction, menuType) {
+		try {
+			const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+			
+			const embed = new EmbedBuilder()
+				.setTitle('⚙️ Configuration de Modération')
+				.setDescription('Configurez les paramètres de modération de votre serveur')
+				.setColor('#FF6B6B')
+				.addFields([
+					{ name: '🛡️ Système de Sécurité', value: 'Configuration des vérifications automatiques', inline: true },
+					{ name: '⚠️ Avertissements', value: 'Gestion des avertissements et sanctions', inline: true },
+					{ name: '🔨 Actions Auto', value: 'Configuration des actions automatiques', inline: true }
+				])
+				.setTimestamp();
 
-            const row = new ActionRowBuilder()
-                .addComponents(
-                    new StringSelectMenuBuilder()
-                        .setCustomId('moderation_config_menu')
-                        .setPlaceholder('Choisissez une section à configurer...')
-                        .addOptions([
-                            {
-                                label: 'Système de Sécurité',
-                                description: 'Configurer les vérifications d\'entrée',
-                                value: 'security_config',
-                                emoji: '🛡️'
-                            },
-                            {
-                                label: 'Avertissements',
-                                description: 'Gérer le système d\'avertissements',
-                                value: 'warnings_config',
-                                emoji: '⚠️'
-                            },
-                            {
-                                label: 'Actions Automatiques',
-                                description: 'Configurer les sanctions automatiques',
-                                value: 'auto_actions_config',
-                                emoji: '🔨'
-                            }
-                        ])
-                );
+			const row = new ActionRowBuilder()
+				.addComponents(
+					new StringSelectMenuBuilder()
+						.setCustomId('moderation_config_menu')
+						.setPlaceholder('Choisissez une section à configurer...')
+						.addOptions([
+							{
+								label: 'Système de Sécurité',
+								description: 'Configurer les vérifications d\'entrée',
+								value: 'security_config',
+								emoji: '🛡️'
+							},
+							{
+								label: 'Avertissements',
+								description: 'Gérer le système d\'avertissements',
+								value: 'warnings_config',
+								emoji: '⚠️'
+							},
+							{
+								label: 'Actions Automatiques',
+								description: 'Configurer les sanctions automatiques',
+								value: 'auto_actions_config',
+								emoji: '🔨'
+							}
+						])
+				);
 
-            await interaction.editReply({ embeds: [embed], components: [row] });
-            
-        } catch (error) {
-            console.error('❌ Erreur handleModerationUI:', error);
-            await interaction.editReply({
-                content: '❌ Erreur lors de l\'affichage du menu de modération.',
-                embeds: [],
-                components: []
-            });
-        }
-    }
+			await interaction.editReply({ embeds: [embed], components: [row] });
+			
+		} catch (error) {
+			console.error('❌ Erreur handleModerationUI:', error);
+			await interaction.editReply({
+				content: '❌ Erreur lors de l\'affichage du menu de modération.',
+				embeds: [],
+				components: []
+			});
+		}
+	}
 }
 
 module.exports = MainRouterHandler;

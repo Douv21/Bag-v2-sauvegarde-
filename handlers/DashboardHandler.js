@@ -119,11 +119,12 @@ class DashboardHandler {
         const guildId = interaction.guild.id;
         const economy = await this.dataManager.loadData('economy.json', {});
         
-        const guildUsers = Object.keys(economy).filter(userId => 
-            interaction.guild.members.cache.has(userId)
-        );
+        // Récupérer les utilisateurs de la guilde (clé au format userId_guildId)
+        const users = Object.entries(economy)
+            .filter(([key]) => key.endsWith(`_${guildId}`))
+            .map(([, user]) => user || {});
 
-        const stats = this.calculateEconomyStats(guildUsers, economy);
+        const stats = this.calculateEconomyStats(users);
 
         const embed = new EmbedBuilder()
             .setColor('#27ae60')
@@ -157,8 +158,18 @@ class DashboardHandler {
      */
     async showConfessionsDashboard(interaction) {
         try {
-            const stats = this.calculateStats(interaction.guild.id, this.dataManager.data);
-            const confessionStats = await this.getConfessionStats(interaction.guild.id);
+            const guildId = interaction.guild.id;
+            const [economy, confessions, counting, autothread, shop] = await Promise.all([
+                this.dataManager.loadData('economy.json', {}),
+                // Confessions peut être stocké dans data/logs/confessions.json via getData('confessions')
+                this.dataManager.getData('confessions').catch(() => ({})),
+                this.dataManager.loadData('counting.json', {}),
+                this.dataManager.loadData('autothread.json', {}),
+                this.dataManager.loadData('shop.json', {})
+            ]);
+
+            const stats = this.calculateStats(guildId, { economy, confessions, counting, autothread, shop });
+            const confessionStats = await this.getConfessionStats(guildId);
             
             const embed = new EmbedBuilder()
                 .setColor('#e74c3c')
@@ -389,30 +400,36 @@ class DashboardHandler {
     calculateStats(guildId, data) {
         const { economy, confessions, counting, autothread, shop } = data;
         
-        // Statistiques économie
-        const economyUsers = Object.keys(economy).filter(userId => 
-            interaction.guild.members.cache.has(userId)
-        );
-        const totalBalance = economyUsers.reduce((sum, userId) => sum + (economy[userId]?.balance || 0), 0);
+        // Statistiques économie (clés userId_guildId)
+        const economyKeys = Object.keys(economy || {});
+        const economyUsersForGuild = economyKeys.filter(key => key.endsWith(`_${guildId}`));
+        const totalBalance = economyUsersForGuild.reduce((sum, key) => sum + (economy[key]?.balance || 0), 0);
         
         // Statistiques confessions
-        const guildConfessions = confessions[guildId] || {};
-        const totalConfessions = guildConfessions.total || 0;
+        let totalConfessions = 0;
+        try {
+            if (Array.isArray(confessions)) {
+                totalConfessions = confessions.length;
+            } else if (confessions && typeof confessions === 'object') {
+                const g = confessions[guildId];
+                totalConfessions = Array.isArray(g) ? g.length : (g?.logs?.length || 0);
+            }
+        } catch {}
         
         // Statistiques comptage
-        const guildCounting = counting[guildId] || {};
-        const countingChannels = (guildCounting.channels || []).length;
+        const guildCounting = (counting || {})[guildId] || {};
+        const countingChannels = Array.isArray(guildCounting.channels) ? guildCounting.channels.length : 0;
         
         // Statistiques auto-thread
-        const guildAutothread = autothread[guildId] || {};
-        const autothreadEnabled = guildAutothread.enabled || false;
+        const guildAutothread = (autothread || {})[guildId] || {};
+        const autothreadEnabled = !!guildAutothread.enabled;
         
         // Statistiques boutique
-        const guildShop = shop[guildId] || [];
-        const shopItems = guildShop.length;
+        const guildShop = (shop || {})[guildId] || [];
+        const shopItems = Array.isArray(guildShop) ? guildShop.length : 0;
 
         return {
-            activeUsers: economyUsers.length,
+            activeUsers: economyUsersForGuild.length,
             totalBalance,
             totalConfessions,
             countingChannels,
@@ -424,21 +441,21 @@ class DashboardHandler {
     /**
      * Calculer les statistiques économiques détaillées
      */
-    calculateEconomyStats(guildUsers, economy) {
-        const users = guildUsers.map(userId => economy[userId] || {});
+    calculateEconomyStats(users) {
+        const safeUsers = Array.isArray(users) ? users : [];
         
-        const totalUsers = users.length;
-        const totalBalance = users.reduce((sum, user) => sum + (user.balance || 0), 0);
-        const averageBalance = totalBalance / Math.max(totalUsers, 1);
+        const totalUsers = safeUsers.length;
+        const totalBalance = safeUsers.reduce((sum, user) => sum + (Number(user.balance) || 0), 0);
+        const averageBalance = totalUsers > 0 ? (totalBalance / totalUsers) : 0;
         
-        const totalGoodKarma = users.reduce((sum, user) => sum + (user.goodKarma || 0), 0);
-        const totalBadKarma = users.reduce((sum, user) => sum + (user.badKarma || 0), 0);
-        const avgGoodKarma = totalGoodKarma / Math.max(totalUsers, 1);
-        const avgBadKarma = totalBadKarma / Math.max(totalUsers, 1);
+        const totalGoodKarma = safeUsers.reduce((sum, user) => sum + (Number(user.goodKarma) || 0), 0);
+        const totalBadKarma = safeUsers.reduce((sum, user) => sum + (Number(user.badKarma) || 0), 0);
+        const avgGoodKarma = totalUsers > 0 ? (totalGoodKarma / totalUsers) : 0;
+        const avgBadKarma = totalUsers > 0 ? (totalBadKarma / totalUsers) : 0;
         
-        const streaks = users.map(user => user.dailyStreak || 0);
-        const maxStreak = Math.max(...streaks, 0);
-        const avgStreak = streaks.reduce((sum, streak) => sum + streak, 0) / Math.max(totalUsers, 1);
+        const streaks = safeUsers.map(user => Number(user.dailyStreak) || 0);
+        const maxStreak = streaks.length ? Math.max(...streaks) : 0;
+        const avgStreak = totalUsers > 0 ? (streaks.reduce((sum, v) => sum + v, 0) / totalUsers) : 0;
 
         return {
             totalUsers,
@@ -456,32 +473,29 @@ class DashboardHandler {
     // Méthodes utilitaires pour récupérer les statistiques
     async getConfessionStats(guildId) {
         try {
-            // Récupérer les statistiques des confessions depuis le dataManager
-            const guildData = this.dataManager.data[guildId];
-            if (!guildData || !guildData.confessions) {
-                return {
-                    totalConfessions: 0,
-                    avgConfessions: 0,
-                    weekConfessions: 0,
-                    channelId: null,
-                    moderationEnabled: false,
-                    autoDelete: false,
-                    minLength: 10,
-                    maxLength: 2000,
-                    pendingCount: 0
-                };
+            // Essayer de charger les logs de confessions (data/logs/confessions.json)
+            const logs = await this.dataManager.getData('confessions').catch(() => ({}));
+            let total = 0;
+            if (Array.isArray(logs)) total = logs.length;
+            else if (logs && typeof logs === 'object') {
+                const g = logs[guildId];
+                total = Array.isArray(g) ? g.length : (g?.logs?.length || 0);
             }
 
+            // Charger la configuration globale (data/confessions.json si présent)
+            const confConfig = await this.dataManager.loadData('confessions.json', {});
+            const cfg = confConfig[guildId] || confConfig || {};
+
             return {
-                totalConfessions: guildData.confessions.length || 0,
-                avgConfessions: guildData.confessions.length > 0 ? (guildData.confessions.length / 7).toFixed(1) : 0,
-                weekConfessions: Math.floor(guildData.confessions.length * 0.1),
-                channelId: guildData.confessionConfig?.channelId || null,
-                moderationEnabled: guildData.confessionConfig?.moderationEnabled || false,
-                autoDelete: guildData.confessionConfig?.autoDelete || false,
-                minLength: guildData.confessionConfig?.minLength || 10,
-                maxLength: guildData.confessionConfig?.maxLength || 2000,
-                pendingCount: guildData.confessions.filter(c => c.status === 'pending').length || 0
+                totalConfessions: total,
+                avgConfessions: total > 0 ? Number((total / 7).toFixed(1)) : 0,
+                weekConfessions: Math.floor(total * 0.1),
+                channelId: cfg.channelId || null,
+                moderationEnabled: !!cfg.moderationEnabled,
+                autoDelete: !!cfg.autoDelete,
+                minLength: cfg.minLength || 10,
+                maxLength: cfg.maxLength || 2000,
+                pendingCount: 0
             };
         } catch (error) {
             console.error('Erreur getConfessionStats:', error);
