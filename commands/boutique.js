@@ -11,10 +11,14 @@ module.exports = {
 			const guildId = interaction.guild.id;
 			const userId = interaction.user.id;
 			
+			console.log(`🛒 Commande boutique appelée par ${interaction.user.tag} dans ${interaction.guild.name}`);
+			
 			const userData = await dataManager.getUser(userId, guildId);
 			const shopData = await dataManager.loadData('shop.json', {});
 			const karmaDiscountsData = await dataManager.loadData('karma_discounts', {});
 			const allShopItems = shopData[guildId] || [];
+			
+			console.log(`📦 Articles chargés: ${allShopItems.length}`);
 
 			            // Catégorisation par catégorie logique
             const isCustom = (t) => t === 'custom_object' || t === 'custom' || t === 'text' || !t;
@@ -40,7 +44,14 @@ module.exports = {
 
 			const categories = Object.entries(categoriesMap);
 			const shopHasItems = categories.length > 0;
+			
+			console.log(`🏷️  Catégories créées: ${categories.length}`);
+			categories.forEach(([catName, items]) => {
+				console.log(`  - "${catName}": ${items.length} articles`);
+			});
+			
 			if (!shopHasItems) {
+				console.log('❌ Aucune catégorie trouvée, boutique vide');
 				return await interaction.reply({
 					content: '🛒 La boutique est vide. Les administrateurs n\'ont pas encore configuré d\'articles.\n\n💡 Utilisez `/configeconomie` → 🏪 Boutique pour ajouter des articles.',
 					flags: 64
@@ -110,14 +121,30 @@ module.exports = {
 					const discountedPrice = Math.floor(item.price * (100 - karmaDiscountPercent) / 100);
 					priceText = `~~${item.price}💋~~ **${discountedPrice}💋** (-${karmaDiscountPercent}%)`;
 				}
-				return `${typeIcon} **${item.name}** - ${priceText}\n${typeText}\n*${item.description || 'Aucune description'}*`;
+				// Raccourcir la description pour économiser l'espace
+				const shortDescription = (item.description || 'Aucune description').substring(0, 80);
+				const finalDescription = item.description && item.description.length > 80 ? shortDescription + '...' : shortDescription;
+				return `${typeIcon} **${item.name}** - ${priceText}\n${typeText}\n*${finalDescription}*`;
 			};
 
-			// Champs par catégorie
+			// Champs par catégorie (limités pour éviter l'erreur Discord)
 			const fields = [];
 			for (const [catName, items] of categories) {
-				const list = items.slice(0, 10).map(renderLine).join('\n\n') || 'Aucun objet disponible';
-				fields.push({ name: `📂 ${catName}`, value: list, inline: false });
+				// Limiter à 5 articles par catégorie pour rester sous la limite de 1024 caractères
+				const limitedItems = items.slice(0, 5);
+				const list = limitedItems.map(renderLine).join('\n\n') || 'Aucun objet disponible';
+				
+				// Si plus de 5 articles, ajouter un indicateur
+				const moreItemsText = items.length > 5 ? `\n\n... et ${items.length - 5} autres articles` : '';
+				const finalValue = list + moreItemsText;
+				
+				// Vérifier la longueur (limite Discord: 1024 caractères)
+				if (finalValue.length > 1000) {
+					const truncated = list.substring(0, 950) + '...\n\n*Utilisez les menus pour voir tous les articles*';
+					fields.push({ name: `📂 ${catName}`, value: truncated, inline: false });
+				} else {
+					fields.push({ name: `📂 ${catName}`, value: finalValue, inline: false });
+				}
 			}
 			embed.addFields(fields);
 
