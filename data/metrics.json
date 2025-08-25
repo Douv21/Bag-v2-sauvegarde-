@@ -1,21 +1,21 @@
 {
   "messagesPerDay": {
-    "2025-08-25": 244
+    "2025-08-25": 245
   },
   "commandsPerDay": {
-    "2025-08-25": 205
+    "2025-08-25": 207
   },
   "guilds": {
     "1360897918504271882": {
       "messagesPerDay": {
-        "2025-08-25": 244
+        "2025-08-25": 245
       },
       "commandsPerDay": {
-        "2025-08-25": 205
+        "2025-08-25": 207
       },
       "commandsByName": {
         "force-backup": 2,
-        "boutique": 15,
+        "boutique": 16,
         "backup-status": 1,
         "caresser": 7,
         "config-aouv": 14,
@@ -44,7 +44,7 @@
   },
   "commandsByName": {
     "force-backup": 2,
-    "boutique": 15,
+    "boutique": 16,
     "backup-status": 1,
     "caresser": 7,
     "config-aouv": 14,
