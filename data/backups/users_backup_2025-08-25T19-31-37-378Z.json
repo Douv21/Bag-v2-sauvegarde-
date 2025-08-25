@@ -7,15 +7,16 @@
   "943487722738311219_1360897918504271882": {
     "userId": "943487722738311219",
     "guildId": "1360897918504271882",
-    "balance": 295,
-    "goodKarma": 0,
+    "balance": 361,
+    "goodKarma": 3,
     "badKarma": -5,
     "xp": 0,
     "messageCount": 0,
     "createdAt": 1756145959059,
     "lastDaily": null,
     "dailyStreak": 0,
-    "lastCrime": 1756149992206
+    "lastCrime": 1756149992206,
+    "lastFish": 1756150221753
   },
   "463272211269156865_1360897918504271882": {
     "userId": "463272211269156865",
@@ -61,15 +62,16 @@
   "1407748779075043328_1360897918504271882": {
     "userId": "1407748779075043328",
     "guildId": "1360897918504271882",
-    "balance": 1076,
-    "goodKarma": 2,
-    "badKarma": 0,
+    "balance": 1206,
+    "goodKarma": 1,
+    "badKarma": 2,
     "xp": 0,
     "messageCount": 0,
     "createdAt": 1756149494079,
     "lastDaily": null,
     "dailyStreak": 0,
     "lastCaresser": 1756149494079,
-    "lastTease": 1756149996383
+    "lastTease": 1756149996383,
+    "lastStriptease": 1756150154429
   }
 }

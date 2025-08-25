@@ -417,3 +417,178 @@ nohup: ignoring input
 ⚠️ Sauvegarde MongoDB ignorée - pas de connexion
 ✅ Sauvegarde simple: 8 fichiers sauvegardés
 🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+[lavalink] Node creavite-us1 error: connect ETIMEDOUT 23.142.24.138:20080
+[lavalink] Node creavite-us1 closed: 1006 
+💾 Sauvegarde automatique déclenchée (3 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+❌ Erreur pecher: ReferenceError: cooldownTime is not defined
+    at Object.execute (/workspace/commands/pecher.js:99:64)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Client.<anonymous> (/workspace/handlers/CommandHandler.js:91:25)
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+❌ Erreur pecher: ReferenceError: cooldownTime is not defined
+    at Object.execute (/workspace/commands/pecher.js:99:64)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Client.<anonymous> (/workspace/handlers/CommandHandler.js:91:25)
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+[lavalink] Node creavite-us1 error: connect ETIMEDOUT 23.142.24.138:20080
+[lavalink] Node creavite-us1 closed: 1006 
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+🔍 Debug progression: {
+  userXP: 6004,
+  level: 16,
+  currentLevelXP: 5809,
+  nextLevelXP: 6400,
+  xpProgress: 195,
+  xpNeeded: 591,
+  progressPercent: 33
+}
+🎨 /level: Génération carte holographic pour jormungand21
+🔍 Debug user data: {
+  id: '943487722738311219',
+  username: 'jormungand21',
+  displayName: 'Jormungand',
+  tag: 'jormungand21',
+  memberDisplayName: 'Jormungand'
+}
+🖼️ Avatar final sélectionné: https://cdn.discordapp.com/avatars/943487722738311219/4955d6a6b86cfee7d774a1d7dd21ef9d.png?size=256
+✅ Final user object for card: {
+  displayName: 'Jormungand',
+  username: 'jormungand21',
+  avatarURL: 'https://cdn.discordapp.com/avatars/943487722738311219/4955d6a6b86cfee7d774a1d7dd21ef9d.png?size=256',
+  rolesCount: 18
+}
+🎨 Génération carte niveau: 16 (style: holographic)
+🖼️ Avatar URL reçue pour carte: https://cdn.discordapp.com/avatars/943487722738311219/4955d6a6b86cfee7d774a1d7dd21ef9d.png?size=256
+✅ Avatar téléchargé et encodé en base64: 217810 chars
+🎨 NOTIFICATION: Résolution image holographique => OK
+✅ Carte générée: 134367 bytes (holographic)
+📊 /level: Carte générée - 134367 bytes
+✅ /level: Carte envoyée avec image intégrée pour jormungand21
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+🔄 Traitement interaction: aouv_main_select
+🔄 Traitement interaction: aouv_main_select
+🔄 Traitement interaction: aouv_channel_add
+🔄 Traitement interaction: aouv_channel_add
+💾 Sauvegarde automatique déclenchée (3 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
