@@ -305,3 +305,29 @@ nohup: ignoring input
 ❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
     at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+🔄 Traitement interaction: economy_main_config_submenu
+🔄 Traitement interaction: economy_main_config_submenu
+❌ Interaction non gérée: economy_main_config_submenu
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+🔄 Traitement interaction: economy_main_config_submenu
+🔄 Traitement interaction: economy_main_config_submenu
+❌ Interaction non gérée: economy_main_config_submenu
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
