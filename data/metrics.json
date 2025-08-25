@@ -1,17 +1,17 @@
 {
   "messagesPerDay": {
-    "2025-08-25": 228
+    "2025-08-25": 231
   },
   "commandsPerDay": {
-    "2025-08-25": 194
+    "2025-08-25": 196
   },
   "guilds": {
     "1360897918504271882": {
       "messagesPerDay": {
-        "2025-08-25": 228
+        "2025-08-25": 231
       },
       "commandsPerDay": {
-        "2025-08-25": 194
+        "2025-08-25": 196
       },
       "commandsByName": {
         "force-backup": 2,
@@ -37,7 +37,7 @@
         "ajouter-carte": 1,
         "baiser": 2,
         "config-level": 1,
-        "crime": 3,
+        "crime": 4,
         "level": 1
       }
     }
@@ -66,7 +66,7 @@
     "ajouter-carte": 1,
     "baiser": 2,
     "config-level": 1,
-    "crime": 3,
+    "crime": 4,
     "level": 1
   }
 }

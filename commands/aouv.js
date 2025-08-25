@@ -122,6 +122,7 @@ module.exports = {
 		const cfg = await getGuildConfig(dataManager, guildId);
 
 		const mode = resolveMode(cfg, channel);
+		console.log(`🧪 Debug AouV - Canal: ${channelId}, Mode: ${mode}, Config SFW: ${JSON.stringify(cfg.allowedChannels)}, Config NSFW: ${JSON.stringify(cfg.nsfwAllowedChannels)}`);
 		if (mode === 'invalid_nsfw_channel') {
 			return interaction.reply({ content: '❌ Ce salon n\'est pas marqué NSFW dans Discord. Veuillez utiliser un salon NSFW configuré pour AouV NSFW.', flags: 64 });
 		}

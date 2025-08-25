@@ -1,5 +1,5 @@
 nohup: ignoring input
-[dotenv@17.2.1] injecting env (4) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+[dotenv@17.2.1] injecting env (4) from .env -- tip: ⚙️  override existing env vars with { override: true }
 🔑 MONGODB_PASSWORD non configuré - sauvegarde locale uniquement
 ⏰ Sauvegarde automatique level activée (30 min)
 ✅ LevelBackupManager initialisé
@@ -204,7 +204,6 @@ nohup: ignoring input
 ✅ warn
 ✅ warns
 ✅ 90 commandes chargées
-✅ 90 commandes enregistrées
 🚀 BAG BOT V2 - Render.com Web Service démarré
 🌐 Serveur Web actif sur port 5000
 📊 Health check: http://localhost:5000/health
@@ -226,6 +225,7 @@ nohup: ignoring input
 [lavalink] Node jirayu-nossl ready
 [lavalink] Node hatry4-nossl ready
 ✅ 90 commandes enregistrées
+✅ 90 commandes enregistrées
 ⚠️ Variables d'environnement MongoDB manquantes - utilisation du mode JSON uniquement
    Pour utiliser le système de bump, configurez:
    - MONGODB_USERNAME
@@ -234,33 +234,40 @@ nohup: ignoring input
 ⚠️ MongoDB non connecté - les rappels de bump ne seront pas persistés
 🕒 Planification des vérifications de modération activée (check hourly)
 🕒 Planification du reset hebdomadaire du karma activée (check hourly)
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node ajie-v4 ready
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
+[lavalink] Node creavite-eu1 closed: 1006 
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
 💾 Sauvegarde automatique déclenchée (2 opérations)
 ⚠️ Sauvegarde MongoDB ignorée - pas de connexion
 ✅ Sauvegarde simple: 8 fichiers sauvegardés
 🧹 8 anciennes sauvegardes supprimées
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
 [lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
 [lavalink] Node lava-link closed: 1006 
 [lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
 [lavalink] Node nextgencoders-ssl closed: 1006 
 [lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
 [lavalink] Node creavite-eu1 closed: 1006 
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
-[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
-[lavalink] Node nextgencoders-ssl closed: 1006 
-[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
-[lavalink] Node creavite-eu1 closed: 1006 
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+✅ Sauvegarde simple: 8 fichiers sauvegardés
+🧹 8 anciennes sauvegardes supprimées
 [lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
 [lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node darren-v4 error: Unexpected server response: 403
-[lavalink] Node darren-v4 closed: 1006 
+[lavalink] Node v4-lavalink-rocks disconnected: 
 [lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
 [lavalink] Node lava-link closed: 1006 
 [lavalink] Node lava-link disconnected: 
@@ -270,82 +277,6 @@ nohup: ignoring input
 [lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
 [lavalink] Node creavite-eu1 closed: 1006 
 [lavalink] Node creavite-eu1 disconnected: 
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node v4-lavalink-rocks disconnected: 
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node darren-v4 disconnected: 
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (3 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-🔄 Traitement interaction: aouv_btn_verite
-🔄 Traitement interaction: aouv_btn_verite
-🎯 Bouton AouV cliqué via MainRouter: aouv_btn_verite
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-🔄 Traitement interaction: aouv_main_select
-🔄 Traitement interaction: aouv_main_select
-🔄 Traitement interaction: aouv_channel_add
-🔄 Traitement interaction: aouv_channel_add
-💾 Sauvegarde automatique déclenchée (3 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-[lavalink] Node creavite-us1 error: connect ETIMEDOUT 23.142.24.138:20080
-[lavalink] Node creavite-us1 closed: 1006 
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
