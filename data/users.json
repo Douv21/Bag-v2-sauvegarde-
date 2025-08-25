@@ -3,5 +3,17 @@
     "balance": 300,
     "karmaGood": 0,
     "karmaBad": 0
+  },
+  "943487722738311219_1360897918504271882": {
+    "userId": "943487722738311219",
+    "guildId": "1360897918504271882",
+    "balance": 0,
+    "goodKarma": 0,
+    "badKarma": 0,
+    "xp": 0,
+    "messageCount": 0,
+    "createdAt": 1756145959059,
+    "lastDaily": null,
+    "dailyStreak": 0
   }
 }

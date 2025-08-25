@@ -1,24 +1,26 @@
 {
   "messagesPerDay": {
-    "2025-08-25": 1
+    "2025-08-25": 12
   },
   "commandsPerDay": {
-    "2025-08-25": 2
+    "2025-08-25": 8
   },
   "guilds": {
     "1360897918504271882": {
       "messagesPerDay": {
-        "2025-08-25": 1
+        "2025-08-25": 12
       },
       "commandsPerDay": {
-        "2025-08-25": 2
+        "2025-08-25": 8
       },
       "commandsByName": {
-        "force-backup": 1
+        "force-backup": 2,
+        "boutique": 2
       }
     }
   },
   "commandsByName": {
-    "force-backup": 1
+    "force-backup": 2,
+    "boutique": 2
   }
 }
