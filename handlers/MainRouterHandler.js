@@ -604,7 +604,12 @@ class MainRouterHandler {
                 return true;
             }
 
-            // === SELECT MENUS RÉDUCTIONS COOLDOWN ===
+            // === SELECT MENUS ÉCONOMIE PRINCIPALE ===
+            if (customId === 'economy_main_select') {
+                await this.economyHandler.handleMainSelect(interaction);
+                return true;
+            }
+
             if (customId === 'economy_boutique_select') {
                 await this.economyHandler.handleBoutiqueSelect(interaction);
                 return true;

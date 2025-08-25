@@ -8,6 +8,42 @@ class EconomyConfigHandler {
     // =============
     // MENU PRINCIPAL
     // =============
+    async showMainMenu(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#3498db')
+            .setTitle('💋 Configuration du Jeu Coquin')
+            .setDescription('Choisissez la section à configurer :')
+            .addFields([
+                { name: '🎯 Actions Sexy', value: 'Configurer les actions (montant, cooldown, karma, NSFW)', inline: true },
+                { name: '🏪 Boutique Coquine', value: 'Objets personnalisés, rôles, remises karma', inline: true },
+                { name: '📅 Daily/Quotidien', value: 'Configuration des récompenses quotidiennes', inline: true },
+                { name: '💬 Messages', value: 'Configuration des gains par message', inline: true },
+                { name: '⚖️ Karma', value: 'Configuration des niveaux et récompenses karma', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_main_select')
+            .setPlaceholder('Choisissez une section...')
+            .addOptions([
+                { label: '🎯 Actions Économiques', value: 'actions', description: 'Travailler, voler, crime, pêcher, etc.' },
+                { label: '🏪 Boutique', value: 'boutique', description: 'Objets, rôles, réductions cooldown' },
+                { label: '📅 Daily/Quotidien', value: 'daily', description: 'Récompenses quotidiennes' },
+                { label: '💬 Messages', value: 'messages', description: 'Gains par message' },
+                { label: '⚖️ Karma', value: 'karma', description: 'Niveaux et récompenses karma' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        
+        if (interaction.update) {
+            await interaction.update({ embeds: [embed], components: [row] });
+        } else {
+            await interaction.reply({ embeds: [embed], components: [row] });
+        }
+    }
+
+    // =============
+    // MENU PRINCIPAL
+    // =============
     async handleMainSelect(interaction) {
         const value = interaction.values[0];
         

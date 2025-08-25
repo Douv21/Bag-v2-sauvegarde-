@@ -32,5 +32,18 @@
     "lastFish": 1756146843342,
     "lastSeduce": 1756146865026,
     "lastStriptease": 1756146927776
+  },
+  "1108053454519271535_1360897918504271882": {
+    "userId": "1108053454519271535",
+    "guildId": "1360897918504271882",
+    "balance": 31,
+    "goodKarma": 1,
+    "badKarma": 0,
+    "xp": 0,
+    "messageCount": 0,
+    "createdAt": 1756147957936,
+    "lastDaily": null,
+    "dailyStreak": 0,
+    "lastFish": 1756147957937
   }
 }
