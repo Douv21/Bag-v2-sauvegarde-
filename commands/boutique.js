@@ -10,6 +10,13 @@ module.exports = {
 		try {
 			const guildId = interaction.guild.id;
 			const userId = interaction.user.id;
+			// Auto-générer les articles essentiels (suites privées + réductions de cooldown)
+			try {
+				const { ensurePrivateSuiteShopItems } = require('../utils/privateSuiteManager');
+				const { ensureCooldownReductionShopItems } = require('../utils/cooldownBoostManager');
+				await ensurePrivateSuiteShopItems(interaction.guild);
+				await ensureCooldownReductionShopItems(interaction.guild);
+			} catch (_) {}
 			
 			const userData = await dataManager.getUser(userId, guildId);
 			const shopData = await dataManager.loadData('shop.json', {});

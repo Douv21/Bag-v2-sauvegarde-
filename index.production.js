@@ -208,12 +208,14 @@ class ProductionBot {
             console.log(`✅ ${this.client.user.tag} connecté`);
             console.log(`🏰 ${this.client.guilds.cache.size} serveur(s) connecté(s)`);
             
-            // Suites privées (production léger): scan existant
+            // Suites privées (production léger): scan existant + items boutique
             try {
                 const { scanAndRepairSuites, ensurePrivateSuiteShopItems } = require('./utils/privateSuiteManager');
+                const { ensureCooldownReductionShopItems } = require('./utils/cooldownBoostManager');
                 await scanAndRepairSuites(this.client);
                 for (const guild of this.client.guilds.cache.values()) {
                     await ensurePrivateSuiteShopItems(guild);
+                    try { await ensureCooldownReductionShopItems(guild); } catch (_) {}
                 }
                 console.log('🔒 Suites privées prêtes (production)');
             } catch (e) {
