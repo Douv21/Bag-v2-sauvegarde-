@@ -56,7 +56,9 @@ module.exports = {
             const targetData = await dataManager.getUser(target.id, guildId);
             
             const now = Date.now();
-            const cooldownTime = cooldown;
+            const { getCooldownFactor } = require('../utils/cooldownBoostManager');
+            const factor = getCooldownFactor(userData, now);
+            const cooldownTime = Math.floor(cooldown * factor);
             
             if (userData.lastSteal && (now - userData.lastSteal) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastSteal)) / 60000);
@@ -110,7 +112,7 @@ module.exports = {
                         { name: '😇 Karma Positif', value: `${deltaGood >= 0 ? '+' : ''}${deltaGood} (${userData.goodKarma})`, inline: true },
                         { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true }
                     ])
-                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 60000)} minutes` });
+                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldownTime / 60000)} minutes` });
                     
                 await interaction.reply({ content: `<@${target.id}>`, embeds: [embed] });
                 
@@ -137,7 +139,7 @@ module.exports = {
                         { name: '😇 Karma Positif', value: `${deltaGood >= 0 ? '+' : ''}${deltaGood} (${userData.goodKarma})`, inline: true },
                         { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true }
                     ])
-                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 60000)} minutes` });
+                    .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldownTime / 60000)} minutes` });
                     
                 await interaction.reply({ embeds: [embed] });
             }

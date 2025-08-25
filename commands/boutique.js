@@ -91,6 +91,10 @@ module.exports = {
 				} else if (item.type === 'private_permanent') {
 					typeIcon = '♾️';
 					typeText = 'Suite privée permanente (texte NSFW + vocal)';
+				} else if (item.type === 'cooldown_reduction') {
+					typeIcon = '⏱️';
+					const days = Math.round((item.durationMs || 0) / (24 * 60 * 60 * 1000));
+					typeText = `Réduction cooldown ${days}j (-${item.reductionPercent}%)`;
 				}
 				let priceText = `${item.price}💋`;
 				if (karmaDiscountPercent > 0) {
