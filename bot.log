@@ -1,5 +1,5 @@
 nohup: ignoring input
-[dotenv@17.2.1] injecting env (4) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[dotenv@17.2.1] injecting env (4) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
 🔑 MONGODB_PASSWORD non configuré - sauvegarde locale uniquement
 ⏰ Sauvegarde automatique level activée (30 min)
 ✅ LevelBackupManager initialisé
@@ -217,10 +217,10 @@ nohup: ignoring input
 🔄 Enregistrement de 90 commandes...
 [lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
 [lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
 [lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
 [lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
 [lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
 [lavalink] Node creavite-eu1 closed: 1006 
 [lavalink] Node jirayu-nossl ready
@@ -237,16 +237,6 @@ nohup: ignoring input
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node ajie-v4 ready
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
-[lavalink] Node nextgencoders-ssl closed: 1006 
-[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
-[lavalink] Node creavite-eu1 closed: 1006 
-[lavalink] Node darren-v4 error: Unexpected server response: 403
-[lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
 [lavalink] Node v4-lavalink-rocks closed: 1006 
 [lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
@@ -259,16 +249,26 @@ nohup: ignoring input
 [lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
 [lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node v4-lavalink-rocks disconnected: 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
+[lavalink] Node creavite-eu1 closed: 1006 
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
 [lavalink] Node nextgencoders-ssl closed: 1006 
 [lavalink] Node nextgencoders-ssl disconnected: 
-[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
-[lavalink] Node creavite-eu1 closed: 1006 
-[lavalink] Node creavite-eu1 disconnected: 
 [lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
 [lavalink] Node lava-link closed: 1006 
 [lavalink] Node lava-link disconnected: 
+[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
+[lavalink] Node creavite-eu1 closed: 1006 
+[lavalink] Node creavite-eu1 disconnected: 
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node v4-lavalink-rocks disconnected: 
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node darren-v4 disconnected: 
