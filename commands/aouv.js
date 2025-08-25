@@ -8,7 +8,7 @@ function pickRandom(list) {
 }
 
 async function getGuildConfig(dataManager, guildId) {
-	const config = await dataManager.loadData('aouv_config', {});
+	const config = await dataManager.loadData('aouv_config.json', {});
 	return config[guildId] || {
 		allowedChannels: [],
 		disabledBaseActions: [],
@@ -29,9 +29,9 @@ async function getGuildConfig(dataManager, guildId) {
 }
 
 async function saveGuildConfig(dataManager, guildId, partial) {
-	const all = await dataManager.loadData('aouv_config', {});
+	const all = await dataManager.loadData('aouv_config.json', {});
 	all[guildId] = { ...(all[guildId] || {}), ...partial };
-	await dataManager.saveData('aouv_config', all);
+	await dataManager.saveData('aouv_config.json', all);
 }
 
 function buildButtons() {
@@ -122,7 +122,6 @@ module.exports = {
 		const cfg = await getGuildConfig(dataManager, guildId);
 
 		const mode = resolveMode(cfg, channel);
-		console.log(`🧪 Debug AouV - Canal: ${channelId}, Mode: ${mode}, Config SFW: ${JSON.stringify(cfg.allowedChannels)}, Config NSFW: ${JSON.stringify(cfg.nsfwAllowedChannels)}`);
 		if (mode === 'invalid_nsfw_channel') {
 			return interaction.reply({ content: '❌ Ce salon n\'est pas marqué NSFW dans Discord. Veuillez utiliser un salon NSFW configuré pour AouV NSFW.', flags: 64 });
 		}

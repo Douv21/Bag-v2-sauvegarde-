@@ -85,7 +85,7 @@ class AouvConfigHandler {
 
 	// ---- Channels ----
 	async showAouvChannelsMenu(interaction) {
-		const cfgAll = await this.dataManager.loadData('aouv_config', {});
+		const cfgAll = await this.dataManager.loadData('aouv_config.json', {});
 		const guildId = interaction.guild.id;
 		const cfg = cfgAll[guildId] || { allowedChannels: [] };
 
@@ -126,27 +126,27 @@ class AouvConfigHandler {
 	async handleAouvChannelAdd(interaction) {
 		const guildId = interaction.guild.id;
 		const chId = interaction.values[0];
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { allowedChannels: [], disabledBaseActions: [], disabledBaseTruths: [], customActions: [], customTruths: [] };
 		const set = new Set(cfg.allowedChannels || []); set.add(chId);
 		cfg.allowedChannels = Array.from(set);
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.update({ content: `✅ Salon autorisé: <#${chId}>`, embeds: [], components: [] });
 	}
 
 	async handleAouvChannelRemove(interaction) {
 		const guildId = interaction.guild.id;
 		const chId = interaction.values[0];
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { allowedChannels: [] };
 		cfg.allowedChannels = (cfg.allowedChannels || []).filter(id => id !== chId);
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.update({ content: `✅ Salon retiré: <#${chId}>`, embeds: [], components: [] });
 	}
 
 	// ---- NSFW Channels ----
 	async showAouvNsfwChannelsMenu(interaction) {
-		const cfgAll = await this.dataManager.loadData('aouv_config', {});
+		const cfgAll = await this.dataManager.loadData('aouv_config.json', {});
 		const guildId = interaction.guild.id;
 		const cfg = cfgAll[guildId] || { nsfwAllowedChannels: [] };
 
@@ -190,21 +190,21 @@ class AouvConfigHandler {
 		if (!channel?.nsfw) {
 			return interaction.update({ content: '❌ Le salon sélectionné n\'est pas marqué NSFW dans Discord.', embeds: [], components: [] });
 		}
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { nsfwAllowedChannels: [] };
 		const set = new Set(cfg.nsfwAllowedChannels || []); set.add(chId);
 		cfg.nsfwAllowedChannels = Array.from(set);
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.update({ content: `✅ Salon NSFW autorisé: <#${chId}>`, embeds: [], components: [] });
 	}
 
 	async handleAouvNsfwChannelRemove(interaction) {
 		const guildId = interaction.guild.id;
 		const chId = interaction.values[0];
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { nsfwAllowedChannels: [] };
 		cfg.nsfwAllowedChannels = (cfg.nsfwAllowedChannels || []).filter(id => id !== chId);
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.update({ content: `✅ Salon NSFW retiré: <#${chId}>`, embeds: [], components: [] });
 	}
 
@@ -260,7 +260,7 @@ class AouvConfigHandler {
 
 	async showAouvPromptEditListPaged(interaction, kind, page = 1) {
 		const guildId = interaction.guild.id;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { customActions: [], customTruths: [] };
 		const list = kind === 'action' ? (cfg.customActions || []) : (cfg.customTruths || []);
 		const per = 25;
@@ -312,7 +312,7 @@ class AouvConfigHandler {
 
 	async showAouvPromptRemoveListPaged(interaction, kind, page = 1) {
 		const guildId = interaction.guild.id;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { customActions: [], customTruths: [] };
 		const list = kind === 'action' ? (cfg.customActions || []) : (cfg.customTruths || []);
 		const per = 25;
@@ -344,7 +344,7 @@ class AouvConfigHandler {
 	async handleAouvPromptRemoveSelect(interaction, kind) {
 		const guildId = interaction.guild.id;
 		const index = parseInt(interaction.values[0], 10);
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		if (kind === 'action') {
 			if (!Array.isArray(cfg.customActions) || index < 0 || index >= cfg.customActions.length) return interaction.update({ content: '❌ Indice invalide.', embeds: [], components: [] });
@@ -353,7 +353,7 @@ class AouvConfigHandler {
 			if (!Array.isArray(cfg.customTruths) || index < 0 || index >= cfg.customTruths.length) return interaction.update({ content: '❌ Indice invalide.', embeds: [], components: [] });
 			cfg.customTruths.splice(index, 1);
 		}
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.update({ content: '✅ Supprimé.', embeds: [], components: [] });
 	}
 
@@ -380,7 +380,7 @@ class AouvConfigHandler {
 
 	async showAouvPromptListCustomPaged(interaction, kind, page = 1) {
 		const guildId = interaction.guild.id;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { customActions: [], customTruths: [] };
 		const list = kind === 'action' ? (cfg.customActions || []) : (cfg.customTruths || []);
 		const per = 20;
@@ -501,7 +501,7 @@ class AouvConfigHandler {
 	// Nouveau: sélecteur avant le modal d'édition
 	async showAouvPromptEditPicker(interaction) {
 		const guildId = interaction.guild.id;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { customActions: [], customTruths: [] };
 		const actions = Array.isArray(cfg.customActions) ? cfg.customActions : [];
 		const truths = Array.isArray(cfg.customTruths) ? cfg.customTruths : [];
@@ -551,7 +551,7 @@ class AouvConfigHandler {
 	async handleAouvPromptEditSelect(interaction, kind) {
 		const guildId = interaction.guild.id;
 		const index = parseInt(interaction.values[0], 10);
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { customActions: [], customTruths: [] };
 		const list = kind === 'action' ? (cfg.customActions || []) : (cfg.customTruths || []);
 		const currentText = list[index] || '';
@@ -575,7 +575,7 @@ class AouvConfigHandler {
 
 	async showAouvPromptListCustomOld(interaction) {
 		const guildId = interaction.guild.id;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { customActions: [], customTruths: [] };
 		const a = (cfg.customActions || []).map((t, i) => `A${i}: ${t}`).join('\n') || '(Aucune action personnalisée)';
 		const v = (cfg.customTruths || []).map((t, i) => `V${i}: ${t}`).join('\n') || '(Aucune vérité personnalisée)';
@@ -617,10 +617,10 @@ class AouvConfigHandler {
 		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
 		const texte = interaction.fields.getTextInputValue('texte') || '';
 		if (!['action','verite'].includes(kind) || !texte.trim()) return interaction.reply({ content: '❌ Paramètres invalides.', flags: 64 });
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { customActions: [], customTruths: [] };
 		if (kind === 'action') cfg.customActions = [...(cfg.customActions||[]), texte]; else cfg.customTruths = [...(cfg.customTruths||[]), texte];
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		
 		// Ajouter des boutons pour continuer
 		const continueButton = new ButtonBuilder()
@@ -650,7 +650,7 @@ class AouvConfigHandler {
 		const prompts = texte.split('\n').map(p => p.trim()).filter(p => p.length > 0);
 		if (prompts.length === 0) return interaction.reply({ content: '❌ Aucun prompt valide trouvé.', flags: 64 });
 		
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { customActions: [], customTruths: [] };
 		
 		if (kind === 'action') {
@@ -660,7 +660,7 @@ class AouvConfigHandler {
 		}
 		
 		all[guildId] = cfg; 
-		await this.dataManager.saveData('aouv_config', all);
+		await this.dataManager.saveData('aouv_config.json', all);
 		
 		// Ajouter des boutons pour continuer
 		const singleButton = new ButtonBuilder()
@@ -689,7 +689,7 @@ class AouvConfigHandler {
 		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
 		const index = parseInt(interaction.fields.getTextInputValue('index') || '-1', 10);
 		const texte = interaction.fields.getTextInputValue('texte') || '';
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		if (kind === 'action') {
 			if (!Array.isArray(cfg.customActions) || index < 0 || index >= cfg.customActions.length) return interaction.reply({ content: '❌ Indice invalide.', flags: 64 });
@@ -700,7 +700,7 @@ class AouvConfigHandler {
 		} else {
 			return interaction.reply({ content: '❌ Type invalide.', flags: 64 });
 		}
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.reply({ content: '✅ Modifié.', flags: 64 });
 	}
 
@@ -708,7 +708,7 @@ class AouvConfigHandler {
 		const guildId = interaction.guild.id;
 		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
 		const index = parseInt(interaction.fields.getTextInputValue('index') || '-1', 10);
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		if (kind === 'action') {
 			if (!Array.isArray(cfg.customActions) || index < 0 || index >= cfg.customActions.length) return interaction.reply({ content: '❌ Indice invalide.', flags: 64 });
@@ -719,7 +719,7 @@ class AouvConfigHandler {
 		} else {
 			return interaction.reply({ content: '❌ Type invalide.', flags: 64 });
 		}
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.reply({ content: '✅ Supprimé.', flags: 64 });
 	}
 
@@ -728,13 +728,13 @@ class AouvConfigHandler {
 		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
 		const numero = parseInt(interaction.fields.getTextInputValue('numero') || '0', 10);
 		const idx = Math.max(1, numero) - 1;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		const key = kind === 'action' ? 'disabledBaseActions' : 'disabledBaseTruths';
 		const set = new Set(cfg[key] || []);
 		if (disable) set.add(idx); else set.delete(idx);
 		cfg[key] = Array.from(set);
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.reply({ content: `✅ ${disable ? 'Désactivé' : 'Réactivé'}: ${kind} #${numero}`, flags: 64 });
 	}
 
@@ -745,7 +745,7 @@ class AouvConfigHandler {
 		if (!['action', 'verite'].includes(kind)) {
 			return interaction.update({ content: '❌ Sélection invalide.', embeds: [], components: [] });
 		}
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		const { BASE_ACTIONS, BASE_TRUTHS } = require('../utils/aouvPrompts');
 		const total = kind === 'action' ? (BASE_ACTIONS?.length || 0) : (BASE_TRUTHS?.length || 0);
@@ -753,7 +753,7 @@ class AouvConfigHandler {
 		const key = kind === 'action' ? 'disabledBaseActions' : 'disabledBaseTruths';
 		cfg[key] = indices;
 		all[guildId] = cfg;
-		await this.dataManager.saveData('aouv_config', all);
+		await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.update({ content: `✅ Tous les ${kind === 'action' ? 'prompts Action' : 'prompts Vérité'} de base ont été désactivés.`, embeds: [], components: [] });
 	}
 
@@ -805,12 +805,12 @@ class AouvConfigHandler {
 		const idx = Math.max(1, numero) - 1;
 		const texte = interaction.fields.getTextInputValue('texte') || '';
 		if (!['action','verite'].includes(kind) || !texte.trim()) return interaction.reply({ content: '❌ Paramètres invalides.', flags: 64 });
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		const key = kind === 'action' ? 'baseActionOverrides' : 'baseTruthOverrides';
 		cfg[key] = cfg[key] || {};
 		cfg[key][idx] = texte;
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.reply({ content: `✅ Remplacement enregistré pour ${kind} #${numero}.`, flags: 64 });
 	}
 
@@ -819,12 +819,12 @@ class AouvConfigHandler {
 		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
 		const numero = parseInt(interaction.fields.getTextInputValue('numero') || '0', 10);
 		const idx = Math.max(1, numero) - 1;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		const key = kind === 'action' ? 'baseActionOverrides' : 'baseTruthOverrides';
 		if (cfg[key] && Object.prototype.hasOwnProperty.call(cfg[key], idx)) {
 			delete cfg[key][idx];
-			all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+			all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 			return interaction.reply({ content: `✅ Override supprimé pour ${kind} #${numero}.`, flags: 64 });
 		}
 		return interaction.reply({ content: 'ℹ️ Aucun override trouvé pour ce numéro.', flags: 64 });
@@ -870,7 +870,7 @@ class AouvConfigHandler {
 
 	async showAouvNsfwPromptEditListPaged(interaction, kind, page = 1) {
 		const guildId = interaction.guild.id;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
 		const list = kind === 'action' ? (cfg.nsfwCustomActions || []) : (cfg.nsfwCustomTruths || []);
 		const per = 25;
@@ -902,7 +902,7 @@ class AouvConfigHandler {
 	async handleAouvNsfwPromptEditSelect(interaction, kind) {
 		const guildId = interaction.guild.id;
 		const index = parseInt(interaction.values[0], 10);
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
 		const list = kind === 'action' ? (cfg.nsfwCustomActions || []) : (cfg.nsfwCustomTruths || []);
 		const currentText = list[index] || '';
@@ -938,7 +938,7 @@ class AouvConfigHandler {
 
 	async showAouvNsfwPromptRemoveListPaged(interaction, kind, page = 1) {
 		const guildId = interaction.guild.id;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
 		const list = kind === 'action' ? (cfg.nsfwCustomActions || []) : (cfg.nsfwCustomTruths || []);
 		const per = 25;
@@ -970,7 +970,7 @@ class AouvConfigHandler {
 	async handleAouvNsfwPromptRemoveSelect(interaction, kind) {
 		const guildId = interaction.guild.id;
 		const index = parseInt(interaction.values[0], 10);
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		if (kind === 'action') {
 			if (!Array.isArray(cfg.nsfwCustomActions) || index < 0 || index >= cfg.nsfwCustomActions.length) return interaction.update({ content: '❌ Indice invalide.', embeds: [], components: [] });
@@ -979,7 +979,7 @@ class AouvConfigHandler {
 			if (!Array.isArray(cfg.nsfwCustomTruths) || index < 0 || index >= cfg.nsfwCustomTruths.length) return interaction.update({ content: '❌ Indice invalide.', embeds: [], components: [] });
 			cfg.nsfwCustomTruths.splice(index, 1);
 		}
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.update({ content: '✅ Supprimé (NSFW).', embeds: [], components: [] });
 	}
 
@@ -1006,7 +1006,7 @@ class AouvConfigHandler {
 
 	async showAouvNsfwPromptListCustomPaged(interaction, kind, page = 1) {
 		const guildId = interaction.guild.id;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
 		const list = kind === 'action' ? (cfg.nsfwCustomActions || []) : (cfg.nsfwCustomTruths || []);
 		const per = 20;
@@ -1097,10 +1097,10 @@ class AouvConfigHandler {
 		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
 		const texte = interaction.fields.getTextInputValue('texte') || '';
 		if (!['action','verite'].includes(kind) || !texte.trim()) return interaction.reply({ content: '❌ Paramètres invalides.', flags: 64 });
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
 		if (kind === 'action') cfg.nsfwCustomActions = [...(cfg.nsfwCustomActions||[]), texte]; else cfg.nsfwCustomTruths = [...(cfg.nsfwCustomTruths||[]), texte];
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		
 		// Ajouter des boutons pour continuer
 		const continueButton = new ButtonBuilder()
@@ -1130,7 +1130,7 @@ class AouvConfigHandler {
 		const prompts = texte.split('\n').map(p => p.trim()).filter(p => p.length > 0);
 		if (prompts.length === 0) return interaction.reply({ content: '❌ Aucun prompt valide trouvé.', flags: 64 });
 		
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || { nsfwCustomActions: [], nsfwCustomTruths: [] };
 		
 		if (kind === 'action') {
@@ -1140,7 +1140,7 @@ class AouvConfigHandler {
 		}
 		
 		all[guildId] = cfg; 
-		await this.dataManager.saveData('aouv_config', all);
+		await this.dataManager.saveData('aouv_config.json', all);
 		
 		// Ajouter des boutons pour continuer
 		const singleButton = new ButtonBuilder()
@@ -1169,7 +1169,7 @@ class AouvConfigHandler {
 		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
 		const index = parseInt(interaction.fields.getTextInputValue('index') || '-1', 10);
 		const texte = interaction.fields.getTextInputValue('texte') || '';
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		if (kind === 'action') {
 			if (!Array.isArray(cfg.nsfwCustomActions) || index < 0 || index >= cfg.nsfwCustomActions.length) return interaction.reply({ content: '❌ Indice invalide.', flags: 64 });
@@ -1180,7 +1180,7 @@ class AouvConfigHandler {
 		} else {
 			return interaction.reply({ content: '❌ Type invalide.', flags: 64 });
 		}
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.reply({ content: '✅ Modifié (NSFW).', flags: 64 });
 	}
 
@@ -1188,7 +1188,7 @@ class AouvConfigHandler {
 		const guildId = interaction.guild.id;
 		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
 		const index = parseInt(interaction.fields.getTextInputValue('index') || '-1', 10);
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		if (kind === 'action') {
 			if (!Array.isArray(cfg.nsfwCustomActions) || index < 0 || index >= cfg.nsfwCustomActions.length) return interaction.reply({ content: '❌ Indice invalide.', flags: 64 });
@@ -1199,7 +1199,7 @@ class AouvConfigHandler {
 		} else {
 			return interaction.reply({ content: '❌ Type invalide.', flags: 64 });
 		}
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.reply({ content: '✅ Supprimé (NSFW).', flags: 64 });
 	}
 
@@ -1208,13 +1208,13 @@ class AouvConfigHandler {
 		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
 		const numero = parseInt(interaction.fields.getTextInputValue('numero') || '0', 10);
 		const idx = Math.max(1, numero) - 1;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		const key = kind === 'action' ? 'nsfwDisabledBaseActions' : 'nsfwDisabledBaseTruths';
 		const set = new Set(cfg[key] || []);
 		if (disable) set.add(idx); else set.delete(idx);
 		cfg[key] = Array.from(set);
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.reply({ content: `✅ ${disable ? 'Désactivé' : 'Réactivé'} (NSFW): ${kind} #${numero}`, flags: 64 });
 	}
 
@@ -1225,7 +1225,7 @@ class AouvConfigHandler {
 		if (!['action', 'verite'].includes(kind)) {
 			return interaction.update({ content: '❌ Sélection invalide.', embeds: [], components: [] });
 		}
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		const { BASE_NSFW_ACTIONS, BASE_NSFW_TRUTHS } = require('../utils/aouvPrompts');
 		const total = kind === 'action' ? (BASE_NSFW_ACTIONS?.length || 0) : (BASE_NSFW_TRUTHS?.length || 0);
@@ -1233,7 +1233,7 @@ class AouvConfigHandler {
 		const key = kind === 'action' ? 'nsfwDisabledBaseActions' : 'nsfwDisabledBaseTruths';
 		cfg[key] = indices;
 		all[guildId] = cfg;
-		await this.dataManager.saveData('aouv_config', all);
+		await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.update({ content: `✅ Tous les ${kind === 'action' ? 'prompts Action NSFW' : 'prompts Vérité NSFW'} de base ont été désactivés.`, embeds: [], components: [] });
 	}
 
@@ -1257,12 +1257,12 @@ class AouvConfigHandler {
 		const idx = Math.max(1, numero) - 1;
 		const texte = interaction.fields.getTextInputValue('texte') || '';
 		if (!['action','verite'].includes(kind) || !texte.trim()) return interaction.reply({ content: '❌ Paramètres invalides.', flags: 64 });
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		const key = kind === 'action' ? 'nsfwBaseActionOverrides' : 'nsfwBaseTruthOverrides';
 		cfg[key] = cfg[key] || {};
 		cfg[key][idx] = texte;
-		all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.reply({ content: `✅ Remplacement NSFW enregistré pour ${kind} #${numero}.`, flags: 64 });
 	}
 
@@ -1271,12 +1271,12 @@ class AouvConfigHandler {
 		const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
 		const numero = parseInt(interaction.fields.getTextInputValue('numero') || '0', 10);
 		const idx = Math.max(1, numero) - 1;
-		const all = await this.dataManager.loadData('aouv_config', {});
+		const all = await this.dataManager.loadData('aouv_config.json', {});
 		const cfg = all[guildId] || {};
 		const key = kind === 'action' ? 'nsfwBaseActionOverrides' : 'nsfwBaseTruthOverrides';
 		if (cfg[key] && Object.prototype.hasOwnProperty.call(cfg[key], idx)) {
 			delete cfg[key][idx];
-			all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
+			all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 			return interaction.reply({ content: `✅ Override NSFW supprimé pour ${kind} #${numero}.`, flags: 64 });
 		}
 		return interaction.reply({ content: 'ℹ️ Aucun override NSFW trouvé pour ce numéro.', flags: 64 });

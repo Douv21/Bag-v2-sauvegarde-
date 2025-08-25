@@ -1,5 +1,5 @@
 nohup: ignoring input
-[dotenv@17.2.1] injecting env (4) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.1] injecting env (4) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
 🔑 MONGODB_PASSWORD non configuré - sauvegarde locale uniquement
 ⏰ Sauvegarde automatique level activée (30 min)
 ✅ LevelBackupManager initialisé
@@ -204,6 +204,7 @@ nohup: ignoring input
 ✅ warn
 ✅ warns
 ✅ 90 commandes chargées
+✅ 90 commandes enregistrées
 🚀 BAG BOT V2 - Render.com Web Service démarré
 🌐 Serveur Web actif sur port 5000
 📊 Health check: http://localhost:5000/health
@@ -223,8 +224,6 @@ nohup: ignoring input
 [lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
 [lavalink] Node creavite-eu1 closed: 1006 
 [lavalink] Node jirayu-nossl ready
-[lavalink] Node hatry4-nossl ready
-✅ 90 commandes enregistrées
 ✅ 90 commandes enregistrées
 ⚠️ Variables d'environnement MongoDB manquantes - utilisation du mode JSON uniquement
    Pour utiliser le système de bump, configurez:
@@ -234,152 +233,42 @@ nohup: ignoring input
 ⚠️ MongoDB non connecté - les rappels de bump ne seront pas persistés
 🕒 Planification des vérifications de modération activée (check hourly)
 🕒 Planification du reset hebdomadaire du karma activée (check hourly)
+[lavalink] Node hatry4-nossl ready
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node ajie-v4 ready
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
 [lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
 [lavalink] Node lava-link closed: 1006 
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
 [lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
 [lavalink] Node nextgencoders-ssl closed: 1006 
 [lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
 [lavalink] Node creavite-eu1 closed: 1006 
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
 [lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
 [lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
 [lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
 [lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
 [lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
 [lavalink] Node creavite-eu1 closed: 1006 
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
 [lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
 [lavalink] Node v4-lavalink-rocks closed: 1006 
 [lavalink] Node v4-lavalink-rocks disconnected: 
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
-[lavalink] Node lava-link disconnected: 
 [lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
 [lavalink] Node nextgencoders-ssl closed: 1006 
 [lavalink] Node nextgencoders-ssl disconnected: 
 [lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
 [lavalink] Node creavite-eu1 closed: 1006 
 [lavalink] Node creavite-eu1 disconnected: 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node lava-link disconnected: 
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node darren-v4 disconnected: 
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-🧪 Debug AouV - Canal: 1360897919384817762, Mode: denied, Config SFW: [], Config NSFW: []
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-🔄 Traitement interaction: aouv_main_select
-🔄 Traitement interaction: aouv_main_select
-🔄 Traitement interaction: aouv_channel_add
-🔄 Traitement interaction: aouv_channel_add
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-🧪 Debug AouV - Canal: 1360897919384817762, Mode: denied, Config SFW: [], Config NSFW: []
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-🧪 Debug AouV - Canal: 1360897919384817762, Mode: denied, Config SFW: [], Config NSFW: []
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-[lavalink] Node creavite-us1 error: connect ETIMEDOUT 23.142.24.138:20080
-[lavalink] Node creavite-us1 closed: 1006 
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-Erreur /config-economie: DiscordAPIError[40060]: Interaction has already been acknowledged.
-    at handleErrors (/workspace/node_modules/@discordjs/rest/dist/index.js:748:13)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async BurstHandler.runRequest (/workspace/node_modules/@discordjs/rest/dist/index.js:852:23)
-    at async _REST.request (/workspace/node_modules/@discordjs/rest/dist/index.js:1293:22)
-    at async ChatInputCommandInteraction.reply (/workspace/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:200:22)
-    at async Object.execute (/workspace/commands/config-economie.js:20:4)
-    at async Client.<anonymous> (/workspace/handlers/CommandHandler.js:91:25) {
-  requestBody: { files: [], json: { type: 4, data: [Object] } },
-  rawError: {
-    message: 'Interaction has already been acknowledged.',
-    code: 40060
-  },
-  code: 40060,
-  status: 400,
-  method: 'POST',
-  url: 'https://discord.com/api/v10/interactions/1409626063465746552/aW50ZXJhY3Rpb246MTQwOTYyNjA2MzQ2NTc0NjU1MjpsckpDZnNRS3ZmZEFlSFpybEdRYUI3SnBHQ04xQUFqb01sMHdaakhmTHEyRW1FejF1TTlhMGszRTExRGVuS2VjaVhMSGViY2o0RXdBdVJRSldzWjNIZ1V3WGp5VG5aMjhrVzIzRXc0a25ndTN4NmNpbTFQbkp0V3p1T2IwU0VCTA/callback?with_response=false'
-}
-❌ Erreur commande config-economie: Error [InteractionNotReplied]: The reply to this interaction has not been sent or deferred.
-    at ChatInputCommandInteraction.editReply (/workspace/node_modules/discord.js/src/structures/interfaces/InteractionResponses.js:253:48)
-    at Object.execute (/workspace/commands/config-economie.js:25:22)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async Client.<anonymous> (/workspace/handlers/CommandHandler.js:91:25) {
-  code: 'InteractionNotReplied'
-}
-(node:18812) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
-(Use `node --trace-warnings ...` to show where the warning was created)
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-🔄 Traitement interaction: economy_main_config_submenu
-🔄 Traitement interaction: economy_main_config_submenu
-🔧 Routage économie: economy_main_config_submenu
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (3 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-✅ Sauvegarde simple: 8 fichiers sauvegardés
-🧹 8 anciennes sauvegardes supprimées
