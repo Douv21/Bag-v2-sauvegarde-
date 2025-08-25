@@ -54,5 +54,18 @@
     "lastMassage": 1756148372714,
     "lastTease": 1756148380713,
     "lastCaresser": 1756148392220
+  },
+  "1407748779075043328_1360897918504271882": {
+    "userId": "1407748779075043328",
+    "guildId": "1360897918504271882",
+    "balance": 1047,
+    "goodKarma": 1,
+    "badKarma": 0,
+    "xp": 0,
+    "messageCount": 0,
+    "createdAt": 1756149494079,
+    "lastDaily": null,
+    "dailyStreak": 0,
+    "lastCaresser": 1756149494079
   }
 }
