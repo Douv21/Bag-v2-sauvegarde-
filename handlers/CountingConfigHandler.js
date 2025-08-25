@@ -9,10 +9,88 @@ class CountingConfigHandler {
         this.dataManager = dataManager;
     }
 
+    // Normalise le schéma des canaux vers currentNumber/lastUserId et ajoute les champs manquants
+    async normalizeGuildConfig(interaction, config, guildId) {
+        const guildConfig = config[guildId] || { channels: [] };
+        let changed = false;
+
+        if (!Array.isArray(guildConfig.channels)) {
+            guildConfig.channels = [];
+            changed = true;
+        }
+
+        for (const channel of guildConfig.channels) {
+            // currentNumber
+            if (typeof channel.currentNumber !== 'number') {
+                channel.currentNumber = typeof channel.current === 'number' ? channel.current : 0;
+                changed = true;
+            }
+            // lastUserId
+            if (typeof channel.lastUserId !== 'string' && channel.lastUserId !== null) {
+                channel.lastUserId = typeof channel.lastUser === 'string' ? channel.lastUser : null;
+                changed = true;
+            }
+            // lastMessageId
+            if (typeof channel.lastMessageId !== 'string' && channel.lastMessageId !== null) {
+                channel.lastMessageId = channel.lastMessageId || null;
+                changed = true;
+            }
+            // lastTimestamp
+            if (typeof channel.lastTimestamp !== 'string') {
+                channel.lastTimestamp = new Date().toISOString();
+                changed = true;
+            }
+            // enabled
+            if (typeof channel.enabled !== 'boolean') {
+                channel.enabled = true;
+                changed = true;
+            }
+            // record/recordUserId/recordDate
+            if (typeof channel.record !== 'number') {
+                channel.record = Number(channel.record) || 0;
+                changed = true;
+            }
+            if (channel.record > 0) {
+                if (channel.recordUserId && typeof channel.recordUserId !== 'string') {
+                    channel.recordUserId = String(channel.recordUserId);
+                    changed = true;
+                }
+                if (channel.recordDate && typeof channel.recordDate !== 'string') {
+                    channel.recordDate = String(channel.recordDate);
+                    changed = true;
+                }
+            }
+            // Nettoyage des anciennes clés (laisser en lecture seule si présent != nécessaire mais évite confusions UI)
+            if (Object.prototype.hasOwnProperty.call(channel, 'current')) {
+                delete channel.current;
+                changed = true;
+            }
+            if (Object.prototype.hasOwnProperty.call(channel, 'lastUser')) {
+                delete channel.lastUser;
+                changed = true;
+            }
+            if (Object.prototype.hasOwnProperty.call(channel, 'lastNumber')) {
+                delete channel.lastNumber;
+                changed = true;
+            }
+        }
+
+        // Valeurs globales par défaut
+        if (typeof guildConfig.mathEnabled !== 'boolean') { guildConfig.mathEnabled = true; changed = true; }
+        if (typeof guildConfig.reactionsEnabled !== 'boolean') { guildConfig.reactionsEnabled = true; changed = true; }
+
+        if (changed) {
+            config[guildId] = guildConfig;
+            await this.dataManager.saveData('counting.json', config);
+        }
+
+        return guildConfig;
+    }
+
     async showMainConfigMenu(interaction) {
         const guildId = interaction.guild.id;
         const config = await this.dataManager.loadData('counting.json', {});
-        const guildConfig = config[guildId] || { channels: [] };
+        const guildConfig = await this.normalizeGuildConfig(interaction, config, guildId);
 
         // Nettoyer automatiquement les canaux supprimés au chargement
         const validChannels = [];
@@ -132,7 +210,7 @@ class CountingConfigHandler {
     async showChannelsManagement(interaction) {
         const guildId = interaction.guild.id;
         const config = await this.dataManager.loadData('counting.json', {});
-        const guildConfig = config[guildId] || { channels: [] };
+        const guildConfig = await this.normalizeGuildConfig(interaction, config, guildId);
 
         // Nettoyer automatiquement les canaux supprimés et afficher seulement les valides
         let validChannels = [];
@@ -244,7 +322,8 @@ class CountingConfigHandler {
     async showChannelConfigSelector(interaction) {
         const guildId = interaction.guild.id;
         const config = await this.dataManager.loadData('counting.json', {});
-        const channels = config[guildId]?.channels || [];
+        const guildConfig = await this.normalizeGuildConfig(interaction, config, guildId);
+        const channels = guildConfig.channels || [];
 
         if (channels.length === 0) {
             const embed = new EmbedBuilder()
@@ -273,7 +352,7 @@ class CountingConfigHandler {
                     const status = channel.enabled ? '🟢' : '🔴';
                     options.push({
                         label: `${status} #${discordChannel.name}`,
-                        description: `Record: ${channel.record || 0} | Actuel: ${channel.current || 0}`,
+                        description: `Record: ${channel.record || 0} | Actuel: ${channel.currentNumber || 0}`,
                         value: channel.channelId,
                         emoji: '⚙️'
                     });
@@ -570,14 +649,15 @@ class CountingConfigHandler {
             return;
         }
 
-        // Ajouter le nouveau canal
+        // Ajouter le nouveau canal (schéma normalisé)
         config[guildId].channels.push({
             channelId: channelId,
             enabled: true,
-            current: 0,
+            currentNumber: 0,
             record: 0,
-            lastUser: null,
-            lastNumber: 0
+            lastUserId: null,
+            lastMessageId: null,
+            lastTimestamp: new Date().toISOString()
         });
 
         await this.dataManager.saveData('counting.json', config);
@@ -907,7 +987,7 @@ class CountingConfigHandler {
         if (config[guildId]?.channels) {
             config[guildId].channels.forEach(channel => {
                 channel.record = 0;
-                channel.current = 0;
+                channel.currentNumber = 0;
             });
             await this.dataManager.saveData('counting.json', config);
         }
@@ -986,7 +1066,7 @@ class CountingConfigHandler {
             if (channel) {
                 const oldRecord = channel.record;
                 channel.record = 0;
-                channel.current = 0;
+                channel.currentNumber = 0;
                 await this.dataManager.saveData('counting.json', config);
 
                 const embed = new EmbedBuilder()
