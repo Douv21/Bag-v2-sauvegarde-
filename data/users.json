@@ -15,5 +15,22 @@
     "createdAt": 1756145959059,
     "lastDaily": null,
     "dailyStreak": 0
+  },
+  "463272211269156865_1360897918504271882": {
+    "userId": "463272211269156865",
+    "guildId": "1360897918504271882",
+    "balance": 1317,
+    "goodKarma": 3,
+    "badKarma": -1,
+    "xp": 0,
+    "messageCount": 0,
+    "createdAt": 1756146396389,
+    "lastDaily": null,
+    "dailyStreak": 0,
+    "lastCaresser": 1756146396389,
+    "lastWork": 1756146839416,
+    "lastFish": 1756146843342,
+    "lastSeduce": 1756146865026,
+    "lastStriptease": 1756146927776
   }
 }
