@@ -1,41 +1,43 @@
 {
   "messagesPerDay": {
-    "2025-08-25": 135
+    "2025-08-25": 173
   },
   "commandsPerDay": {
-    "2025-08-25": 132
+    "2025-08-25": 152
   },
   "guilds": {
     "1360897918504271882": {
       "messagesPerDay": {
-        "2025-08-25": 135
+        "2025-08-25": 173
       },
       "commandsPerDay": {
-        "2025-08-25": 132
+        "2025-08-25": 152
       },
       "commandsByName": {
         "force-backup": 2,
         "boutique": 13,
         "backup-status": 1,
         "caresser": 6,
-        "config-aouv": 8,
+        "config-aouv": 9,
         "travailler": 4,
-        "pecher": 8,
+        "pecher": 10,
         "seduire": 2,
         "striptease": 1,
         "leaderboard": 1,
         "config-economie": 5,
         "config-confession": 1,
-        "massage": 1,
-        "aguicher": 1,
+        "massage": 2,
+        "aguicher": 2,
         "embrasser": 2,
         "stats": 1,
         "dashboard": 1,
         "seduire-mass": 1,
-        "aouv": 4,
+        "aouv": 6,
         "membre-proche": 1,
         "ajouter-carte": 1,
-        "baiser": 1
+        "baiser": 1,
+        "config-level": 1,
+        "crime": 2
       }
     }
   },
@@ -44,23 +46,25 @@
     "boutique": 13,
     "backup-status": 1,
     "caresser": 6,
-    "config-aouv": 8,
+    "config-aouv": 9,
     "travailler": 4,
-    "pecher": 8,
+    "pecher": 10,
     "seduire": 2,
     "striptease": 1,
     "leaderboard": 1,
     "config-economie": 5,
     "config-confession": 1,
-    "massage": 1,
-    "aguicher": 1,
+    "massage": 2,
+    "aguicher": 2,
     "embrasser": 2,
     "stats": 1,
     "dashboard": 1,
     "seduire-mass": 1,
-    "aouv": 4,
+    "aouv": 6,
     "membre-proche": 1,
     "ajouter-carte": 1,
-    "baiser": 1
+    "baiser": 1,
+    "config-level": 1,
+    "crime": 2
   }
 }
