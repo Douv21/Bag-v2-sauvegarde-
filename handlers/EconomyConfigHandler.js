@@ -287,7 +287,7 @@ class EconomyConfigHandler {
                 { label: '🎨 Objets Personnalisés', value: 'objets', description: 'Créer des objets uniques' },
                 { label: '⌛ Rôles Temporaires', value: 'roles_temp', description: 'Rôles avec durée limitée' },
                 { label: '⭐ Rôles Permanents', value: 'roles_perm', description: 'Rôles définitifs' },
-                { label: '⚡ Réductions Cooldown', value: 'cooldown_reductions', description: 'Accélérer les actions du serveur' },
+
                 { label: '💸 Remises Karma', value: 'remises', description: 'Réductions basées sur karma' },
                 { label: '🔧 Modifier Objets Existants', value: 'manage_objets', description: 'Gérer objets créés' },
                 { label: '🗑️ Supprimer Articles', value: 'delete_articles', description: 'Supprimer objets/rôles' },
@@ -327,8 +327,7 @@ class EconomyConfigHandler {
             await this.showRolesTempMenu(interaction);
         } else if (value === 'roles_perm') {
             await this.showRolesPermMenu(interaction);
-        } else if (value === 'cooldown_reductions') {
-            await this.showCooldownReductionsMenu(interaction);
+
         } else if (value === 'remises') {
             await this.showRemisesMenu(interaction);
         } else if (value === 'manage_objets') {
@@ -400,206 +399,8 @@ class EconomyConfigHandler {
         await interaction.update({ embeds: [embed], components: [row] });
     }
 
-    async showCooldownReductionsMenu(interaction) {
-        const embed = new EmbedBuilder()
-            .setColor('#e74c3c')
-            .setTitle('⚡ Réductions de Cooldown')
-            .setDescription('Choisissez le type de réduction à ajouter à la boutique :')
-            .addFields([
-                {
-                    name: '📦 Articles disponibles',
-                    value: 
-                        '**🔥 50% de réduction :**\n' +
-                        '• 1 jour - Accélère toutes les actions de 50% pendant 24h\n' +
-                        '• 1 semaine - Accélère toutes les actions de 50% pendant 7 jours\n' +
-                        '• 1 mois - Accélère toutes les actions de 50% pendant 30 jours\n\n' +
-                        '**⚡ 75% de réduction :**\n' +
-                        '• 1 jour - Accélère toutes les actions de 75% pendant 24h\n' +
-                        '• 1 semaine - Accélère toutes les actions de 75% pendant 7 jours\n' +
-                        '• 1 mois - Accélère toutes les actions de 75% pendant 30 jours\n\n' +
-                        '**🚀 Actions illimitées :**\n' +
-                        '• 1 jour - Supprime tous les cooldowns pendant 24h\n' +
-                        '• 1 semaine - Supprime tous les cooldowns pendant 7 jours\n' +
-                        '• 1 mois - Supprime tous les cooldowns pendant 30 jours',
-                    inline: false
-                }
-            ]);
 
-        const selectMenu = new StringSelectMenuBuilder()
-            .setCustomId('cooldown_reduction_select')
-            .setPlaceholder('Choisissez un type de réduction...')
-            .addOptions([
-                { label: '🔥 50% - 1 jour', value: 'cd_50_1d', description: 'Réduction 50% pendant 24h' },
-                { label: '🔥 50% - 1 semaine', value: 'cd_50_1w', description: 'Réduction 50% pendant 7 jours' },
-                { label: '🔥 50% - 1 mois', value: 'cd_50_1m', description: 'Réduction 50% pendant 30 jours' },
-                { label: '⚡ 75% - 1 jour', value: 'cd_75_1d', description: 'Réduction 75% pendant 24h' },
-                { label: '⚡ 75% - 1 semaine', value: 'cd_75_1w', description: 'Réduction 75% pendant 7 jours' },
-                { label: '⚡ 75% - 1 mois', value: 'cd_75_1m', description: 'Réduction 75% pendant 30 jours' },
-                { label: '🚀 Illimité - 1 jour', value: 'cd_100_1d', description: 'Suppression totale pendant 24h' },
-                { label: '🚀 Illimité - 1 semaine', value: 'cd_100_1w', description: 'Suppression totale pendant 7 jours' },
-                { label: '🚀 Illimité - 1 mois', value: 'cd_100_1m', description: 'Suppression totale pendant 30 jours' },
-                { label: '🔙 Retour Boutique', value: 'back_boutique', description: 'Retour au menu boutique' }
-            ]);
 
-        const row = new ActionRowBuilder().addComponents(selectMenu);
-        await interaction.update({ embeds: [embed], components: [row] });
-    }
-
-    async handleCooldownReductionSelect(interaction) {
-        const value = interaction.values[0];
-        
-        if (value === 'back_boutique') {
-            return await this.showBoutiqueMenu(interaction);
-        }
-
-        // Parser la valeur (ex: cd_50_1d = 50% reduction for 1 day)
-        const [, reduction, duration] = value.split('_');
-        await this.showCooldownReductionConfigModal(interaction, reduction, duration);
-    }
-
-    async showCooldownReductionConfigModal(interaction, reduction, duration) {
-        // Mapper les valeurs pour un affichage compréhensible
-        const reductionMap = {
-            '50': { name: '🔥 50% de réduction', percent: 50 },
-            '75': { name: '⚡ 75% de réduction', percent: 75 },
-            '100': { name: '🚀 Actions illimitées', percent: 100 }
-        };
-        
-        const durationMap = {
-            '1d': { name: '1 jour', days: 1 },
-            '1w': { name: '1 semaine', days: 7 },
-            '1m': { name: '1 mois', days: 30 }
-        };
-
-        const reductionInfo = reductionMap[reduction];
-        const durationInfo = durationMap[duration];
-        
-        const itemName = `${reductionInfo.name} - ${durationInfo.name}`;
-        const defaultPrice = this.calculateDefaultCooldownPrice(reductionInfo.percent, durationInfo.days);
-
-        const modal = new ModalBuilder()
-            .setCustomId(`cooldown_reduction_modal_${reduction}_${duration}`)
-            .setTitle('Ajouter Réduction de Cooldown')
-            .addComponents(
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('cooldown_price')
-                        .setLabel('Prix (💋)')
-                        .setStyle(TextInputStyle.Short)
-                        .setPlaceholder(`Prix suggéré: ${defaultPrice}`)
-                        .setValue(defaultPrice.toString())
-                        .setRequired(true)
-                ),
-                new ActionRowBuilder().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('cooldown_description')
-                        .setLabel('Description personnalisée (optionnelle)')
-                        .setStyle(TextInputStyle.Paragraph)
-                        .setPlaceholder(`${itemName} - ${reductionInfo.percent === 100 ? 'Supprime' : 'Réduit de ' + reductionInfo.percent + '%'} tous les cooldowns pendant ${durationInfo.name}`)
-                        .setRequired(false)
-                )
-            );
-
-        await interaction.showModal(modal);
-    }
-
-    calculateDefaultCooldownPrice(percent, days) {
-        // Prix de base selon le pourcentage de réduction
-        let basePrice = 100; // Prix pour 50%, 1 jour
-        
-        if (percent === 75) basePrice = 250;
-        else if (percent === 100) basePrice = 500;
-        
-        // Multiplicateur selon la durée
-        let multiplier = 1;
-        if (days === 7) multiplier = 5;
-        else if (days === 30) multiplier = 15;
-        
-        return basePrice * multiplier;
-    }
-
-    async handleCooldownReductionModal(interaction) {
-        try {
-            const customId = interaction.customId; // cooldown_reduction_modal_50_1d
-            const parts = customId.split('_');
-            const reduction = parts[3]; // "50", "75", or "100"
-            const duration = parts[4]; // "1d", "1w", or "1m"
-
-            const price = parseInt(interaction.fields.getTextInputValue('cooldown_price'));
-            const description = interaction.fields.getTextInputValue('cooldown_description');
-
-            if (isNaN(price) || price <= 0) {
-                await interaction.reply({
-                    content: '❌ Prix invalide. Doit être un nombre positif.',
-                    flags: 64
-                });
-                return;
-            }
-
-            // Mapper les valeurs
-            const reductionMap = {
-                '50': { name: '🔥 50% de réduction', percent: 50 },
-                '75': { name: '⚡ 75% de réduction', percent: 75 },
-                '100': { name: '🚀 Actions illimitées', percent: 100 }
-            };
-            
-            const durationMap = {
-                '1d': { name: '1 jour', days: 1 },
-                '1w': { name: '1 semaine', days: 7 },
-                '1m': { name: '1 mois', days: 30 }
-            };
-
-            const reductionInfo = reductionMap[reduction];
-            const durationInfo = durationMap[duration];
-            
-            const itemName = `${reductionInfo.name} - ${durationInfo.name}`;
-            const finalDescription = description || `${reductionInfo.percent === 100 ? 'Supprime' : 'Réduit de ' + reductionInfo.percent + '%'} tous les cooldowns pendant ${durationInfo.name}`;
-
-            // Sauvegarder l'article dans la boutique
-            await this.saveCooldownReductionToShop(
-                interaction.guild.id, 
-                itemName, 
-                price, 
-                finalDescription,
-                reductionInfo.percent,
-                durationInfo.days
-            );
-
-            await interaction.reply({
-                content: `✅ Article "${itemName}" ajouté à la boutique pour ${price}💋 !`,
-                flags: 64
-            });
-
-        } catch (error) {
-            console.error('Erreur modal réduction cooldown:', error);
-            await interaction.reply({
-                content: '❌ Erreur lors de la création de l\'article.',
-                flags: 64
-            });
-        }
-    }
-
-    async saveCooldownReductionToShop(guildId, name, price, description, reductionPercent, durationDays) {
-        const shopData = await this.dataManager.loadData('shop.json', {});
-        
-        if (!shopData[guildId]) shopData[guildId] = [];
-        
-        const cooldownItem = {
-            id: Date.now().toString(),
-            type: 'cooldown_reduction',
-            name: name,
-            price: price,
-            description: description,
-            category: 'Réductions de Cooldown',
-            reductionPercent: reductionPercent,
-            durationDays: durationDays,
-            created: new Date().toISOString()
-        };
-        
-        shopData[guildId].push(cooldownItem);
-        await this.dataManager.saveData('shop.json', shopData);
-        console.log(`✅ Réduction cooldown ajoutée à la boutique:`, cooldownItem);
-    }
 
     async showRemisesMenu(interaction) {
         const embed = new EmbedBuilder()

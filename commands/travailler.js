@@ -19,103 +19,73 @@ module.exports = {
             const economyConfig = await dataManager.loadData('economy.json', {});
             const rawCfg = (economyConfig.actions?.travailler || economyConfig.actions?.charmer) || {};
             
-            const enabled = rawCfg.enabled !== false;
-            const minReward = asNumber(rawCfg.minReward ?? rawCfg?.montant?.minAmount, 100);
-            const maxReward = asNumber(rawCfg.maxReward ?? rawCfg?.montant?.maxAmount, Math.max(150, minReward));
-            const cooldown = asNumber(rawCfg.cooldown, 3600000);
-            const deltaGood = asNumber(rawCfg.goodKarma ?? rawCfg?.karma?.goodKarma, 1);
-            const deltaBad = asNumber(rawCfg.badKarma ?? rawCfg?.karma?.badKarma, -1);
-
-            // Vérifier si l'action est activée
-            if (!enabled) {
-                await interaction.reply({
-                    content: '❌ La commande /travailler est actuellement désactivée.',
-                    flags: 64
-                });
-                return;
+            // Normaliser les valeurs (peuvent être des objets avec .money)
+            const minReward = asNumber(rawCfg.min || rawCfg.minReward || 10);
+            const maxReward = asNumber(rawCfg.max || rawCfg.maxReward || 25);
+            
+            // Gérer cooldown (peut être un objet avec .cooldown)
+            let cooldownTime = asNumber(rawCfg.cooldown, 600000); // 10 min par défaut
+            if (typeof rawCfg.cooldown === 'object' && rawCfg.cooldown.cooldown) {
+                cooldownTime = asNumber(rawCfg.cooldown.cooldown, 600000);
             }
             
-            // Vérifier cooldown avec dataManager
             const userData = await dataManager.getUser(userId, guildId);
             
-            // Calculer le cooldown avec réductions actives
-            const { calculateReducedCooldown, formatCooldownBuffMessage, cleanExpiredBuffs } = require('../utils/cooldownCalculator');
-            
-            // Nettoyer les buffs expirés
-            const buffsRemoved = cleanExpiredBuffs(userData);
-            if (buffsRemoved) {
-                await dataManager.updateUser(userId, guildId, userData);
-            }
-            
             const now = Date.now();
-            const baseCooldownTime = cooldown;
-            const finalCooldownTime = calculateReducedCooldown(userData, baseCooldownTime);
             
-            if (userData.lastWork && (now - userData.lastWork) < finalCooldownTime) {
-                const remaining = Math.ceil((finalCooldownTime - (now - userData.lastWork)) / 60000);
-                const buffMessage = formatCooldownBuffMessage(userData);
+            if (userData.lastWork && (now - userData.lastWork) < cooldownTime) {
+                const remaining = Math.ceil((cooldownTime - (now - userData.lastWork)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir retravailler.${buffMessage}`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir retravailler.`,
                     flags: 64
                 });
             }
+
+            // Actions de travail variées
+            const workActions = [
+                'Vous avez travaillé dans un café coquin', 'Vous avez donné un massage relaxant',
+                'Vous avez organisé un spectacle privé', 'Vous avez participé à un shooting photo',
+                'Vous avez animé une soirée dansante', 'Vous avez fait du mannequinat charmant',
+                'Vous avez écrit des poèmes séduisants', 'Vous avez donné des cours de charme',
+                'Vous avez participé à un défilé sensuel', 'Vous avez organisé une dégustation romantique'
+            ];
+
+            const action = workActions[Math.floor(Math.random() * workActions.length)];
+            const baseReward = Math.floor(Math.random() * (maxReward - minReward + 1)) + minReward;
             
-            // Calculer gains selon configuration
-            const totalReward = Math.floor(Math.random() * (Math.max(0, maxReward - minReward) + 1)) + minReward;
+            // Appliquer les bonus karma
+            const userKarma = (userData.goodKarma || 0) + (userData.badKarma || 0);
+            let karmaMultiplier = 1;
+            if (userKarma >= 10) karmaMultiplier = 1.5;
+            else if (userKarma >= 1) karmaMultiplier = 1.2;
+            else if (userKarma <= -10) karmaMultiplier = 0.5;
+            else if (userKarma < 0) karmaMultiplier = 0.8;
             
-            // Mettre à jour utilisateur avec dataManager
-            const previousBalance = asNumber(userData.balance, 1000);
-            userData.balance = previousBalance + totalReward;
-            userData.goodKarma = (asNumber(userData.goodKarma, 0)) + deltaGood;
-            userData.badKarma = (asNumber(userData.badKarma, 0)) + deltaBad;
+            const totalReward = Math.floor(baseReward * karmaMultiplier);
+            
+            userData.balance = (userData.balance || 0) + totalReward;
             userData.lastWork = now;
             
             await dataManager.updateUser(userId, guildId, userData);
-            
-            const workActions = [
-                'Vous avez travaillé d\'arrache-pied',
-                'Vous avez bouclé un gros dossier',
-                'Vous avez enchaîné les tâches efficacement',
-                'Vous avez aidé un collègue',
-                'Vous avez fait des heures sup\' rentables'
-            ];
-            
-            const action = workActions[Math.floor(Math.random() * workActions.length)];
-            
-            // Recalculer la réputation APRÈS la mise à jour (karma net = charme + perversion négative)
-            const karmaNet = (asNumber(userData.goodKarma, 0)) + (asNumber(userData.badKarma, 0));
-            
-            // Message sur les buffs actifs
-            const buffMessage = formatCooldownBuffMessage(userData);
-            const successDescription = `${action} et avez gagné **${totalReward}💋** !${buffMessage}`;
-            
+
+            const successDescription = `${action} et avez gagné **${totalReward}💋** !`;
+
             const embed = new EmbedBuilder()
-                .setColor('#00ff00')
-                .setTitle('💼 Travail Réussi !')
+                .setColor('#2ecc71')
+                .setTitle('💼 Travail Accompli')
                 .setDescription(successDescription)
-                .addFields([
-                    { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
-                    { name: '😇 Karma Positif', value: `${deltaGood >= 0 ? '+' : ''}${deltaGood} (${userData.goodKarma})`, inline: true },
-                    { name: '😈 Karma Négatif', value: `${deltaBad >= 0 ? '+' : ''}${deltaBad} (${userData.badKarma})`, inline: true },
-                    { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true }
-                ])
-                .setFooter({ text: `Prochaine utilisation dans ${Math.round(finalCooldownTime / 60000)} minutes` });
-                
+                .addFields(
+                    { name: '💰 Nouveau solde', value: `${userData.balance}💋`, inline: true },
+                    { name: '📈 Gains', value: `+${totalReward}💋`, inline: true }
+                )
+                .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldownTime / 60000)} minutes` });
+
             await interaction.reply({ embeds: [embed] });
 
-            // Vérifier et appliquer les récompenses karma automatiques
-            try {
-                const KarmaRewardManager = require('../utils/karmaRewardManager');
-                const karmaManager = new KarmaRewardManager(dataManager);
-                await karmaManager.checkAndApplyKarmaRewards(interaction.user, interaction.guild, interaction.channel);
-            } catch (error) {
-                console.error('Erreur vérification récompenses karma:', error);
-            }
-            
         } catch (error) {
-            console.error('❌ Erreur travailler:', error);
+            console.error('Erreur commande travailler:', error);
             await interaction.reply({
-                content: '❌ Une erreur est survenue.',
+                content: '❌ Une erreur s\'est produite lors de l\'exécution de cette commande.',
                 flags: 64
             });
         }

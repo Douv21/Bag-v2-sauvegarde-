@@ -21,23 +21,24 @@
   "463272211269156865_1360897918504271882": {
     "userId": "463272211269156865",
     "guildId": "1360897918504271882",
-    "balance": 1904,
-    "goodKarma": 11,
-    "badKarma": 3,
+    "balance": 2552,
+    "goodKarma": 12,
+    "badKarma": 5,
     "xp": 0,
     "messageCount": 0,
     "createdAt": 1756146396389,
     "lastDaily": null,
     "dailyStreak": 0,
     "lastCaresser": 1756149224790,
-    "lastWork": 1756149569257,
+    "lastWork": 1756150482793,
     "lastFish": 1756149581551,
     "lastSeduce": 1756146865026,
-    "lastStriptease": 1756146927776,
+    "lastStriptease": 1756150567002,
     "lastEmbrasser": 1756148753608,
     "lastMassSeduce": 1756148979388,
     "appliedRewards": [
-      1753184033719
+      1753184033719,
+      1753181391406
     ],
     "lastBaiser": 1756149600452,
     "lastMassage": 1756149911012

@@ -616,10 +616,7 @@ class MainRouterHandler {
                 return true;
             }
 
-            if (customId === 'cooldown_reduction_select') {
-                await this.economyHandler.handleCooldownReductionSelect(interaction);
-                return true;
-            }
+
 
             // === SELECT MENUS CONFESSION ===
             // Menus d'options principaux (logs / autothread / canaux)
