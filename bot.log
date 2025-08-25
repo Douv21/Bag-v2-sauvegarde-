@@ -272,3 +272,111 @@ nohup: ignoring input
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node darren-v4 disconnected: 
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+🔍 Vérification karma pour davidzzr: +5😇 / 1😈
+✅ récompense karma déclenchée: Pas de chance pour davidzzr
+🎁 Notification envoyée pour davidzzr: Pas de chance
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+❌ Erreur boutique: CombinedPropertyError (1)
+  Received one or more errors
+
+  input[1]
+  | CombinedPropertyError (1)
+  |   Received one or more errors
+  | 
+  |   input.value
+  |   | ExpectedConstraintError > s.string().lengthLessThanOrEqual()
+  |   |   Invalid string length
+  |   | 
+  |   |   Expected: expected.length <= 1024
+  |   | 
+  |   |   Received:
+  |   |   | '🔥 **🔥 50% de réduction - 1 jour** - 100💋\nRéduction 50% cooldowns (1j)\n*Réduit de 50% tous les cooldowns pendant 24h*\n\n🔥 **🔥 50% de réduction - 1 semaine** - 500💋\nRéduction 50% cooldowns (7j)\n*Réduit de 50% tous les cooldowns pendant 7 jours*\n\n⚡ **⚡ 75% de réduction - 1 jour** - 250💋\nRéduction 75% cooldowns (1j)\n*Réduit de 75% tous les cooldowns pendant 24h*\n\n🚀 **🚀 Actions illimitées - 1 jour** - 500💋\nActions illimitées (1j)\n*Supprime tous les cooldowns pendant 24h*\n\n🔥 **🔥 50% de réduction - 1 mois** - 1500💋\nRéduction 50% cooldowns (30j)\n*Réduit de 50% tous les cooldowns pendant 30 jours*\n\n⚡ **⚡ 75% de réduction - 1 semaine** - 1250💋\nRéduction 75% cooldowns (7j)\n*Réduit de 75% tous les cooldowns pendant 7 jours*\n\n⚡ **⚡ 75% de réduction - 1 mois** - 3750💋\nRéduction 75% cooldowns (30j)\n*Réduit de 75% tous les cooldowns pendant 30 jours*\n\n🚀 **🚀 Actions illimitées - 1 semaine** - 2500💋\nActions illimitées (7j)\n*Supprime tous les cooldowns pendant 7 jours*\n\n🚀 **🚀 Actions illimitées - 1 mois** - 7500💋\nActions illimitées (30j)\n*Supprime tous les cooldowns pendant 30 jours*'
+
+    at _ArrayValidator.handle (/workspace/node_modules/@sapphire/shapeshift/dist/cjs/index.cjs:1254:70)
+    at _ArrayValidator.parse (/workspace/node_modules/@sapphire/shapeshift/dist/cjs/index.cjs:972:90)
+    at EmbedBuilder.addFields (/workspace/node_modules/@discordjs/builders/dist/index.js:235:31)
+    at Object.execute (/workspace/commands/boutique.js:122:10)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Client.<anonymous> (/workspace/handlers/CommandHandler.js:91:25)
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+❌ Erreur boutique: CombinedPropertyError (1)
+  Received one or more errors
+
+  input[1]
+  | CombinedPropertyError (1)
+  |   Received one or more errors
+  | 
+  |   input.value
+  |   | ExpectedConstraintError > s.string().lengthLessThanOrEqual()
+  |   |   Invalid string length
+  |   | 
+  |   |   Expected: expected.length <= 1024
+  |   | 
+  |   |   Received:
+  |   |   | '🔥 **🔥 50% de réduction - 1 jour** - 100💋\nRéduction 50% cooldowns (1j)\n*Réduit de 50% tous les cooldowns pendant 24h*\n\n🔥 **🔥 50% de réduction - 1 semaine** - 500💋\nRéduction 50% cooldowns (7j)\n*Réduit de 50% tous les cooldowns pendant 7 jours*\n\n⚡ **⚡ 75% de réduction - 1 jour** - 250💋\nRéduction 75% cooldowns (1j)\n*Réduit de 75% tous les cooldowns pendant 24h*\n\n🚀 **🚀 Actions illimitées - 1 jour** - 500💋\nActions illimitées (1j)\n*Supprime tous les cooldowns pendant 24h*\n\n🔥 **🔥 50% de réduction - 1 mois** - 1500💋\nRéduction 50% cooldowns (30j)\n*Réduit de 50% tous les cooldowns pendant 30 jours*\n\n⚡ **⚡ 75% de réduction - 1 semaine** - 1250💋\nRéduction 75% cooldowns (7j)\n*Réduit de 75% tous les cooldowns pendant 7 jours*\n\n⚡ **⚡ 75% de réduction - 1 mois** - 3750💋\nRéduction 75% cooldowns (30j)\n*Réduit de 75% tous les cooldowns pendant 30 jours*\n\n🚀 **🚀 Actions illimitées - 1 semaine** - 2500💋\nActions illimitées (7j)\n*Supprime tous les cooldowns pendant 7 jours*\n\n🚀 **🚀 Actions illimitées - 1 mois** - 7500💋\nActions illimitées (30j)\n*Supprime tous les cooldowns pendant 30 jours*'
+
+    at _ArrayValidator.handle (/workspace/node_modules/@sapphire/shapeshift/dist/cjs/index.cjs:1254:70)
+    at _ArrayValidator.parse (/workspace/node_modules/@sapphire/shapeshift/dist/cjs/index.cjs:972:90)
+    at EmbedBuilder.addFields (/workspace/node_modules/@discordjs/builders/dist/index.js:235:31)
+    at Object.execute (/workspace/commands/boutique.js:122:10)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Client.<anonymous> (/workspace/handlers/CommandHandler.js:91:25)
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+🔄 Traitement interaction: economy_main_config_submenu
+🔄 Traitement interaction: economy_main_config_submenu
+🔧 Routage économie: economy_main_config_submenu
+[lavalink] Node creavite-us1 error: connect ETIMEDOUT 23.142.24.138:20080
+[lavalink] Node creavite-us1 closed: 1006 
+🔄 Traitement interaction: economy_boutique_select
+🔄 Traitement interaction: economy_boutique_select
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+🔄 Traitement interaction: economy_main_config_submenu
+🔄 Traitement interaction: economy_main_config_submenu
+🔧 Routage économie: economy_main_config_submenu
+🔄 Traitement interaction: economy_boutique_select
+🔄 Traitement interaction: economy_boutique_select
