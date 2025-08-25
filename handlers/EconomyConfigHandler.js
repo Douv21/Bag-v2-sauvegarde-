@@ -298,6 +298,22 @@ class EconomyConfigHandler {
         await interaction.update({ embeds: [embed], components: [row] });
     }
 
+    async handleMainSelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'actions') {
+            await this.showActionsMenu(interaction);
+        } else if (value === 'boutique') {
+            await this.showBoutiqueMenu(interaction);
+        } else if (value === 'daily') {
+            await this.showDailyMenu(interaction);
+        } else if (value === 'messages') {
+            await this.showMessagesMenu(interaction);
+        } else if (value === 'karma') {
+            await this.showKarmaMenu(interaction);
+        }
+    }
+
     async handleBoutiqueSelect(interaction) {
         const value = interaction.values[0];
         

@@ -1,17 +1,17 @@
 {
   "messagesPerDay": {
-    "2025-08-25": 65
+    "2025-08-25": 73
   },
   "commandsPerDay": {
-    "2025-08-25": 42
+    "2025-08-25": 44
   },
   "guilds": {
     "1360897918504271882": {
       "messagesPerDay": {
-        "2025-08-25": 65
+        "2025-08-25": 73
       },
       "commandsPerDay": {
-        "2025-08-25": 42
+        "2025-08-25": 44
       },
       "commandsByName": {
         "force-backup": 2,
@@ -24,7 +24,8 @@
         "seduire": 1,
         "striptease": 1,
         "leaderboard": 1,
-        "config-economie": 3
+        "config-economie": 3,
+        "config-confession": 1
       }
     }
   },
@@ -39,6 +40,7 @@
     "seduire": 1,
     "striptease": 1,
     "leaderboard": 1,
-    "config-economie": 3
+    "config-economie": 3,
+    "config-confession": 1
   }
 }

@@ -1,5 +1,5 @@
 nohup: ignoring input
-[dotenv@17.2.1] injecting env (4) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.2.1] injecting env (4) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
 🔑 MONGODB_PASSWORD non configuré - sauvegarde locale uniquement
 ⏰ Sauvegarde automatique level activée (30 min)
 ✅ LevelBackupManager initialisé
@@ -239,10 +239,10 @@ nohup: ignoring input
 [lavalink] Node ajie-v4 ready
 [lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
 [lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
-[lavalink] Node nextgencoders-ssl closed: 1006 
 [lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
 [lavalink] Node lava-link closed: 1006 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
 [lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
 [lavalink] Node creavite-eu1 closed: 1006 
 [lavalink] Node darren-v4 error: Unexpected server response: 403
@@ -268,66 +268,15 @@ nohup: ignoring input
 [lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
 [lavalink] Node v4-lavalink-rocks closed: 1006 
 [lavalink] Node v4-lavalink-rocks disconnected: 
-[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
-[lavalink] Node nextgencoders-ssl closed: 1006 
-[lavalink] Node nextgencoders-ssl disconnected: 
 [lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
 [lavalink] Node lava-link closed: 1006 
 [lavalink] Node lava-link disconnected: 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node nextgencoders-ssl disconnected: 
 [lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
 [lavalink] Node creavite-eu1 closed: 1006 
 [lavalink] Node creavite-eu1 disconnected: 
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node darren-v4 disconnected: 
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at runNextTicks (node:internal/process/task_queues:69:3)
-    at listOnTimeout (node:internal/timers:549:9)
-    at process.processTimers (node:internal/timers:523:7)
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at runNextTicks (node:internal/process/task_queues:69:3)
-    at listOnTimeout (node:internal/timers:549:9)
-    at process.processTimers (node:internal/timers:523:7)
-❌ Erreur pecher: ReferenceError: cooldownTime is not defined
-    at Object.execute (/workspace/commands/pecher.js:99:64)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async Client.<anonymous> (/workspace/handlers/CommandHandler.js:91:25)
-💾 Sauvegarde automatique déclenchée (3 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-🔄 Traitement interaction: economy_main_config_submenu
-🔄 Traitement interaction: economy_main_config_submenu
-❌ Interaction non gérée: economy_main_config_submenu
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-🔄 Traitement interaction: economy_main_config_submenu
-🔄 Traitement interaction: economy_main_config_submenu
-❌ Interaction non gérée: economy_main_config_submenu
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
