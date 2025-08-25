@@ -1,28 +1,28 @@
 {
   "messagesPerDay": {
-    "2025-08-25": 201
+    "2025-08-25": 205
   },
   "commandsPerDay": {
-    "2025-08-25": 170
+    "2025-08-25": 182
   },
   "guilds": {
     "1360897918504271882": {
       "messagesPerDay": {
-        "2025-08-25": 201
+        "2025-08-25": 205
       },
       "commandsPerDay": {
-        "2025-08-25": 170
+        "2025-08-25": 182
       },
       "commandsByName": {
         "force-backup": 2,
-        "boutique": 13,
+        "boutique": 14,
         "backup-status": 1,
         "caresser": 7,
-        "config-aouv": 10,
-        "travailler": 4,
-        "pecher": 12,
+        "config-aouv": 11,
+        "travailler": 5,
+        "pecher": 13,
         "seduire": 2,
-        "striptease": 2,
+        "striptease": 3,
         "leaderboard": 1,
         "config-economie": 5,
         "config-confession": 1,
@@ -35,7 +35,7 @@
         "aouv": 8,
         "membre-proche": 1,
         "ajouter-carte": 1,
-        "baiser": 1,
+        "baiser": 2,
         "config-level": 1,
         "crime": 3,
         "level": 1
@@ -44,14 +44,14 @@
   },
   "commandsByName": {
     "force-backup": 2,
-    "boutique": 13,
+    "boutique": 14,
     "backup-status": 1,
     "caresser": 7,
-    "config-aouv": 10,
-    "travailler": 4,
-    "pecher": 12,
+    "config-aouv": 11,
+    "travailler": 5,
+    "pecher": 13,
     "seduire": 2,
-    "striptease": 2,
+    "striptease": 3,
     "leaderboard": 1,
     "config-economie": 5,
     "config-confession": 1,
@@ -64,7 +64,7 @@
     "aouv": 8,
     "membre-proche": 1,
     "ajouter-carte": 1,
-    "baiser": 1,
+    "baiser": 2,
     "config-level": 1,
     "crime": 3,
     "level": 1
