@@ -57,6 +57,9 @@ class DataManager {
             // Configuration karma personnalisé
             'karma_config': 'karma_config.json',
             'karma_discounts': 'karma_discounts.json',
+            
+            // Configuration AouV (Actions ou Vérité)
+            'aouv_config': 'aouv_config.json',
 
             // Moderation
             'warnings': 'warnings.json',

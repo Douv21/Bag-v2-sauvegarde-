@@ -6,7 +6,7 @@ function pickRandom(list) {
 }
 
 async function getGuildConfig(dataManager, guildId) {
-	const all = await dataManager.loadData('aouv_config.json', {});
+	const all = await dataManager.loadData('aouv_config', {});
 	return all[guildId] || { disabledBaseActions: [], customActions: [], allowedChannels: [] };
 }
 

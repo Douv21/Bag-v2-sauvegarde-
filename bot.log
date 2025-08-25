@@ -222,10 +222,8 @@ nohup: ignoring input
 [lavalink] Node nextgencoders-ssl closed: 1006 
 [lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
 [lavalink] Node creavite-eu1 closed: 1006 
+✅ 90 commandes enregistrées
 [lavalink] Node jirayu-nossl ready
-[lavalink] Node hatry4-nossl ready
-[lavalink] Node darren-v4 error: Unexpected server response: 403
-[lavalink] Node darren-v4 closed: 1006 
 ✅ 90 commandes enregistrées
 ⚠️ Variables d'environnement MongoDB manquantes - utilisation du mode JSON uniquement
    Pour utiliser le système de bump, configurez:
@@ -235,69 +233,67 @@ nohup: ignoring input
 ⚠️ MongoDB non connecté - les rappels de bump ne seront pas persistés
 🕒 Planification des vérifications de modération activée (check hourly)
 🕒 Planification du reset hebdomadaire du karma activée (check hourly)
+[lavalink] Node hatry4-nossl ready
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node ajie-v4 ready
-✅ 90 commandes enregistrées
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
-[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
-[lavalink] Node nextgencoders-ssl closed: 1006 
-[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
-[lavalink] Node creavite-eu1 closed: 1006 
-[lavalink] Node darren-v4 error: Unexpected server response: 403
-[lavalink] Node darren-v4 closed: 1006 
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
-[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
-[lavalink] Node nextgencoders-ssl closed: 1006 
-[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
-[lavalink] Node creavite-eu1 closed: 1006 
-[lavalink] Node darren-v4 error: Unexpected server response: 403
-[lavalink] Node darren-v4 closed: 1006 
-[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
-[lavalink] Node v4-lavalink-rocks closed: 1006 
-[lavalink] Node v4-lavalink-rocks disconnected: 
-[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
-[lavalink] Node nextgencoders-ssl closed: 1006 
-[lavalink] Node nextgencoders-ssl disconnected: 
-[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
-[lavalink] Node creavite-eu1 closed: 1006 
-[lavalink] Node creavite-eu1 disconnected: 
-[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
-[lavalink] Node lava-link closed: 1006 
-[lavalink] Node lava-link disconnected: 
 🛒 Commande boutique appelée par jormungand21 dans BAG v2
 📦 Articles chargés: 16
 🏷️  Catégories créées: 3
   - "VIP 💎": 3 articles
   - "Réductions de Cooldown": 9 articles
   - "Objets personnalisés": 4 articles
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
+[lavalink] Node creavite-eu1 closed: 1006 
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
+[lavalink] Node creavite-eu1 closed: 1006 
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node v4-lavalink-rocks disconnected: 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node nextgencoders-ssl disconnected: 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node lava-link disconnected: 
+[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
+[lavalink] Node creavite-eu1 closed: 1006 
+[lavalink] Node creavite-eu1 disconnected: 
 [lavalink] Node darren-v4 error: Unexpected server response: 403
 [lavalink] Node darren-v4 closed: 1006 
 [lavalink] Node darren-v4 disconnected: 
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-🔄 Traitement interaction: aouv_btn_verite
-🔄 Traitement interaction: aouv_btn_verite
-🎯 Bouton AouV cliqué via MainRouter: aouv_btn_verite
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-🔄 Traitement interaction: aouv_main_select
-🔄 Traitement interaction: aouv_main_select
 💾 Sauvegarde automatique déclenchée (2 opérations)
 ⚠️ Sauvegarde MongoDB ignorée - pas de connexion
 ❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
@@ -306,117 +302,6 @@ nohup: ignoring input
     at runNextTicks (node:internal/process/task_queues:69:3)
     at listOnTimeout (node:internal/timers:549:9)
     at process.processTimers (node:internal/timers:523:7)
-🔄 Traitement interaction: aouv_channel_add
-🔄 Traitement interaction: aouv_channel_add
-❌ Erreur sauvegarde aouv_config.json: Error: Type de données inconnu: aouv_config.json
-    at DataManager.saveData (/workspace/managers/DataManager.js:199:23)
-    at AouvConfigHandler.handleAouvChannelAdd (/workspace/handlers/AouvConfigHandler.js:133:46)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async MainRouterHandler.handleSelectMenuInteraction (/workspace/handlers/MainRouterHandler.js:746:21)
-    at async MainRouterHandler.handleInteraction (/workspace/handlers/MainRouterHandler.js:127:24)
-    at async Client.<anonymous> (/workspace/index.js:858:37)
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-🔄 Traitement interaction: aouv_main_select
-🔄 Traitement interaction: aouv_main_select
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-🔄 Traitement interaction: aouv_main_select
-🔄 Traitement interaction: aouv_main_select
-🔄 Traitement interaction: aouv_nsfw_channel_add
-🔄 Traitement interaction: aouv_nsfw_channel_add
-❌ Erreur sauvegarde aouv_config.json: Error: Type de données inconnu: aouv_config.json
-    at DataManager.saveData (/workspace/managers/DataManager.js:199:23)
-    at AouvConfigHandler.handleAouvNsfwChannelAdd (/workspace/handlers/AouvConfigHandler.js:197:46)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async MainRouterHandler.handleSelectMenuInteraction (/workspace/handlers/MainRouterHandler.js:756:21)
-    at async MainRouterHandler.handleInteraction (/workspace/handlers/MainRouterHandler.js:127:24)
-    at async Client.<anonymous> (/workspace/index.js:858:37)
-🔄 Traitement interaction: aouv_btn_verite
-🔄 Traitement interaction: aouv_btn_verite
-🎯 Bouton AouV cliqué via MainRouter: aouv_btn_verite
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-🔄 Traitement interaction: aouv_main_select
-🔄 Traitement interaction: aouv_main_select
-[lavalink] Node creavite-us1 error: connect ETIMEDOUT 23.142.24.138:20080
-[lavalink] Node creavite-us1 closed: 1006 
-🔄 Traitement interaction: aouv_nsfw_channel_add
-🔄 Traitement interaction: aouv_nsfw_channel_add
-❌ Erreur sauvegarde aouv_config.json: Error: Type de données inconnu: aouv_config.json
-    at DataManager.saveData (/workspace/managers/DataManager.js:199:23)
-    at AouvConfigHandler.handleAouvNsfwChannelAdd (/workspace/handlers/AouvConfigHandler.js:197:46)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async MainRouterHandler.handleSelectMenuInteraction (/workspace/handlers/MainRouterHandler.js:756:21)
-    at async MainRouterHandler.handleInteraction (/workspace/handlers/MainRouterHandler.js:127:24)
-    at async Client.<anonymous> (/workspace/index.js:858:37)
-🔄 Traitement interaction: aouv_btn_verite
-🔄 Traitement interaction: aouv_btn_verite
-🎯 Bouton AouV cliqué via MainRouter: aouv_btn_verite
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at runNextTicks (node:internal/process/task_queues:69:3)
-    at listOnTimeout (node:internal/timers:549:9)
-    at process.processTimers (node:internal/timers:523:7)
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-🔄 Traitement interaction: aouv_btn_verite
-🔄 Traitement interaction: aouv_btn_verite
-🎯 Bouton AouV cliqué via MainRouter: aouv_btn_verite
-(node:10575) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
-(Use `node --trace-warnings ...` to show where the warning was created)
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-💾 Sauvegarde automatique déclenchée (2 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at runNextTicks (node:internal/process/task_queues:69:3)
-    at listOnTimeout (node:internal/timers:549:9)
-    at process.processTimers (node:internal/timers:523:7)
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-🔄 Traitement interaction: aouv_main_select
-🔄 Traitement interaction: aouv_main_select
-💾 Sauvegarde automatique déclenchée (1 opérations)
-⚠️ Sauvegarde MongoDB ignorée - pas de connexion
-❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
-    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-🔄 Traitement interaction: aouv_channel_add
-🔄 Traitement interaction: aouv_channel_add
-❌ Erreur sauvegarde aouv_config.json: Error: Type de données inconnu: aouv_config.json
-    at DataManager.saveData (/workspace/managers/DataManager.js:199:23)
-    at AouvConfigHandler.handleAouvChannelAdd (/workspace/handlers/AouvConfigHandler.js:133:46)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async MainRouterHandler.handleSelectMenuInteraction (/workspace/handlers/MainRouterHandler.js:746:21)
-    at async MainRouterHandler.handleInteraction (/workspace/handlers/MainRouterHandler.js:127:24)
-    at async Client.<anonymous> (/workspace/index.js:858:37)
-🔄 Traitement interaction: aouv_btn_verite
-🔄 Traitement interaction: aouv_btn_verite
-🎯 Bouton AouV cliqué via MainRouter: aouv_btn_verite
 💾 Sauvegarde automatique déclenchée (2 opérations)
 ⚠️ Sauvegarde MongoDB ignorée - pas de connexion
 ❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function

@@ -2033,7 +2033,7 @@ class EconomyConfigHandler {
     // ---- Channels ----
     async showAouvChannelsMenu(interaction) {
         const { StringSelectMenuBuilder, ChannelSelectMenuBuilder, ActionRowBuilder, EmbedBuilder, ChannelType } = require('discord.js');
-        const cfgAll = await this.dataManager.loadData('aouv_config.json', {});
+        const cfgAll = await this.dataManager.loadData('aouv_config', {});
         const guildId = interaction.guild.id;
         const cfg = cfgAll[guildId] || { allowedChannels: [] };
 
@@ -2062,21 +2062,21 @@ class EconomyConfigHandler {
     async handleAouvChannelAdd(interaction) {
         const guildId = interaction.guild.id;
         const chId = interaction.values[0];
-        const all = await this.dataManager.loadData('aouv_config.json', {});
+        const all = await this.dataManager.loadData('aouv_config', {});
         const cfg = all[guildId] || { allowedChannels: [], disabledBaseActions: [], disabledBaseTruths: [], customActions: [], customTruths: [] };
         const set = new Set(cfg.allowedChannels || []); set.add(chId);
         cfg.allowedChannels = Array.from(set);
-        all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
+        all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
         await interaction.update({ content: `✅ Salon autorisé: <#${chId}>`, embeds: [], components: [] });
     }
 
     async handleAouvChannelRemove(interaction) {
         const guildId = interaction.guild.id;
         const chId = interaction.values[0];
-        const all = await this.dataManager.loadData('aouv_config.json', {});
+        const all = await this.dataManager.loadData('aouv_config', {});
         const cfg = all[guildId] || { allowedChannels: [] };
         cfg.allowedChannels = (cfg.allowedChannels || []).filter(id => id !== chId);
-        all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
+        all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
         await interaction.update({ content: `✅ Salon retiré: <#${chId}>`, embeds: [], components: [] });
     }
 
@@ -2113,7 +2113,7 @@ class EconomyConfigHandler {
 
     async showAouvPromptListCustom(interaction) {
         const guildId = interaction.guild.id;
-        const all = await this.dataManager.loadData('aouv_config.json', {});
+        const all = await this.dataManager.loadData('aouv_config', {});
         const cfg = all[guildId] || { customActions: [], customTruths: [] };
         const a = (cfg.customActions || []).map((t, i) => `A${i}: ${t}`).join('\n') || '(Aucune action personnalisée)';
         const v = (cfg.customTruths || []).map((t, i) => `V${i}: ${t}`).join('\n') || '(Aucune vérité personnalisée)';
@@ -2136,10 +2136,10 @@ class EconomyConfigHandler {
         const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
         const texte = interaction.fields.getTextInputValue('texte') || '';
         if (!['action','verite'].includes(kind) || !texte.trim()) return interaction.reply({ content: '❌ Paramètres invalides.', flags: 64 });
-        const all = await this.dataManager.loadData('aouv_config.json', {});
+        const all = await this.dataManager.loadData('aouv_config', {});
         const cfg = all[guildId] || { customActions: [], customTruths: [] };
         if (kind === 'action') cfg.customActions = [...(cfg.customActions||[]), texte]; else cfg.customTruths = [...(cfg.customTruths||[]), texte];
-        all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
+        all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
         await interaction.reply({ content: '✅ Ajouté.', flags: 64 });
     }
 
@@ -2148,7 +2148,7 @@ class EconomyConfigHandler {
         const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
         const index = parseInt(interaction.fields.getTextInputValue('index') || '-1', 10);
         const texte = interaction.fields.getTextInputValue('texte') || '';
-        const all = await this.dataManager.loadData('aouv_config.json', {});
+        const all = await this.dataManager.loadData('aouv_config', {});
         const cfg = all[guildId] || {};
         if (kind === 'action') {
             if (!Array.isArray(cfg.customActions) || index < 0 || index >= cfg.customActions.length) return interaction.reply({ content: '❌ Indice invalide.', flags: 64 });
@@ -2159,7 +2159,7 @@ class EconomyConfigHandler {
         } else {
             return interaction.reply({ content: '❌ Type invalide.', flags: 64 });
         }
-        all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
+        all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
         await interaction.reply({ content: '✅ Modifié.', flags: 64 });
     }
 
@@ -2167,7 +2167,7 @@ class EconomyConfigHandler {
         const guildId = interaction.guild.id;
         const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
         const index = parseInt(interaction.fields.getTextInputValue('index') || '-1', 10);
-        const all = await this.dataManager.loadData('aouv_config.json', {});
+        const all = await this.dataManager.loadData('aouv_config', {});
         const cfg = all[guildId] || {};
         if (kind === 'action') {
             if (!Array.isArray(cfg.customActions) || index < 0 || index >= cfg.customActions.length) return interaction.reply({ content: '❌ Indice invalide.', flags: 64 });
@@ -2178,7 +2178,7 @@ class EconomyConfigHandler {
         } else {
             return interaction.reply({ content: '❌ Type invalide.', flags: 64 });
         }
-        all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
+        all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
         await interaction.reply({ content: '✅ Supprimé.', flags: 64 });
     }
 
@@ -2187,13 +2187,13 @@ class EconomyConfigHandler {
         const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
         const numero = parseInt(interaction.fields.getTextInputValue('numero') || '0', 10);
         const idx = Math.max(1, numero) - 1;
-        const all = await this.dataManager.loadData('aouv_config.json', {});
+        const all = await this.dataManager.loadData('aouv_config', {});
         const cfg = all[guildId] || {};
         const key = kind === 'action' ? 'disabledBaseActions' : 'disabledBaseTruths';
         const set = new Set(cfg[key] || []);
         if (disable) set.add(idx); else set.delete(idx);
         cfg[key] = Array.from(set);
-        all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
+        all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
         await interaction.reply({ content: `✅ ${disable ? 'Désactivé' : 'Réactivé'}: ${kind} #${numero}`, flags: 64 });
     }
 
@@ -2248,12 +2248,12 @@ class EconomyConfigHandler {
         const idx = Math.max(1, numero) - 1;
         const texte = interaction.fields.getTextInputValue('texte') || '';
         if (!['action','verite'].includes(kind) || !texte.trim()) return interaction.reply({ content: '❌ Paramètres invalides.', flags: 64 });
-        const all = await this.dataManager.loadData('aouv_config.json', {});
+        const all = await this.dataManager.loadData('aouv_config', {});
         const cfg = all[guildId] || {};
         const key = kind === 'action' ? 'baseActionOverrides' : 'baseTruthOverrides';
         cfg[key] = cfg[key] || {};
         cfg[key][idx] = texte;
-        all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
+        all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
         await interaction.reply({ content: `✅ Remplacement enregistré pour ${kind} #${numero}.`, flags: 64 });
     }
 
@@ -2262,12 +2262,12 @@ class EconomyConfigHandler {
         const kind = (interaction.fields.getTextInputValue('kind') || '').toLowerCase();
         const numero = parseInt(interaction.fields.getTextInputValue('numero') || '0', 10);
         const idx = Math.max(1, numero) - 1;
-        const all = await this.dataManager.loadData('aouv_config.json', {});
+        const all = await this.dataManager.loadData('aouv_config', {});
         const cfg = all[guildId] || {};
         const key = kind === 'action' ? 'baseActionOverrides' : 'baseTruthOverrides';
         if (cfg[key] && Object.prototype.hasOwnProperty.call(cfg[key], idx)) {
             delete cfg[key][idx];
-            all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
+            all[guildId] = cfg; await this.dataManager.saveData('aouv_config', all);
             return interaction.reply({ content: `✅ Override supprimé pour ${kind} #${numero}.`, flags: 64 });
         }
         return interaction.reply({ content: 'ℹ️ Aucun override trouvé pour ce numéro.', flags: 64 });

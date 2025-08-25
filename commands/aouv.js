@@ -8,7 +8,7 @@ function pickRandom(list) {
 }
 
 async function getGuildConfig(dataManager, guildId) {
-	const config = await dataManager.loadData('aouv_config.json', {});
+	const config = await dataManager.loadData('aouv_config', {});
 	return config[guildId] || {
 		allowedChannels: [],
 		disabledBaseActions: [],
@@ -29,9 +29,9 @@ async function getGuildConfig(dataManager, guildId) {
 }
 
 async function saveGuildConfig(dataManager, guildId, partial) {
-	const all = await dataManager.loadData('aouv_config.json', {});
+	const all = await dataManager.loadData('aouv_config', {});
 	all[guildId] = { ...(all[guildId] || {}), ...partial };
-	await dataManager.saveData('aouv_config.json', all);
+	await dataManager.saveData('aouv_config', all);
 }
 
 function buildButtons() {
