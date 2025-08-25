@@ -604,6 +604,17 @@ class MainRouterHandler {
                 return true;
             }
 
+            // === SELECT MENUS RÉDUCTIONS COOLDOWN ===
+            if (customId === 'economy_boutique_select') {
+                await this.economyHandler.handleBoutiqueSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'cooldown_reduction_select') {
+                await this.economyHandler.handleCooldownReductionSelect(interaction);
+                return true;
+            }
+
             // === SELECT MENUS CONFESSION ===
             // Menus d'options principaux (logs / autothread / canaux)
             if (customId === 'confession_logs_options') {

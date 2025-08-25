@@ -38,13 +38,24 @@ module.exports = {
             // Vérifier cooldown avec dataManager
             const userData = await dataManager.getUser(userId, guildId);
             
-            const now = Date.now();
-            const cooldownTime = cooldown;
+            // Calculer le cooldown avec réductions actives
+            const { calculateReducedCooldown, formatCooldownBuffMessage, cleanExpiredBuffs } = require('../utils/cooldownCalculator');
             
-            if (userData.lastFish && (now - userData.lastFish) < cooldownTime) {
-                const remaining = Math.ceil((cooldownTime - (now - userData.lastFish)) / 60000);
+            // Nettoyer les buffs expirés
+            const buffsRemoved = cleanExpiredBuffs(userData);
+            if (buffsRemoved) {
+                await dataManager.updateUser(userId, guildId, userData);
+            }
+            
+            const now = Date.now();
+            const baseCooldownTime = cooldown;
+            const finalCooldownTime = calculateReducedCooldown(userData, baseCooldownTime);
+            
+            if (userData.lastFish && (now - userData.lastFish) < finalCooldownTime) {
+                const remaining = Math.ceil((finalCooldownTime - (now - userData.lastFish)) / 60000);
+                const buffMessage = formatCooldownBuffMessage(userData);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir pêcher à nouveau.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir pêcher à nouveau.${buffMessage}`,
                     flags: 64
                 });
             }

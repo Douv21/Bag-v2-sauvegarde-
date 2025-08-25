@@ -4670,6 +4670,23 @@ async function handleShopPurchase(interaction, dataManager) {
             inventoryItem.type = 'private_suite_permanent';
         }
 
+        // Gestion réductions de cooldown
+        if (item.type === 'cooldown_reduction') {
+            inventoryItem.reductionPercent = item.reductionPercent;
+            inventoryItem.durationDays = item.durationDays;
+            inventoryItem.expiresAt = new Date(Date.now() + (item.durationDays * 24 * 60 * 60 * 1000)).toISOString();
+            
+            // Ajouter aux buffs actifs de l'utilisateur
+            if (!userData.cooldownBuffs) userData.cooldownBuffs = [];
+            userData.cooldownBuffs.push({
+                id: inventoryItem.id,
+                reductionPercent: item.reductionPercent,
+                activatedAt: new Date().toISOString(),
+                expiresAt: inventoryItem.expiresAt,
+                name: item.name
+            });
+        }
+
         userData.inventory.push(inventoryItem);
         await dataManager.updateUser(userId, guildId, userData);
 
@@ -4710,6 +4727,12 @@ async function handleShopPurchase(interaction, dataManager) {
             }
         } else if (item.type === 'private_24h' || item.type === 'private_monthly' || item.type === 'private_permanent') {
             effectMessage = '\n🔒 Suite privée créée: 1 rôle + 2 salons (🔞 texte NSFW + 🎙️ vocal)';
+        } else if (item.type === 'cooldown_reduction') {
+            if (item.reductionPercent === 100) {
+                effectMessage = `\n🚀 **Actions illimitées activées !** Aucun cooldown pendant ${item.durationDays} jour${item.durationDays > 1 ? 's' : ''} !`;
+            } else {
+                effectMessage = `\n⚡ **Réduction de cooldown activée !** -${item.reductionPercent}% sur toutes les actions pendant ${item.durationDays} jour${item.durationDays > 1 ? 's' : ''} !`;
+            }
         } else if (item.type === 'custom_object' || item.type === 'custom' || item.type === 'text') {
             effectMessage = '\n🎁 Objet personnalisé acheté !';
         } else {

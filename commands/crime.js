@@ -45,13 +45,24 @@ module.exports = {
             // Vérifier cooldown avec dataManager
             const userData = await dataManager.getUser(userId, guildId);
             
-            const now = Date.now();
-            const cooldownTime = toNumber(cooldown, 14400000);
+            // Calculer le cooldown avec réductions actives
+            const { calculateReducedCooldown, formatCooldownBuffMessage, cleanExpiredBuffs } = require('../utils/cooldownCalculator');
             
-            if (userData.lastCrime && (now - userData.lastCrime) < cooldownTime) {
-                const remaining = Math.ceil((cooldownTime - (now - userData.lastCrime)) / 60000);
+            // Nettoyer les buffs expirés
+            const buffsRemoved = cleanExpiredBuffs(userData);
+            if (buffsRemoved) {
+                await dataManager.updateUser(userId, guildId, userData);
+            }
+            
+            const now = Date.now();
+            const baseCooldownTime = toNumber(cooldown, 14400000);
+            const finalCooldownTime = calculateReducedCooldown(userData, baseCooldownTime);
+            
+            if (userData.lastCrime && (now - userData.lastCrime) < finalCooldownTime) {
+                const remaining = Math.ceil((finalCooldownTime - (now - userData.lastCrime)) / 60000);
+                const buffMessage = formatCooldownBuffMessage(userData);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir refaire un crime.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir refaire un crime.${buffMessage}`,
                     flags: 64
                 });
             }

@@ -16,17 +16,19 @@ module.exports = {
 			const karmaDiscountsData = await dataManager.loadData('karma_discounts', {});
 			const allShopItems = shopData[guildId] || [];
 
-			// Catégorisation par catégorie logique
-			const isCustom = (t) => t === 'custom_object' || t === 'custom' || t === 'text' || !t;
-			const isTempRole = (t) => t === 'temporary_role' || t === 'temp_role';
-			const isPermRole = (t) => t === 'permanent_role' || t === 'perm_role';
-			const isSuite = (t) => t === 'private_24h' || t === 'private_monthly' || t === 'private_permanent';
-			const deriveCategoryFromType = (t) => {
-				if (isSuite(t)) return 'Suites privées';
-				if (isTempRole(t) || isPermRole(t)) return 'Rôles';
-				if (isCustom(t)) return 'Objets personnalisés';
-				return 'Autres';
-			};
+			            // Catégorisation par catégorie logique
+            const isCustom = (t) => t === 'custom_object' || t === 'custom' || t === 'text' || !t;
+            const isTempRole = (t) => t === 'temporary_role' || t === 'temp_role';
+            const isPermRole = (t) => t === 'permanent_role' || t === 'perm_role';
+            const isSuite = (t) => t === 'private_24h' || t === 'private_monthly' || t === 'private_permanent';
+            const isCooldownReduction = (t) => t === 'cooldown_reduction';
+            const deriveCategoryFromType = (t) => {
+                if (isSuite(t)) return 'Suites privées';
+                if (isTempRole(t) || isPermRole(t)) return 'Rôles';
+                if (isCooldownReduction(t)) return 'Réductions de Cooldown';
+                if (isCustom(t)) return 'Objets personnalisés';
+                return 'Autres';
+            };
 			
 			const categoriesMap = allShopItems.reduce((acc, item) => {
 				const raw = typeof item.category === 'string' ? item.category.trim() : '';
@@ -70,28 +72,39 @@ module.exports = {
 				.setDescription(descriptionText)
 				.setFooter({ text: 'Choisissez un article dans la catégorie souhaitée' });
 
-			const renderLine = (item) => {
-				let typeIcon = '🏆';
-				let typeText = 'Objet virtuel';
-				if (isTempRole(item.type)) {
-					typeIcon = '⌛';
-					typeText = `Rôle temporaire (${item.duration}j)`;
-				} else if (isPermRole(item.type)) {
-					typeIcon = '⭐';
-					typeText = 'Rôle permanent';
-				} else if (isCustom(item.type)) {
-					typeIcon = '🎨';
-					typeText = 'Objet personnalisé';
-				} else if (item.type === 'private_24h') {
-					typeIcon = '🔒';
-					typeText = 'Suite privée 24h (texte NSFW + vocal)';
-				} else if (item.type === 'private_monthly') {
-					typeIcon = '🗓️';
-					typeText = 'Suite privée 30j (texte NSFW + vocal)';
-				} else if (item.type === 'private_permanent') {
-					typeIcon = '♾️';
-					typeText = 'Suite privée permanente (texte NSFW + vocal)';
-				}
+			            const renderLine = (item) => {
+                let typeIcon = '🏆';
+                let typeText = 'Objet virtuel';
+                if (isTempRole(item.type)) {
+                    typeIcon = '⌛';
+                    typeText = `Rôle temporaire (${item.duration}j)`;
+                } else if (isPermRole(item.type)) {
+                    typeIcon = '⭐';
+                    typeText = 'Rôle permanent';
+                } else if (isCooldownReduction(item.type)) {
+                    if (item.reductionPercent === 100) {
+                        typeIcon = '🚀';
+                        typeText = `Actions illimitées (${item.durationDays}j)`;
+                    } else if (item.reductionPercent === 75) {
+                        typeIcon = '⚡';
+                        typeText = `Réduction 75% cooldowns (${item.durationDays}j)`;
+                    } else {
+                        typeIcon = '🔥';
+                        typeText = `Réduction 50% cooldowns (${item.durationDays}j)`;
+                    }
+                } else if (isCustom(item.type)) {
+                    typeIcon = '🎨';
+                    typeText = 'Objet personnalisé';
+                } else if (item.type === 'private_24h') {
+                    typeIcon = '🔒';
+                    typeText = 'Suite privée 24h (texte NSFW + vocal)';
+                } else if (item.type === 'private_monthly') {
+                    typeIcon = '🗓️';
+                    typeText = 'Suite privée 30j (texte NSFW + vocal)';
+                } else if (item.type === 'private_permanent') {
+                    typeIcon = '♾️';
+                    typeText = 'Suite privée permanente (texte NSFW + vocal)';
+                }
 				let priceText = `${item.price}💋`;
 				if (karmaDiscountPercent > 0) {
 					const discountedPrice = Math.floor(item.price * (100 - karmaDiscountPercent) / 100);

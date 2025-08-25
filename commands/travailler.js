@@ -38,13 +38,24 @@ module.exports = {
             // Vérifier cooldown avec dataManager
             const userData = await dataManager.getUser(userId, guildId);
             
-            const now = Date.now();
-            const cooldownTime = cooldown;
+            // Calculer le cooldown avec réductions actives
+            const { calculateReducedCooldown, formatCooldownBuffMessage, cleanExpiredBuffs } = require('../utils/cooldownCalculator');
             
-            if (userData.lastWork && (now - userData.lastWork) < cooldownTime) {
-                const remaining = Math.ceil((cooldownTime - (now - userData.lastWork)) / 60000);
+            // Nettoyer les buffs expirés
+            const buffsRemoved = cleanExpiredBuffs(userData);
+            if (buffsRemoved) {
+                await dataManager.updateUser(userId, guildId, userData);
+            }
+            
+            const now = Date.now();
+            const baseCooldownTime = cooldown;
+            const finalCooldownTime = calculateReducedCooldown(userData, baseCooldownTime);
+            
+            if (userData.lastWork && (now - userData.lastWork) < finalCooldownTime) {
+                const remaining = Math.ceil((finalCooldownTime - (now - userData.lastWork)) / 60000);
+                const buffMessage = formatCooldownBuffMessage(userData);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir retravailler.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir retravailler.${buffMessage}`,
                     flags: 64
                 });
             }
@@ -74,17 +85,21 @@ module.exports = {
             // Recalculer la réputation APRÈS la mise à jour (karma net = charme + perversion négative)
             const karmaNet = (asNumber(userData.goodKarma, 0)) + (asNumber(userData.badKarma, 0));
             
+            // Message sur les buffs actifs
+            const buffMessage = formatCooldownBuffMessage(userData);
+            const successDescription = `${action} et avez gagné **${totalReward}💋** !${buffMessage}`;
+            
             const embed = new EmbedBuilder()
                 .setColor('#00ff00')
                 .setTitle('💼 Travail Réussi !')
-                .setDescription(`${action} et avez gagné **${totalReward}💋** !`)
+                .setDescription(successDescription)
                 .addFields([
                     { name: '💋 Nouveau Plaisir', value: `${userData.balance}💋`, inline: true },
                     { name: '😇 Karma Positif', value: `${deltaGood >= 0 ? '+' : ''}${deltaGood} (${userData.goodKarma})`, inline: true },
                     { name: '😈 Karma Négatif', value: `${deltaBad >= 0 ? '+' : ''}${deltaBad} (${userData.badKarma})`, inline: true },
                     { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true }
                 ])
-                .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 60000)} minutes` });
+                .setFooter({ text: `Prochaine utilisation dans ${Math.round(finalCooldownTime / 60000)} minutes` });
                 
             await interaction.reply({ embeds: [embed] });
 
