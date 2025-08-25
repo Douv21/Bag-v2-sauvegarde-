@@ -87,7 +87,7 @@ class AouvConfigHandler {
 	async showAouvChannelsMenu(interaction) {
 		const cfgAll = await this.dataManager.loadData('aouv_config.json', {});
 		const guildId = interaction.guild.id;
-		const cfg = cfgAll[guildId] || { allowedChannels: [] };
+		const cfg = cfgAll[guildId] || { allowedChannels: [], nsfwAllowedChannels: [], disabledBaseActions: [], disabledBaseTruths: [], customActions: [], customTruths: [] };
 
 		const embed = new EmbedBuilder()
 			.setColor('#2ecc71')
@@ -127,7 +127,7 @@ class AouvConfigHandler {
 		const guildId = interaction.guild.id;
 		const chId = interaction.values[0];
 		const all = await this.dataManager.loadData('aouv_config.json', {});
-		const cfg = all[guildId] || { allowedChannels: [], disabledBaseActions: [], disabledBaseTruths: [], customActions: [], customTruths: [] };
+		const cfg = all[guildId] || { allowedChannels: [], nsfwAllowedChannels: [], disabledBaseActions: [], disabledBaseTruths: [], customActions: [], customTruths: [] };
 		const set = new Set(cfg.allowedChannels || []); set.add(chId);
 		cfg.allowedChannels = Array.from(set);
 		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
@@ -138,7 +138,7 @@ class AouvConfigHandler {
 		const guildId = interaction.guild.id;
 		const chId = interaction.values[0];
 		const all = await this.dataManager.loadData('aouv_config.json', {});
-		const cfg = all[guildId] || { allowedChannels: [] };
+		const cfg = all[guildId] || { allowedChannels: [], nsfwAllowedChannels: [] };
 		cfg.allowedChannels = (cfg.allowedChannels || []).filter(id => id !== chId);
 		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.update({ content: `✅ Salon retiré: <#${chId}>`, embeds: [], components: [] });
@@ -148,7 +148,7 @@ class AouvConfigHandler {
 	async showAouvNsfwChannelsMenu(interaction) {
 		const cfgAll = await this.dataManager.loadData('aouv_config.json', {});
 		const guildId = interaction.guild.id;
-		const cfg = cfgAll[guildId] || { nsfwAllowedChannels: [] };
+		const cfg = cfgAll[guildId] || { allowedChannels: [], nsfwAllowedChannels: [], disabledBaseActions: [], disabledBaseTruths: [], customActions: [], customTruths: [] };
 
 		const embed = new EmbedBuilder()
 			.setColor('#e91e63')
@@ -191,7 +191,7 @@ class AouvConfigHandler {
 			return interaction.update({ content: '❌ Le salon sélectionné n\'est pas marqué NSFW dans Discord.', embeds: [], components: [] });
 		}
 		const all = await this.dataManager.loadData('aouv_config.json', {});
-		const cfg = all[guildId] || { nsfwAllowedChannels: [] };
+		const cfg = all[guildId] || { allowedChannels: [], nsfwAllowedChannels: [], disabledBaseActions: [], disabledBaseTruths: [], customActions: [], customTruths: [] };
 		const set = new Set(cfg.nsfwAllowedChannels || []); set.add(chId);
 		cfg.nsfwAllowedChannels = Array.from(set);
 		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
@@ -202,7 +202,7 @@ class AouvConfigHandler {
 		const guildId = interaction.guild.id;
 		const chId = interaction.values[0];
 		const all = await this.dataManager.loadData('aouv_config.json', {});
-		const cfg = all[guildId] || { nsfwAllowedChannels: [] };
+		const cfg = all[guildId] || { allowedChannels: [], nsfwAllowedChannels: [] };
 		cfg.nsfwAllowedChannels = (cfg.nsfwAllowedChannels || []).filter(id => id !== chId);
 		all[guildId] = cfg; await this.dataManager.saveData('aouv_config.json', all);
 		await interaction.update({ content: `✅ Salon NSFW retiré: <#${chId}>`, embeds: [], components: [] });
