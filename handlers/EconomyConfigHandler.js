@@ -8,6 +8,42 @@ class EconomyConfigHandler {
     // =============
     // MENU PRINCIPAL
     // =============
+    async showMainMenu(interaction) {
+        const embed = new EmbedBuilder()
+            .setColor('#3498db')
+            .setTitle('💋 Configuration du Jeu Coquin')
+            .setDescription('Choisissez la section à configurer :')
+            .addFields([
+                { name: '🎯 Actions Sexy', value: 'Configurer les actions (montant, cooldown, karma, NSFW)', inline: true },
+                { name: '🏪 Boutique Coquine', value: 'Objets personnalisés, rôles, remises karma', inline: true },
+                { name: '📅 Daily/Quotidien', value: 'Configuration des récompenses quotidiennes', inline: true },
+                { name: '💬 Messages', value: 'Configuration des gains par message', inline: true },
+                { name: '⚖️ Karma', value: 'Configuration des niveaux et récompenses karma', inline: true }
+            ]);
+
+        const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('economy_main_select')
+            .setPlaceholder('Choisissez une section...')
+            .addOptions([
+                { label: '🎯 Actions Économiques', value: 'actions', description: 'Travailler, voler, crime, pêcher, etc.' },
+                { label: '🏪 Boutique', value: 'boutique', description: 'Objets, rôles, réductions cooldown' },
+                { label: '📅 Daily/Quotidien', value: 'daily', description: 'Récompenses quotidiennes' },
+                { label: '💬 Messages', value: 'messages', description: 'Gains par message' },
+                { label: '⚖️ Karma', value: 'karma', description: 'Niveaux et récompenses karma' }
+            ]);
+
+        const row = new ActionRowBuilder().addComponents(selectMenu);
+        
+        if (interaction.update) {
+            await interaction.update({ embeds: [embed], components: [row] });
+        } else {
+            await interaction.reply({ embeds: [embed], components: [row] });
+        }
+    }
+
+    // =============
+    // MENU PRINCIPAL
+    // =============
     async handleMainSelect(interaction) {
         const value = interaction.values[0];
         
@@ -251,6 +287,7 @@ class EconomyConfigHandler {
                 { label: '🎨 Objets Personnalisés', value: 'objets', description: 'Créer des objets uniques' },
                 { label: '⌛ Rôles Temporaires', value: 'roles_temp', description: 'Rôles avec durée limitée' },
                 { label: '⭐ Rôles Permanents', value: 'roles_perm', description: 'Rôles définitifs' },
+
                 { label: '💸 Remises Karma', value: 'remises', description: 'Réductions basées sur karma' },
                 { label: '🔧 Modifier Objets Existants', value: 'manage_objets', description: 'Gérer objets créés' },
                 { label: '🗑️ Supprimer Articles', value: 'delete_articles', description: 'Supprimer objets/rôles' },
@@ -259,6 +296,22 @@ class EconomyConfigHandler {
 
         const row = new ActionRowBuilder().addComponents(selectMenu);
         await interaction.update({ embeds: [embed], components: [row] });
+    }
+
+    async handleMainSelect(interaction) {
+        const value = interaction.values[0];
+        
+        if (value === 'actions') {
+            await this.showActionsMenu(interaction);
+        } else if (value === 'boutique') {
+            await this.showBoutiqueMenu(interaction);
+        } else if (value === 'daily') {
+            await this.showDailyMenu(interaction);
+        } else if (value === 'messages') {
+            await this.showMessagesMenu(interaction);
+        } else if (value === 'karma') {
+            await this.showKarmaMenu(interaction);
+        }
     }
 
     async handleBoutiqueSelect(interaction) {
@@ -274,6 +327,7 @@ class EconomyConfigHandler {
             await this.showRolesTempMenu(interaction);
         } else if (value === 'roles_perm') {
             await this.showRolesPermMenu(interaction);
+
         } else if (value === 'remises') {
             await this.showRemisesMenu(interaction);
         } else if (value === 'manage_objets') {
@@ -344,6 +398,9 @@ class EconomyConfigHandler {
         const row = new ActionRowBuilder().addComponents(roleSelect);
         await interaction.update({ embeds: [embed], components: [row] });
     }
+
+
+
 
     async showRemisesMenu(interaction) {
         const embed = new EmbedBuilder()

@@ -1,24 +1,14 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-function toNumber(value, fallback = 0) {
+function asNumber(value, fallback = 0) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
-}
-
-function sanitizeConfig(rawCfg) {
-  const minReward = toNumber(rawCfg?.minReward, 200);
-  const maxReward = toNumber(rawCfg?.maxReward, Math.max(200, minReward));
-  const cooldown = toNumber(rawCfg?.cooldown, 14400000); // 4h par défaut
-  const goodKarma = toNumber(rawCfg?.goodKarma, -2);
-  const badKarma = toNumber(rawCfg?.badKarma, 3);
-  const enabled = rawCfg?.enabled !== false;
-  return { minReward, maxReward, cooldown, goodKarma, badKarma, enabled };
 }
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('crime')
-        .setDescription('Commettre un crime pour beaucoup de plaisir (très risqué 😈)'),
+        .setDescription('Commettre un crime pour de l\'argent (risqué mais rentable)'),
 
     async execute(interaction, dataManager) {
         try {
@@ -27,118 +17,117 @@ module.exports = {
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const actions = (economyConfig && economyConfig.actions) ? economyConfig.actions : {};
-            const rawCfg = (actions.crime || actions['coup-de-folie'] || actions.coup_de_folie) || {};
-
-            // Normaliser les paramètres numériques
-            const { minReward, maxReward, cooldown, goodKarma: deltaGood, badKarma: deltaBad, enabled } = sanitizeConfig(rawCfg);
-
-            // Vérifier si l'action est activée
-            if (!enabled) {
-                await interaction.reply({
-                    content: '❌ La commande /crime est actuellement désactivée.',
-                    flags: 64
-                });
-                return;
+            const rawCfg = economyConfig.actions?.crime || {};
+            
+            // Normaliser les valeurs
+            const minReward = asNumber(rawCfg.min || rawCfg.minReward || 20);
+            const maxReward = asNumber(rawCfg.max || rawCfg.maxReward || 50);
+            
+            // Gérer cooldown
+            let cooldownTime = asNumber(rawCfg.cooldown, 900000); // 15 min par défaut
+            if (typeof rawCfg.cooldown === 'object' && rawCfg.cooldown.cooldown) {
+                cooldownTime = asNumber(rawCfg.cooldown.cooldown, 900000);
             }
             
-            // Vérifier cooldown avec dataManager
             const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
-            const cooldownTime = toNumber(cooldown, 14400000);
             
             if (userData.lastCrime && (now - userData.lastCrime) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastCrime)) / 60000);
                 return await interaction.reply({
-                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir refaire un crime.`,
+                    content: `⏰ Vous devez attendre encore **${remaining} minutes** avant de pouvoir commettre un autre crime.`,
                     flags: 64
                 });
             }
-            
-            // Probabilité de succès (60% - plus risqué que le vol)
-            const success = Math.random() < 0.6;
-            
-            const crimes = [
-                'Vous avez tenté un braquage discret',
-                'Vous avez fait un coup tordu',
-                'Vous avez piraté une caisse',
-                'Vous avez monté un plan risqué',
-                'Vous avez joué avec le feu'
-            ];
-            
-            const crime = crimes[Math.floor(Math.random() * crimes.length)];
 
-            const safeBalance = toNumber(userData.balance, 1000);
-            const safeGood = toNumber(userData.goodKarma, 0);
-            const safeBad = toNumber(userData.badKarma, 0);
+            // 30% de chance d'échec
+            const success = Math.random() > 0.3;
             
-            if (success) {
-                // Crime réussi - gains selon configuration
-                const range = Math.max(0, toNumber(maxReward, 0) - toNumber(minReward, 0));
-                const earnings = Math.floor(Math.random() * (range + 1)) + toNumber(minReward, 0);
+            if (!success) {
+                // Échec - perte d'argent
+                const penalty = Math.floor(Math.random() * 30) + 10;
+                const newBalance = Math.max(0, (userData.balance || 0) - penalty);
+                const actualLoss = (userData.balance || 0) - newBalance;
                 
-                userData.balance = safeBalance + earnings;
-                userData.badKarma = safeBad + toNumber(deltaBad, 0);
-                userData.goodKarma = safeGood + toNumber(deltaGood, 0);
+                userData.balance = newBalance;
                 userData.lastCrime = now;
+                userData.badKarma = (userData.badKarma || 0) + 1;
                 
                 await dataManager.updateUser(userId, guildId, userData);
-                
-                // Calculer réputation (karma net = charme + perversion négative)
-                const karmaNet = toNumber(userData.goodKarma, 0) + toNumber(userData.badKarma, 0);
-                const cooldownHours = Math.max(1, Math.round(toNumber(cooldownTime, 3600000) / 3600000));
-                
+
+                const failActions = [
+                    'Vous avez été attrapé en train de voler dans un magasin',
+                    'Votre tentative de cambriolage a échoué',
+                    'Vous avez été pris en flagrant délit de fraude',
+                    'Votre plan de vol à l\'étalage a foiré',
+                    'Vous avez été surpris en train de pirater'
+                ];
+
+                const failAction = failActions[Math.floor(Math.random() * failActions.length)];
+
                 const embed = new EmbedBuilder()
-                    .setColor('#8b0000')
-                    .setTitle('🔥 Crime Réussi !')
-                    .setDescription(`${crime} et avez gagné **${earnings}💋** !`)
-                    .addFields([
-                        { name: '💋 Nouveau Plaisir', value: `${toNumber(userData.balance, 0)}💋`, inline: true },
-                        { name: '😈 Karma Négatif', value: `${toNumber(deltaBad, 0) >= 0 ? '+' : ''}${toNumber(deltaBad, 0)} (${toNumber(userData.badKarma, 0)})`, inline: true },
-                        { name: '😇 Karma Positif', value: `${toNumber(deltaGood, 0) >= 0 ? '+' : ''}${toNumber(deltaGood, 0)} (${toNumber(userData.goodKarma, 0)})`, inline: true },
-                        { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
-                        { name: '⚠️ Attention', value: 'Le crime a des conséquences', inline: false }
-                    ])
-                    .setFooter({ text: `Prochaine utilisation dans ${cooldownHours} heures` });
-                
+                    .setColor('#e74c3c')
+                    .setTitle('🚨 Crime Échoué')
+                    .setDescription(`${failAction} et avez perdu **${actualLoss}💋** !`)
+                    .addFields(
+                        { name: '💰 Nouveau solde', value: `${userData.balance}💋`, inline: true },
+                        { name: '📉 Perte', value: `-${actualLoss}💋`, inline: true },
+                        { name: '😈 Karma', value: `${(userData.goodKarma || 0) + (userData.badKarma || 0)} (${userData.badKarma || 0} mauvais)`, inline: true }
+                    )
+                    .setFooter({ text: `Prochaine tentative dans ${Math.round(cooldownTime / 60000)} minutes` });
+
                 await interaction.reply({ embeds: [embed] });
-                
-            } else {
-                // Crime échoué - amende selon configuration
-                const penaltyBase = Math.floor(toNumber(minReward, 0) / 2);
-                const penalty = Math.max(0, penaltyBase);
-                userData.balance = Math.max(0, safeBalance - penalty);
-                userData.badKarma = safeBad + Math.floor(toNumber(deltaBad, 0) / 2);
-                userData.goodKarma = safeGood + Math.floor(toNumber(deltaGood, 0) / 2);
-                userData.lastCrime = now;
-                
-                await dataManager.updateUser(userId, guildId, userData);
-                
-                // Calculer réputation (karma net = charme + perversion négative)
-                const karmaNet = toNumber(userData.goodKarma, 0) + toNumber(userData.badKarma, 0);
-                const cooldownHours = Math.max(1, Math.round(toNumber(cooldownTime, 3600000) / 3600000));
-                
-                const embed = new EmbedBuilder()
-                    .setColor('#ff0000')
-                    .setTitle('❌ Crime Échoué !')
-                    .setDescription(`Ça n'a pas pris... Pénalité de **${penalty}💋**.`)
-                    .addFields([
-                        { name: '💋 Nouveau Plaisir', value: `${toNumber(userData.balance, 0)}💋`, inline: true },
-                        { name: '😈 Karma Négatif', value: `${Math.floor(toNumber(deltaBad, 0) / 2) >= 0 ? '+' : ''}${Math.floor(toNumber(deltaBad, 0) / 2)} (${toNumber(userData.badKarma, 0)})`, inline: true },
-                        { name: '😇 Karma Positif', value: `${Math.floor(toNumber(deltaGood, 0) / 2) >= 0 ? '+' : ''}${Math.floor(toNumber(deltaGood, 0) / 2)} (${toNumber(userData.goodKarma, 0)})`, inline: true },
-                        { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
-                        { name: '⚖️ Justice', value: 'Le crime ne paie pas toujours', inline: false }
-                    ])
-                    .setFooter({ text: `Prochaine utilisation dans ${cooldownHours} heures` });
-                
-                await interaction.reply({ embeds: [embed] });
+                return;
             }
+
+            // Succès
+            const crimeActions = [
+                'Vous avez réussi un cambriolage discret',
+                'Vous avez piraté avec succès',
+                'Votre arnaque a parfaitement fonctionné',
+                'Vous avez volé sans vous faire prendre',
+                'Votre fraude est passée inaperçue'
+            ];
+
+            const action = crimeActions[Math.floor(Math.random() * crimeActions.length)];
+            const baseReward = Math.floor(Math.random() * (maxReward - minReward + 1)) + minReward;
             
+            // Appliquer les bonus/malus karma
+            const userKarma = (userData.goodKarma || 0) + (userData.badKarma || 0);
+            let karmaMultiplier = 1;
+            if (userKarma >= 10) karmaMultiplier = 0.8; // Les saints gagnent moins en crime
+            else if (userKarma >= 1) karmaMultiplier = 0.9;
+            else if (userKarma <= -10) karmaMultiplier = 1.3; // Les méchants sont doués
+            else if (userKarma < 0) karmaMultiplier = 1.1;
+            
+            const totalReward = Math.floor(baseReward * karmaMultiplier);
+            
+            userData.balance = (userData.balance || 0) + totalReward;
+            userData.lastCrime = now;
+            userData.badKarma = (userData.badKarma || 0) + 1;
+            
+            await dataManager.updateUser(userId, guildId, userData);
+
+            const successDescription = `${action} et avez gagné **${totalReward}💋** !`;
+
+            const embed = new EmbedBuilder()
+                .setColor('#f39c12')
+                .setTitle('💰 Crime Réussi')
+                .setDescription(successDescription)
+                .addFields(
+                    { name: '💰 Nouveau solde', value: `${userData.balance}💋`, inline: true },
+                    { name: '📈 Gains', value: `+${totalReward}💋`, inline: true },
+                    { name: '😈 Karma', value: `${(userData.goodKarma || 0) + (userData.badKarma || 0)} (${userData.badKarma || 0} mauvais)`, inline: true }
+                )
+                .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldownTime / 60000)} minutes` });
+
+            await interaction.reply({ embeds: [embed] });
+
         } catch (error) {
-            console.error('❌ Erreur crime:', error);
+            console.error('Erreur commande crime:', error);
             await interaction.reply({
-                content: '❌ Une erreur est survenue.',
+                content: '❌ Une erreur s\'est produite lors de l\'exécution de cette commande.',
                 flags: 64
             });
         }

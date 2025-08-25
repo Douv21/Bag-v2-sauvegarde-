@@ -29,6 +29,42 @@
       "createdAt": "2025-08-07T21:57:22.114Z",
       "createdBy": "system",
       "category": "VIP 💎"
+    },
+    {
+      "id": "1756148910076_custom1",
+      "type": "custom_object",
+      "name": "💎 Collier de Séduction",
+      "price": 150,
+      "description": "Un magnifique collier qui augmente votre charme naturel",
+      "category": "Objets personnalisés",
+      "created": "2025-08-25T19:08:30.076Z"
+    },
+    {
+      "id": "1756148910076_custom2",
+      "type": "custom_object",
+      "name": "🌹 Bouquet de Roses Éternelles",
+      "price": 200,
+      "description": "Des roses qui ne fanent jamais, symbole d'amour éternel",
+      "category": "Objets personnalisés",
+      "created": "2025-08-25T19:08:30.076Z"
+    },
+    {
+      "id": "1756148910076_custom3",
+      "type": "custom_object",
+      "name": "🍷 Bouteille de Champagne Premium",
+      "price": 300,
+      "description": "Une bouteille exclusive pour célébrer les moments spéciaux",
+      "category": "Objets personnalisés",
+      "created": "2025-08-25T19:08:30.076Z"
+    },
+    {
+      "id": "1756148910076_custom4",
+      "type": "text",
+      "name": "💌 Message Personnalisé",
+      "price": 50,
+      "description": "Envoyez un message personnalisé à quelqu'un de spécial",
+      "category": "Objets personnalisés",
+      "created": "2025-08-25T19:08:30.076Z"
     }
   ]
 }

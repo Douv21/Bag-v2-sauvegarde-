@@ -1,0 +1,130 @@
+{
+  "1360897918504271882": {
+    "guildId": "1360897918504271882",
+    "enabled": true,
+    "theme": {
+      "nsfwTone": true,
+      "footer": "Boys & Girls 🔥 Logs",
+      "includeAvatars": true,
+      "includeJumpLinks": true
+    },
+    "caseCounter": 0,
+    "categories": {
+      "messages": {
+        "enabled": true,
+        "channelId": null,
+        "logEdits": true,
+        "logDeletes": true,
+        "includeContent": true
+      },
+      "moderation": {
+        "enabled": true,
+        "channelId": null,
+        "logWarns": true,
+        "logMutes": true,
+        "logKicks": true,
+        "logBans": true,
+        "logUnbans": true,
+        "logPurges": true
+      },
+      "members": {
+        "enabled": true,
+        "channelId": null,
+        "logJoins": true,
+        "logLeaves": true
+      },
+      "nicknames": {
+        "enabled": true,
+        "channelId": null
+      },
+      "economy": {
+        "enabled": true,
+        "channelId": null,
+        "logDaily": true,
+        "logTransfers": true,
+        "logRewards": true,
+        "logAdminChanges": true
+      },
+      "voice": {
+        "enabled": true,
+        "channelId": null,
+        "logJoins": true,
+        "logLeaves": true,
+        "logMoves": true,
+        "logMutes": true,
+        "logDeafens": true,
+        "logStreams": true,
+        "logCameras": true
+      },
+      "roles": {
+        "enabled": true,
+        "channelId": null,
+        "logMemberChanges": true,
+        "logRoleCreate": true,
+        "logRoleDelete": true,
+        "logRoleUpdate": true
+      },
+      "channels": {
+        "enabled": true,
+        "channelId": null,
+        "logCreates": true,
+        "logDeletes": true,
+        "logUpdates": true
+      },
+      "threads": {
+        "enabled": true,
+        "channelId": null,
+        "logCreates": true,
+        "logDeletes": true,
+        "logUpdates": true,
+        "logArchived": true,
+        "logUnarchived": true,
+        "logLocked": true,
+        "logUnlocked": true
+      },
+      "emojis": {
+        "enabled": true,
+        "channelId": null,
+        "logCreates": true,
+        "logDeletes": true,
+        "logUpdates": true
+      },
+      "stickers": {
+        "enabled": true,
+        "channelId": null,
+        "logCreates": true,
+        "logDeletes": true,
+        "logUpdates": true
+      },
+      "invites": {
+        "enabled": true,
+        "channelId": null,
+        "logCreates": true,
+        "logDeletes": true
+      },
+      "webhooks": {
+        "enabled": true,
+        "channelId": null,
+        "logUpdates": true
+      },
+      "server": {
+        "enabled": true,
+        "channelId": null,
+        "logUpdates": true
+      },
+      "boosts": {
+        "enabled": true,
+        "channelId": null,
+        "logStart": true,
+        "logEnd": true
+      },
+      "events": {
+        "enabled": true,
+        "channelId": null,
+        "logCreates": true,
+        "logUpdates": true,
+        "logDeletes": true
+      }
+    }
+  }
+}

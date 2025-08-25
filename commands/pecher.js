@@ -8,7 +8,7 @@ function asNumber(value, fallback = 0) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('pecher')
-        .setDescription('Pêcher pour gagner du plaisir (Action standard 😇)'),
+        .setDescription('Pêcher pour gagner de l\'argent (activité relaxante)'),
 
     async execute(interaction, dataManager) {
         try {
@@ -17,29 +17,21 @@ module.exports = {
             
             // Charger la configuration économique
             const economyConfig = await dataManager.loadData('economy.json', {});
-            const rawCfg = (economyConfig.actions?.pecher || economyConfig.actions?.flirter) || {};
+            const rawCfg = economyConfig.actions?.pecher || {};
             
-            const enabled = rawCfg.enabled !== false;
-            const minReward = asNumber(rawCfg.minReward, 50);
-            const maxReward = asNumber(rawCfg.maxReward, Math.max(50, 150));
-            const cooldown = asNumber(rawCfg.cooldown, 5400000);
-            const deltaGood = asNumber(rawCfg.goodKarma, 1);
-            const deltaBad = asNumber(rawCfg.badKarma, -1);
-
-            // Vérifier si l'action est activée
-            if (!enabled) {
-                await interaction.reply({
-                    content: '❌ La commande /pecher est actuellement désactivée.',
-                    flags: 64
-                });
-                return;
+            // Normaliser les valeurs
+            const minReward = asNumber(rawCfg.min || rawCfg.minReward || 5);
+            const maxReward = asNumber(rawCfg.max || rawCfg.maxReward || 20);
+            
+            // Gérer cooldown
+            let cooldownTime = asNumber(rawCfg.cooldown, 480000); // 8 min par défaut
+            if (typeof rawCfg.cooldown === 'object' && rawCfg.cooldown.cooldown) {
+                cooldownTime = asNumber(rawCfg.cooldown.cooldown, 480000);
             }
             
-            // Vérifier cooldown avec dataManager
             const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
-            const cooldownTime = cooldown;
             
             if (userData.lastFish && (now - userData.lastFish) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastFish)) / 60000);
@@ -48,64 +40,96 @@ module.exports = {
                     flags: 64
                 });
             }
+
+            // 85% de chance de succès (pêche plus fiable)
+            const success = Math.random() > 0.15;
             
-            // Calculer le gain aléatoire selon la configuration
-            const gainAmount = Math.floor(Math.random() * (Math.max(0, maxReward - minReward) + 1)) + minReward;
-            
-            // Types de poissons
+            if (!success) {
+                userData.lastFish = now;
+                await dataManager.updateUser(userId, guildId, userData);
+
+                const embed = new EmbedBuilder()
+                    .setColor('#3498db')
+                    .setTitle('🎣 Aucune Prise')
+                    .setDescription('Vous n\'avez rien attrapé cette fois-ci... La pêche demande de la patience !')
+                    .addFields(
+                        { name: '💰 Votre solde', value: `${userData.balance || 0}💋`, inline: true }
+                    )
+                    .setFooter({ text: `Prochaine tentative dans ${Math.round(cooldownTime / 60000)} minutes` });
+
+                await interaction.reply({ embeds: [embed] });
+                return;
+            }
+
+            // Succès - différents types de poissons
             const fishTypes = [
-                { name: 'un petit poisson', emoji: '🐟', multiplier: 0.6 },
-                { name: 'une belle prise', emoji: '🎣', multiplier: 1.0 },
-                { name: 'un gros poisson', emoji: '🐠', multiplier: 1.2 },
-                { name: 'un banc entier', emoji: '🐡', multiplier: 1.5 },
-                { name: 'un trésor englouti', emoji: '💎', multiplier: 2.0 }
+                { name: 'une truite', multiplier: 1, rarity: 'commune' },
+                { name: 'un saumon', multiplier: 1.2, rarity: 'commune' },
+                { name: 'une carpe', multiplier: 0.8, rarity: 'commune' },
+                { name: 'un brochet', multiplier: 1.5, rarity: 'rare' },
+                { name: 'un thon', multiplier: 1.8, rarity: 'rare' },
+                { name: 'un requin', multiplier: 3, rarity: 'légendaire' },
+                { name: 'un poisson d\'or', multiplier: 5, rarity: 'mythique' }
             ];
+
+            // Probabilités: 60% commune, 25% rare, 10% légendaire, 5% mythique
+            let fishCaught;
+            const rarity = Math.random();
+            if (rarity < 0.6) {
+                fishCaught = fishTypes.filter(f => f.rarity === 'commune')[Math.floor(Math.random() * 3)];
+            } else if (rarity < 0.85) {
+                fishCaught = fishTypes.filter(f => f.rarity === 'rare')[Math.floor(Math.random() * 2)];
+            } else if (rarity < 0.95) {
+                fishCaught = fishTypes.find(f => f.rarity === 'légendaire');
+            } else {
+                fishCaught = fishTypes.find(f => f.rarity === 'mythique');
+            }
+
+            const baseReward = Math.floor(Math.random() * (maxReward - minReward + 1)) + minReward;
+            const finalReward = Math.floor(baseReward * fishCaught.multiplier);
             
-            // Sélectionner un type de poisson aléatoire
-            const selectedFish = fishTypes[Math.floor(Math.random() * fishTypes.length)];
-            const actualGain = Math.floor(gainAmount * selectedFish.multiplier);
+            // Appliquer bonus karma (les bons pêcheurs ont de la chance)
+            const userKarma = (userData.goodKarma || 0) + (userData.badKarma || 0);
+            let karmaMultiplier = 1;
+            if (userKarma >= 10) karmaMultiplier = 1.3;
+            else if (userKarma >= 1) karmaMultiplier = 1.1;
+            else if (userKarma <= -10) karmaMultiplier = 0.8;
+            else if (userKarma < 0) karmaMultiplier = 0.9;
             
-            // Mettre à jour utilisateur avec dataManager selon configuration
-            userData.balance = asNumber(userData.balance, 1000) + actualGain;
-            userData.goodKarma = asNumber(userData.goodKarma, 0) + deltaGood;
-            userData.badKarma = asNumber(userData.badKarma, 0) + deltaBad;
+            const totalReward = Math.floor(finalReward * karmaMultiplier);
+            
+            userData.balance = (userData.balance || 0) + totalReward;
             userData.lastFish = now;
             
             await dataManager.updateUser(userId, guildId, userData);
-            
-            // Calculer réputation (karma net = charme + perversion négative)
-            const karmaNet = (asNumber(userData.goodKarma, 0)) + (asNumber(userData.badKarma, 0));
-            
+
+            // Emojis selon la rareté
+            const rarityEmojis = {
+                'commune': '🐟',
+                'rare': '🐠',
+                'légendaire': '🦈',
+                'mythique': '🐉'
+            };
+
             const embed = new EmbedBuilder()
-                .setColor('#1E90FF')
-                .setTitle('🎣 Pêche Réussie !')
-                .setDescription(`Vous avez attrapé ${selectedFish.name} ${selectedFish.emoji}`)
-                .addFields([
-                    { name: '💋 Plaisir Gagné', value: `${actualGain}💋`, inline: true },
-                    { name: '😇 Karma Positif', value: `+${deltaGood} (${userData.goodKarma})`, inline: true },
-                    { name: '😈 Karma Négatif', value: `${deltaBad} (${userData.badKarma})`, inline: true },
-                    { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
-                    { name: '⏰ Cooldown', value: `${Math.floor(cooldownTime / 60000)} minutes`, inline: true },
-                    { name: '💋 Plaisir Total', value: `${userData.balance}💋`, inline: true },
-                    { name: '🎯 Configuration', value: `Gains: ${minReward}💋-${maxReward}💋`, inline: false }
-                ])
-                .setFooter({ text: 'Prochaine pêche dans 1h30' });
-            
+                .setColor(fishCaught.rarity === 'mythique' ? '#f1c40f' : 
+                         fishCaught.rarity === 'légendaire' ? '#9b59b6' :
+                         fishCaught.rarity === 'rare' ? '#3498db' : '#2ecc71')
+                .setTitle('🎣 Belle Prise !')
+                .setDescription(`Vous avez attrapé ${fishCaught.name} ${rarityEmojis[fishCaught.rarity]} et gagné **${totalReward}💋** !`)
+                .addFields(
+                    { name: '💰 Nouveau solde', value: `${userData.balance}💋`, inline: true },
+                    { name: '📈 Gains', value: `+${totalReward}💋`, inline: true },
+                    { name: '🏆 Rareté', value: fishCaught.rarity, inline: true }
+                )
+                .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldownTime / 60000)} minutes` });
+
             await interaction.reply({ embeds: [embed] });
 
-            // Vérifier et appliquer les récompenses karma automatiques
-            try {
-                const KarmaRewardManager = require('../utils/karmaRewardManager');
-                const karmaManager = new KarmaRewardManager(dataManager);
-                await karmaManager.checkAndApplyKarmaRewards(interaction.user, interaction.guild, interaction.channel);
-            } catch (error) {
-                console.error('Erreur vérification récompenses karma:', error);
-            }
-            
         } catch (error) {
-            console.error('❌ Erreur pecher:', error);
+            console.error('Erreur commande pecher:', error);
             await interaction.reply({
-                content: '❌ Une erreur est survenue.',
+                content: '❌ Une erreur s\'est produite lors de l\'exécution de cette commande.',
                 flags: 64
             });
         }

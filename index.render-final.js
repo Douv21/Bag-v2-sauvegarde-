@@ -4670,6 +4670,8 @@ async function handleShopPurchase(interaction, dataManager) {
             inventoryItem.type = 'private_suite_permanent';
         }
 
+
+
         userData.inventory.push(inventoryItem);
         await dataManager.updateUser(userId, guildId, userData);
 
@@ -4710,6 +4712,7 @@ async function handleShopPurchase(interaction, dataManager) {
             }
         } else if (item.type === 'private_24h' || item.type === 'private_monthly' || item.type === 'private_permanent') {
             effectMessage = '\n🔒 Suite privée créée: 1 rôle + 2 salons (🔞 texte NSFW + 🎙️ vocal)';
+
         } else if (item.type === 'custom_object' || item.type === 'custom' || item.type === 'text') {
             effectMessage = '\n🎁 Objet personnalisé acheté !';
         } else {

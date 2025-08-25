@@ -38,6 +38,7 @@ module.exports = {
 
 			const categories = Object.entries(categoriesMap);
 			const shopHasItems = categories.length > 0;
+			
 			if (!shopHasItems) {
 				return await interaction.reply({
 					content: '🛒 La boutique est vide. Les administrateurs n\'ont pas encore configuré d\'articles.\n\n💡 Utilisez `/configeconomie` → 🏪 Boutique pour ajouter des articles.',
@@ -49,27 +50,24 @@ module.exports = {
 			const userKarmaNet = (userData.goodKarma || 0) + (userData.badKarma || 0);
 			const calculateKarmaDiscount = (userKarmaNet, karmaDiscountsData, guildId) => {
 				const guildDiscounts = karmaDiscountsData[guildId] || [];
-				if (guildDiscounts.length === 0) return 0;
-				const applicableDiscount = guildDiscounts
-					.filter(discount => userKarmaNet >= discount.karmaMin)
-					.sort((a, b) => b.karmaMin - a.karmaMin)[0];
-				return applicableDiscount ? applicableDiscount.percentage : 0;
+				let bestDiscount = 0;
+				for (const discount of guildDiscounts) {
+					if (userKarmaNet >= discount.minKarma && discount.discountPercent > bestDiscount) {
+						bestDiscount = discount.discountPercent;
+					}
+				}
+				return bestDiscount;
 			};
 			const karmaDiscountPercent = calculateKarmaDiscount(userKarmaNet, karmaDiscountsData, guildId);
 
-			// Texte de description
-			let descriptionText = `**Votre plaisir:** ${userData.balance}💋\n**Réputation 🥵:** ${userKarmaNet}`;
-			if (karmaDiscountPercent > 0) {
-				descriptionText += `\n💸 **Remise réputation:** -${karmaDiscountPercent}% sur tous les achats !`;
-			}
-			descriptionText += '\n\n🛒 Articles par catégories :';
-
+			// En-tête avec balance et karma
 			const embed = new EmbedBuilder()
-				.setColor('#d35400')
-				.setTitle('🔞 Boutique NSFW - Boys & Girls')
-				.setDescription(descriptionText)
-				.setFooter({ text: 'Choisissez un article dans la catégorie souhaitée' });
+				.setColor('#e74c3c')
+				.setTitle('🛒 Boutique NSFW du Serveur')
+				.setDescription(`💰 **Votre balance :** ${userData.balance || 0}💋\n💫 **Karma :** ${userKarmaNet} ${karmaDiscountPercent > 0 ? `(Remise ${karmaDiscountPercent}% !)` : ''}`)
+				.setTimestamp();
 
+			// Fonction de rendu d'articles
 			const renderLine = (item) => {
 				let typeIcon = '🏆';
 				let typeText = 'Objet virtuel';
@@ -92,6 +90,7 @@ module.exports = {
 					typeIcon = '♾️';
 					typeText = 'Suite privée permanente (texte NSFW + vocal)';
 				}
+				
 				let priceText = `${item.price}💋`;
 				if (karmaDiscountPercent > 0) {
 					const discountedPrice = Math.floor(item.price * (100 - karmaDiscountPercent) / 100);
@@ -112,41 +111,37 @@ module.exports = {
 			const components = [];
 			const sortedForMenus = categories
 				.sort((a, b) => b[1].length - a[1].length)
-				.slice(0, 5); // Limite Discord: 5 action rows
-			let menuIndex = 0;
+				.slice(0, 5);
 
-			for (const [catName, items] of sortedForMenus) {
-				const select = new StringSelectMenuBuilder()
-					.setCustomId(`shop_purchase_${menuIndex}`)
-					.setPlaceholder(`📂 ${catName} — sélectionner`)
-					.addOptions(
-						items.slice(0, 25).map((item) => {
-							const finalPrice = karmaDiscountPercent > 0 ? Math.floor(item.price * (100 - karmaDiscountPercent) / 100) : item.price;
-							const priceDisplay = karmaDiscountPercent > 0 ? `${finalPrice}💋 (était ${item.price}💋)` : `${item.price}💋`;
-							const fullIndex = allShopItems.findIndex(it => it === item);
-							const uniqueValue = item.id ? item.id.toString() : `shop_item_${fullIndex}_${Date.now().toString(36)}`;
-							return {
-								label: item.name,
-								description: `${priceDisplay} - ${(item.description || 'Aucune description').substring(0, 60)}`,
-								value: uniqueValue,
-								emoji: '🛒'
-							};
-						})
-					);
-				components.push(new ActionRowBuilder().addComponents(select));
-				menuIndex++;
+			for (let i = 0; i < sortedForMenus.length; i++) {
+				const [catName, items] = sortedForMenus[i];
+				const options = items.slice(0, 25).map(item => {
+					const basePrice = item.price;
+					const finalPrice = karmaDiscountPercent > 0 ? Math.floor(basePrice * (100 - karmaDiscountPercent) / 100) : basePrice;
+					return {
+						label: `${item.name} - ${finalPrice}💋`,
+						value: item.id,
+						description: (item.description || 'Aucune description').slice(0, 100)
+					};
+				});
+
+				const menu = new StringSelectMenuBuilder()
+					.setCustomId(`shop_buy_${i}`)
+					.setPlaceholder(`🛒 Acheter dans ${catName}`)
+					.addOptions(options);
+
+				components.push(new ActionRowBuilder().addComponents(menu));
 			}
 
-			await interaction.reply({
-				embeds: [embed],
-				components: components,
-				flags: 64
-			});
+			// Footer
+			embed.setFooter({ text: '💡 Sélectionnez un article dans les menus pour l\'acheter' });
+
+			await interaction.reply({ embeds: [embed], components });
 
 		} catch (error) {
 			console.error('❌ Erreur boutique:', error);
 			await interaction.reply({
-				content: '❌ Une erreur est survenue lors de l\'accès à la boutique.',
+				content: '❌ Une erreur est survenue lors de l\'affichage de la boutique.',
 				flags: 64
 			});
 		}

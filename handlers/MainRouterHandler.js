@@ -604,6 +604,20 @@ class MainRouterHandler {
                 return true;
             }
 
+            // === SELECT MENUS ÉCONOMIE PRINCIPALE ===
+            if (customId === 'economy_main_select' || customId === 'economy_main_config_submenu') {
+                console.log(`🔧 Routage économie: ${customId}`);
+                await this.economyHandler.handleMainSelect(interaction);
+                return true;
+            }
+
+            if (customId === 'economy_boutique_select') {
+                await this.economyHandler.handleBoutiqueSelect(interaction);
+                return true;
+            }
+
+
+
             // === SELECT MENUS CONFESSION ===
             // Menus d'options principaux (logs / autothread / canaux)
             if (customId === 'confession_logs_options') {
