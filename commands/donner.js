@@ -53,7 +53,9 @@ module.exports = {
             const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
-            const cooldownTime = cooldown;
+            const { getCooldownFactor } = require('../utils/cooldownBoostManager');
+            const factor = getCooldownFactor(userData, now);
+            const cooldownTime = Math.floor(cooldown * factor);
             
             if (userData.lastDonate && (now - userData.lastDonate) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastDonate)) / 60000);
@@ -93,7 +95,7 @@ module.exports = {
                     { name: '😈 Karma Négatif', value: `${deltaBad >= 0 ? '+' : ''}${deltaBad} (${userData.badKarma})`, inline: true },
                     { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true }
                 ])
-                .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldown / 60000)} minutes` });
+                .setFooter({ text: `Prochaine utilisation dans ${Math.round(cooldownTime / 60000)} minutes` });
                 
             await interaction.reply({ content: `<@${targetUser.id}>`, embeds: [embed] });
 

@@ -1244,9 +1244,11 @@ class RenderSolutionBot {
             // Suites privées: scan et items boutique par défaut
             try {
                 const { scanAndRepairSuites, ensurePrivateSuiteShopItems } = require('./utils/privateSuiteManager');
+                const { ensureCooldownReductionShopItems } = require('./utils/cooldownBoostManager');
                 await scanAndRepairSuites(this.client);
                 for (const guild of this.client.guilds.cache.values()) {
                     await ensurePrivateSuiteShopItems(guild);
+                    try { await ensureCooldownReductionShopItems(guild); } catch (_) {}
                 }
                 console.log('🔒 Suites privées prêtes');
             } catch (e) {
@@ -4652,6 +4654,7 @@ async function handleShopPurchase(interaction, dataManager) {
         // Gestion nouvelles suites privées
         const member = await interaction.guild.members.fetch(userId);
         const { createPrivateSuite, scheduleExpiry } = require('./utils/privateSuiteManager');
+        const { addCooldownBoost, humanDuration } = require('./utils/cooldownBoostManager');
         if (item.type === 'private_24h') {
             const rec = await createPrivateSuite(interaction, member, { durationDays: 1 });
             scheduleExpiry(interaction.client, rec);
@@ -4668,6 +4671,16 @@ async function handleShopPurchase(interaction, dataManager) {
             const rec = await createPrivateSuite(interaction, member, { durationDays: null });
             inventoryItem.privateSuiteId = rec.id;
             inventoryItem.type = 'private_suite_permanent';
+        } else if (item.type === 'cooldown_reduction') {
+            const percent = Number(item.reductionPercent) || 0;
+            const durationMs = Number(item.durationMs) || 0;
+            if (percent > 0 && durationMs > 0) {
+                const rec = await addCooldownBoost(userId, guildId, percent, durationMs);
+                inventoryItem.type = 'cooldown_reduction';
+                inventoryItem.reductionPercent = percent;
+                inventoryItem.durationMs = durationMs;
+                inventoryItem.expiresAt = rec.expiresAt;
+            }
         }
 
         userData.inventory.push(inventoryItem);
@@ -4712,6 +4725,10 @@ async function handleShopPurchase(interaction, dataManager) {
             effectMessage = '\n🔒 Suite privée créée: 1 rôle + 2 salons (🔞 texte NSFW + 🎙️ vocal)';
         } else if (item.type === 'custom_object' || item.type === 'custom' || item.type === 'text') {
             effectMessage = '\n🎁 Objet personnalisé acheté !';
+        } else if (item.type === 'cooldown_reduction') {
+            const percent = Number(item.reductionPercent) || 0;
+            const durationMs = Number(item.durationMs) || 0;
+            effectMessage = `\n⏱️ Cooldown réduit de ${percent}% pendant ${humanDuration(durationMs)} !`;
         } else {
             effectMessage = '\n📦 Objet ajouté à votre inventaire !';
         }

@@ -46,7 +46,10 @@ module.exports = {
             const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
-            const cooldownTime = toNumber(cooldown, 14400000);
+            const { getCooldownFactor } = require('../utils/cooldownBoostManager');
+            const factor = getCooldownFactor(userData, now);
+            const baseCooldown = toNumber(cooldown, 14400000);
+            const cooldownTime = Math.floor(baseCooldown * factor);
             
             if (userData.lastCrime && (now - userData.lastCrime) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastCrime)) / 60000);
@@ -98,9 +101,9 @@ module.exports = {
                         { name: '😈 Karma Négatif', value: `${toNumber(deltaBad, 0) >= 0 ? '+' : ''}${toNumber(deltaBad, 0)} (${toNumber(userData.badKarma, 0)})`, inline: true },
                         { name: '😇 Karma Positif', value: `${toNumber(deltaGood, 0) >= 0 ? '+' : ''}${toNumber(deltaGood, 0)} (${toNumber(userData.goodKarma, 0)})`, inline: true },
                         { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
-                        { name: '⚠️ Attention', value: 'Le crime a des conséquences', inline: false }
+                        { name: '⏰ Cooldown', value: `${cooldownHours} heure${cooldownHours > 1 ? 's' : ''}`, inline: true }
                     ])
-                    .setFooter({ text: `Prochaine utilisation dans ${cooldownHours} heures` });
+                    .setFooter({ text: `Prochaine utilisation dans ${cooldownHours} heure${cooldownHours > 1 ? 's' : ''}` });
                 
                 await interaction.reply({ embeds: [embed] });
                 
@@ -128,9 +131,9 @@ module.exports = {
                         { name: '😈 Karma Négatif', value: `${Math.floor(toNumber(deltaBad, 0) / 2) >= 0 ? '+' : ''}${Math.floor(toNumber(deltaBad, 0) / 2)} (${toNumber(userData.badKarma, 0)})`, inline: true },
                         { name: '😇 Karma Positif', value: `${Math.floor(toNumber(deltaGood, 0) / 2) >= 0 ? '+' : ''}${Math.floor(toNumber(deltaGood, 0) / 2)} (${toNumber(userData.goodKarma, 0)})`, inline: true },
                         { name: '⚖️ Réputation 🥵', value: `${karmaNet >= 0 ? '+' : ''}${karmaNet}`, inline: true },
-                        { name: '⚖️ Justice', value: 'Le crime ne paie pas toujours', inline: false }
+                        { name: '⏰ Cooldown', value: `${cooldownHours} heure${cooldownHours > 1 ? 's' : ''}`, inline: true }
                     ])
-                    .setFooter({ text: `Prochaine utilisation dans ${cooldownHours} heures` });
+                    .setFooter({ text: `Prochaine utilisation dans ${cooldownHours} heure${cooldownHours > 1 ? 's' : ''}` });
                 
                 await interaction.reply({ embeds: [embed] });
             }

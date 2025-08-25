@@ -39,7 +39,9 @@ module.exports = {
             const userData = await dataManager.getUser(userId, guildId);
             
             const now = Date.now();
-            const cooldownTime = cooldown;
+            const { getCooldownFactor } = require('../utils/cooldownBoostManager');
+            const factor = getCooldownFactor(userData, now);
+            const cooldownTime = Math.floor(cooldown * factor);
             
             if (userData.lastFish && (now - userData.lastFish) < cooldownTime) {
                 const remaining = Math.ceil((cooldownTime - (now - userData.lastFish)) / 60000);
