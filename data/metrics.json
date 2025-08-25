@@ -1,24 +1,24 @@
 {
   "messagesPerDay": {
-    "2025-08-25": 214
+    "2025-08-25": 228
   },
   "commandsPerDay": {
-    "2025-08-25": 190
+    "2025-08-25": 194
   },
   "guilds": {
     "1360897918504271882": {
       "messagesPerDay": {
-        "2025-08-25": 214
+        "2025-08-25": 228
       },
       "commandsPerDay": {
-        "2025-08-25": 190
+        "2025-08-25": 194
       },
       "commandsByName": {
         "force-backup": 2,
         "boutique": 15,
         "backup-status": 1,
         "caresser": 7,
-        "config-aouv": 12,
+        "config-aouv": 13,
         "travailler": 5,
         "pecher": 13,
         "seduire": 2,
@@ -32,7 +32,7 @@
         "stats": 1,
         "dashboard": 1,
         "seduire-mass": 1,
-        "aouv": 10,
+        "aouv": 11,
         "membre-proche": 1,
         "ajouter-carte": 1,
         "baiser": 2,
@@ -47,7 +47,7 @@
     "boutique": 15,
     "backup-status": 1,
     "caresser": 7,
-    "config-aouv": 12,
+    "config-aouv": 13,
     "travailler": 5,
     "pecher": 13,
     "seduire": 2,
@@ -61,7 +61,7 @@
     "stats": 1,
     "dashboard": 1,
     "seduire-mass": 1,
-    "aouv": 10,
+    "aouv": 11,
     "membre-proche": 1,
     "ajouter-carte": 1,
     "baiser": 2,
