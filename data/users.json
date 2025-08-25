@@ -19,8 +19,8 @@
   "463272211269156865_1360897918504271882": {
     "userId": "463272211269156865",
     "guildId": "1360897918504271882",
-    "balance": 1317,
-    "goodKarma": 3,
+    "balance": 1380,
+    "goodKarma": 4,
     "badKarma": -1,
     "xp": 0,
     "messageCount": 0,
@@ -31,19 +31,24 @@
     "lastWork": 1756146839416,
     "lastFish": 1756146843342,
     "lastSeduce": 1756146865026,
-    "lastStriptease": 1756146927776
+    "lastStriptease": 1756146927776,
+    "lastEmbrasser": 1756148753608
   },
   "1108053454519271535_1360897918504271882": {
     "userId": "1108053454519271535",
     "guildId": "1360897918504271882",
-    "balance": 31,
-    "goodKarma": 1,
+    "balance": 256,
+    "goodKarma": 8,
     "badKarma": 0,
     "xp": 0,
     "messageCount": 0,
     "createdAt": 1756147957936,
     "lastDaily": null,
     "dailyStreak": 0,
-    "lastFish": 1756147957937
+    "lastFish": 1756148341668,
+    "lastWork": 1756148355328,
+    "lastMassage": 1756148372714,
+    "lastTease": 1756148380713,
+    "lastCaresser": 1756148392220
   }
 }
