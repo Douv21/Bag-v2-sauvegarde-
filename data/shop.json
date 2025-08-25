@@ -29,6 +29,50 @@
       "createdAt": "2025-08-07T21:57:22.114Z",
       "createdBy": "system",
       "category": "VIP 💎"
+    },
+    {
+      "id": "1756146080355_cd50_1d",
+      "type": "cooldown_reduction",
+      "name": "🔥 50% de réduction - 1 jour",
+      "price": 100,
+      "description": "Réduit de 50% tous les cooldowns pendant 24h",
+      "category": "Réductions de Cooldown",
+      "reductionPercent": 50,
+      "durationDays": 1,
+      "created": "2025-08-25T18:21:20.355Z"
+    },
+    {
+      "id": "1756146080355_cd50_1w",
+      "type": "cooldown_reduction",
+      "name": "🔥 50% de réduction - 1 semaine",
+      "price": 500,
+      "description": "Réduit de 50% tous les cooldowns pendant 7 jours",
+      "category": "Réductions de Cooldown",
+      "reductionPercent": 50,
+      "durationDays": 7,
+      "created": "2025-08-25T18:21:20.355Z"
+    },
+    {
+      "id": "1756146080355_cd75_1d",
+      "type": "cooldown_reduction",
+      "name": "⚡ 75% de réduction - 1 jour",
+      "price": 250,
+      "description": "Réduit de 75% tous les cooldowns pendant 24h",
+      "category": "Réductions de Cooldown",
+      "reductionPercent": 75,
+      "durationDays": 1,
+      "created": "2025-08-25T18:21:20.355Z"
+    },
+    {
+      "id": "1756146080355_cd100_1d",
+      "type": "cooldown_reduction",
+      "name": "🚀 Actions illimitées - 1 jour",
+      "price": 500,
+      "description": "Supprime tous les cooldowns pendant 24h",
+      "category": "Réductions de Cooldown",
+      "reductionPercent": 100,
+      "durationDays": 1,
+      "created": "2025-08-25T18:21:20.355Z"
     }
   ]
 }
