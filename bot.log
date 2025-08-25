@@ -1,7 +1,6 @@
 nohup: ignoring input
-[dotenv@17.2.1] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.2.1] injecting env (4) from .env -- tip: ⚙️  enable debug logging with { debug: true }
 🔑 MONGODB_PASSWORD non configuré - sauvegarde locale uniquement
-📁 Répertoire de sauvegarde level créé
 ⏰ Sauvegarde automatique level activée (30 min)
 ✅ LevelBackupManager initialisé
 ⚠️ Variables d'environnement MongoDB manquantes - utilisation du mode JSON uniquement
@@ -11,13 +10,14 @@ nohup: ignoring input
    - MONGODB_CLUSTER_URL
 🎨 LevelCardGenerator initialisé
 ✅ Handlers spécialisés initialisés
+✅ SecurityConfigHandler initialisé avec moderationManager
 🔗 Attachement des méthodes de quarantaine au client...
 ✅ Méthodes de quarantaine attachées: {
   quarantineMember: 'function',
   grantAccess: 'function',
   getQuarantineInfo: 'function'
 }
-📂 Chargement de 89 commandes...
+📂 Chargement de 91 commandes...
 ✅ action
 ✅ je-suis-actif
 ✅ add-level-reward
@@ -47,6 +47,7 @@ nohup: ignoring input
 ✅ config-level
 ✅ config-logs
 ✅ config-moderation
+✅ config-verif-menu
 ✅ config-verif
 ✅ crime
 ✅ daily
@@ -93,6 +94,7 @@ nohup: ignoring input
 ✅ stats
 ✅ stop
 ✅ striptease
+✅ test-isolation
 ✅ test-level-notif
 ✅ test-verif
 ✅ topplaisir
@@ -107,16 +109,9 @@ nohup: ignoring input
 ✅ volume
 ✅ warn
 ✅ warns
-✅ 88 commandes chargées
-🔄 Enregistrement de 88 commandes...
-❌ Erreur enregistrement commandes: Error: Expected token to be set for this request, but none was present
-    at _REST.resolveRequest (/workspace/node_modules/@discordjs/rest/dist/index.js:1367:15)
-    at _REST.queueRequest (/workspace/node_modules/@discordjs/rest/dist/index.js:1327:46)
-    at _REST.request (/workspace/node_modules/@discordjs/rest/dist/index.js:1293:33)
-    at _REST.put (/workspace/node_modules/@discordjs/rest/dist/index.js:1276:17)
-    at CommandHandler.registerCommands (/workspace/handlers/CommandHandler.js:67:24)
-    at CommandHandler.init (/workspace/handlers/CommandHandler.js:16:20)
-📂 Chargement de 89 commandes...
+✅ 90 commandes chargées
+🔄 Enregistrement de 90 commandes...
+📂 Chargement de 91 commandes...
 ✅ action
 ✅ je-suis-actif
 ✅ add-level-reward
@@ -146,6 +141,7 @@ nohup: ignoring input
 ✅ config-level
 ✅ config-logs
 ✅ config-moderation
+✅ config-verif-menu
 ✅ config-verif
 ✅ crime
 ✅ daily
@@ -192,6 +188,7 @@ nohup: ignoring input
 ✅ stats
 ✅ stop
 ✅ striptease
+✅ test-isolation
 ✅ test-level-notif
 ✅ test-verif
 ✅ topplaisir
@@ -206,9 +203,107 @@ nohup: ignoring input
 ✅ volume
 ✅ warn
 ✅ warns
-✅ 88 commandes chargées
-❌ Erreur démarrage: Error [TokenInvalid]: An invalid token was provided.
-    at Client.login (/workspace/node_modules/discord.js/src/client/Client.js:217:52)
-    at BagBotRender.init (/workspace/index.js:138:31) {
-  code: 'TokenInvalid'
+✅ 90 commandes chargées
+✅ 90 commandes enregistrées
+🚀 BAG BOT V2 - Render.com Web Service démarré
+🌐 Serveur Web actif sur port 5000
+📊 Health check: http://localhost:5000/health
+✅ Bag#0424 connecté
+🔍 Vérification des méthodes de quarantaine après connexion: {
+  quarantineMember: 'function',
+  grantAccess: 'function',
+  getQuarantineInfo: 'function'
 }
+🔄 Enregistrement de 90 commandes...
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
+[lavalink] Node creavite-eu1 closed: 1006 
+[lavalink] Node jirayu-nossl ready
+[lavalink] Node hatry4-nossl ready
+✅ 90 commandes enregistrées
+⚠️ Variables d'environnement MongoDB manquantes - utilisation du mode JSON uniquement
+   Pour utiliser le système de bump, configurez:
+   - MONGODB_USERNAME
+   - MONGODB_PASSWORD
+   - MONGODB_CLUSTER_URL
+⚠️ MongoDB non connecté - les rappels de bump ne seront pas persistés
+🕒 Planification des vérifications de modération activée (check hourly)
+🕒 Planification du reset hebdomadaire du karma activée (check hourly)
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
+[lavalink] Node ajie-v4 ready
+💾 Sauvegarde automatique déclenchée (2 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
+[lavalink] Node creavite-eu1 closed: 1006 
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
+[lavalink] Node creavite-eu1 closed: 1006 
+🚨 Sauvegarde manuelle d'urgence...
+📋 Fichiers prioritaires pour sauvegarde d'urgence:
+   • economy.json
+   • level_users.json
+   • level_config.json
+   • confessions.json
+   • counting.json
+   • autothread.json
+   • shop.json
+   • karma_config.json
+   • karma_discounts.json
+   • message_rewards.json
+   • daily.json
+   • actions.json
+   • config.json
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+🔄 Fallback vers sauvegarde simple...
+❌ Erreur force-backup: TypeError: simpleBackup.performBackup is not a function
+    at DeploymentManager.emergencyBackup (/workspace/utils/deploymentManager.js:296:49)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.execute (/workspace/commands/force-backup.js:25:29)
+    at async Client.<anonymous> (/workspace/handlers/CommandHandler.js:91:25)
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[lavalink] Node v4-lavalink-rocks error: getaddrinfo ENOTFOUND v4.lavalink.rocks
+[lavalink] Node v4-lavalink-rocks closed: 1006 
+[lavalink] Node v4-lavalink-rocks disconnected: 
+[lavalink] Node lava-link error: getaddrinfo ENOTFOUND lava.link
+[lavalink] Node lava-link closed: 1006 
+[lavalink] Node lava-link disconnected: 
+[lavalink] Node nextgencoders-ssl error: getaddrinfo ENOTFOUND lavalink.nextgencoders.xyz
+[lavalink] Node nextgencoders-ssl closed: 1006 
+[lavalink] Node nextgencoders-ssl disconnected: 
+[lavalink] Node creavite-eu1 error: getaddrinfo ENOTFOUND eu1.lavalink.creavite.co
+[lavalink] Node creavite-eu1 closed: 1006 
+[lavalink] Node creavite-eu1 disconnected: 
+[lavalink] Node darren-v4 error: Unexpected server response: 403
+[lavalink] Node darren-v4 closed: 1006 
+[lavalink] Node darren-v4 disconnected: 
