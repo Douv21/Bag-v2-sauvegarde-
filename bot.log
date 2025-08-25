@@ -645,3 +645,11 @@ nohup: ignoring input
 ❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
     at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+💾 Sauvegarde automatique déclenchée (1 opérations)
+⚠️ Sauvegarde MongoDB ignorée - pas de connexion
+❌ Erreur sauvegarde automatique: TypeError: simpleBackup.performBackup is not a function
+    at DataHooks.processBackupQueue (/workspace/utils/dataHooks.js:35:36)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
