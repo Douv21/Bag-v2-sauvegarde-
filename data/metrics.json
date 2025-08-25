@@ -3,7 +3,7 @@
     "2025-08-25": 245
   },
   "commandsPerDay": {
-    "2025-08-25": 207
+    "2025-08-25": 209
   },
   "guilds": {
     "1360897918504271882": {
@@ -11,7 +11,7 @@
         "2025-08-25": 245
       },
       "commandsPerDay": {
-        "2025-08-25": 207
+        "2025-08-25": 209
       },
       "commandsByName": {
         "force-backup": 2,
@@ -37,7 +37,7 @@
         "ajouter-carte": 1,
         "baiser": 2,
         "config-level": 1,
-        "crime": 4,
+        "crime": 5,
         "level": 1
       }
     }
@@ -66,7 +66,7 @@
     "ajouter-carte": 1,
     "baiser": 2,
     "config-level": 1,
-    "crime": 4,
+    "crime": 5,
     "level": 1
   }
 }
