@@ -2,8 +2,8 @@
   "1360897918504271882_943487722738311219": {
     "userId": "943487722738311219",
     "guildId": "1360897918504271882",
-    "xp": 6004,
-    "level": 16,
+    "xp": 80000,
+    "level": 87,
     "totalMessages": 105,
     "totalVoiceTime": 0,
     "lastMessageTime": 1753620432825,
@@ -147,6 +147,46 @@
     "totalMessages": 1,
     "totalVoiceTime": 0,
     "lastMessageTime": 1755727222282,
+    "lastVoiceTime": 0
+  },
+  "1360897918504271882_519883409917607937": {
+    "userId": "519883409917607937",
+    "guildId": "1360897918504271882",
+    "xp": 0,
+    "level": 1,
+    "totalMessages": 0,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 0,
+    "lastVoiceTime": 0
+  },
+  "1360897918504271882_1396872608154386472": {
+    "userId": "1396872608154386472",
+    "guildId": "1360897918504271882",
+    "xp": 0,
+    "level": 1,
+    "totalMessages": 0,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 0,
+    "lastVoiceTime": 0
+  },
+  "1360897918504271882_1394407529508900894": {
+    "userId": "1394407529508900894",
+    "guildId": "1360897918504271882",
+    "xp": 0,
+    "level": 1,
+    "totalMessages": 0,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 0,
+    "lastVoiceTime": 0
+  },
+  "1360897918504271882_253847407043805185": {
+    "userId": "253847407043805185",
+    "guildId": "1360897918504271882",
+    "xp": 0,
+    "level": 1,
+    "totalMessages": 0,
+    "totalVoiceTime": 0,
+    "lastMessageTime": 0,
     "lastVoiceTime": 0
   }
 }

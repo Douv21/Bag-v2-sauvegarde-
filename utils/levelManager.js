@@ -169,7 +169,7 @@ class LevelManager {
             
             if (require('fs').existsSync(economyPath)) {
                 const economyData = JSON.parse(require('fs').readFileSync(economyPath, 'utf8'));
-                const economyKey = `${guildId}_${userId}`;
+                const economyKey = `${userId}_${guildId}`;
                 
                 if (economyData[economyKey] && economyData[economyKey].xp !== undefined) {
                     const economyUser = economyData[economyKey];
